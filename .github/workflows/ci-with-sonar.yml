@@ -1,0 +1,17 @@
+# Thông tin project
+sonar.projectKey=thangnvhe
+sonar.organization=Thangnvhe
+sonar.host.url=https://sonarcloud.io
+
+# Ngôn ngữ chính
+sonar.language=cs
+sonar.sourceEncoding=UTF-8
+
+# Thư mục source (ví dụ code của bạn nằm trong src)
+sonar.sources=src
+
+# Thư mục test (nếu có)
+sonar.tests=tests
+
+# Bỏ qua những folder/file không cần quét
+sonar.exclusions=**/bin/**,**/obj/**,**/wwwroot/**,**/node_modules/**,**/Migrations/**,**/*.html,**/*.css,**/*.js
