@@ -1,17 +1,35 @@
-# Thông tin project
-sonar.projectKey=thangnvhe
-sonar.organization=Thangnvhe
-sonar.host.url=https://sonarcloud.io
+name: CI - Build, Test & SonarCloud
 
-# Ngôn ngữ chính
-sonar.language=cs
-sonar.sourceEncoding=UTF-8
+on:
+  pull_request:
+    branches: [ "main" ]
 
-# Thư mục source (ví dụ code của bạn nằm trong src)
-sonar.sources=src
+jobs:
+  build-sonar:
+    runs-on: ubuntu-latest
 
-# Thư mục test (nếu có)
-sonar.tests=tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # Quan trọng để Sonar phân tích lịch sử git
 
-# Bỏ qua những folder/file không cần quét
-sonar.exclusions=**/bin/**,**/obj/**,**/wwwroot/**,**/node_modules/**,**/Migrations/**,**/*.html,**/*.css,**/*.js
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests
+        run: dotnet test --no-build --verbosity normal --logger "trx;LogFileName=test_results.trx"

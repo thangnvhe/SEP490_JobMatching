@@ -1,16 +1,18 @@
-name: CI - build-test-sonar
+name: CI - Build & Test
 
 on:
   pull_request:
     branches: [ "main" ]
+  push:
+    branches: [ "develop" ]
 
 jobs:
-  build-sonar:
+  build-test:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v5
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -20,19 +22,8 @@ jobs:
       - name: Restore
         run: dotnet restore
 
-      - name: SonarQube Begin
-        # SonarSource action will integrate; ensure SONAR_TOKEN secret exists
-        uses: SonarSource/sonarqube-scan-action@v6
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
-      - name: Test
+      - name: Run tests
         run: dotnet test --no-build --verbosity normal --logger "trx;LogFileName=test_results.trx"
-
-      - name: SonarQube End
-        # If using the action above, it will handle begin/end automatically; 
-        # for manual dotnet-sonarscanner you'd call dotnet sonarscanner end here.
-        run: echo "Sonar scan finished"
