@@ -1,0 +1,80 @@
+@{
+    ViewData["Title"] = "CV Text Analysis";
+}
+
+<h2>📝 CV Text Analysis</h2>
+<p class="text-muted">Enter CV text to analyze with AI</p>
+
+@if (!string.IsNullOrEmpty(ViewBag.Error))
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+@if (ViewBag.Result != null)
+{
+    <div class="alert alert-success">
+        <h5>✅ Analysis Result:</h5>
+        <hr>
+        <strong>Input CV:</strong>
+        <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px;">@ViewBag.CVText</pre>
+        
+        <strong>AI Analysis:</strong>
+        <pre style="background: #e7f3ff; padding: 10px; border-radius: 5px;">@ViewBag.Result</pre>
+    </div>
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form asp-action="CVAnalysis" method="post">
+                    <div class="mb-3">
+                        <label for="cvText" class="form-label">CV Text Content:</label>
+                        <textarea name="cvText" id="cvText" class="form-control" rows="10" 
+                                  placeholder="Paste CV content here..." required>@ViewBag.CVText</textarea>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">🧠 Analyze with AI</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="loadSample()">📄 Load Sample</button>
+                        <button type="button" class="btn btn-outline-danger" onclick="clearText()">🗑️ Clear</button>
+                        <a href="@Url.Action("Index")" class="btn btn-outline-primary">← Back to Dashboard</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function loadSample() {
+    const sample = `Nguyen Van A
+Email: nguyenvana@email.com
+Phone: 0123456789
+Address: Ha Noi, Vietnam
+
+OBJECTIVE:
+Experienced Software Developer with 3+ years in web development
+
+SKILLS:
+- Programming: C#, ASP.NET Core, JavaScript
+- Database: SQL Server, Entity Framework
+- Tools: Git, Visual Studio, Docker
+
+EXPERIENCE:
+Software Developer at Tech Company (2021-2024)
+- Developed web applications using ASP.NET Core
+- Implemented RESTful APIs
+- Collaborated with team using Agile methodology
+
+EDUCATION:
+Bachelor of Computer Science
+Hanoi University (2017-2021)`;
+    
+    document.getElementById('cvText').value = sample;
+}
+
+function clearText() {
+    document.getElementById('cvText').value = '';
+}
+</script>

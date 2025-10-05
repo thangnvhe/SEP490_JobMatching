@@ -22,6 +22,7 @@ builder.Services.AddScoped<IAIService, AIService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IPDFService, PDFService>();
+builder.Services.AddScoped<ICVTemplateService, CVTemplateService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

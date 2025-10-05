@@ -1,0 +1,505 @@
+@{
+    ViewData["Title"] = "PDF CV Analysis";
+}
+
+<h2>📄 PDF CV Analysis</h2>
+<p class="text-muted">Upload PDF CV files for AI analysis and export results to Excel</p>
+
+@if (!string.IsNullOrEmpty(ViewBag.Error))
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<div class="row">
+    <!-- PDF Upload Section -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">📤 Upload PDF CV</h5>
+            </div>
+            <div class="card-body">
+                <form id="pdfUploadForm" enctype="multipart/form-data"">
+                    <div class="mb-3">
+                        <label for="pdfFile" class="form-label">Select PDF CV File</label>
+                        <input type="file" class="form-control" id="pdfFile" name="pdfFile" accept=".pdf" required>
+                        <div class="form-text">Supported format: PDF only (max 10MB)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Analysis Options</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="extractText" id="extractText" checked>
+                            <label class="form-check-label" for="extractText">Extract Text Content</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="aiAnalysis" id="aiAnalysis" checked>
+                            <label class="form-check-label" for="aiAnalysis">AI Content Analysis</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="skillExtraction" id="skillExtraction" checked>
+                            <label class="form-check-label" for="skillExtraction">Skill Extraction</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="scoreCV" id="scoreCV" checked>
+                            <label class="form-check-label" for="scoreCV">CV Scoring</label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Upload & Analyze PDF
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearResults()">
+                            <i class="fas fa-trash"></i> Clear Results
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Progress Bar -->
+                <div id="uploadProgress" class="mt-3" style="display: none;">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 0%" id="progressBar"></div>
+                    </div>
+                    <small class="text-muted" id="progressText">Uploading...</small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Test Section -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">⚡ Quick Test</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Test with Sample PDF</label>
+                    <select class="form-control" id="samplePdfSelector">
+                        <option value="">-- Select Sample --</option>
+                        <option value="developer">Developer CV Sample</option>
+                        <option value="designer">Designer CV Sample</option>
+                        <option value="manager">Manager CV Sample</option>
+                    </select>
+                </div>
+                
+                <div class="d-grid gap-1">
+                    <button class="btn btn-outline-primary btn-sm" onclick="testSamplePDF()">
+                        <i class="fas fa-play"></i> Test Selected Sample
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" onclick="testAllSamples()">
+                        <i class="fas fa-list"></i> Test All Samples
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Results Section -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">📊 Analysis Results</h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-success" onclick="exportToExcel()" 
+                            id="exportBtn" style="display: none;">
+                        <i class="fas fa-file-excel"></i> Export Excel
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" onclick="exportToPDF()" 
+                            id="exportPdfBtn" style="display: none;">
+                        <i class="fas fa-file-pdf"></i> Export Report
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="noResults" class="text-center text-muted py-5">
+                    <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                    <p class="mb-0">Upload a PDF to see analysis results</p>
+                </div>
+                
+                <div id="analysisResults" style="display: none;">
+                    <!-- File Info -->
+                    <div class="mb-3">
+                        <h6 class="text-primary">📄 File Information</h6>
+                        <div id="fileInfo" class="small"></div>
+                    </div>
+                    
+                    <!-- CV Score -->
+                    <div class="mb-3" id="cvScoreSection" style="display: none;">
+                        <h6 class="text-primary">⭐ CV Score</h6>
+                        <div class="progress mb-2">
+                            <div class="progress-bar" role="progressbar" id="scoreBar"></div>
+                        </div>
+                        <div id="scoreDetails" class="small"></div>
+                    </div>
+                    
+                    <!-- Extracted Text -->
+                    <div class="mb-3" id="extractedTextSection" style="display: none;">
+                        <h6 class="text-primary">📝 Extracted Text</h6>
+                        <textarea id="extractedText" class="form-control" rows="4" readonly></textarea>
+                        <small class="text-muted" id="textStats"></small>
+                    </div>
+                    
+                    <!-- AI Analysis -->
+                    <div class="mb-3" id="aiAnalysisSection" style="display: none;">
+                        <h6 class="text-primary">🤖 AI Analysis</h6>
+                        <div id="aiAnalysisResult" class="border rounded p-3 bg-light"></div>
+                    </div>
+                    
+                    <!-- Skills -->
+                    <div class="mb-3" id="skillsSection" style="display: none;">
+                        <h6 class="text-primary">🔧 Extracted Skills</h6>
+                        <div id="extractedSkills"></div>
+                    </div>
+                    
+                    <!-- Error Display -->
+                    <div id="errorSection" class="alert alert-danger" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Batch Results Section -->
+<div class="row mt-4" id="batchResultsSection" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">📋 Batch Analysis Results</h5>
+                <button type="button" class="btn btn-success btn-sm" onclick="exportBatchToExcel()">
+                    <i class="fas fa-file-excel"></i> Export All to Excel
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-sm" id="batchResultsTable">
+                        <thead>
+                            <tr>
+                                <th>File</th>
+                                <th>Score</th>
+                                <th>Skills Count</th>
+                                <th>Text Length</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentAnalysisResults = null;
+let batchResults = [];
+
+// Form submission with progress
+document.getElementById('pdfUploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const fileInput = document.getElementById('pdfFile');
+    
+    if (!fileInput.files.length) {
+        alert('Please select a PDF file');
+        return;
+    }
+    
+    showProgress();
+    
+    fetch('@Url.Action("AnalyzePDFCV")', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideProgress();
+        displayResults(data, fileInput.files[0].name);
+    })
+    .catch(error => {
+        hideProgress();
+        showError('Upload failed: ' + error.message);
+    });
+});
+
+function showProgress() {
+    document.getElementById('uploadProgress').style.display = 'block';
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += 10;
+        document.getElementById('progressBar').style.width = progress + '%';
+        
+        if (progress >= 90) {
+            clearInterval(interval);
+        }
+    }, 200);
+}
+
+function hideProgress() {
+    document.getElementById('progressBar').style.width = '100%';
+    setTimeout(() => {
+        document.getElementById('uploadProgress').style.display = 'none';
+        document.getElementById('progressBar').style.width = '0%';
+    }, 500);
+}
+
+function displayResults(data, fileName) {
+    currentAnalysisResults = data;
+    
+    document.getElementById('noResults').style.display = 'none';
+    document.getElementById('analysisResults').style.display = 'block';
+    document.getElementById('exportBtn').style.display = 'inline-block';
+    document.getElementById('exportPdfBtn').style.display = 'inline-block';
+    
+    // File Info
+    document.getElementById('fileInfo').innerHTML = `
+        <strong>File:</strong> ${fileName}<br>
+        <strong>Size:</strong> ${data.fileSize || 'Unknown'}<br>
+        <strong>Analyzed:</strong> ${new Date().toLocaleString()}
+    `;
+    
+    // CV Score
+    if (data.cvScore !== undefined) {
+        document.getElementById('cvScoreSection').style.display = 'block';
+        const score = Math.round(data.cvScore);
+        const scoreBar = document.getElementById('scoreBar');
+        scoreBar.style.width = score + '%';
+        scoreBar.textContent = score + '/100';
+        scoreBar.className = `progress-bar ${getScoreClass(score)}`;
+        
+        document.getElementById('scoreDetails').innerHTML = `
+            <strong>Overall Score:</strong> ${score}/100<br>
+            <strong>Assessment:</strong> ${getScoreAssessment(score)}
+        `;
+    }
+    
+    // Extracted Text
+    if (data.extractedText) {
+        document.getElementById('extractedTextSection').style.display = 'block';
+        document.getElementById('extractedText').value = data.extractedText;
+        document.getElementById('textStats').textContent = 
+            `Characters: ${data.extractedText.length}, Words: ${data.extractedText.split(' ').length}`;
+    }
+    
+    // AI Analysis
+    if (data.aiAnalysis) {
+        document.getElementById('aiAnalysisSection').style.display = 'block';
+        document.getElementById('aiAnalysisResult').innerHTML = formatAIAnalysis(data.aiAnalysis);
+    }
+    
+    // Skills
+    if (data.extractedSkills && data.extractedSkills.length > 0) {
+        document.getElementById('skillsSection').style.display = 'block';
+        document.getElementById('extractedSkills').innerHTML = formatSkills(data.extractedSkills);
+    }
+    
+    // Error
+    if (data.error) {
+        document.getElementById('errorSection').innerHTML = data.error;
+        document.getElementById('errorSection').style.display = 'block';
+    }
+}
+
+function formatAIAnalysis(analysis) {
+    if (typeof analysis === 'string') {
+        return `<pre class="mb-0">${analysis}</pre>`;
+    }
+    
+    let html = '';
+    if (analysis.summary) html += `<strong>Summary:</strong><br>${analysis.summary}<br><br>`;
+    if (analysis.strengths) html += `<strong>Strengths:</strong><br>${analysis.strengths}<br><br>`;
+    if (analysis.improvements) html += `<strong>Improvements:</strong><br>${analysis.improvements}<br>`;
+    
+    return html || '<em>No detailed analysis available</em>';
+}
+
+function formatSkills(skills) {
+    return skills.map(skill => 
+        `<span class="badge bg-primary me-1 mb-1">${skill}</span>`
+    ).join('');
+}
+
+function getScoreClass(score) {
+    if (score >= 80) return 'bg-success';
+    if (score >= 60) return 'bg-warning';
+    return 'bg-danger';
+}
+
+function getScoreAssessment(score) {
+    if (score >= 90) return 'Excellent CV';
+    if (score >= 80) return 'Good CV';
+    if (score >= 60) return 'Average CV';
+    if (score >= 40) return 'Below Average';
+    return 'Needs Improvement';
+}
+
+function testSamplePDF() {
+    const sample = document.getElementById('samplePdfSelector').value;
+    if (!sample) {
+        alert('Please select a sample PDF');
+        return;
+    }
+    
+    showProgress();
+    
+    fetch('@Url.Action("TestSamplePDF")', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sampleType: sample })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideProgress();
+        displayResults(data, `Sample ${sample} CV`);
+    })
+    .catch(error => {
+        hideProgress();
+        showError('Test failed: ' + error.message);
+    });
+}
+
+function testAllSamples() {
+    document.getElementById('batchResultsSection').style.display = 'block';
+    const tbody = document.getElementById('batchResultsTable').querySelector('tbody');
+    tbody.innerHTML = '';
+    batchResults = [];
+    
+    const samples = ['developer', 'designer', 'manager'];
+    
+    samples.forEach((sample, index) => {
+        setTimeout(() => {
+            fetch('@Url.Action("TestSamplePDF")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ sampleType: sample })
+            })
+            .then(response => response.json())
+            .then(data => {
+                batchResults.push({ sample, data });
+                addBatchResult(sample, data);
+            })
+            .catch(error => {
+                addBatchResult(sample, { error: error.message });
+            });
+        }, index * 1000);
+    });
+}
+
+function addBatchResult(sample, data) {
+    const tbody = document.getElementById('batchResultsTable').querySelector('tbody');
+    const row = tbody.insertRow();
+    
+    const score = data.cvScore ? Math.round(data.cvScore) : 'N/A';
+    const skillsCount = data.extractedSkills ? data.extractedSkills.length : 0;
+    const textLength = data.extractedText ? data.extractedText.length : 0;
+    const status = data.error ? 'Error' : 'Success';
+    
+    row.innerHTML = `
+        <td>${sample.charAt(0).toUpperCase() + sample.slice(1)} CV</td>
+        <td><span class="badge ${getScoreClass(data.cvScore || 0)}">${score}</span></td>
+        <td>${skillsCount}</td>
+        <td>${textLength}</td>
+        <td><span class="badge ${status === 'Success' ? 'bg-success' : 'bg-danger'}">${status}</span></td>
+        <td>
+            <button class="btn btn-sm btn-outline-primary" onclick="viewBatchResult('${sample}')">
+                View
+            </button>
+        </td>
+    `;
+}
+
+function viewBatchResult(sample) {
+    const result = batchResults.find(r => r.sample === sample);
+    if (result) {
+        displayResults(result.data, `${sample} Sample CV`);
+    }
+}
+
+function exportToExcel() {
+    if (!currentAnalysisResults) {
+        alert('No analysis results to export');
+        return;
+    }
+    
+    window.location.href = '@Url.Action("ExportAnalysisToExcel")?' + 
+        new URLSearchParams({ data: JSON.stringify(currentAnalysisResults) });
+}
+
+function exportToPDF() {
+    if (!currentAnalysisResults) {
+        alert('No analysis results to export');
+        return;
+    }
+    
+    window.location.href = '@Url.Action("ExportAnalysisToPDF")?' + 
+        new URLSearchParams({ data: JSON.stringify(currentAnalysisResults) });
+}
+
+function exportBatchToExcel() {
+    if (batchResults.length === 0) {
+        alert('No batch results to export');
+        return;
+    }
+    
+    window.location.href = '@Url.Action("ExportBatchToExcel")?' + 
+        new URLSearchParams({ data: JSON.stringify(batchResults) });
+}
+
+function clearResults() {
+    document.getElementById('analysisResults').style.display = 'none';
+    document.getElementById('noResults').style.display = 'block';
+    document.getElementById('batchResultsSection').style.display = 'none';
+    document.getElementById('exportBtn').style.display = 'none';
+    document.getElementById('exportPdfBtn').style.display = 'none';
+    
+    currentAnalysisResults = null;
+    batchResults = [];
+}
+
+function showError(message) {
+    document.getElementById('errorSection').innerHTML = message;
+    document.getElementById('errorSection').style.display = 'block';
+    document.getElementById('analysisResults').style.display = 'block';
+    document.getElementById('noResults').style.display = 'none';
+}
+</script>
+
+<style>
+.progress {
+    height: 20px;
+}
+
+.badge {
+    font-size: 0.8em;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+#analysisResults h6 {
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 5px;
+}
+
+.form-check {
+    margin-bottom: 0.5rem;
+}
+
+pre {
+    font-size: 0.9em;
+    max-height: 200px;
+    overflow-y: auto;
+}
+</style>

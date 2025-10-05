@@ -1,0 +1,488 @@
+@{
+    ViewData["Title"] = "Quick CV Template Test";
+}
+
+<h2>⚡ Quick CV Template Test</h2>
+<p class="text-muted">Generate CV templates quickly with predefined data for testing</p>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">🎯 Quick Test Options</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Select Template Type</label>
+                    <select class="form-control" id="templateSelector">
+                        <option value="">-- Select Template --</option>
+                        @if (ViewBag.LocalTemplates != null)
+                        {
+                            var localTemplates = ViewBag.LocalTemplates as List<object>;
+                            if (localTemplates != null)
+                            {
+                                foreach (dynamic template in localTemplates)
+                                {
+                                    <option value="@template.TemplateId">@template.TemplateName</option>
+                                }
+                            }
+                        }
+                        @if (ViewBag.Templates != null)
+                        {
+                            var templates = ViewBag.Templates as List<JobMatchingSystem.Infrastructure.Models.CVTemplate>;
+                            if (templates != null)
+                            {
+                                foreach (var template in templates)
+                                {
+                                    <option value="@template.TemplateId">@template.TemplateName (Service)</option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Test Profile</label>
+                    <select class="form-control" id="profileSelector" onchange="loadProfile()">
+                        <option value="">-- Select Profile --</option>
+                        <option value="developer">Software Developer</option>
+                        <option value="designer">UI/UX Designer</option>
+                        <option value="manager">Project Manager</option>
+                        <option value="analyst">Business Analyst</option>
+                        <option value="tester">QA Tester</option>
+                    </select>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" onclick="quickGenerate()">
+                        ⚡ Quick Generate
+                    </button>
+                    <button class="btn btn-success" onclick="quickDownload()">
+                        💾 Generate & Download
+                    </button>
+                    <button class="btn btn-outline-info" onclick="showAllProfiles()">
+                        👥 Test All Profiles
+                    </button>
+                </div>
+
+                <div class="mt-4">
+                    <h6>📊 Quick Actions</h6>
+                    <div class="d-grid gap-1">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="loadProfile('developer')">Load Developer</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="loadProfile('designer')">Load Designer</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="loadProfile('manager')">Load Manager</button>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="@Url.Action("CVTemplates")" class="btn btn-outline-info btn-sm">🎨 Full Template Editor</a>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-sm">← Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">👤 Current Profile Data</h5>
+            </div>
+            <div class="card-body">
+                <div id="profileDisplay">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Select a profile to see the data
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generated Template Display -->
+        <div class="card mt-3" id="quickResultCard" style="display: none;">
+            <div class="card-header">
+                <h5 class="mb-0">📄 Generated Template</h5>
+            </div>
+            <div class="card-body text-center">
+                <div id="quickLoadingSpinner" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Generating...</span>
+                    </div>
+                    <p class="mt-2">Generating CV template...</p>
+                </div>
+                
+                <div id="quickGeneratedImageContainer" style="display: none;">
+                    <img id="quickGeneratedImage" class="img-fluid border rounded" style="max-height: 500px;" />
+                    <div class="mt-2">
+                        <small class="text-muted" id="generationInfo"></small>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-outline-primary btn-sm" onclick="downloadQuickTemplate()">
+                            💾 Download
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="regenerateQuick()">
+                            🔄 Regenerate
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="quickErrorContainer" class="alert alert-danger" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- All Profiles Test Results -->
+<div class="row mt-4" id="allProfilesResults" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">🔄 Testing All Profiles Results</h5>
+            </div>
+            <div class="card-body">
+                <div id="allProfilesContainer">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const profileData = {
+    developer: {
+        fullName: 'Nguyen Van Dev',
+        jobTitle: 'Senior Software Developer',
+        email: 'dev.nguyen@techcompany.com',
+        phoneNumber: '0901234567',
+        address: 'Ho Chi Minh City, Vietnam',
+        summary: 'Passionate Full-Stack Developer with 5+ years of experience in building scalable web applications using modern technologies. Expert in .NET ecosystem and cloud platforms.',
+        skills: 'C#, ASP.NET Core, React, JavaScript, TypeScript, SQL Server, MongoDB, Docker, Kubernetes, Azure, Git, CI/CD',
+        education: 'Bachelor of Computer Science - Ho Chi Minh University of Technology (2017-2021)\nGPA: 3.7/4.0\nRelevant Courses: Advanced Algorithms, Software Architecture, Database Systems',
+        experience: 'Senior Software Developer at TechCorp (2022-Present)\n- Led development team of 5 developers\n- Architected microservices using .NET Core and Docker\n- Improved system performance by 40%\n\nSoftware Developer at StartupXYZ (2021-2022)\n- Built responsive web applications using React and ASP.NET\n- Implemented automated testing and CI/CD pipelines'
+    },
+    designer: {
+        fullName: 'Tran Thi Design',
+        jobTitle: 'Senior UI/UX Designer',
+        email: 'design.tran@creativestudio.com',
+        phoneNumber: '0902345678',
+        address: 'Ha Noi, Vietnam',
+        summary: 'Creative UI/UX Designer with 4+ years of experience creating beautiful and functional digital experiences. Passionate about user-centered design and modern design trends.',
+        skills: 'Figma, Adobe Creative Suite, Sketch, InVision, User Research, Wireframing, Prototyping, HTML/CSS, Design Systems',
+        education: 'Bachelor of Fine Arts - Ha Noi University of Arts (2018-2022)\nGPA: 3.8/4.0\nSpecialization: Digital Media Design',
+        experience: 'Senior UI/UX Designer at Creative Studio (2023-Present)\n- Lead design for 10+ mobile and web applications\n- Conducted user research and usability testing\n- Created design systems used across multiple products\n\nUI/UX Designer at Digital Agency (2022-2023)\n- Designed responsive interfaces for e-commerce platforms\n- Collaborated with development teams using Figma and Zeplin'
+    },
+    manager: {
+        fullName: 'Le Van Manager',
+        jobTitle: 'Senior Project Manager',
+        email: 'manager.le@projectfirm.com',
+        phoneNumber: '0903456789',
+        address: 'Da Nang, Vietnam',
+        summary: 'Results-driven Project Manager with 6+ years of experience leading cross-functional teams and delivering complex projects on time and within budget. Expert in Agile methodologies.',
+        skills: 'Project Management, Agile/Scrum, Jira, Confluence, Risk Management, Team Leadership, Budget Management, Stakeholder Communication',
+        education: 'Master of Business Administration - Da Nang University (2019-2021)\nBachelor of Engineering - Da Nang University of Technology (2015-2019)\nPMP Certification (2022)',
+        experience: 'Senior Project Manager at ProjectFirm (2021-Present)\n- Managed 15+ software development projects worth $2M+\n- Led teams of 20+ members across different departments\n- Improved project delivery time by 25%\n\nProject Coordinator at TechSolutions (2019-2021)\n- Coordinated agile development processes\n- Managed project timelines and resource allocation'
+    },
+    analyst: {
+        fullName: 'Pham Thi Analyst',
+        jobTitle: 'Senior Business Analyst',
+        email: 'analyst.pham@bizfirm.com',
+        phoneNumber: '0904567890',
+        address: 'Can Tho, Vietnam',
+        summary: 'Detail-oriented Business Analyst with 4+ years of experience in gathering requirements, analyzing business processes, and driving digital transformation initiatives.',
+        skills: 'Business Analysis, Requirements Gathering, Process Modeling, SQL, Power BI, Tableau, BPMN, Stakeholder Management, Agile Methodology',
+        education: 'Master of Information Systems - Can Tho University (2020-2022)\nBachelor of Economics - Can Tho University (2016-2020)\nCertified Business Analysis Professional (CBAP)',
+        experience: 'Senior Business Analyst at BizFirm (2022-Present)\n- Analyzed and optimized business processes for 10+ clients\n- Led requirements gathering for ERP implementation\n- Created detailed functional specifications and user stories\n\nBusiness Analyst at ConsultingCorp (2020-2022)\n- Conducted gap analysis and process improvement initiatives\n- Built dashboards and reports using Power BI'
+    },
+    tester: {
+        fullName: 'Vo Van Tester',
+        jobTitle: 'Senior QA Engineer',
+        email: 'tester.vo@qualitytech.com',
+        phoneNumber: '0905678901',
+        address: 'Nha Trang, Vietnam',
+        summary: 'Dedicated QA Engineer with 4+ years of experience in manual and automated testing. Passionate about ensuring software quality and implementing comprehensive testing strategies.',
+        skills: 'Manual Testing, Automation Testing, Selenium, Cypress, TestNG, JUnit, API Testing, Performance Testing, Bug Tracking, Test Planning',
+        education: 'Bachelor of Information Technology - Nha Trang University (2018-2022)\nGPA: 3.6/4.0\nISTQB Foundation Level Certification',
+        experience: 'Senior QA Engineer at QualityTech (2022-Present)\n- Designed and executed comprehensive test plans for web applications\n- Implemented automated testing framework using Selenium\n- Reduced testing time by 50% through automation\n\nQA Engineer at TestingSolutions (2020-2022)\n- Performed functional, integration, and regression testing\n- Created detailed test cases and bug reports'
+    }
+};
+
+let currentProfile = null;
+let lastQuickImageData = null;
+let lastQuickFileName = null;
+
+function loadProfile(profileKey) {
+    if (!profileKey) {
+        profileKey = document.getElementById('profileSelector').value;
+    }
+    
+    if (!profileKey || !profileData[profileKey]) {
+        document.getElementById('profileDisplay').innerHTML = '<div class="alert alert-info"><i class="fas fa-info-circle"></i> Select a profile to see the data</div>';
+        return;
+    }
+    
+    currentProfile = profileData[profileKey];
+    document.getElementById('profileSelector').value = profileKey;
+    
+    const displayHTML = `
+        <div class="profile-data">
+            <h6 class="text-primary">${currentProfile.fullName}</h6>
+            <p class="mb-1"><strong>Job:</strong> ${currentProfile.jobTitle}</p>
+            <p class="mb-1"><strong>Email:</strong> ${currentProfile.email}</p>
+            <p class="mb-1"><strong>Phone:</strong> ${currentProfile.phoneNumber}</p>
+            <p class="mb-1"><strong>Address:</strong> ${currentProfile.address}</p>
+            <hr>
+            <p class="mb-1"><strong>Summary:</strong><br><small>${currentProfile.summary}</small></p>
+            <p class="mb-1"><strong>Skills:</strong><br><small>${currentProfile.skills}</small></p>
+            <div class="mt-2">
+                <span class="badge bg-success">Profile Loaded</span>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('profileDisplay').innerHTML = displayHTML;
+}
+
+function quickGenerate() {
+    const templateId = document.getElementById('templateSelector').value;
+    if (!templateId) {
+        alert('Please select a template!');
+        return;
+    }
+    
+    if (!currentProfile) {
+        alert('Please select a profile!');
+        return;
+    }
+    
+    // Show loading
+    document.getElementById('quickResultCard').style.display = 'block';
+    document.getElementById('quickLoadingSpinner').style.display = 'block';
+    document.getElementById('quickGeneratedImageContainer').style.display = 'none';
+    document.getElementById('quickErrorContainer').style.display = 'none';
+    
+    fetch('@Url.Action("GenerateTemplate")', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            templateId: templateId,
+            templateData: currentProfile
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('quickLoadingSpinner').style.display = 'none';
+        
+        if (data.success) {
+            if (data.isPdf) {
+                // Display PDF in an embed element
+                document.getElementById('quickGeneratedImageContainer').innerHTML = `
+                    <embed src="${data.imageData}" type="application/pdf" width="100%" height="400px" />
+                    <div class="mt-2">
+                        <small class="text-muted" id="generationInfo">Generated: ${new Date().toLocaleTimeString()}</small>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-outline-primary btn-sm" onclick="downloadQuickTemplate()">
+                            💾 Download
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="regenerateQuick()">
+                            🔄 Regenerate
+                        </button>
+                    </div>
+                `;
+            } else {
+                // Fallback for image display
+                document.getElementById('quickGeneratedImage').src = data.imageData;
+                document.getElementById('generationInfo').textContent = `Generated: ${new Date().toLocaleTimeString()}`;
+            }
+            document.getElementById('quickGeneratedImageContainer').style.display = 'block';
+            lastQuickImageData = data.imageData;
+            lastQuickFileName = data.fileName;
+        } else {
+            document.getElementById('quickErrorContainer').innerHTML = '<strong>Error:</strong> ' + data.error;
+            document.getElementById('quickErrorContainer').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('quickLoadingSpinner').style.display = 'none';
+        document.getElementById('quickErrorContainer').innerHTML = '<strong>Network Error:</strong> ' + error.message;
+        document.getElementById('quickErrorContainer').style.display = 'block';
+    });
+}
+
+function quickDownload() {
+    const templateId = document.getElementById('templateSelector').value;
+    if (!templateId) {
+        alert('Please select a template!');
+        return;
+    }
+    
+    if (!currentProfile) {
+        alert('Please select a profile!');
+        return;
+    }
+    
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '@Url.Action("DownloadTemplate")';
+    
+    // Add template ID
+    const templateIdInput = document.createElement('input');
+    templateIdInput.type = 'hidden';
+    templateIdInput.name = 'templateId';
+    templateIdInput.value = templateId;
+    form.appendChild(templateIdInput);
+    
+    // Add profile data
+    Object.keys(currentProfile).forEach(key => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = `templateData.${key}`;
+        input.value = currentProfile[key];
+        form.appendChild(input);
+    });
+    
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+}
+
+function downloadQuickTemplate() {
+    if (lastQuickImageData && lastQuickFileName) {
+        const link = document.createElement('a');
+        link.href = lastQuickImageData;
+        link.download = lastQuickFileName;
+        link.click();
+    }
+}
+
+function regenerateQuick() {
+    quickGenerate();
+}
+
+function showAllProfiles() {
+    const templateId = document.getElementById('templateSelector').value;
+    if (!templateId) {
+        alert('Please select a template first!');
+        return;
+    }
+    
+    document.getElementById('allProfilesResults').style.display = 'block';
+    const container = document.getElementById('allProfilesContainer');
+    container.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div><p class="mt-2">Testing all profiles...</p></div>';
+    
+    const profiles = Object.keys(profileData);
+    let completedTests = 0;
+    let results = [];
+    
+    profiles.forEach((profileKey, index) => {
+        setTimeout(() => {
+            fetch('@Url.Action("GenerateTemplate")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    templateId: templateId,
+                    templateData: profileData[profileKey]
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                completedTests++;
+                results.push({
+                    profile: profileKey,
+                    data: profileData[profileKey],
+                    result: data
+                });
+                
+                if (completedTests === profiles.length) {
+                    displayAllProfilesResults(results);
+                }
+            })
+            .catch(error => {
+                completedTests++;
+                results.push({
+                    profile: profileKey,
+                    data: profileData[profileKey],
+                    result: { success: false, error: error.message }
+                });
+                
+                if (completedTests === profiles.length) {
+                    displayAllProfilesResults(results);
+                }
+            });
+        }, index * 1000); // Stagger requests by 1 second
+    });
+}
+
+function displayAllProfilesResults(results) {
+    const container = document.getElementById('allProfilesContainer');
+    let html = '<div class="row">';
+    
+    results.forEach(result => {
+        const profile = result.data;
+        const success = result.result.success;
+        
+        html += `
+            <div class="col-md-4 mb-3">
+                <div class="card ${success ? 'border-success' : 'border-danger'}">
+                    <div class="card-header ${success ? 'bg-success' : 'bg-danger'} text-white">
+                        <h6 class="mb-0">${profile.fullName}</h6>
+                        <small>${profile.jobTitle}</small>
+                    </div>
+                    <div class="card-body text-center p-2">
+                        ${success ? 
+                            (result.result.isPdf ? 
+                                `<embed src="${result.result.imageData}" type="application/pdf" width="100%" height="150px" />
+                                 <div class="mt-2">
+                                     <span class="badge bg-success">✓ PDF Generated</span>
+                                 </div>` :
+                                `<img src="${result.result.imageData}" class="img-fluid" style="max-height: 200px;" />
+                                 <div class="mt-2">
+                                     <span class="badge bg-success">✓ Generated</span>
+                                 </div>`) :
+                            `<div class="alert alert-danger p-2 mb-0">
+                                 <small>❌ Error: ${result.result.error}</small>
+                             </div>`
+                        }
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    
+    const successCount = results.filter(r => r.result.success).length;
+    html = `<div class="alert alert-info">
+                <strong>Test Complete:</strong> ${successCount}/${results.length} profiles generated successfully
+            </div>` + html;
+    
+    container.innerHTML = html;
+}
+
+// Load default profile on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadProfile('developer');
+});
+</script>
+
+<style>
+.profile-data {
+    font-size: 0.9rem;
+}
+
+.profile-data h6 {
+    color: #007bff;
+    font-weight: bold;
+}
+
+.card.border-success {
+    border-width: 2px;
+}
+
+.card.border-danger {
+    border-width: 2px;
+}
+</style>

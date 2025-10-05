@@ -1,0 +1,845 @@
+using Microsoft.AspNetCore.Mvc;
+using JobMatchingSystem.Infrastructure.IServices;
+using JobMatchingSystem.Infrastructure.Models;
+
+namespace JobMatchingSystem.AITestWeb.Controllers
+{
+    public class AITestController : Controller
+    {
+        private readonly IAIService _aiService;
+        private readonly ICVTemplateService _cvTemplateService;
+        private readonly ILogger<AITestController> _logger;
+        private readonly IWebHostEnvironment _hostEnvironment;
+
+        public AITestController(IAIService aiService, ICVTemplateService cvTemplateService, ILogger<AITestController> logger, IWebHostEnvironment hostEnvironment)
+        {
+            _aiService = aiService;
+            _cvTemplateService = cvTemplateService;
+            _logger = logger;
+            _hostEnvironment = hostEnvironment;
+        }
+
+        // GET: AI Test Dashboard
+        public IActionResult Index()
+        {
+            ViewBag.Message = "🤖 AI Test Platform - JobMatching System";
+            return View();
+        }
+
+        // CV Analysis from text
+        public IActionResult CVAnalysis()
+        {
+            return View();
+        }
+
+        // PDF Analysis
+        public IActionResult PDFAnalysis()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CVAnalysis(string cvText)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(cvText))
+                {
+                    ViewBag.Error = "Vui lòng nhập nội dung CV!";
+                    return View();
+                }
+
+                var result = await _aiService.AnalyzeCVFromTextAsync(cvText);
+                ViewBag.Result = result;
+                ViewBag.CVText = cvText;
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error analyzing CV");
+                ViewBag.Error = $"Lỗi phân tích CV: {ex.Message}";
+                return View();
+            }
+        }
+
+        // PDF CV Analysis
+        public IActionResult PDFAnalysis()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> PDFAnalysis(IFormFile pdfFile)
+        {
+            try
+            {
+                if (pdfFile == null || pdfFile.Length == 0)
+                {
+                    ViewBag.Error = "Vui lòng chọn file PDF!";
+                    return View();
+                }
+
+                // Extract text and analyze CV from PDF
+                var extractedText = await _aiService.ExtractTextFromPDFAsync(pdfFile);
+                ViewBag.ExtractedText = extractedText;
+                
+                var analysis = await _aiService.AnalyzeCVFromTextAsync(extractedText);
+                ViewBag.Analysis = analysis;
+                ViewBag.FileName = pdfFile.FileName;
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error analyzing PDF CV");
+                ViewBag.Error = $"Lỗi phân tích CV PDF: {ex.Message}";
+                return View();
+            }
+        }
+
+        // Excel Export
+        public IActionResult ExcelExport()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ExcelExport(string[] cvTexts)
+        {
+            try
+            {
+                if (cvTexts == null || cvTexts.Length == 0)
+                {
+                    ViewBag.Error = "Vui lòng nhập ít nhất một CV!";
+                    return View();
+                }
+
+                var analysisResults = new List<CVAnalysisResult>();
+                
+                foreach (var cvText in cvTexts)
+                {
+                    if (!string.IsNullOrWhiteSpace(cvText))
+                    {
+                        var result = await _aiService.AnalyzeCVFromTextAsync(cvText);
+                        analysisResults.Add(result);
+                    }
+                }
+
+                if (analysisResults.Count > 0)
+                {
+                    var excelBytes = await _aiService.ExportCVAnalysisToExcelAsync(analysisResults);
+                    return File(excelBytes, 
+                               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+                               $"CV_Analysis_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+                }
+                else
+                {
+                    ViewBag.Error = "Không có CV nào được phân tích!";
+                    return View();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error exporting to Excel");
+                ViewBag.Error = $"Lỗi xuất Excel: {ex.Message}";
+                return View();
+            }
+        }
+
+        // Health Check
+        public async Task<IActionResult> HealthCheck()
+        {
+            var healthStatus = new Dictionary<string, string>();
+
+            try
+            {
+                // Test with a simple CV text
+                var testCV = "Test CV - John Doe, Software Developer, 3 years experience";
+                var result = await _aiService.AnalyzeCVFromTextAsync(testCV);
+                
+                healthStatus["AI Service"] = result != null ? "✅ Working" : "❌ Not responding";
+                healthStatus["Last Test"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                healthStatus["Test Input"] = testCV;
+                healthStatus["Response Type"] = result?.GetType().Name ?? "null";
+                
+                // Test CV Template Service
+                try
+                {
+                    var templates = await _cvTemplateService.GetAvailableTemplatesAsync();
+                    healthStatus["CV Template Service"] = templates.Any() ? $"✅ Working ({templates.Count} templates)" : "⚠️ No templates found";
+                }
+                catch (Exception ex)
+                {
+                    healthStatus["CV Template Service"] = $"❌ Error: {ex.Message}";
+                }
+            }
+            catch (Exception ex)
+            {
+                healthStatus["AI Service"] = $"❌ Error: {ex.Message}";
+                healthStatus["Last Test"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            }
+
+            ViewBag.HealthStatus = healthStatus;
+            return View();
+        }
+
+        // API endpoint for AJAX testing
+        [HttpPost]
+        public async Task<JsonResult> QuickTest(string cvText)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(cvText))
+                {
+                    return Json(new { success = false, error = "CV text is required" });
+                }
+
+                var result = await _aiService.AnalyzeCVFromTextAsync(cvText);
+                return Json(new { 
+                    success = true, 
+                    result = result?.ToString() ?? "Analysis completed but no result returned" 
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
+        // ============== CV TEMPLATE TESTING ACTIONS ==============
+        
+        // CV Templates List and Testing
+        public async Task<IActionResult> CVTemplates()
+        {
+            try
+            {
+                var templates = await _cvTemplateService.GetAvailableTemplatesAsync();
+                
+                // Also load local template images for preview
+                var localTemplates = GetLocalTemplateImages();
+                ViewBag.LocalTemplates = localTemplates;
+                ViewBag.Templates = templates;
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting CV templates");
+                ViewBag.Error = $"Lỗi lấy danh sách templates: {ex.Message}";
+                
+                // Still try to load local templates
+                var localTemplates = GetLocalTemplateImages();
+                ViewBag.LocalTemplates = localTemplates;
+                return View();
+            }
+        }
+        
+        private List<object> GetLocalTemplateImages()
+        {
+            var templates = new List<object>();
+            var templatePath = Path.Combine(_hostEnvironment.WebRootPath, "TemplateCV");
+            
+            if (Directory.Exists(templatePath))
+            {
+                var imageFiles = Directory.GetFiles(templatePath, "*.png")
+                    .Concat(Directory.GetFiles(templatePath, "*.jpg"))
+                    .Concat(Directory.GetFiles(templatePath, "*.jpeg"))
+                    .OrderBy(f => f);
+                
+                foreach (var file in imageFiles)
+                {
+                    var fileName = Path.GetFileName(file);
+                    var templateId = Path.GetFileNameWithoutExtension(fileName);
+                    
+                    templates.Add(new {
+                        TemplateId = templateId,
+                        TemplateName = $"Template {templateId.Replace("theme", "")}",
+                        Description = $"CV Template {templateId.Replace("theme", "")}",
+                        ImageUrl = $"/TemplateCV/{fileName}",
+                        FileName = fileName
+                    });
+                }
+            }
+            
+            return templates;
+        }
+
+        // Template Preview
+        public async Task<IActionResult> TemplatePreview(string templateId)
+        {
+            try
+            {
+                var preview = await _cvTemplateService.GetTemplatePreviewAsync(templateId);
+                
+                if (preview != null && preview.Length > 0)
+                {
+                    return File(preview, "image/png");
+                }
+                else
+                {
+                    return NotFound("Template preview not found");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting template preview");
+                return BadRequest($"Error: {ex.Message}");
+            }
+        }
+
+        // Generate Template (AJAX)
+        [HttpPost]
+        public async Task<JsonResult> GenerateTemplate(string templateId, CVTemplateData templateData)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(templateId) || templateData == null)
+                {
+                    return Json(new { success = false, error = "Template ID and data are required" });
+                }
+
+                var result = await _cvTemplateService.GenerateCVFromTemplateAsync(templateId, templateData);
+                
+                if (result.Success && result.GeneratedImageBytes != null)
+                {
+                    // Return the PDF as base64 for preview (browsers can display PDFs)
+                    var base64Pdf = Convert.ToBase64String(result.GeneratedImageBytes);
+                    return Json(new { 
+                        success = true, 
+                        imageData = $"data:application/pdf;base64,{base64Pdf}",
+                        fileName = result.FileName ?? $"CV_Template_{templateId}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf",
+                        isPdf = true
+                    });
+                }
+                else
+                {
+                    return Json(new { success = false, error = result.ErrorMessage ?? "Failed to generate template" });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating CV template");
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
+        // Download Template
+        [HttpPost]
+        public async Task<IActionResult> DownloadTemplate(string templateId, CVTemplateData templateData)
+        {
+            try
+            {
+                var result = await _cvTemplateService.GenerateCVFromTemplateAsync(templateId, templateData);
+                
+                if (result.Success && result.GeneratedImageBytes != null)
+                {
+                    var fileName = result.FileName ?? $"CV_Template_{templateId}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                    return File(result.GeneratedImageBytes, "application/pdf", fileName);
+                }
+                else
+                {
+                    TempData["Error"] = result.ErrorMessage ?? "Failed to generate template";
+                    return RedirectToAction("CVTemplates");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error downloading CV template");
+                TempData["Error"] = $"Lỗi tạo template: {ex.Message}";
+                return RedirectToAction("CVTemplates");
+            }
+        }
+
+        // Get Template Details (AJAX)
+        [HttpGet]
+        public async Task<JsonResult> GetTemplateDetails(string templateId)
+        {
+            try
+            {
+                var template = await _cvTemplateService.GetTemplateByIdAsync(templateId);
+                
+                if (template != null)
+                {
+                    return Json(new { 
+                        success = true, 
+                        template = new {
+                            id = template.TemplateId,
+                            name = template.TemplateName,
+                            description = template.Description,
+                            imagePath = template.TemplateImagePath,
+                            previewUrl = Url.Action("TemplatePreview", new { templateId = template.TemplateId })
+                        }
+                    });
+                }
+                else
+                {
+                    return Json(new { success = false, error = "Template not found" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
+        // Quick Template Test - Simple form to test templates
+        public async Task<IActionResult> QuickTemplateTest()
+        {
+            try
+            {
+                var templates = await _cvTemplateService.GetAvailableTemplatesAsync();
+                ViewBag.Templates = templates;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting templates for quick test");
+                ViewBag.Templates = new List<CVTemplate>();
+            }
+            
+            // Load local templates
+            var localTemplates = GetLocalTemplateImages();
+            ViewBag.LocalTemplates = localTemplates;
+            
+            var sampleData = new CVTemplateData
+            {
+                FullName = "John Doe",
+                JobTitle = "Software Developer",
+                Email = "john.doe@email.com",
+                PhoneNumber = "0123456789",
+                Address = "Ha Noi, Vietnam",
+                Summary = "Experienced software developer with 3+ years in web development",
+                Skills = "C#, ASP.NET Core, JavaScript, React, SQL Server",
+                Experience = "Software Developer at Tech Company (2021-2024)",
+                Education = "Bachelor of Computer Science - Hanoi University (2017-2021)"
+            };
+            
+            return View(sampleData);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> QuickTemplateTest(CVTemplateData templateData)
+        {
+            try
+            {
+                // Get first available template for testing
+                var templates = await _cvTemplateService.GetAvailableTemplatesAsync();
+                var template = templates.FirstOrDefault();
+                
+                if (template == null)
+                {
+                    ViewBag.Error = "No templates available for testing";
+                    return View(templateData);
+                }
+
+                var result = await _cvTemplateService.GenerateCVFromTemplateAsync(template.TemplateId, templateData);
+                
+                if (result.Success && result.GeneratedImageBytes != null)
+                {
+                    var base64Image = Convert.ToBase64String(result.GeneratedImageBytes);
+                    ViewBag.GeneratedImage = $"data:image/png;base64,{base64Image}";
+                    ViewBag.Success = $"Template generated successfully using {template.TemplateName}";
+                    ViewBag.UsedTemplate = template;
+                }
+                else
+                {
+                    ViewBag.Error = result.ErrorMessage ?? "Failed to generate template";
+                }
+
+                return View(templateData);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in quick template test");
+                ViewBag.Error = $"Lỗi tạo template: {ex.Message}";
+                return View(templateData);
+            }
+        }
+
+        // ============== PDF ANALYSIS ACTIONS ==============
+
+        [HttpPost]
+        public async Task<JsonResult> AnalyzePDFCV(IFormFile pdfFile, bool extractText = true, bool aiAnalysis = true, bool skillExtraction = true, bool scoreCV = true)
+        {
+            try
+            {
+                if (pdfFile == null || pdfFile.Length == 0)
+                {
+                    return Json(new { success = false, error = "No PDF file uploaded" });
+                }
+
+                if (!pdfFile.ContentType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Json(new { success = false, error = "Only PDF files are supported" });
+                }
+
+                var result = new Dictionary<string, object>
+                {
+                    ["fileName"] = pdfFile.FileName,
+                    ["fileSize"] = $"{pdfFile.Length / 1024} KB",
+                    ["uploadTime"] = DateTime.Now
+                };
+
+                // Extract text from PDF
+                string extractedText = null;
+                if (extractText)
+                {
+                    extractedText = await ExtractTextFromPDF(pdfFile);
+                    result["extractedText"] = extractedText;
+                }
+
+                // AI Analysis
+                if (aiAnalysis && !string.IsNullOrEmpty(extractedText))
+                {
+                    try
+                    {
+                        var aiResult = await _aiService.AnalyzeCVFromTextAsync(extractedText);
+                        result["aiAnalysis"] = aiResult?.ToString() ?? "Analysis completed";
+                    }
+                    catch (Exception ex)
+                    {
+                        result["aiAnalysis"] = $"AI Analysis failed: {ex.Message}";
+                    }
+                }
+
+                // Skill Extraction
+                if (skillExtraction && !string.IsNullOrEmpty(extractedText))
+                {
+                    var skills = ExtractSkills(extractedText);
+                    result["extractedSkills"] = skills;
+                }
+
+                // CV Scoring
+                if (scoreCV && !string.IsNullOrEmpty(extractedText))
+                {
+                    var score = CalculateCVScore(extractedText);
+                    result["cvScore"] = score;
+                }
+
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error analyzing PDF CV");
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<JsonResult> TestSamplePDF(string sampleType)
+        {
+            try
+            {
+                var sampleText = GetSampleCVText(sampleType);
+                
+                var result = new Dictionary<string, object>
+                {
+                    ["fileName"] = $"Sample_{sampleType}_CV.pdf",
+                    ["fileSize"] = "Sample",
+                    ["extractedText"] = sampleText,
+                    ["uploadTime"] = DateTime.Now
+                };
+
+                // AI Analysis
+                try
+                {
+                    var aiResult = await _aiService.AnalyzeCVFromTextAsync(sampleText);
+                    result["aiAnalysis"] = aiResult?.ToString() ?? "Analysis completed";
+                }
+                catch (Exception ex)
+                {
+                    result["aiAnalysis"] = $"AI Analysis failed: {ex.Message}";
+                }
+
+                // Skill Extraction
+                var skills = ExtractSkills(sampleText);
+                result["extractedSkills"] = skills;
+
+                // CV Scoring
+                var score = CalculateCVScore(sampleText);
+                result["cvScore"] = score;
+
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error testing sample PDF");
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
+        public IActionResult ExportAnalysisToExcel(string data)
+        {
+            try
+            {
+                // Create Excel file with analysis results
+                var bytes = CreateExcelReport(data);
+                var fileName = $"CV_Analysis_Report_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error exporting to Excel");
+                TempData["Error"] = $"Export failed: {ex.Message}";
+                return RedirectToAction("PDFAnalysis");
+            }
+        }
+
+        public IActionResult ExportAnalysisToPDF(string data)
+        {
+            try
+            {
+                // Create PDF report
+                var bytes = CreatePDFReport(data);
+                var fileName = $"CV_Analysis_Report_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                return File(bytes, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error exporting to PDF");
+                TempData["Error"] = $"Export failed: {ex.Message}";
+                return RedirectToAction("PDFAnalysis");
+            }
+        }
+
+        public IActionResult ExportBatchToExcel(string data)
+        {
+            try
+            {
+                // Create Excel file with batch results
+                var bytes = CreateBatchExcelReport(data);
+                var fileName = $"Batch_CV_Analysis_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error exporting batch to Excel");
+                TempData["Error"] = $"Batch export failed: {ex.Message}";
+                return RedirectToAction("PDFAnalysis");
+            }
+        }
+
+        // Helper methods for PDF Analysis
+        private async Task<string> ExtractTextFromPDF(IFormFile pdfFile)
+        {
+            try
+            {
+                using var stream = pdfFile.OpenReadStream();
+                using var pdfReader = new iText.Kernel.Pdf.PdfReader(stream);
+                using var pdfDocument = new iText.Kernel.Pdf.PdfDocument(pdfReader);
+                
+                var text = "";
+                for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
+                {
+                    var page = pdfDocument.GetPage(i);
+                    text += iText.Kernel.Pdf.Canvas.Parser.PdfTextExtractor.GetTextFromPage(page);
+                }
+                
+                return text;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error extracting text from PDF");
+                return $"Error extracting text: {ex.Message}";
+            }
+        }
+
+        private List<string> ExtractSkills(string text)
+        {
+            var skills = new List<string>();
+            var commonSkills = new[] 
+            {
+                "C#", "Java", "Python", "JavaScript", "TypeScript", "React", "Angular", "Vue.js",
+                "ASP.NET", "Node.js", "SQL Server", "MySQL", "PostgreSQL", "MongoDB",
+                "Docker", "Kubernetes", "AWS", "Azure", "Git", "Agile", "Scrum",
+                "HTML", "CSS", "Bootstrap", "jQuery", "REST API", "GraphQL",
+                "Machine Learning", "AI", "Data Science", "Big Data", "Analytics"
+            };
+
+            foreach (var skill in commonSkills)
+            {
+                if (text.Contains(skill, StringComparison.OrdinalIgnoreCase))
+                {
+                    skills.Add(skill);
+                }
+            }
+
+            return skills.Distinct().ToList();
+        }
+
+        private int CalculateCVScore(string text)
+        {
+            var score = 0;
+            
+            // Basic scoring logic
+            if (text.Length > 500) score += 20; // Has substantial content
+            if (text.Contains("experience", StringComparison.OrdinalIgnoreCase)) score += 15;
+            if (text.Contains("education", StringComparison.OrdinalIgnoreCase)) score += 15;
+            if (text.Contains("skills", StringComparison.OrdinalIgnoreCase)) score += 15;
+            if (text.Contains("project", StringComparison.OrdinalIgnoreCase)) score += 10;
+            if (text.Contains("achievement", StringComparison.OrdinalIgnoreCase)) score += 10;
+            
+            // Email and contact info
+            if (text.Contains("@")) score += 5;
+            if (System.Text.RegularExpressions.Regex.IsMatch(text, @"\d{10,}")) score += 5; // Phone number
+            
+            // Technical skills bonus
+            var techSkills = ExtractSkills(text);
+            score += Math.Min(techSkills.Count * 2, 20);
+            
+            return Math.Min(score, 100);
+        }
+
+        private string GetSampleCVText(string sampleType)
+        {
+            return sampleType.ToLower() switch
+            {
+                "developer" => @"
+                    John Developer
+                    Senior Software Developer
+                    john.developer@email.com | +84 123 456 789 | Ho Chi Minh City, Vietnam
+                    
+                    SUMMARY
+                    Experienced Senior Software Developer with 5+ years in full-stack web development. 
+                    Expert in .NET ecosystem, React, and cloud technologies. Proven track record of 
+                    leading development teams and delivering scalable solutions.
+                    
+                    EXPERIENCE
+                    Senior Software Developer - Tech Corp (2021-Present)
+                    • Led development of microservices architecture serving 1M+ users
+                    • Implemented CI/CD pipelines reducing deployment time by 60%
+                    • Mentored 5 junior developers and established coding standards
+                    • Technologies: C#, ASP.NET Core, React, Azure, Docker
+                    
+                    Software Developer - StartupXYZ (2019-2021)
+                    • Built responsive web applications using React and .NET Core
+                    • Integrated payment systems and third-party APIs
+                    • Optimized database queries improving performance by 40%
+                    
+                    EDUCATION
+                    Bachelor of Computer Science - FPT University (2015-2019)
+                    GPA: 3.7/4.0
+                    
+                    SKILLS
+                    Programming: C#, JavaScript, TypeScript, Python
+                    Frameworks: ASP.NET Core, React, Angular, Node.js
+                    Databases: SQL Server, MongoDB, Redis
+                    Cloud: Azure, AWS, Docker, Kubernetes
+                    Tools: Git, Visual Studio, VS Code, Postman
+                    
+                    PROJECTS
+                    E-commerce Platform - Full-stack web application
+                    Job Matching System - AI-powered recruitment platform
+                    
+                    ACHIEVEMENTS
+                    • Microsoft Certified: Azure Developer Associate
+                    • Best Employee Award 2023
+                    • Published 3 technical articles on Medium
+                ",
+                "designer" => @"
+                    Sarah Designer
+                    Senior UI/UX Designer
+                    sarah.designer@email.com | +84 987 654 321 | Ha Noi, Vietnam
+                    
+                    SUMMARY
+                    Creative UI/UX Designer with 4+ years of experience creating beautiful and 
+                    functional digital experiences. Passionate about user-centered design and 
+                    modern design trends. Expert in design systems and prototyping.
+                    
+                    EXPERIENCE
+                    Senior UI/UX Designer - Creative Studio (2022-Present)
+                    • Lead design for 15+ mobile and web applications
+                    • Conducted user research and usability testing for 500+ users
+                    • Created comprehensive design systems used across 8 products
+                    • Increased user engagement by 35% through improved UX
+                    
+                    UI/UX Designer - Digital Agency (2020-2022)
+                    • Designed responsive interfaces for e-commerce platforms
+                    • Collaborated with development teams using Figma and Zeplin
+                    • Created wireframes, prototypes, and high-fidelity mockups
+                    
+                    EDUCATION
+                    Bachelor of Fine Arts - Ha Noi University of Arts (2016-2020)
+                    Specialization: Digital Media Design
+                    GPA: 3.8/4.0
+                    
+                    SKILLS
+                    Design Tools: Figma, Adobe Creative Suite, Sketch, InVision
+                    Prototyping: Principle, Framer, Marvel
+                    Research: User Interviews, A/B Testing, Analytics
+                    Frontend: HTML, CSS, Bootstrap, Basic JavaScript
+                    
+                    PROJECTS
+                    Banking Mobile App - Redesigned mobile banking experience
+                    E-learning Platform - Educational platform for 10k+ students
+                    
+                    ACHIEVEMENTS
+                    • Design Awards: Best Mobile App Design 2023
+                    • Dribbble Top Shot with 2k+ likes
+                    • Speaker at UX Vietnam Conference 2023
+                ",
+                "manager" => @"
+                    Michael Manager
+                    Senior Project Manager
+                    michael.manager@email.com | +84 555 123 456 | Da Nang, Vietnam
+                    
+                    SUMMARY
+                    Results-driven Senior Project Manager with 6+ years of experience leading 
+                    cross-functional teams and delivering complex software projects. Expert in 
+                    Agile methodologies with a track record of improving team productivity by 40%.
+                    
+                    EXPERIENCE
+                    Senior Project Manager - ProjectFirm (2020-Present)
+                    • Managed portfolio of 20+ software projects worth $5M+ annually
+                    • Led cross-functional teams of 30+ members across multiple departments
+                    • Implemented Agile practices reducing project delivery time by 35%
+                    • Maintained 98% on-time delivery rate with 15% under-budget average
+                    
+                    Project Manager - TechSolutions (2018-2020)
+                    • Coordinated agile development processes for 8 concurrent projects
+                    • Managed stakeholder relationships and client communications
+                    • Established project governance and risk management frameworks
+                    
+                    EDUCATION
+                    Master of Business Administration - Da Nang University (2017-2019)
+                    Bachelor of Engineering - Da Nang University of Technology (2013-2017)
+                    
+                    CERTIFICATIONS
+                    • Project Management Professional (PMP)
+                    • Certified Scrum Master (CSM)
+                    • Agile Certified Practitioner (ACP)
+                    
+                    SKILLS
+                    Project Management: Agile, Scrum, Kanban, Waterfall
+                    Tools: Jira, Confluence, MS Project, Trello, Slack
+                    Leadership: Team Building, Stakeholder Management, Risk Assessment
+                    
+                    ACHIEVEMENTS
+                    • Delivered 95% of projects on time and within budget
+                    • Improved team productivity by 40% through process optimization
+                    • Led digital transformation initiative saving $500k annually
+                ",
+                _ => "Sample CV content not available for this type."
+            };
+        }
+
+        private byte[] CreateExcelReport(string data)
+        {
+            // Simple Excel creation - in real implementation, use EPPlus or similar
+            var content = $"CV Analysis Report\nGenerated: {DateTime.Now}\nData: {data}";
+            return System.Text.Encoding.UTF8.GetBytes(content);
+        }
+
+        private byte[] CreatePDFReport(string data)
+        {
+            // Simple PDF creation - in real implementation, use iText7 for proper PDF
+            var content = $"CV Analysis Report\nGenerated: {DateTime.Now}\nData: {data}";
+            return System.Text.Encoding.UTF8.GetBytes(content);
+        }
+
+        private byte[] CreateBatchExcelReport(string data)
+        {
+            // Simple batch Excel creation
+            var content = $"Batch CV Analysis Report\nGenerated: {DateTime.Now}\nData: {data}";
+            return System.Text.Encoding.UTF8.GetBytes(content);
+        }
+    }
+}

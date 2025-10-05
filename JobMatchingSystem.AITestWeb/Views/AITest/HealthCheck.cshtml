@@ -1,0 +1,75 @@
+@{
+    ViewData["Title"] = "Health Check";
+}
+
+<h2>🔧 System Health Check</h2>
+<p class="text-muted">Check AI service status and connectivity</p>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Service Status</h5>
+            </div>
+            <div class="card-body">
+                @if (ViewBag.HealthStatus != null)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Component</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var status in ViewBag.HealthStatus as Dictionary<string, string>)
+                                {
+                                    <tr>
+                                        <td><strong>@status.Key</strong></td>
+                                        <td>@status.Value</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No health check data available.
+                    </div>
+                }
+                
+                <div class="mt-3">
+                    <a href="@Url.Action("HealthCheck")" class="btn btn-primary">🔄 Refresh Check</a>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">← Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">System Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Environment:</strong> @System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")</p>
+                        <p><strong>Machine:</strong> @System.Environment.MachineName</p>
+                        <p><strong>OS:</strong> @System.Environment.OSVersion</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Current Time:</strong> @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</p>
+                        <p><strong>.NET Version:</strong> @System.Environment.Version</p>
+                        <p><strong>Working Directory:</strong> @System.Environment.CurrentDirectory</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

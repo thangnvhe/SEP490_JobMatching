@@ -79,24 +79,40 @@ namespace JobMatchingSystem.Infrastructure.Services
                 return new CVAnalysisResult
                 {
                     OriginalText = cvText,
-                    FullName = "AI chưa được kích hoạt"
+                    FullName = "AI chưa được kích hoạt - EnableAI = false"
                 };
             }
 
             try
             {
+                // Log bước 1: Tạo prompt
                 var prompt = CreateCVAnalysisPrompt(cvText);
+                
+                // Log bước 2: Gọi AI
                 var aiResponse = await CallOllamaAPIAsync(prompt);
                 
+                if (string.IsNullOrWhiteSpace(aiResponse))
+                {
+                    throw new Exception("AI trả về response rỗng");
+                }
+                
+                // Log bước 3: Parse response
                 return ParseAIResponse(aiResponse, cvText);
             }
             catch (Exception ex)
             {
-                // Fallback: trả về kết quả cơ bản nếu AI không hoạt động
+                // Fallback: trả về kết quả cơ bản với thông tin debug
                 return new CVAnalysisResult
                 {
                     OriginalText = cvText,
-                    FullName = "Lỗi phân tích AI: " + ex.Message
+                    FullName = $"DEBUG - Lỗi AI: {ex.Message}",
+                    Skills = new List<string> 
+                    { 
+                        $"AI Settings: EnableAI={_aiSettings.EnableAI}", 
+                        $"Model: {_aiSettings.DefaultModel}",
+                        $"URL: {_aiSettings.OllamaBaseUrl}",
+                        $"Error: {ex.GetType().Name}"
+                    }
                 };
             }
         }
@@ -174,50 +190,19 @@ namespace JobMatchingSystem.Infrastructure.Services
         private string CreateCVAnalysisPrompt(string cvText)
         {
             return $@"
-Bạn là một chuyên gia phân tích CV. Hãy phân tích CV sau và trả về thông tin dưới dạng JSON với các trường sau:
+Analyze the following CV and return ONLY a JSON response with this exact structure:
 
 {{
-    ""fullName"": ""Tên đầy đủ của ứng viên"",
-    ""birthYear"": ""Năm sinh (chỉ năm)"",
-    ""gender"": ""Nam/Nữ"",
-    ""email"": ""Địa chỉ email"",
-    ""phoneNumber"": ""Số điện thoại"",
-    ""address"": ""Địa chỉ"",
-    ""education"": [
-        {{
-            ""institution"": ""Tên trường"",
-            ""degree"": ""Bằng cấp"",
-            ""major"": ""Chuyên ngành"",
-            ""graduationYear"": ""Năm tốt nghiệp"",
-            ""gpa"": ""Điểm GPA (nếu có)""
-        }}
-    ],
-    ""skills"": [""Kỹ năng 1"", ""Kỹ năng 2""],
-    ""experience"": [
-        {{
-            ""company"": ""Tên công ty"",
-            ""position"": ""Vị trí"",
-            ""startDate"": ""Ngày bắt đầu"",
-            ""endDate"": ""Ngày kết thúc"",
-            ""description"": ""Mô tả công việc"",
-            ""responsibilities"": [""Trách nhiệm 1"", ""Trách nhiệm 2""]
-        }}
-    ],
-    ""achievements"": [""Thành tựu 1"", ""Thành tựu 2""],
-    ""projects"": [
-        {{
-            ""projectName"": ""Tên dự án"",
-            ""description"": ""Mô tả dự án"",
-            ""technologies"": ""Công nghệ sử dụng"",
-            ""duration"": ""Thời gian thực hiện"",
-            ""role"": ""Vai trò trong dự án""
-        }}
-    ]
+    ""fullName"": ""Full name of candidate"",
+    ""birthYear"": ""Birth year only"",
+    ""email"": ""Email address"",
+    ""skills"": [""Skill1"", ""Skill2"", ""Skill3""],
+    ""education"": [{{""institution"": ""School name"", ""degree"": ""Degree""}}]
 }}
 
-Chỉ trả về JSON, không thêm text giải thích nào khác.
+Return ONLY JSON, no explanations.
 
-Nội dung CV:
+CV Content:
 {cvText}
 ";
         }
@@ -259,15 +244,34 @@ Nội dung CV:
         {
             try
             {
+                // Log raw AI response for debugging
+                if (string.IsNullOrWhiteSpace(aiResponse))
+                {
+                    throw new Exception("AI response is empty");
+                }
+
                 // Loại bỏ markdown code blocks nếu có
                 var cleanedResponse = aiResponse.Trim();
                 if (cleanedResponse.StartsWith("```json"))
                 {
                     cleanedResponse = cleanedResponse.Substring(7);
                 }
+                if (cleanedResponse.StartsWith("```"))
+                {
+                    cleanedResponse = cleanedResponse.Substring(3);
+                }
                 if (cleanedResponse.EndsWith("```"))
                 {
                     cleanedResponse = cleanedResponse.Substring(0, cleanedResponse.Length - 3);
+                }
+
+                // Tìm JSON trong response
+                var jsonStart = cleanedResponse.IndexOf('{');
+                var jsonEnd = cleanedResponse.LastIndexOf('}');
+                
+                if (jsonStart >= 0 && jsonEnd > jsonStart)
+                {
+                    cleanedResponse = cleanedResponse.Substring(jsonStart, jsonEnd - jsonStart + 1);
                 }
 
                 var result = JsonSerializer.Deserialize<CVAnalysisResult>(cleanedResponse, _jsonOptions);
@@ -277,17 +281,33 @@ Nội dung CV:
                     return result;
                 }
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
-                // Nếu không parse được JSON, tạo kết quả cơ bản
+                // Debug JSON parsing error
+                return new CVAnalysisResult
+                {
+                    OriginalText = originalText,
+                    FullName = $"JSON Parse Error: {ex.Message}",
+                    Skills = new List<string> { $"Raw AI Response: {aiResponse.Substring(0, Math.Min(200, aiResponse.Length))}" }
+                };
+            }
+            catch (Exception ex)
+            {
+                // Debug other errors
+                return new CVAnalysisResult
+                {
+                    OriginalText = originalText,
+                    FullName = $"Parse Error: {ex.Message}",
+                    Skills = new List<string> { $"AI Response Length: {aiResponse?.Length ?? 0}" }
+                };
             }
 
             // Fallback: tạo kết quả cơ bản từ AI response
             return new CVAnalysisResult
             {
                 OriginalText = originalText,
-                FullName = "Không thể phân tích được từ AI response",
-                Skills = new List<string> { aiResponse.Substring(0, Math.Min(100, aiResponse.Length)) + "..." }
+                FullName = "Fallback - Không thể parse AI response",
+                Skills = new List<string> { aiResponse?.Substring(0, Math.Min(100, aiResponse?.Length ?? 0)) + "..." }
             };
         }
     }

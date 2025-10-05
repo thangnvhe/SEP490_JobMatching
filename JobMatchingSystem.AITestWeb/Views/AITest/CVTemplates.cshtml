@@ -1,0 +1,466 @@
+@{
+    ViewData["Title"] = "CV Templates Testing";
+}
+
+<h2>🎨 CV Templates Testing</h2>
+<p class="text-muted">Test CV template generation with different templates and custom data</p>
+
+@if (!string.IsNullOrEmpty(ViewBag.Error))
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="row">
+    <!-- Available Templates -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">📋 Available Templates</h5>
+            </div>
+            <div class="card-body">
+                @if (ViewBag.LocalTemplates != null)
+                {
+                    var localTemplates = ViewBag.LocalTemplates as List<object>;
+                    if (localTemplates != null && localTemplates.Any())
+                    {
+                        <div id="templatesList">
+                            @foreach (dynamic template in localTemplates)
+                            {
+                                <div class="template-item mb-3 p-2 border rounded" style="cursor: pointer;" 
+                                     onclick="selectTemplate('@template.TemplateId', '@template.TemplateName', '@template.ImageUrl')">
+                                    <div class="row">
+                                        <div class="col-4">
+                                            <img src="@template.ImageUrl" class="img-fluid rounded" style="max-height: 80px;" alt="@template.TemplateName" />
+                                        </div>
+                                        <div class="col-8">
+                                            <h6 class="mb-1">@template.TemplateName</h6>
+                                            <p class="mb-1 small text-muted">@template.Description</p>
+                                            <small class="text-primary">ID: @template.TemplateId</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        
+                        <!-- Template Preview Section -->
+                        <div class="mt-4">
+                            <h6>🖼️ Template Preview</h6>
+                            <div id="templatePreview" class="border rounded p-2 text-center" style="min-height: 200px; display: none;">
+                                <img id="previewImage" class="img-fluid" style="max-height: 180px;" />
+                                <p class="small text-muted mt-2" id="previewDescription">Select a template to see preview</p>
+                            </div>
+                            <div id="noPreview" class="border rounded p-3 text-center text-muted" style="min-height: 200px;">
+                                <i class="fas fa-image fa-3x mb-2"></i>
+                                <p class="mb-0">Select a template to see preview</p>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No local templates found.
+                        </div>
+                    }
+                }
+                
+                @if (ViewBag.Templates != null)
+                {
+                    var templates = ViewBag.Templates as List<JobMatchingSystem.Infrastructure.Models.CVTemplate>;
+                    if (templates != null && templates.Any())
+                    {
+                        <hr />
+                        <h6 class="text-muted">Service Templates</h6>
+                        <div id="serviceTemplatesList">
+                            @foreach (var template in templates)
+                            {
+                                <div class="template-item mb-2 p-2 border rounded" style="cursor: pointer;" 
+                                     onclick="selectTemplate('@template.TemplateId', '@template.TemplateName')">
+                                    <h6 class="mb-1">@template.TemplateName</h6>
+                                    <p class="mb-1 small text-muted">@template.Description</p>
+                                    <small class="text-primary">ID: @template.TemplateId</small>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                
+                <div class="mt-3">
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-sm">← Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CV Data Form -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">✏️ CV Data Input</h5>
+            </div>
+            <div class="card-body">
+                <div id="selectedTemplate" class="alert alert-info" style="display: none;">
+                    <strong>Selected Template:</strong> <span id="selectedTemplateName">None</span>
+                </div>
+
+                <form id="cvTemplateForm">
+                    <input type="hidden" id="templateId" name="templateId" />
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" name="FullName" id="fullName" 
+                                       value="Nguyen Van A" required />
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Job Title</label>
+                                <input type="text" class="form-control" name="JobTitle" id="jobTitle" 
+                                       value="Software Developer" />
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="Email" id="email" 
+                                       value="nguyenvana@email.com" />
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <input type="text" class="form-control" name="PhoneNumber" id="phoneNumber" 
+                                       value="0123456789" />
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Address</label>
+                                <input type="text" class="form-control" name="Address" id="address" 
+                                       value="Ha Noi, Vietnam" />
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Summary</label>
+                                <textarea class="form-control" name="Summary" id="summary" rows="3">Experienced Software Developer with 3+ years in web development. Passionate about creating efficient and scalable solutions.</textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Skills</label>
+                                <textarea class="form-control" name="Skills" id="skills" rows="3">C#, ASP.NET Core, JavaScript, React, SQL Server, Git, Docker, Agile Methodology</textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Education</label>
+                                <textarea class="form-control" name="Education" id="education" rows="2">Bachelor of Computer Science - Hanoi University (2017-2021)
+GPA: 3.5/4.0</textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Experience</label>
+                                <textarea class="form-control" name="Experience" id="experience" rows="3">Software Developer at Tech Company (2021-2024)
+- Developed web applications using ASP.NET Core
+- Collaborated with cross-functional teams</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-primary" onclick="generateTemplate()">
+                            🎨 Generate Template
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="downloadTemplate()">
+                            💾 Generate & Download
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="loadSampleData()">
+                            📄 Load Sample Data
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" onclick="clearForm()">
+                            🗑️ Clear Form
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Generated Template Display -->
+        <div class="card mt-3" id="resultCard" style="display: none;">
+            <div class="card-header">
+                <h5 class="mb-0">📄 Generated Template</h5>
+            </div>
+            <div class="card-body text-center">
+                <div id="loadingSpinner" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Generating...</span>
+                    </div>
+                    <p class="mt-2">Generating CV template...</p>
+                </div>
+                
+                <div id="generatedImageContainer" style="display: none;">
+                    <img id="generatedImage" class="img-fluid border rounded" style="max-height: 600px;" />
+                    <div class="mt-3">
+                        <button class="btn btn-outline-primary btn-sm" onclick="downloadCurrentTemplate()">
+                            💾 Download This Template
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="errorContainer" class="alert alert-danger" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedTemplateId = null;
+let lastGeneratedImageData = null;
+let lastGeneratedFileName = null;
+
+function selectTemplate(templateId, templateName, imageUrl) {
+    selectedTemplateId = templateId;
+    document.getElementById('templateId').value = templateId;
+    document.getElementById('selectedTemplateName').textContent = templateName;
+    document.getElementById('selectedTemplate').style.display = 'block';
+    
+    // Show template preview
+    document.getElementById('previewImage').src = imageUrl;
+    document.getElementById('previewDescription').textContent = templateName + ' - Generating PDF preview...';
+    document.getElementById('templatePreview').style.display = 'block';
+    document.getElementById('noPreview').style.display = 'none';
+    
+    // Highlight selected template
+    document.querySelectorAll('.template-item').forEach(item => {
+        item.classList.remove('border-primary', 'bg-light');
+    });
+    event.target.closest('.template-item').classList.add('border-primary', 'bg-light');
+    
+    // Show loading in result area
+    document.getElementById('resultCard').style.display = 'block';
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('generatedImageContainer').style.display = 'none';
+    document.getElementById('errorContainer').style.display = 'none';
+    
+    console.log('Selecting template:', templateId, 'name:', templateName);
+    
+    // Generate sample PDF preview automatically
+    generateSamplePreview(templateId);
+}
+
+function generateSamplePreview(templateId) {
+    console.log('Generating sample preview for template:', templateId);
+    
+    // Generate a quick sample to show PDF structure
+    const sampleData = {
+        FullName: "John Doe (Sample)",
+        JobTitle: "Software Developer", 
+        Email: "john@example.com",
+        PhoneNumber: "0123456789",
+        Address: "Sample City, Vietnam",
+        Summary: "This is a sample preview of the PDF template. Your actual data will replace this content.",
+        Skills: "Sample Skills: C#, JavaScript, React",
+        Experience: "Sample Experience:\n• Position at Company (2020-2024)\n• Sample achievements and responsibilities",
+        Education: "Sample Education:\nBachelor Degree - University (2016-2020)"
+    };
+    
+    const requestData = {
+        templateId: templateId,
+        ...sampleData  // Flatten the data
+    };
+    
+    console.log('Sending request data:', requestData);
+    
+    fetch('@Url.Action("GenerateTemplate")', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        document.getElementById('loadingSpinner').style.display = 'none';
+        
+        if (data.success && data.isPdf) {
+            // Show PDF preview in the right panel
+            document.getElementById('resultCard').style.display = 'block';
+            document.getElementById('generatedImageContainer').innerHTML = `
+                <h6 class="text-primary mb-3">📄 PDF Preview (Sample Data)</h6>
+                <embed src="${data.imageData}" type="application/pdf" width="100%" height="400px" />
+                <div class="mt-3">
+                    <button class="btn btn-outline-success btn-sm me-2" onclick="downloadSamplePDF('${data.imageData}', 'sample-template-${templateId}.pdf')">
+                        💾 Download Sample PDF
+                    </button>
+                    <small class="text-muted d-block mt-2">This is a sample preview. Fill in your data and click "Generate Template" to create your CV.</small>
+                </div>
+            `;
+            document.getElementById('generatedImageContainer').style.display = 'block';
+            document.getElementById('errorContainer').style.display = 'none';
+            
+            // Update preview description
+            document.getElementById('previewDescription').textContent = 'Template Selected - PDF Preview Generated';
+        } else {
+            document.getElementById('errorContainer').innerHTML = '<strong>Sample Preview Error:</strong> ' + (data.error || 'Failed to generate sample');
+            document.getElementById('errorContainer').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        console.error('Sample preview failed:', error);
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.getElementById('errorContainer').innerHTML = '<strong>Network Error:</strong> ' + error.message;
+        document.getElementById('errorContainer').style.display = 'block';
+    });
+}
+
+function generateTemplate() {
+    if (!selectedTemplateId) {
+        alert('Please select a template first!');
+        return;
+    }
+    
+    const formData = new FormData(document.getElementById('cvTemplateForm'));
+    const templateData = Object.fromEntries(formData);
+    
+    // Show loading
+    document.getElementById('resultCard').style.display = 'block';
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('generatedImageContainer').style.display = 'none';
+    document.getElementById('errorContainer').style.display = 'none';
+    
+    fetch('@Url.Action("GenerateTemplate")', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            templateId: selectedTemplateId,
+            ...templateData  // Flatten the data
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('loadingSpinner').style.display = 'none';
+        
+        if (data.success) {
+            if (data.isPdf) {
+                // Display PDF in an embed element
+                document.getElementById('generatedImageContainer').innerHTML = `
+                    <h6 class="text-success mb-3">📄 Your Generated CV</h6>
+                    <embed src="${data.imageData}" type="application/pdf" width="100%" height="500px" />
+                    <div class="mt-3">
+                        <button class="btn btn-success btn-sm me-2" onclick="downloadCurrentTemplate()">
+                            💾 Download Your CV (PDF)
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="generateTemplate()">
+                            🔄 Regenerate
+                        </button>
+                    </div>
+                `;
+            } else {
+                // Fallback for image display
+                document.getElementById('generatedImage').src = data.imageData;
+            }
+            document.getElementById('generatedImageContainer').style.display = 'block';
+            lastGeneratedImageData = data.imageData;
+            lastGeneratedFileName = data.fileName;
+        } else {
+            document.getElementById('errorContainer').innerHTML = '<strong>Error:</strong> ' + data.error;
+            document.getElementById('errorContainer').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.getElementById('errorContainer').innerHTML = '<strong>Network Error:</strong> ' + error.message;
+        document.getElementById('errorContainer').style.display = 'block';
+    });
+}
+
+function downloadTemplate() {
+    if (!selectedTemplateId) {
+        alert('Please select a template first!');
+        return;
+    }
+    
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '@Url.Action("DownloadTemplate")';
+    
+    // Add template data
+    const formData = new FormData(document.getElementById('cvTemplateForm'));
+    formData.forEach((value, key) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key === 'templateId' ? 'templateId' : `templateData.${key}`;
+        input.value = value;
+        form.appendChild(input);
+    });
+    
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+}
+
+function downloadCurrentTemplate() {
+    if (lastGeneratedImageData && lastGeneratedFileName) {
+        const link = document.createElement('a');
+        link.href = lastGeneratedImageData;
+        link.download = lastGeneratedFileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } else {
+        alert('No CV generated yet. Please generate a CV first.');
+    }
+}
+
+function downloadSamplePDF(pdfUrl, fileName) {
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function loadSampleData() {
+    document.getElementById('fullName').value = 'Nguyen Van A';
+    document.getElementById('jobTitle').value = 'Senior Software Developer';
+    document.getElementById('email').value = 'nguyenvana@email.com';
+    document.getElementById('phoneNumber').value = '0123456789';
+    document.getElementById('address').value = 'Ha Noi, Vietnam';
+    document.getElementById('summary').value = 'Experienced Senior Software Developer with 5+ years in full-stack web development. Expert in .NET ecosystem and modern web technologies.';
+    document.getElementById('skills').value = 'C#, ASP.NET Core, React, JavaScript, TypeScript, SQL Server, MongoDB, Docker, Kubernetes, Azure, Git';
+    document.getElementById('education').value = 'Bachelor of Computer Science - Hanoi University of Science and Technology (2017-2021)\nGPA: 3.8/4.0\nRelevant Courses: Data Structures, Algorithms, Software Engineering';
+    document.getElementById('experience').value = 'Senior Software Developer at ABC Tech (2022-2024)\n- Led development of microservices architecture\n- Mentored junior developers\n\nSoftware Developer at XYZ Company (2021-2022)\n- Developed web applications using ASP.NET Core\n- Implemented RESTful APIs and database optimization';
+}
+
+function clearForm() {
+    document.getElementById('cvTemplateForm').reset();
+    document.getElementById('selectedTemplate').style.display = 'none';
+    document.getElementById('resultCard').style.display = 'none';
+    selectedTemplateId = null;
+    
+    // Remove highlight from templates
+    document.querySelectorAll('.template-item').forEach(item => {
+        item.classList.remove('border-primary', 'bg-light');
+    });
+}
+</script>
+
+<style>
+.template-item:hover {
+    background-color: #f8f9fa !important;
+    border-color: #007bff !important;
+}
+
+.template-item.border-primary {
+    border-width: 2px !important;
+}
+</style>
