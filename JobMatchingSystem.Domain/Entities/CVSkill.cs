@@ -1,0 +1,25 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace JobMatchingSystem.Domain.Entities
+{
+    public class CVSkill
+    {
+        [Key]
+        public int Id { get; set; }
+
+        public int? CVId { get; set; }
+        public int? userId { get; set; }
+
+        [MaxLength(100)]
+        public string? Name { get; set; }
+
+        public int? Level { get; set; }
+
+        // Navigation properties
+        [ForeignKey("CVId")]
+        public virtual DataCV DataCV { get; set; } = null!;
+        [ForeignKey("userId")]
+        public virtual ApplicationUser User { get; set; } = null!;
+    }
+}

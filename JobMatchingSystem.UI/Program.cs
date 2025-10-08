@@ -1,7 +1,9 @@
+using JobMatchingSystem.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.ConfigureIdentity(builder.Configuration);
 builder.Services.AddRazorPages();
 builder.Services.AddControllersWithViews();
 var app = builder.Build();
