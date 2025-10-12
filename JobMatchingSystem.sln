@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36429.23 d17.14
+VisualStudioVersion = 17.14.36429.23
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobMatchingSystem.UI", "JobMatchingSystem.UI\JobMatchingSystem.UI.csproj", "{00341815-CB3F-4C0F-BFDB-8A85300AF2B4}"
 EndProject
@@ -20,6 +20,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobMatchingSystem.DataAccess", "JobMatchingSystem.DataAccess\JobMatchingSystem.DataAccess.csproj", "{F2418C4E-770D-46B9-B785-83572F785FC2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobMatchingSystem.Infrastructure", "JobMatchingSystem.Infrastructure\JobMatchingSystem.Infrastructure.csproj", "{48857648-5758-4A70-B4E7-BAADD46362E1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{0C2FFC17-5873-4D04-A9F3-348C62AA04D0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestVnPayPayment", "TestVnPayPayment\TestVnPayPayment.csproj", "{410908BC-7954-4D17-8C15-B2A95C794AFF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +51,10 @@ Global
 		{48857648-5758-4A70-B4E7-BAADD46362E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{48857648-5758-4A70-B4E7-BAADD46362E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{48857648-5758-4A70-B4E7-BAADD46362E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{410908BC-7954-4D17-8C15-B2A95C794AFF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{410908BC-7954-4D17-8C15-B2A95C794AFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{410908BC-7954-4D17-8C15-B2A95C794AFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{410908BC-7954-4D17-8C15-B2A95C794AFF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -57,6 +65,7 @@ Global
 		{ACAA4639-7930-4598-B201-BD1C8477573F} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{F2418C4E-770D-46B9-B785-83572F785FC2} = {C91C3C13-B78D-4498-851D-E80C3DDCA835}
 		{48857648-5758-4A70-B4E7-BAADD46362E1} = {C91C3C13-B78D-4498-851D-E80C3DDCA835}
+		{410908BC-7954-4D17-8C15-B2A95C794AFF} = {0C2FFC17-5873-4D04-A9F3-348C62AA04D0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4449C26A-FC65-4887-B083-0F2B3AEE584D}
