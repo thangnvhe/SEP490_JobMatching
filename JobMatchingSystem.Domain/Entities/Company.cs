@@ -11,7 +11,7 @@ namespace JobMatchingSystem.Domain.Entities
 
         [Required]
         [MaxLength(150)]
-        public string Name { get; set; } = string.Empty;
+        public string CompanyName { get; set; } = string.Empty;
 
         public string? Description { get; set; }
 
@@ -19,22 +19,22 @@ namespace JobMatchingSystem.Domain.Entities
         public string? Logo { get; set; }
 
         [MaxLength(100)]
-        public string? Email { get; set; }
+        public string Email { get; set; }
 
         [MaxLength(150)]
         public string? Website { get; set; }
 
         [MaxLength(255)]
-        public string? Address { get; set; }
+        public string Address { get; set; }
 
         [MaxLength(20)]
-        public string? PhoneContact { get; set; }
+        public string PhoneContact { get; set; }
 
         [MaxLength(50)]
-        public string? TaxCode { get; set; }
+        public string TaxCode { get; set; }
 
         [MaxLength(255)]
-        public string? LicenseFile { get; set; }
+        public string LicenseFile { get; set; }
 
         public CompanyStatus Status { get; set; } = CompanyStatus.Pending;
 
@@ -50,7 +50,7 @@ namespace JobMatchingSystem.Domain.Entities
 
         public DateTime? UpdatedAt { get; set; }
 
-        public bool IsActive { get; set; } = true;
+        public bool IsActive { get; set; } = false;
 
         // Navigation properties
         [ForeignKey("VerifiedBy")]

@@ -16,7 +16,7 @@ namespace JobMatchingSystem.Domain.Entities
         [MaxLength(255)]
         public string? AvatarUrl { get; set; }
 
-        public Gender? Gender { get; set; }
+        public bool? Gender { get; set; }
 
         public DateTime? Birthday { get; set; }
 
@@ -24,7 +24,7 @@ namespace JobMatchingSystem.Domain.Entities
 
         public bool IsActive { get; set; } = true;
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }
 
@@ -39,7 +39,9 @@ namespace JobMatchingSystem.Domain.Entities
         public virtual ICollection<SavedCV> SavedCVs { get; set; } = new List<SavedCV>();
         public virtual ICollection<DataCV> DataCVs { get; set; } = new List<DataCV>();
         public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
-        public virtual ICollection<Report> ReviewedReports { get; set; } = new List<Report>();
-        
+        public virtual ICollection<ReportSolved> ReviewedReports { get; set; } = new List<ReportSolved>();
+        public virtual ICollection<Interview> Interviews { get; set; } = new List<Interview>();
+        public virtual ICollection<Offer> Offers { get; set; } = new List<Offer>();
+
     }
 }
