@@ -9,7 +9,7 @@ namespace JobMatchingSystem.Domain.Entities
         public int Id { get; set; }
 
         public int? CVId { get; set; }
-        public int? userId { get; set; }
+        public int? UserId { get; set; }
 
         [MaxLength(100)]
         public string? Name { get; set; }
@@ -19,7 +19,7 @@ namespace JobMatchingSystem.Domain.Entities
         // Navigation properties
         [ForeignKey("CVId")]
         public virtual DataCV DataCV { get; set; } = null!;
-        [ForeignKey("userId")]
+        [ForeignKey("UserId")]
         public virtual ApplicationUser User { get; set; } = null!;
     }
 }

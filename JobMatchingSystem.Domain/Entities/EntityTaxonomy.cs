@@ -17,7 +17,6 @@ namespace JobMatchingSystem.Domain.Entities
 
         public DateTime? CreatedAt { get; set; }
 
-        // Navigation properties
         [ForeignKey("TaxonomyId")]
         public virtual Taxonomy Taxonomy { get; set; } = null!;
     }

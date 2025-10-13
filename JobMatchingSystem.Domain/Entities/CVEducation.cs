@@ -1,3 +1,4 @@
+using JobMatchingSystem.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -9,16 +10,16 @@ namespace JobMatchingSystem.Domain.Entities
         public int Id { get; set; }
 
         public int? CVId { get; set; }
-        public int? userId { get; set; }
+        public int? UserId { get; set; }
 
         [MaxLength(150)]
-        public string? School { get; set; }
+        public string? SchoolName { get; set; }
 
         [MaxLength(100)]
-        public string? Degree { get; set; }
+        public DegreeType? Degree { get; set; }
 
         [MaxLength(100)]
-        public string? FieldOfStudy { get; set; }
+        public string? Major { get; set; }
 
         public DateTime? StartDate { get; set; }
 
@@ -29,7 +30,7 @@ namespace JobMatchingSystem.Domain.Entities
         // Navigation properties
         [ForeignKey("CVId")]
         public virtual DataCV DataCV { get; set; } = null!;
-        [ForeignKey("userId")]
+        [ForeignKey("UserId")]
         public virtual ApplicationUser User { get; set; } = null!;
     }
 }
