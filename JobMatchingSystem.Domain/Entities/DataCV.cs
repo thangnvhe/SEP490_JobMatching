@@ -14,6 +14,7 @@ namespace JobMatchingSystem.Domain.Entities
         public string? Title { get; set; }
 
         public bool IsPrimary { get; set; } = false;
+        public bool IsActive { get; set; } = true;
 
         [MaxLength(150)]
         public string? FileName { get; set; }
@@ -30,7 +31,7 @@ namespace JobMatchingSystem.Domain.Entities
         // Navigation properties
         [ForeignKey("UserId")]
         public virtual ApplicationUser User { get; set; } = null!;
-
+        public virtual ICollection<SavedCV> SavedCVs { get; set; } = new List<SavedCV>();
         public virtual ICollection<CVExperience> CVExperiences { get; set; } = new List<CVExperience>();
         public virtual ICollection<CVEducation> CVEducations { get; set; } = new List<CVEducation>();
         public virtual ICollection<CVProject> CVProjects { get; set; } = new List<CVProject>();

@@ -15,6 +15,7 @@ namespace JobMatchingSystem.Domain.Entities
 
         [MaxLength(150)]
         public string? Subject { get; set; }
+        public bool IsActive { get; set; }
 
         public string? Message { get; set; }
 
@@ -24,6 +25,5 @@ namespace JobMatchingSystem.Domain.Entities
 
         public DateTime? UpdatedAt { get; set; }
 
-        public DateTime? DeletedAt { get; set; }
     }
 }

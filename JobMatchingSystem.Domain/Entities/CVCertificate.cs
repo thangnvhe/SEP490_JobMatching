@@ -9,22 +9,24 @@ namespace JobMatchingSystem.Domain.Entities
         public int Id { get; set; }
 
         public int? CVId { get; set; }
-        public int? userId { get; set; }
+        public int? UserId { get; set; }
 
         [MaxLength(150)]
         public string? Name { get; set; }
+        [MaxLength(150)]
+        public string? Organization { get; set; }
+        [MaxLength(250)]
+        public string? Link { get; set; }
 
         [MaxLength(150)]
-        public string? IssuedBy { get; set; }
+        public string? Description { get; set; }
 
-        public DateTime? IssuedDate { get; set; }
-
-        public DateTime? ExpirationDate { get; set; }
+        public DateTime? CertificateAt { get; set; }
 
         // Navigation properties
         [ForeignKey("CVId")]
         public virtual DataCV DataCV { get; set; } = null!;
-        [ForeignKey("userId")]
+        [ForeignKey("UserId")]
         public virtual ApplicationUser User { get; set; } = null!;
     }
 }
