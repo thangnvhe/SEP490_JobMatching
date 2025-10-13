@@ -15,7 +15,6 @@ namespace JobMatchingSystem.Domain.Entities
 
         public DateTime? CreatedAt { get; set; }
 
-        // Navigation properties
         public virtual ICollection<EntityTaxonomy> EntityTaxonomies { get; set; } = new List<EntityTaxonomy>();
     }
 }
