@@ -11,11 +11,8 @@ namespace JobMatchingSystem.Domain.Entities
 
         public int JobId { get; set; }
         public int ReporterId { get; set; }
+        public ReportType? Subject { get; set; }
         public string? Reason { get; set; }
-        public ReportStatus Status { get; set; } = ReportStatus.Pending;
-        public int? ReviewedById { get; set; }
-        public string? ReviewNotes { get; set; }
-
         public DateTime? CreatedAt { get; set; }
 
         // Navigation properties
@@ -23,7 +20,7 @@ namespace JobMatchingSystem.Domain.Entities
         public virtual Job Job { get; set; } = null!;
         [ForeignKey("ReporterId")]
         public virtual ApplicationUser Reporter { get; set; } = null!;
-        [ForeignKey("ReviewedById")]
-        public virtual ApplicationUser? ReviewedBy { get; set; }
+        public virtual ReportSolved? ReportSolved { get; set; }
+
     }
 }

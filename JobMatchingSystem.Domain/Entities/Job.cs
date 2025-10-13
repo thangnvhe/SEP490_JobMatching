@@ -13,9 +13,9 @@ namespace JobMatchingSystem.Domain.Entities
         [MaxLength(150)]
         public string Title { get; set; } = string.Empty;
 
-        public string? Description { get; set; }
+        public string Description { get; set; }
 
-        public string? Requirements { get; set; }
+        public string Requirements { get; set; }
 
         public string? Benefits { get; set; }
 
@@ -24,7 +24,7 @@ namespace JobMatchingSystem.Domain.Entities
         public int? SalaryMax { get; set; }
 
         [MaxLength(100)]
-        public string? Location { get; set; }
+        public string Location { get; set; }
 
         public JobType? JobType { get; set; }
 
@@ -36,9 +36,9 @@ namespace JobMatchingSystem.Domain.Entities
 
         public int CompanyId { get; set; }
 
-        public int? RecruiterId { get; set; }
+        public int? Poster { get; set; }
 
-        public int? StaffId { get; set; }
+        public int? VerifiedBy { get; set; }
 
         public DateTime? CreatedAt { get; set; }
 
@@ -50,15 +50,17 @@ namespace JobMatchingSystem.Domain.Entities
         [ForeignKey("CompanyId")]
         public virtual Company Company { get; set; } = null!;
 
-        [ForeignKey("RecruiterId")]
+        [ForeignKey("Poster")]
         public virtual ApplicationUser? Recruiter { get; set; }
 
-        [ForeignKey("StaffId")]
+        [ForeignKey("VerifiedBy")]
         public virtual ApplicationUser? Staff { get; set; }
 
         public virtual ICollection<ApplyJob> ApplyJobs { get; set; } = new List<ApplyJob>();
         public virtual ICollection<SavedJob> SavedJobs { get; set; } = new List<SavedJob>();
         public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
         public virtual ICollection<EntityTaxonomy> EntityTaxonomies { get; set; } = new List<EntityTaxonomy>();
+        public virtual ICollection<Interview> Interviews { get; set; } = new List<Interview>();
+        public virtual ICollection<Offer> Offers { get; set; } = new List<Offer>();
     }
 }
