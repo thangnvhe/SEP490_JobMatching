@@ -2,6 +2,7 @@
 
 namespace JobMatchingSystem.UI.Areas.Public.Controllers
 {
+    [Area("Public")]
     public class AuthController : Controller
     {
         public IActionResult Login()

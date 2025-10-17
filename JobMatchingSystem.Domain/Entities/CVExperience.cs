@@ -10,11 +10,7 @@ namespace JobMatchingSystem.Domain.Entities
 
         public int? CVId { get; set; }
         public int? UserId { get; set; }
-
-        [MaxLength(150)]
         public string? CompanyName { get; set; }
-
-        [MaxLength(150)]
         public string? Position { get; set; }
 
         public DateTime? StartDate { get; set; }

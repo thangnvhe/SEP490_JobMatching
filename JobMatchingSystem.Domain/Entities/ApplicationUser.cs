@@ -1,28 +1,23 @@
 using Microsoft.AspNetCore.Identity;
 using JobMatchingSystem.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace JobMatchingSystem.Domain.Entities
 {
     public class ApplicationUser : IdentityUser<int>
     {
-        [Required]
-        [MaxLength(100)]
         public string FullName { get; set; } = string.Empty;
 
-        [MaxLength(20)]
-        public string? Phone { get; set; }
-
-        [MaxLength(255)]
         public string? AvatarUrl { get; set; }
 
         public bool? Gender { get; set; }
 
         public DateTime? Birthday { get; set; }
 
-        public int Score { get; set; } = 0;
+        public int? Score { get; set; } = 100;
 
-        public bool IsActive { get; set; } = true;
+        public bool? IsActive { get; set; } = true;
 
         public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -42,6 +37,13 @@ namespace JobMatchingSystem.Domain.Entities
         public virtual ICollection<ReportSolved> ReviewedReports { get; set; } = new List<ReportSolved>();
         public virtual ICollection<Interview> Interviews { get; set; } = new List<Interview>();
         public virtual ICollection<Offer> Offers { get; set; } = new List<Offer>();
+        public virtual ICollection<CVSkill> CVSkills { get; set; } = new List<CVSkill>();
+        public virtual ICollection<CVProject> CVProjects { get; set; } = new List<CVProject>();
+        public virtual ICollection<CVEducation> CVEducations { get; set; } = new List<CVEducation>();
+        public virtual ICollection<CVCertificate> CVCertificates { get; set; } = new List<CVCertificate>();
+        public virtual ICollection<CVAchievement> CVAchievements { get; set; } = new List<CVAchievement>();
+        public virtual ICollection<CVExperience> CVExperiences { get; set; } = new List<CVExperience>();
+        public virtual ICollection<RoundResult> RoundResults { get; set; } = new List<RoundResult>();
 
     }
 }

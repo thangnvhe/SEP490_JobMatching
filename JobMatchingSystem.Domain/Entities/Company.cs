@@ -8,32 +8,14 @@ namespace JobMatchingSystem.Domain.Entities
     {
         [Key]
         public int CompanyId { get; set; }
-
-        [Required]
-        [MaxLength(150)]
         public string CompanyName { get; set; } = string.Empty;
-
         public string? Description { get; set; }
-
-        [MaxLength(255)]
         public string? Logo { get; set; }
-
-        [MaxLength(100)]
         public string Email { get; set; }
-
-        [MaxLength(150)]
         public string? Website { get; set; }
-
-        [MaxLength(255)]
         public string Address { get; set; }
-
-        [MaxLength(20)]
         public string PhoneContact { get; set; }
-
-        [MaxLength(50)]
         public string TaxCode { get; set; }
-
-        [MaxLength(255)]
         public string LicenseFile { get; set; }
 
         public CompanyStatus Status { get; set; } = CompanyStatus.Pending;

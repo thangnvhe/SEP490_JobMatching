@@ -10,16 +10,11 @@ namespace JobMatchingSystem.Domain.Entities
 
         public int UserId { get; set; }
 
-        [MaxLength(150)]
-        public string? Title { get; set; }
+        public string Title { get; set; }
 
-        public bool IsPrimary { get; set; } = false;
+        public bool? IsPrimary { get; set; } = false;
         public bool IsActive { get; set; } = true;
-
-        [MaxLength(150)]
-        public string? FileName { get; set; }
-
-        [MaxLength(255)]
+        public string FileName { get; set; }
         public string? FileUrl { get; set; }
 
         public DateTime? CreatedAt { get; set; }
