@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace JobMatchingSystem.Domain.Entities
 {
@@ -6,16 +7,10 @@ namespace JobMatchingSystem.Domain.Entities
     {
         [Key]
         public int FeedbackId { get; set; }
-
-        [MaxLength(100)]
         public string? Name { get; set; }
-
-        [MaxLength(100)]
         public string? Email { get; set; }
-
-        [MaxLength(150)]
         public string? Subject { get; set; }
-        public bool IsActive { get; set; }
+        public bool? IsActive { get; set; }
 
         public string? Message { get; set; }
 

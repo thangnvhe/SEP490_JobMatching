@@ -10,8 +10,6 @@ namespace JobMatchingSystem.Domain.Entities
 
         public int? CVId { get; set; }
         public int? UserId { get; set; }
-
-        [MaxLength(100)]
         public string? Name { get; set; }
 
         public int? Level { get; set; }

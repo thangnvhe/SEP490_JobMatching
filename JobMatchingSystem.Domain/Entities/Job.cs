@@ -8,33 +8,29 @@ namespace JobMatchingSystem.Domain.Entities
     {
         [Key]
         public int JobId { get; set; }
+        public string? Title { get; set; }
 
-        [Required]
-        [MaxLength(150)]
-        public string Title { get; set; } = string.Empty;
-
-        public string Description { get; set; }
-
-        public string Requirements { get; set; }
+        public string? Description { get; set; }
+        
+        public string? Requirements { get; set; }
 
         public string? Benefits { get; set; }
-
+        [Column(TypeName = "decimal(18,2)")]
         public int? SalaryMin { get; set; }
-
+        [Column(TypeName = "decimal(18,2)")]
         public int? SalaryMax { get; set; }
-
-        [MaxLength(100)]
-        public string Location { get; set; }
+        public string? Location { get; set; }
+        public string? WorkInfo { get; set; }
 
         public JobType? JobType { get; set; }
 
-        public JobStatus? Status { get; set; }
+        public JobStatus? Status { get; set; } = JobStatus.Pending;
 
-        public int ViewsCount { get; set; } = 0;
+        public int? ViewsCount { get; set; } = 0;
 
-        public int AppliesCount { get; set; } = 0;
+        public int? AppliesCount { get; set; } = 0;
 
-        public int CompanyId { get; set; }
+        public int? CompanyId { get; set; }
 
         public int? Poster { get; set; }
 
@@ -48,7 +44,7 @@ namespace JobMatchingSystem.Domain.Entities
 
         // Navigation properties
         [ForeignKey("CompanyId")]
-        public virtual Company Company { get; set; } = null!;
+        public virtual Company? Company { get; set; } = null!;
 
         [ForeignKey("Poster")]
         public virtual ApplicationUser? Recruiter { get; set; }
@@ -62,5 +58,8 @@ namespace JobMatchingSystem.Domain.Entities
         public virtual ICollection<EntityTaxonomy> EntityTaxonomies { get; set; } = new List<EntityTaxonomy>();
         public virtual ICollection<Interview> Interviews { get; set; } = new List<Interview>();
         public virtual ICollection<Offer> Offers { get; set; } = new List<Offer>();
+        public virtual ICollection<Round> Rounds { get; set; } = new List<Round>();
+        public virtual ICollection<Test> Tests { get; set; } = new List<Test>();
+
     }
 }

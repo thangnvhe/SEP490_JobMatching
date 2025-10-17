@@ -11,15 +11,9 @@ namespace JobMatchingSystem.Domain.Entities
 
         public int? CVId { get; set; }
         public int? UserId { get; set; }
-
-        [MaxLength(150)]
-        public string? SchoolName { get; set; }
-
-        [MaxLength(100)]
+        public string SchoolName { get; set; }
         public DegreeType? Degree { get; set; }
-
-        [MaxLength(100)]
-        public string? Major { get; set; }
+        public string Major { get; set; }
 
         public DateTime? StartDate { get; set; }
 
