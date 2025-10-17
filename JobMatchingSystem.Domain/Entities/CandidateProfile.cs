@@ -12,11 +12,11 @@ namespace JobMatchingSystem.Domain.Entities
         public int UserId { get; set; }
 
         public int ExperienceYears { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
 
-        public int SalaryExpect { get; set; }
+        public decimal SalaryExpect { get; set; }
 
-        [MaxLength(100)]
-        public string? Location { get; set; }
+        public string Location { get; set; }
 
         public JobType JobType { get; set; }
 
