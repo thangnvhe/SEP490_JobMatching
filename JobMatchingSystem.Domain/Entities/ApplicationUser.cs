@@ -25,17 +25,16 @@ namespace JobMatchingSystem.Domain.Entities
 
         // Navigation properties
         public virtual CandidateProfile? CandidateProfile { get; set; }
-        public virtual ICollection<CompanyRecruiter> CompanyRecruiters { get; set; } = new List<CompanyRecruiter>();
+        public virtual CompanyRecruiter? CompanyRecruiter { get; set; } 
         public virtual ICollection<Job> CreatedJobs { get; set; } = new List<Job>();
         public virtual ICollection<Job> StaffJobs { get; set; } = new List<Job>();
         public virtual ICollection<Company> VerifiedCompanies { get; set; } = new List<Company>();
-        public virtual ICollection<ApplyJob> ApplyJobs { get; set; } = new List<ApplyJob>();
+        public virtual ICollection<CandidateJob> ApplyJobs { get; set; } = new List<CandidateJob>();
         public virtual ICollection<SavedJob> SavedJobs { get; set; } = new List<SavedJob>();
         public virtual ICollection<SavedCV> SavedCVs { get; set; } = new List<SavedCV>();
         public virtual ICollection<DataCV> DataCVs { get; set; } = new List<DataCV>();
         public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
         public virtual ICollection<ReportSolved> ReviewedReports { get; set; } = new List<ReportSolved>();
-        public virtual ICollection<Interview> Interviews { get; set; } = new List<Interview>();
         public virtual ICollection<Offer> Offers { get; set; } = new List<Offer>();
         public virtual ICollection<CVSkill> CVSkills { get; set; } = new List<CVSkill>();
         public virtual ICollection<CVProject> CVProjects { get; set; } = new List<CVProject>();
@@ -43,7 +42,6 @@ namespace JobMatchingSystem.Domain.Entities
         public virtual ICollection<CVCertificate> CVCertificates { get; set; } = new List<CVCertificate>();
         public virtual ICollection<CVAchievement> CVAchievements { get; set; } = new List<CVAchievement>();
         public virtual ICollection<CVExperience> CVExperiences { get; set; } = new List<CVExperience>();
-        public virtual ICollection<RoundResult> RoundResults { get; set; } = new List<RoundResult>();
 
     }
 }

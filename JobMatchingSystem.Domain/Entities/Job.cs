@@ -24,7 +24,7 @@ namespace JobMatchingSystem.Domain.Entities
 
         public JobType? JobType { get; set; }
 
-        public JobStatus? Status { get; set; } = JobStatus.Pending;
+        public JobStatus? Status { get; set; } = JobStatus.Draft;
 
         public int? ViewsCount { get; set; } = 0;
 
@@ -52,14 +52,12 @@ namespace JobMatchingSystem.Domain.Entities
         [ForeignKey("VerifiedBy")]
         public virtual ApplicationUser? Staff { get; set; }
 
-        public virtual ICollection<ApplyJob> ApplyJobs { get; set; } = new List<ApplyJob>();
+        public virtual ICollection<CandidateJob> CandidateJobs { get; set; } = new List<CandidateJob>();
         public virtual ICollection<SavedJob> SavedJobs { get; set; } = new List<SavedJob>();
         public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
         public virtual ICollection<EntityTaxonomy> EntityTaxonomies { get; set; } = new List<EntityTaxonomy>();
-        public virtual ICollection<Interview> Interviews { get; set; } = new List<Interview>();
         public virtual ICollection<Offer> Offers { get; set; } = new List<Offer>();
-        public virtual ICollection<Round> Rounds { get; set; } = new List<Round>();
-        public virtual ICollection<Test> Tests { get; set; } = new List<Test>();
+        public virtual ICollection<JobStage> JobStages { get; set; } = new List<JobStage>();
 
     }
 }

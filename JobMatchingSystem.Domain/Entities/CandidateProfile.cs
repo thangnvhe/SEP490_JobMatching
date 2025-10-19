@@ -16,7 +16,7 @@ namespace JobMatchingSystem.Domain.Entities
 
         public decimal SalaryExpect { get; set; }
 
-        public string Location { get; set; }
+        public string? Location { get; set; }
 
         public JobType JobType { get; set; }
 

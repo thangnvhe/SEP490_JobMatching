@@ -79,7 +79,7 @@ namespace JobMatchingSystem.DataAccess.Data.SeedData
                     SalaryMax = maxSalary,
                     CompanyId = companyId,
                     JobType = randomJobType,
-                    Status = JobStatus.Pending,
+                    Status = JobStatus.Draft,
                     CreatedAt = DateTime.Now,
                 };
 
