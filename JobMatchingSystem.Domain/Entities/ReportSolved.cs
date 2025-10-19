@@ -11,15 +11,14 @@ namespace JobMatchingSystem.Domain.Entities
     public class ReportSolved
     {
         public int ReportSolvedId { get; set; }
-        public int ReportId { get; set; }
         public int SolvedBy { get; set; }
-        public ReportStatus Status { get; set; } = ReportStatus.Pending;
+        public ReportStatus Status { get; set; } = ReportStatus.Investigate;
         public string? Notes { get; set; }
         public DateTime? SolvedDate { get; set; }
-        [ForeignKey("ReportId")]
-        public virtual Report Report { get; set; }
 
         [ForeignKey("SolvedBy")]
-        public virtual ApplicationUser User { get; set; }
+        public virtual ApplicationUser? User { get; set; }
+        // Navigation Reports
+        public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
     }
 }

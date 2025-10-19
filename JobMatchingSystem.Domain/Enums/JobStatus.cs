@@ -2,9 +2,10 @@ namespace JobMatchingSystem.Domain.Enums
 {
     public enum JobStatus
     {
-        Pending,
-        Approved,
-        Expired,
+        Draft,
+        Rejected,
+        Moderated,
+        Opened,
         Closed
     }
 }
