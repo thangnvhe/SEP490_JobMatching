@@ -168,6 +168,10 @@ namespace JobMatchingSystem.DataAccess.Data
                       .WithMany(e => e.CandidateJobs)
                       .HasForeignKey(e => e.JobId)
                       .OnDelete(DeleteBehavior.NoAction);
+                entity.HasOne(e => e.CandidateCV)
+                        .WithMany(e => e.CandidateJobs)
+                        .HasForeignKey(e => e.CVId)
+                        .OnDelete(DeleteBehavior.NoAction);
             });
 
             // SavedJob
@@ -205,6 +209,7 @@ namespace JobMatchingSystem.DataAccess.Data
                       .WithMany(e => e.DataCVs)
                       .HasForeignKey(e => e.UserId)
                       .OnDelete(DeleteBehavior.NoAction);
+
             });
 
             // EntityTaxonomy

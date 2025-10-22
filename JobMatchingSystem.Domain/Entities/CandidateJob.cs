@@ -12,6 +12,7 @@ namespace JobMatchingSystem.Domain.Entities
         public int UserId { get; set; }
 
         public int JobId { get; set; }
+        public int CVId { get; set; }
 
         public CandidateJobStatus Status { get; set; }
 
@@ -22,9 +23,11 @@ namespace JobMatchingSystem.Domain.Entities
         public virtual ApplicationUser User { get; set; } = null!;
 
         [ForeignKey("JobId")]
-        public virtual Job Job { get; set; } = null!;
+        public virtual Job? Job { get; set; } = null!;
         public virtual ICollection<CandidateStage> CandidateStages { get; set; } = new List<CandidateStage>();
         // Offer associated with this candidate job
         public virtual Offer? Offer { get; set; } = null;
+        [ForeignKey("CVId")]
+        public virtual DataCV? CandidateCV { get; set; } = null!;
     }
 }

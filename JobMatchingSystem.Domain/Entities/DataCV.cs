@@ -34,5 +34,6 @@ namespace JobMatchingSystem.Domain.Entities
         public virtual ICollection<CVAchievement> CVAchievements { get; set; } = new List<CVAchievement>();
         public virtual ICollection<CVSkill> CVSkills { get; set; } = new List<CVSkill>();
         public virtual ICollection<EntityTaxonomy> EntityTaxonomies { get; set; } = new List<EntityTaxonomy>();
+        public virtual ICollection<CandidateJob> CandidateJobs { get; set; } = new List<CandidateJob>();
     }
 }
