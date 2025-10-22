@@ -1,0 +1,23 @@
+using JobMatchingSystem.API.Enums;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace JobMatchingSystem.API.Entities
+{
+    public class EntityTaxonomy
+    {
+        [Key]
+        public int Id { get; set; }
+
+        public EntityType EntityType { get; set; }
+
+        public int EntityId { get; set; }
+
+        public int TaxonomyId { get; set; }
+
+        public DateTime? CreatedAt { get; set; }
+
+        [ForeignKey("TaxonomyId")]
+        public virtual Taxonomy Taxonomy { get; set; } = null!;
+    }
+}
