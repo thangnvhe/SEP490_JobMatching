@@ -25,10 +25,7 @@
 
   <ItemGroup>
     <Folder Include="Mappings\" />
-    <Folder Include="Repositories\Implementations\" />
-    <Folder Include="Repositories\Interfaces\" />
-    <Folder Include="Services\Implementations\" />
-    <Folder Include="Services\Interfaces\" />
+    <Folder Include="wwwroot\images\LicenseFile\" />
   </ItemGroup>
 
   <ItemGroup>
