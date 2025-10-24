@@ -5,11 +5,13 @@ import App from './App';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import NotFoundPage from './pages/NotFoundPage';
-
+// Admin Layout và Dashboard
+import AdminLayout from "./components/layout/AdminLayout";
+import DashboardPage from "./pages/admin-site/DashboardPage";
 // Cấu hình router
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <App />,
     children: [
       {
@@ -17,11 +19,27 @@ const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path: 'about',
+        path: "about",
         element: <AboutPage />,
       },
     ],
     errorElement: <NotFoundPage />,
+  },
+  {
+    path: "/admin",
+    element: <AdminLayout />, // Sử dụng AdminLayout làm vỏ bọc
+    errorElement: <NotFoundPage />, 
+    children: [
+      {
+        index: true, 
+        element: <DashboardPage />,
+      },
+      // Ví dụ: sau này bạn thêm trang quản lý người dùng
+      // {
+      //   path: 'users',
+      //   element: <UserManagementPage />,
+      // },
+    ],
   },
 ]);
 
