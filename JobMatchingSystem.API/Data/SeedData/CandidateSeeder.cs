@@ -17,6 +17,11 @@ namespace JobMatchingSystem.API.Data.SeedData
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
             var appContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
+            if (await userManager.GetUsersInRoleAsync(Contraints.RoleCandidate) is { Count: > 0 })
+            {
+                Console.WriteLine("Candidate data already exists, skipping seed...");
+                return;
+            }
             // đảm bảo role candidate tồn tại
             if (!await roleManager.RoleExistsAsync(Contraints.RoleCandidate))
                 await roleManager.CreateAsync(new IdentityRole<int>(Contraints.RoleCandidate));
