@@ -23,6 +23,10 @@ namespace JobMatchingSystem.API.Entities
 
         public DateTime? UpdatedAt { get; set; }
 
+        public string? RefreshToken { get; set; }
+       
+        public DateTime? RefreshTokenExpiryTime { get; set; }
+
         // Navigation properties
         public virtual CandidateProfile? CandidateProfile { get; set; }
         public virtual CompanyRecruiter? CompanyRecruiter { get; set; } 
