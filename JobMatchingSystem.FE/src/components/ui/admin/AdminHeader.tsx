@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LayoutGrid, Briefcase } from "lucide-react"; // Bạn có thể thay Briefcase bằng icon web của bạn
+import { Briefcase } from "lucide-react"; // Bạn có thể thay Briefcase bằng icon web của bạn
 import {
   DropdownMenu,
   DropdownMenuContent,

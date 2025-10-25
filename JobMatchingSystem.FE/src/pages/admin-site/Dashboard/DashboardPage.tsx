@@ -12,7 +12,6 @@ import {
 } from "recharts";
 import {
   Briefcase,
-  Users,
   User,
   Flag,
   UserRoundCog, // Icon cho Recruiter
@@ -22,7 +21,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -36,9 +34,7 @@ import {
 import { Separator } from "@/components/ui/separator"; // <-- Thêm Separator
 import {
   ChartContainer,
-  ChartTooltip,
   ChartTooltipContent,
-  ChartLegend,
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart"; // Import từ file chart.tsx của bạn
@@ -219,9 +215,6 @@ export function DashboardPage() {
           <CardHeader className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle>Phân tích dữ liệu</CardTitle>
-              <CardDescription>
-                Hiển thị dữ liệu tăng trưởng theo thời gian
-              </CardDescription>
             </div>
             {/* Combobox cho biểu đồ */}
             <TimeRangeSelect
