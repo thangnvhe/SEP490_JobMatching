@@ -35,6 +35,9 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (company == null)
                 throw new AppException(ErrorCode.NotFoundCompany());
 
+            if (request.SalaryMin >= request.SalaryMax)
+                throw new AppException(ErrorCode.SalaryError());
+
             // Tạo Job mới
             var job = new Job
             {
@@ -50,7 +53,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 Status = JobStatus.Draft,
                 CompanyId = company.CompanyId, // ✅ Tự động lấy
                 Poster = recruiterId,          // ✅ Tự động lấy
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
                 OpenedAt = request.OpenedAt,
                 ExpiredAt = request.ExpiredAt
             };
@@ -66,7 +69,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                     EntityType = EntityType.Job,
                     EntityId = job.JobId,
                     TaxonomyId = id,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 }).ToList();
 
                 await _context.EntityTaxonomies.AddRangeAsync(entityTaxonomies);
