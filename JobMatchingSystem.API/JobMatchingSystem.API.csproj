@@ -29,6 +29,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="appsettings.Development.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Data\SeedData\Excels\jobs.xlsx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
