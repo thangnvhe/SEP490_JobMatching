@@ -9,5 +9,8 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundCompany()=>new("Not Found Compamy",HttpStatusCode.NotFound);
         public static Error InValidToken() => new("Invalid Token",HttpStatusCode.BadRequest);
         public static Error EmailExist() => new("Email Exist", HttpStatusCode.BadRequest);
+        public static Error NotFoundRecruiter() => new("Not Found Recruiter", HttpStatusCode.BadRequest);
+        public static Error InvalidStatus() => new("Invalid Status", HttpStatusCode.BadRequest);
+        public static Error NotFoundJob() => new("Not Found Job", HttpStatusCode.BadRequest);
     }
 }
