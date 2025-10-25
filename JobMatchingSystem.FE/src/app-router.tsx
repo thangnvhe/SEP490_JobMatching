@@ -24,6 +24,7 @@ import { RecruiterLayout } from './components/layout/recruiter/RecruiterLayout';
 import RecruiterDashboard from './pages/recruiter-site/Dashboard';
 import { CandidateLayout } from './components/layout/candidate/CandidateLayout';
 import CandidateDashboard from './pages/candidate-site/Dashboard';
+import FavouriteJobsPage from './pages/candidate-site/FavouriteJobs';
 
 // Component chính để render router
 const AppRouter: React.FC = () => {
@@ -61,6 +62,7 @@ const AppRouter: React.FC = () => {
       {/* Candidate routes */}
       <Route path="/candidate" element={<CandidateLayout />}>
         <Route index element={<CandidateDashboard />} />
+        <Route path="saved-jobs" element={<FavouriteJobsPage />} />
       </Route>
 
       {/* NotFound route - catch all */}
