@@ -12,8 +12,15 @@ import { cn } from "@/lib/utils";
 import { Menu, Mountain } from "lucide-react";
 import React from "react";
 import { Link } from "react-router-dom";
+import { LoginDialog } from "@/pages/client-site/auth/LoginDialog";
+import { RegisterDialog } from "@/pages/client-site/auth/RegisterDialog";
+import { ForgotPasswordDialog } from "@/pages/client-site/auth/ForgotPasswordDialog";
 
 export function ClientHeader() {
+  const [loginOpen, setLoginOpen] = React.useState(false);
+  const [registerOpen, setRegisterOpen] = React.useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = React.useState(false);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container mx-auto flex h-16 items-center px-4">
@@ -100,7 +107,11 @@ export function ClientHeader() {
             {/* Can add a search bar here if needed */}
           </div>
           <nav className="hidden md:flex items-center space-x-3">
-            <Button variant="ghost" className="text-sm">
+            <Button
+              variant="ghost"
+              className="text-sm"
+              onClick={() => setLoginOpen(true)}
+            >
               Login / Register
             </Button>
             <Button className="text-sm">Job Post</Button>
@@ -131,13 +142,46 @@ export function ClientHeader() {
               <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary">
                 Candidates
               </Link>
-              <Button variant="ghost" className="w-fit text-sm">
+              <Button
+                variant="ghost"
+                className="w-fit text-sm"
+                onClick={() => setLoginOpen(true)}
+              >
                 Login / Register
               </Button>
               <Button className="w-fit text-sm">Job Post</Button>
             </div>
           </SheetContent>
         </Sheet>
+
+        <LoginDialog
+          isOpen={loginOpen}
+          onOpenChange={setLoginOpen}
+          onOpenRegister={() => {
+            setLoginOpen(false);
+            setRegisterOpen(true);
+          }}
+          onOpenForgotPassword={() => {
+            setLoginOpen(false);
+            setForgotPasswordOpen(true);
+          }}
+        />
+        <RegisterDialog
+          isOpen={registerOpen}
+          onOpenChange={setRegisterOpen}
+          onOpenLogin={() => {
+            setRegisterOpen(false);
+            setLoginOpen(true);
+          }}
+        />
+        <ForgotPasswordDialog
+          isOpen={forgotPasswordOpen}
+          onOpenChange={setForgotPasswordOpen}
+          onOpenLogin={() => {
+            setForgotPasswordOpen(false);
+            setLoginOpen(true);
+          }}
+        />
       </div>
     </header>
   );

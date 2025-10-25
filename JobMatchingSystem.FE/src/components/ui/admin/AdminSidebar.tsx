@@ -8,8 +8,7 @@ import {
   BarChart3,
   Folder,
   User,
-  PlusCircle,
-  Mail,
+
 } from "lucide-react";
 import {
   Sidebar,
@@ -25,7 +24,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { IconInnerShadowTop } from "@tabler/icons-react";
 import { NavUser } from "@/components/nav-user";
 import React from "react";
-import { Button } from "../button";
 
 function useIsActivePath(path: string) {
   const location = useLocation();

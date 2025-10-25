@@ -16,8 +16,16 @@ import {
   Users,
   Warehouse,
 } from "lucide-react";
+import { useState } from "react";
+import { LoginDialog } from "@/pages/client-site/auth/LoginDialog";
+import { RegisterDialog } from "@/pages/client-site/auth/RegisterDialog";
+import { ForgotPasswordDialog } from "@/pages/client-site/auth/ForgotPasswordDialog";
 
 const HomePage = () => {
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -47,11 +55,49 @@ const HomePage = () => {
                   </div>
                 </CardContent>
               </Card>
-              <div className="mt-4">
-                <span className="text-gray-500">Popular Searches: </span>
-                <span className="text-gray-700">
-                  Designer, Developer, Web, IOS, PHP, Senior, Engineer
-                </span>
+              <div className="mt-4 flex items-center justify-between">
+                <div>
+                  <span className="text-gray-500">Popular Searches: </span>
+                  <span className="text-gray-700">
+                    Designer, Developer, Web, IOS, PHP, Senior, Engineer
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  className="ml-4"
+                  onClick={() => setLoginOpen(true)}
+                >
+                  Đăng nhập
+                </Button>
+
+                <LoginDialog
+                  isOpen={loginOpen}
+                  onOpenChange={setLoginOpen}
+                  onOpenRegister={() => {
+                    setLoginOpen(false);
+                    setRegisterOpen(true);
+                  }}
+                  onOpenForgotPassword={() => {
+                    setLoginOpen(false);
+                    setForgotPasswordOpen(true);
+                  }}
+                />
+                <RegisterDialog
+                  isOpen={registerOpen}
+                  onOpenChange={setRegisterOpen}
+                  onOpenLogin={() => {
+                    setRegisterOpen(false);
+                    setLoginOpen(true);
+                  }}
+                />
+                <ForgotPasswordDialog
+                  isOpen={forgotPasswordOpen}
+                  onOpenChange={setForgotPasswordOpen}
+                  onOpenLogin={() => {
+                    setForgotPasswordOpen(false);
+                    setLoginOpen(true);
+                  }}
+                />
               </div>
             </div>
             <div className="hidden md:block">
