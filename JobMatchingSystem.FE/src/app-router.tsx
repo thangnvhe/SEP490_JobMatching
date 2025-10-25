@@ -22,6 +22,8 @@ import { CreateEditJobPage } from './pages/admin-site/ManageJob/CreateEditJob';
 import { CreateEditCompanyPage } from './pages/admin-site/ManageCompany/CreateEditCompany';
 import { RecruiterLayout } from './components/layout/recruiter/RecruiterLayout';
 import RecruiterDashboard from './pages/recruiter-site/Dashboard';
+import { CandidateLayout } from './components/layout/candidate/CandidateLayout';
+import CandidateDashboard from './pages/candidate-site/Dashboard';
 
 // Component chính để render router
 const AppRouter: React.FC = () => {
@@ -54,6 +56,11 @@ const AppRouter: React.FC = () => {
       {/* Recruiter routes */}
       <Route path="/recruiter" element={<RecruiterLayout />}>
         <Route index element={<RecruiterDashboard />} />
+      </Route>
+
+      {/* Candidate routes */}
+      <Route path="/candidate" element={<CandidateLayout />}>
+        <Route index element={<CandidateDashboard />} />
       </Route>
 
       {/* NotFound route - catch all */}
