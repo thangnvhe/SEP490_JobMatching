@@ -17,6 +17,9 @@ import { ManageUserPage } from './pages/admin-site/ManageUser/ViewUserList';
 import { ManageJobPage } from './pages/admin-site/ManageJob/ViewJobList';
 import { ManageReportPage } from './pages/admin-site/ManageReport/ViewReportList';
 import Hehe from './pages/admin-site/Test/hehe';
+import { CreateEditUserPage } from './pages/admin-site/ManageUser/CreateEditUser';
+import { CreateEditJobPage } from './pages/admin-site/ManageJob/CreateEditJob';
+import { CreateEditCompanyPage } from './pages/admin-site/ManageCompany/CreateEditCompany';
 
 // Component chính để render router
 const AppRouter: React.FC = () => {
@@ -37,6 +40,12 @@ const AppRouter: React.FC = () => {
         <Route path="manage-user" element={<ManageUserPage />} />
         <Route path="manage-job" element={<ManageJobPage />} />
         <Route path="manage-report" element={<ManageReportPage />} />
+        <Route path="manage-user/create" element={<CreateEditUserPage />} />
+        <Route path="manage-user/edit/:id" element={<CreateEditUserPage />} />
+        <Route path="manage-job/create" element={<CreateEditJobPage />} />
+        <Route path="manage-job/edit/:id" element={<CreateEditJobPage />} />
+        <Route path="manage-company/create" element={<CreateEditCompanyPage />} />
+        <Route path="manage-company/edit/:id" element={<CreateEditCompanyPage />} />
         <Route path="test" element={<Hehe />} />
       </Route>
 
