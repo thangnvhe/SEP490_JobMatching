@@ -1,6 +1,22 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@font-face {
+  font-family: 'Geist Sans';
+  src: url('./assets/fonts/Geist/webfonts/Geist[wght].woff2') format('woff2');
+  font-display: swap;
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('./assets/fonts/GeistMono/webfonts/GeistMono[wght].woff2') format('woff2');
+  font-display: swap;
+  font-weight: 100 900;
+  font-style: normal;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -43,24 +59,24 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.21 0.006 285.885);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
+  --background: oklch(1 0 0); /* #FFFFFF */
+  --foreground: oklch(19.32% 0.006 282.52); /* #202124 */
+  --card: oklch(1 0 0); /* #FFFFFF */
+  --card-foreground: oklch(19.32% 0.006 282.52); /* #202124 */
+  --popover: oklch(1 0 0); /* #FFFFFF */
+  --popover-foreground: oklch(19.32% 0.006 282.52); /* #202124 */
+  --primary: oklch(54.9% 0.17 259.84); /* #1967D2 */
+  --primary-foreground: oklch(1 0 0); /* #FFFFFF */
+  --secondary: oklch(67.2% 0.16 142.2); /* #34A853 */
+  --secondary-foreground: oklch(1 0 0); /* #FFFFFF */
+  --muted: oklch(97.97% 0.005 282.52); /* #F8F9FA */
+  --muted-foreground: oklch(49.46% 0.01 259.5); /* #5F6368 */
+  --accent: oklch(49.56% 0.19 261.35); /* #0B57D0 */
+  --accent-foreground: oklch(1 0 0); /* #FFFFFF */
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.705 0.015 286.067);
+  --border: oklch(90.15% 0 0); /* #E0E0E0 */
+  --input: oklch(90.15% 0 0); /* #E0E0E0 */
+  --ring: oklch(54.9% 0.17 259.84); /* #1967D2 */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -77,24 +93,24 @@
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.92 0.004 286.32);
-  --primary-foreground: oklch(0.21 0.006 285.885);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: oklch(19.32% 0.006 282.52); /* #202124 */
+  --foreground: oklch(97.97% 0.005 282.52); /* #F8F9FA */
+  --card: oklch(24.36% 0.006 282.52); /* #282a2d */
+  --card-foreground: oklch(97.97% 0.005 282.52); /* #F8F9FA */
+  --popover: oklch(24.36% 0.006 282.52); /* #282a2d */
+  --popover-foreground: oklch(97.97% 0.005 282.52); /* #F8F9FA */
+  --primary: oklch(76.22% 0.12 258.11); /* #8AB4F8 */
+  --primary-foreground: oklch(19.32% 0.006 282.52); /* #202124 */
+  --secondary: oklch(80.52% 0.09 143.64); /* #81C995 */
+  --secondary-foreground: oklch(19.32% 0.006 282.52); /* #202124 */
+  --muted: oklch(24.36% 0.006 282.52); /* #282a2d */
+  --muted-foreground: oklch(49.46% 0.01 259.5); /* #5F6368 */
+  --accent: oklch(84.44% 0.08 259.01); /* #AECBFA */
+  --accent-foreground: oklch(19.32% 0.006 282.52); /* #202124 */
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.552 0.016 285.938);
+  --border: oklch(49.46% 0.01 259.5); /* #5F6368 */
+  --input: oklch(49.46% 0.01 259.5); /* #5F6368 */
+  --ring: oklch(76.22% 0.12 258.11); /* #8AB4F8 */
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -116,5 +132,6 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Geist Sans', sans-serif;
   }
 }
