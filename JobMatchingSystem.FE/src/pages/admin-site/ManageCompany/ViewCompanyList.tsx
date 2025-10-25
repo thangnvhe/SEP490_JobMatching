@@ -6,6 +6,7 @@ import {
   Eye,
   Pencil,
   Trash2,
+  Plus,
 } from "lucide-react";
 
 // Import các UI components của bạn
@@ -150,19 +151,32 @@ export function ManageCompanyPage() {
           </InputGroup>
         </div>
 
-        {/* Combobox Filter (bên phải) */}
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full md:w-[240px]">
-            <SelectValue placeholder="Lọc theo trạng thái" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả trạng thái</SelectItem>
-            <SelectItem value="pending">Chưa được duyệt</SelectItem>
-            <SelectItem value="approved">Đã duyệt (Tất cả)</SelectItem>
-            <SelectItem value="active">Đang active</SelectItem>
-            <SelectItem value="deactivated">Đã deactive</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Combobox Filter và Create Button (bên phải) */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full md:w-[240px]">
+              <SelectValue placeholder="Lọc theo trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả trạng thái</SelectItem>
+              <SelectItem value="pending">Chưa được duyệt</SelectItem>
+              <SelectItem value="approved">Đã duyệt (Tất cả)</SelectItem>
+              <SelectItem value="active">Đang active</SelectItem>
+              <SelectItem value="deactivated">Đã deactive</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Nút Create Company */}
+          <Button
+            className="w-full sm:w-auto"
+            onClick={() =>
+              (window.location.href = "/admin/manage-company/create")
+            }
+          >
+            <Plus className="mr-2 size-4" />
+            Tạo công ty
+          </Button>
+        </div>
       </div>
 
       {/* ------------------------------------------- */}
@@ -252,8 +266,8 @@ function CompanyActions({ companyId }: { companyId: string }) {
     // Ví dụ: navigate(`/admin/manage-company/view/${companyId}`)
   };
   const handleUpdate = () => {
-    alert(`Chỉnh sửa công ty: ${companyId}`);
-    // Ví dụ: mở một Dialog/Modal để chỉnh sửa
+    // Navigate to edit page
+    window.location.href = `/admin/manage-company/edit/${companyId}`;
   };
   const handleDelete = () => {
     // Nên có một AlertDialog ở đây để xác nhận

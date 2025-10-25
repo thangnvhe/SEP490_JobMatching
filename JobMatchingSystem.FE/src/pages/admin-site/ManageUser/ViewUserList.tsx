@@ -2,7 +2,7 @@
 import * as React from "react";
 import {
   SearchIcon,
-  MoreHorizontalIcon,
+  Plus, // Icon cho "Create"
   Eye,
   Pencil,
   Trash2,
@@ -32,13 +32,13 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -56,6 +56,9 @@ type User = {
   role: UserRole;
   status: UserStatus;
   dateJoined: string;
+  phone?: string; // Số điện thoại
+  address?: string; // Địa chỉ
+  companyName?: string; // Tên công ty (cho recruiter)
 };
 
 // Dữ liệu giả
@@ -67,6 +70,8 @@ const mockUserData: User[] = [
     role: "candidate",
     status: "active",
     dateJoined: "2024-01-15",
+    phone: "0123456789",
+    address: "123 Nguyễn Huệ, Q1, TP.HCM",
   },
   {
     id: "U002",
@@ -75,6 +80,9 @@ const mockUserData: User[] = [
     role: "recruiter",
     status: "active",
     dateJoined: "2024-02-10",
+    phone: "0987654321",
+    address: "456 Lê Lợi, Q3, TP.HCM",
+    companyName: "FPT Corporation",
   },
   {
     id: "U003",
@@ -83,6 +91,8 @@ const mockUserData: User[] = [
     role: "candidate",
     status: "deactivated",
     dateJoined: "2023-12-05",
+    phone: "0369852147",
+    address: "789 Trần Hưng Đạo, Q5, TP.HCM",
   },
   {
     id: "U004",
@@ -91,6 +101,9 @@ const mockUserData: User[] = [
     role: "recruiter",
     status: "deactivated",
     dateJoined: "2023-11-20",
+    phone: "0741852963",
+    address: "321 Cách Mạng Tháng 8, Q10, TP.HCM",
+    companyName: "Viettel Group",
   },
   {
     id: "U005",
@@ -99,6 +112,8 @@ const mockUserData: User[] = [
     role: "candidate",
     status: "active",
     dateJoined: "2024-05-01",
+    phone: "0521478963",
+    address: "654 Võ Văn Tần, Q3, TP.HCM",
   },
 ];
 
@@ -135,7 +150,7 @@ export function ManageUserPage() {
       <h1 className="text-3xl font-bold tracking-tight">Manage Users</h1>
 
       {/* ------------------------------------------- */}
-      {/* PHẦN ĐIỀU KHIỂN (SEARCH VÀ FILTER)          */}
+      {/* PHẦN ĐIỀU KHIỂN (SEARCH, FILTER VÀ CREATE)   */}
       {/* ------------------------------------------- */}
       <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
         {/* Thanh Search (bên trái) - Theo Email */}
@@ -152,18 +167,29 @@ export function ManageUserPage() {
           </InputGroup>
         </div>
 
-        {/* Combobox Filter (bên phải) */}
-        <Select value={filterValue} onValueChange={setFilterValue}>
-          <SelectTrigger className="w-full md:w-[240px]">
-            <SelectValue placeholder="Lọc theo tài khoản" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả tài khoản</SelectItem>
-            <SelectItem value="candidate">Candidate (Active)</SelectItem>
-            <SelectItem value="recruiter">Recruiter (Active)</SelectItem>
-            <SelectItem value="deactivated">Tài khoản Deactive</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Combobox Filter và Create Button (bên phải) */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Select value={filterValue} onValueChange={setFilterValue}>
+            <SelectTrigger className="w-full sm:w-[240px]">
+              <SelectValue placeholder="Lọc theo tài khoản" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả tài khoản</SelectItem>
+              <SelectItem value="candidate">Candidate (Active)</SelectItem>
+              <SelectItem value="recruiter">Recruiter (Active)</SelectItem>
+              <SelectItem value="deactivated">Tài khoản Deactive</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Nút Create User */}
+          <Button
+            className="w-full sm:w-auto"
+            onClick={() => (window.location.href = "/admin/manage-user/create")}
+          >
+            <Plus className="mr-2 size-4" />
+            Tạo người dùng
+          </Button>
+        </div>
       </div>
 
       {/* ------------------------------------------- */}
@@ -218,7 +244,7 @@ export function ManageUserPage() {
                     <UserStatusBadge status={user.status} />
                   </TableCell>
                   <TableCell className="text-right">
-                    {/* Dùng DropdownMenu cho các Actions */}
+                    {/* Dùng Buttons cho các Actions */}
                     <UserActions userId={user.id} />
                   </TableCell>
                 </TableRow>
@@ -255,49 +281,143 @@ function UserStatusBadge({ status }: { status: UserStatus }) {
 }
 
 /**
- * Component hiển thị DropdownMenu cho các hành động (View, Update, Delete)
+ * Component hiển thị Buttons cho các hành động (View, Update, Delete)
  */
 function UserActions({ userId }: { userId: string }) {
+  const [isViewDialogOpen, setIsViewDialogOpen] = React.useState(false);
+
   // TODO: Bạn sẽ viết logic thật cho các hàm này
-  const handleView = () => {
-    alert(`Đang xem người dùng: ${userId}`);
-    // Ví dụ: navigate(`/admin/manage-user/view/${userId}`)
-  };
   const handleUpdate = () => {
-    alert(`Chỉnh sửa người dùng: ${userId}`);
-    // Ví dụ: mở một Dialog/Modal để chỉnh sửa vai trò, trạng thái
+    // Navigate to edit page
+    window.location.href = `/admin/manage-user/edit/${userId}`;
   };
   const handleDelete = () => {
     // Nên có một AlertDialog ở đây để xác nhận
     alert(`Xóa người dùng: ${userId}`);
   };
 
+  // Tìm user data để hiển thị trong dialog
+  const userData = mockUserData.find((user) => user.id === userId);
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        {/* size="icon-sm" từ file button.tsx của bạn */}
-        <Button variant="ghost" size="icon-sm">
-          <span className="sr-only">Open menu</span>
-          <MoreHorizontalIcon className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-        <DropdownMenuItem onClick={handleView}>
-          <Eye className="mr-2 size-4" />
-          View Details
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleUpdate}>
-          <Pencil className="mr-2 size-4" />
-          Update User
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        {/* Dùng data-variant="destructive" từ file dropdown-menu.tsx */}
-        <DropdownMenuItem data-variant="destructive" onClick={handleDelete}>
-          <Trash2 className="mr-2 size-4" />
-          Delete User
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex items-center gap-1">
+      {/* Nút View - luôn hiển thị */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <Eye className="size-4" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Chi tiết người dùng</DialogTitle>
+            <DialogDescription>
+              Thông tin chi tiết về người dùng
+            </DialogDescription>
+          </DialogHeader>
+          {userData && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Họ tên
+                  </label>
+                  <p className="text-sm">{userData.fullName}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Email
+                  </label>
+                  <p className="text-sm">{userData.email}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Số điện thoại
+                  </label>
+                  <p className="text-sm">{userData.phone || "Chưa cập nhật"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Vai trò
+                  </label>
+                  <div className="mt-1">
+                    <Badge
+                      variant={
+                        userData.role === "recruiter" ? "default" : "secondary"
+                      }
+                      className="capitalize"
+                    >
+                      {userData.role === "recruiter" ? (
+                        <UserRoundCog className="mr-1.5 size-3.5" />
+                      ) : (
+                        <User className="mr-1.5 size-3.5" />
+                      )}
+                      {userData.role}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Trạng thái
+                  </label>
+                  <div className="mt-1">
+                    <UserStatusBadge status={userData.status} />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Ngày tham gia
+                  </label>
+                  <p className="text-sm">{userData.dateJoined}</p>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Địa chỉ
+                </label>
+                <p className="text-sm mt-1">
+                  {userData.address || "Chưa cập nhật"}
+                </p>
+              </div>
+              {userData.companyName && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Công ty
+                  </label>
+                  <p className="text-sm mt-1">{userData.companyName}</p>
+                </div>
+              )}
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsViewDialogOpen(false)}
+                >
+                  Đóng
+                </Button>
+                <Button onClick={handleUpdate}>
+                  <Pencil className="mr-2 size-4" />
+                  Chỉnh sửa
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Nút Edit - luôn hiển thị */}
+      <Button variant="ghost" size="sm" onClick={handleUpdate}>
+        <Pencil className="size-4" />
+      </Button>
+
+      {/* Nút Delete - luôn hiển thị */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleDelete}
+        className="text-red-600 hover:text-red-700"
+      >
+        <Trash2 className="size-4" />
+      </Button>
+    </div>
   );
 }
