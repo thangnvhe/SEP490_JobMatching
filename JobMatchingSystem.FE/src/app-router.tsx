@@ -2,12 +2,15 @@ import { Routes, Route } from 'react-router-dom';
 import App from './App';
 
 // Import các component trang
-import HomePage from './pages/HomePage';
+import HomePage from './pages/client-site/HomePage';
 import AboutPage from './pages/AboutPage';
 import NotFoundPage from './pages/NotFoundPage';
 
-// Admin Layout và pages
+// Layouts
+import { ClientLayout } from './components/layout/Client/ClientLayout';
 import { AdminLayout } from './components/layout/Admin/AdminLayout';
+
+// Admin pages
 import DashboardPage from './pages/admin-site/Dashboard/DashboardPage';
 import { ManageCompanyPage } from './pages/admin-site/ManageCompany/ViewCompanyList';
 import { ManageUserPage } from './pages/admin-site/ManageUser/ViewUserList';
@@ -19,10 +22,12 @@ import Hehe from './pages/admin-site/Test/hehe';
 const AppRouter: React.FC = () => {
   return (
     <Routes>
-      {/* Client routes */}
+      {/* Client routes with ClientLayout */}
       <Route path="/" element={<App />}>
-        <Route index element={<HomePage />} />
-        <Route path="about" element={<AboutPage />} />
+        <Route element={<ClientLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="about" element={<AboutPage />} />
+        </Route>
       </Route>
 
       {/* Admin routes */}
