@@ -20,6 +20,8 @@ import Hehe from './pages/admin-site/Test/hehe';
 import { CreateEditUserPage } from './pages/admin-site/ManageUser/CreateEditUser';
 import { CreateEditJobPage } from './pages/admin-site/ManageJob/CreateEditJob';
 import { CreateEditCompanyPage } from './pages/admin-site/ManageCompany/CreateEditCompany';
+import { RecruiterLayout } from './components/layout/recruiter/RecruiterLayout';
+import RecruiterDashboard from './pages/recruiter-site/Dashboard';
 
 // Component chính để render router
 const AppRouter: React.FC = () => {
@@ -47,6 +49,11 @@ const AppRouter: React.FC = () => {
         <Route path="manage-company/create" element={<CreateEditCompanyPage />} />
         <Route path="manage-company/edit/:id" element={<CreateEditCompanyPage />} />
         <Route path="test" element={<Hehe />} />
+      </Route>
+
+      {/* Recruiter routes */}
+      <Route path="/recruiter" element={<RecruiterLayout />}>
+        <Route index element={<RecruiterDashboard />} />
       </Route>
 
       {/* NotFound route - catch all */}
