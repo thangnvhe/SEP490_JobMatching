@@ -9,17 +9,41 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { Menu, Mountain } from "lucide-react";
+import { Menu, Mountain, User, LogOut } from "lucide-react";
 import React from "react";
 import { Link } from "react-router-dom";
 import { LoginDialog } from "@/pages/client-site/auth/LoginDialog";
 import { RegisterDialog } from "@/pages/client-site/auth/RegisterDialog";
 import { ForgotPasswordDialog } from "@/pages/client-site/auth/ForgotPasswordDialog";
+import { useSelector } from "react-redux";
+import { useAppDispatch } from "@/store";
+import type { RootState } from "@/store";
+import { logout } from "@/store/slices/authSlice";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function ClientHeader() {
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, user, isLoading } = useSelector((state: RootState) => state.auth);
+  
   const [loginOpen, setLoginOpen] = React.useState(false);
   const [registerOpen, setRegisterOpen] = React.useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = React.useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await dispatch(logout()).unwrap();
+      toast.success("Đăng xuất thành công!");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
@@ -107,13 +131,35 @@ export function ClientHeader() {
             {/* Can add a search bar here if needed */}
           </div>
           <nav className="hidden md:flex items-center space-x-3">
-            <Button
-              variant="ghost"
-              className="text-sm"
-              onClick={() => setLoginOpen(true)}
-            >
-              Login / Register
-            </Button>
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-2">
+                    <User className="h-4 w-4" />
+                    <span>{user?.firstName || user?.username || "User"}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} disabled={isLoading}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>{isLoading ? "Đang đăng xuất..." : "Logout"}</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                variant="ghost"
+                className="text-sm"
+                onClick={() => setLoginOpen(true)}
+              >
+                Login / Register
+              </Button>
+            )}
             <Button className="text-sm">Job Post</Button>
           </nav>
         </div>
@@ -142,13 +188,30 @@ export function ClientHeader() {
               <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary">
                 Candidates
               </Link>
-              <Button
-                variant="ghost"
-                className="w-fit text-sm"
-                onClick={() => setLoginOpen(true)}
-              >
-                Login / Register
-              </Button>
+              {isAuthenticated ? (
+                <>
+                  <div className="flex items-center space-x-2 text-sm">
+                    <User className="h-4 w-4" />
+                    <span>{user?.firstName || user?.username || "User"}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    className="w-fit text-sm"
+                    onClick={handleLogout}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Đang đăng xuất..." : "Logout"}
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="ghost"
+                  className="w-fit text-sm"
+                  onClick={() => setLoginOpen(true)}
+                >
+                  Login / Register
+                </Button>
+              )}
               <Button className="w-fit text-sm">Job Post</Button>
             </div>
           </SheetContent>

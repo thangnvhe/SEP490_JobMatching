@@ -10,6 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { useSelector } from "react-redux";
+import { useAppDispatch } from "@/store";
+import type { RootState } from "@/store";
+import { register, clearError } from "@/store/slices/authSlice";
+import { toast } from "sonner";
 
 interface RegisterDialogProps {
   isOpen: boolean;
@@ -18,6 +23,9 @@ interface RegisterDialogProps {
 }
 
 export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDialogProps) {
+  const dispatch = useAppDispatch();
+  const { isLoading, error } = useSelector((state: RootState) => state.auth);
+  
   const [registerForm, setRegisterForm] = React.useState({
     firstName: "",
     lastName: "",
@@ -56,10 +64,18 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
         confirmPassword: "",
       });
       setAgreeToTerms(false);
+      dispatch(clearError());
     }
-  }, [isOpen]);
+  }, [isOpen, dispatch]);
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  // Show error toast when there's an error
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
@@ -123,11 +139,24 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
     setErrors(newErrors);
 
     if (!hasError) {
-      // Handle register logic here
-      console.log("Register attempt:", { ...registerForm, agreeToTerms });
-      // You can integrate with your auth system here
-      // For now, just close the dialog
-      onOpenChange(false);
+      try {
+        const result = await dispatch(register({
+          firstName: registerForm.firstName,
+          lastName: registerForm.lastName,
+          username: registerForm.username,
+          email: registerForm.email,
+          password: registerForm.password,
+          confirmPassword: registerForm.confirmPassword
+        })).unwrap();
+        
+        if (result) {
+          toast.success("Đăng ký thành công!");
+          onOpenChange(false);
+        }
+      } catch (error) {
+        // Error is handled by the slice and shown via toast
+        console.error("Register error:", error);
+      }
     }
   };
 
@@ -295,8 +324,9 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
             <Button
               type="submit"
               className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              disabled={isLoading}
             >
-              Create Account
+              {isLoading ? "Đang đăng ký..." : "Create Account"}
             </Button>
           </form>
         </div>

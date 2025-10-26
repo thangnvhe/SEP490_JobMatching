@@ -2,11 +2,13 @@ import { configureStore } from '@reduxjs/toolkit';
 import { useDispatch, useSelector } from 'react-redux';
 import type { TypedUseSelectorHook } from 'react-redux';
 import dummyReducer from './dummySlice';
+import authReducer from './slices/authSlice';
 
 export const store = configureStore({
   reducer: {
     // các reducer ở đây
     dummy: dummyReducer,
+    auth: authReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

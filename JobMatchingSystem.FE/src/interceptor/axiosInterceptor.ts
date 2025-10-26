@@ -1,8 +1,11 @@
 import axios, { AxiosError } from 'axios';
 import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import { TokenStorage } from '@/utils/tokenStorage';
+import { authService } from '@/services/authService';
 
 // Cấu hình API base URL - bạn có thể thay đổi theo môi trường
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "https://localhost:7044/api";
 
 const axiosInstance = axios.create({
     baseURL: API_BASE_URL,
@@ -30,56 +33,59 @@ const notifyRefreshSubscribers = (token: string) => {
     refreshSubscribers = [];
 };
 
-// Hàm refresh token
-const refreshAccessToken = async (): Promise<string> => {
-    const isLocalStorage = localStorage.getItem('accessToken');
-    const oldRefreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
-    
-    const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, { 
-        refreshToken: oldRefreshToken 
-    });
-    
-    const { accessToken, refreshToken } = response.data.data;
-
-    if (isLocalStorage) {
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-    } else {
-        sessionStorage.setItem('accessToken', accessToken);
-        sessionStorage.setItem('refreshToken', refreshToken);
-    }
-    
-    return accessToken;
-};
-
-// ====== REQUEST INTERCEPTOR ======
+// Request interceptor - Thêm token vào header
 axiosInstance.interceptors.request.use(
-    function (config) {
-        // Thêm token vào header nếu có
-        if (!config.headers.Authorization) {
-            const accessToken = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-            if (accessToken) {
-                config.headers.Authorization = `Bearer ${accessToken}`;
-            }
+    (config: InternalAxiosRequestConfig) => {
+        const token = TokenStorage.getAccessToken();
+        
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Log request (chỉ trong development)
+        if (import.meta.env.DEV) {
+            console.log(`🚀 Request: ${config.method?.toUpperCase()} ${config.url}`, {
+                params: config.params,
+                data: config.data,
+            });
+        }
+
         return config;
     },
-    function (error: AxiosError) {
+    (error: AxiosError) => {
+        console.error('❌ Request Error:', error);
         return Promise.reject(error);
     }
 );
 
-// ====== RESPONSE INTERCEPTOR ======
+// Response interceptor - Xử lý refresh token và errors
 axiosInstance.interceptors.response.use(
-    function (response: AxiosResponse) {
+    (response: AxiosResponse) => {
+        // Log response (chỉ trong development)
+        if (import.meta.env.DEV) {
+            console.log(`✅ Response: ${response.config.method?.toUpperCase()} ${response.config.url}`, {
+                status: response.status,
+                data: response.data,
+            });
+        }
+
         return response;
     },
-    async function (error: AxiosError) {
+    async (error: AxiosError) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-        // Xử lý lỗi 401 (Unauthorized) - Token hết hạn
+        // Log error (chỉ trong development)
+        if (import.meta.env.DEV) {
+            console.error(`❌ Response Error: ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}`, {
+                status: error.response?.status,
+                data: error.response?.data,
+            });
+        }
+
+        // Nếu token hết hạn (401) và chưa retry
         if (error.response?.status === 401 && !originalRequest._retry) {
             if (isRefreshing) {
+                // Nếu đang refresh token, thêm request vào hàng đợi
                 return new Promise((resolve) => {
                     addRefreshSubscriber((token: string) => {
                         if (originalRequest.headers) {
@@ -94,42 +100,59 @@ axiosInstance.interceptors.response.use(
             isRefreshing = true;
 
             try {
-                const newAccessToken = await refreshAccessToken();
+                // Gọi refresh token
+                const response = await authService.refreshToken();
                 
-                if (newAccessToken) {
-                    isRefreshing = false;
-                    notifyRefreshSubscribers(newAccessToken);
-
+                if (response.isSuccess && response.result?.token) {
+                    const newToken = response.result.token;
+                    
+                    // Cập nhật token trong request hiện tại
                     if (originalRequest.headers) {
-                        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                        originalRequest.headers.Authorization = `Bearer ${newToken}`;
                     }
+
+                    // Thông báo cho các request đang chờ
+                    notifyRefreshSubscribers(newToken);
+
+                    // Retry request gốc
                     return axiosInstance(originalRequest);
                 } else {
-                    throw new Error('Không thể refresh token');
+                    throw new Error('Refresh token failed');
                 }
             } catch (refreshError) {
-                isRefreshing = false;
-                refreshSubscribers = [];
+                // Refresh token thất bại, clear storage và redirect to login
+                TokenStorage.clearAll();
+                
+                // Có thể dispatch logout action hoặc redirect
+                window.location.href = '/login';
+                
                 return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
             }
         }
 
-        // Xử lý các lỗi khác (im lặng - không hiển thị toast)
-        switch (error.response?.status) {
-            case 400:
-            case 403:
-            case 404:
-            case 422:
-            case 429:
-            case 500:
-            case 502:
-            case 503:
-            default:
-                // Im lặng: không hiển thị toast hay redirect
-                break;
+        // Xử lý các lỗi khác
+        let errorMessage = 'Có lỗi xảy ra';
+        let errorCode = error.response?.status || 500;
+
+        if (error.response?.data) {
+            const errorData = error.response.data as any;
+            errorMessage = errorData.message || errorData.title || errorMessage;
+        } else if (error.request) {
+            errorMessage = 'Không thể kết nối đến server';
+            errorCode = 0;
+        } else {
+            errorMessage = error.message || errorMessage;
         }
 
-        return Promise.reject(error);
+        // Tạo error object với thông tin chi tiết
+        const apiError = new Error(errorMessage) as any;
+        apiError.status = errorCode;
+        apiError.response = error.response;
+        apiError.request = error.request;
+
+        return Promise.reject(apiError);
     }
 );
 
