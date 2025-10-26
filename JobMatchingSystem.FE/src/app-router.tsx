@@ -5,18 +5,12 @@ import App from './App';
 import HomePage from './pages/client-site/HomePage';
 import AboutPage from './pages/AboutPage';
 import NotFoundPage from './pages/NotFoundPage';
-
-// Auth pages
-import LoginPage from './pages/auth/LoginPage';
-import UnauthorizedPage from './pages/auth/UnauthorizedPage';
-
 // Guards
 import { AdminGuard, RecruiterGuard, CandidateGuard } from './guards/AuthGuard';
 
 // Layouts
+import { DashboardLayout } from './components/layout/DashboardLayout';
 import { ClientLayout } from './components/layout/Client/ClientLayout';
-import { AdminLayout } from './components/layout/Admin/AdminLayout';
-
 // Admin pages
 import DashboardPage from './pages/admin-site/Dashboard/DashboardPage';
 import { ManageCompanyPage } from './pages/admin-site/ManageCompany/ViewCompanyList';
@@ -27,20 +21,14 @@ import Hehe from './pages/admin-site/Test/hehe';
 import { CreateEditUserPage } from './pages/admin-site/ManageUser/CreateEditUser';
 import { CreateEditJobPage } from './pages/admin-site/ManageJob/CreateEditJob';
 import { CreateEditCompanyPage } from './pages/admin-site/ManageCompany/CreateEditCompany';
-import { RecruiterLayout } from './components/layout/recruiter/RecruiterLayout';
-import RecruiterDashboard from './pages/recruiter-site/Dashboard';
-import { CandidateLayout } from './components/layout/candidate/CandidateLayout';
-import CandidateDashboard from './pages/candidate-site/Dashboard';
-import FavouriteJobsPage from './pages/candidate-site/FavouriteJobs';
+import RecruiterDashboard from './pages/client-site/recruiter/Dashboard';
+import CandidateDashboard from './pages/client-site/candidate/Dashboard';
+import FavouriteJobsPage from './pages/client-site/candidate/FavouriteJobs';
 
 // Component chính để render router
 const AppRouter: React.FC = () => {
   return (
     <Routes>
-      {/* Public routes */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/unauthorized" element={<UnauthorizedPage />} />
-
       {/* Client routes with ClientLayout */}
       <Route path="/" element={<App />}>
         <Route element={<ClientLayout />}>
@@ -53,9 +41,9 @@ const AppRouter: React.FC = () => {
       <Route
         path="/admin"
         element={
-          <AdminGuard>
-            <AdminLayout />
-          </AdminGuard>
+          // <AdminGuard>
+            <DashboardLayout />
+          // </AdminGuard>
         }
       >
         <Route index element={<DashboardPage />} />
@@ -76,9 +64,9 @@ const AppRouter: React.FC = () => {
       <Route
         path="/recruiter"
         element={
-          <RecruiterGuard>
-            <RecruiterLayout />
-          </RecruiterGuard>
+          // <RecruiterGuard>
+            <DashboardLayout />
+          // </RecruiterGuard>
         }
       >
         <Route index element={<RecruiterDashboard />} />
@@ -88,9 +76,9 @@ const AppRouter: React.FC = () => {
       <Route
         path="/candidate"
         element={
-          <CandidateGuard>
-            <CandidateLayout />
-          </CandidateGuard>
+          // <CandidateGuard>
+            <DashboardLayout />
+          // </CandidateGuard>
         }
       >
         <Route index element={<CandidateDashboard />} />

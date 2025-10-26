@@ -34,11 +34,11 @@ export function LoginDialog({
   const { isLoading, error } = useSelector((state: RootState) => state.auth);
   
   const [loginForm, setLoginForm] = React.useState({
-    username: "",
+    email: "",
     password: "",
   });
   const [errors, setErrors] = React.useState({
-    username: "",
+    email: "",
     password: "",
   });
   const [rememberMe, setRememberMe] = React.useState(false);
@@ -46,8 +46,8 @@ export function LoginDialog({
   // Reset form when dialog closes
   useEffect(() => {
     if (!isOpen) {
-      setLoginForm({ username: "", password: "" });
-      setErrors({ username: "", password: "" });
+      setLoginForm({ email: "", password: "" });
+      setErrors({ email: "", password: "" });
       setRememberMe(false);
       dispatch(clearError());
     }
@@ -64,11 +64,11 @@ export function LoginDialog({
     e.preventDefault();
 
     // Validation
-    const newErrors = { username: "", password: "" };
+    const newErrors = { email: "", password: "" };
     let hasError = false;
 
-    if (!loginForm.username) {
-      newErrors.username = "Username is required";
+    if (!loginForm.email) {
+      newErrors.email = "Email is required";
       hasError = true;
     }
 
@@ -85,7 +85,7 @@ export function LoginDialog({
     if (!hasError) {
       try {
         const result = await dispatch(login({
-          username: loginForm.username,
+          email: loginForm.email,
           password: loginForm.password,
           rememberMe
         })).unwrap();
@@ -113,23 +113,23 @@ export function LoginDialog({
 
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-sm font-medium">
-                Username
+              <Label htmlFor="email" className="text-sm font-medium">
+                Email
               </Label>
               <Input
-                id="username"
+                id="email"
                 type="text"
-                placeholder="Username"
-                value={loginForm.username}
+                placeholder="Email"
+                value={loginForm.email}
                 onChange={(e) =>
-                  setLoginForm({ ...loginForm, username: e.target.value })
+                  setLoginForm({ ...loginForm, email: e.target.value })
                 }
                 className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${
-                  errors.username ? "border-red-500" : ""
+                  errors.email ? "border-red-500" : ""
                 }`}
               />
-              {errors.username && (
-                <p className="text-sm text-red-500">{errors.username}</p>
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email}</p>
               )}
             </div>
 
