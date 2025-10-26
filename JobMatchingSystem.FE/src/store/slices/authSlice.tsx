@@ -1,12 +1,9 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import { authService } from '@/services/authService';
+import { authService } from '@/services/auth.service';
 import type { 
-  LoginRequest, 
-  RegisterRequest, 
-  ForgotPasswordRequest, 
-  ResetPasswordRequest, 
+  UserLogin, 
   User 
-} from '@/models';
+} from '@/models/user';
 import { TokenStorage } from '@/utils/tokenStorage';
 import { JWTUtils } from '@/utils/jwtUtils';
 
@@ -31,11 +28,15 @@ const initialState: AuthState = {
 // Async thunks
 export const login = createAsyncThunk(
   'auth/login',
-  async (loginData: LoginRequest, { rejectWithValue }) => {
+  async (loginData: UserLogin, { rejectWithValue }) => {
     try {
       const response = await authService.login(loginData);
       if (response.isSuccess) {
-        return response.result;
+        // Return the token và user sẽ được get từ TokenStorage
+        return {
+          token: response.result,
+          user: TokenStorage.getUser()
+        };
       } else {
         return rejectWithValue(response.errorMessages?.[0] || 'Đăng nhập thất bại');
       }
@@ -45,21 +46,21 @@ export const login = createAsyncThunk(
   }
 );
 
-export const register = createAsyncThunk(
-  'auth/register',
-  async (registerData: RegisterRequest, { rejectWithValue }) => {
-    try {
-      const response = await authService.register(registerData);
-      if (response.isSuccess) {
-        return response.result;
-      } else {
-        return rejectWithValue(response.errorMessages?.[0] || 'Đăng ký thất bại');
-      }
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Đăng ký thất bại');
-    }
-  }
-);
+// export const register = createAsyncThunk(
+//   'auth/register',
+//   async (registerData: RegisterRequest, { rejectWithValue }) => {
+//     try {
+//       const response = await authService.register(registerData);
+//       if (response.isSuccess) {
+//         return response.result;
+//       } else {
+//         return rejectWithValue(response.errorMessages?.[0] || 'Đăng ký thất bại');
+//       }
+//     } catch (error: any) {
+//       return rejectWithValue(error.message || 'Đăng ký thất bại');
+//     }
+//   }
+// );
 
 export const logout = createAsyncThunk(
   'auth/logout',
@@ -69,7 +70,7 @@ export const logout = createAsyncThunk(
       if (response.isSuccess) {
         return null;
       } else {
-        return rejectWithValue(response.result || 'Đăng xuất thất bại');
+        return rejectWithValue(response.errorMessages?.[0] || 'Đăng xuất thất bại');
       }
     } catch (error: any) {
       // Even if logout fails, we should clear local state
@@ -90,37 +91,37 @@ export const getCurrentUser = createAsyncThunk(
   }
 );
 
-export const forgotPassword = createAsyncThunk(
-  'auth/forgotPassword',
-  async (forgotPasswordData: ForgotPasswordRequest, { rejectWithValue }) => {
-    try {
-      const response = await authService.forgotPassword(forgotPasswordData);
-      if (response.isSuccess) {
-        return response.result;
-      } else {
-        return rejectWithValue(response.errorMessages?.[0] || 'Gửi email đặt lại mật khẩu thất bại');
-      }
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Gửi email đặt lại mật khẩu thất bại');
-    }
-  }
-);
+// export const forgotPassword = createAsyncThunk(
+//   'auth/forgotPassword',
+//   async (forgotPasswordData: ForgotPasswordRequest, { rejectWithValue }) => {
+//     try {
+//       const response = await authService.forgotPassword(forgotPasswordData);
+//       if (response.isSuccess) {
+//         return response.result;
+//       } else {
+//         return rejectWithValue(response.errorMessages?.[0] || 'Gửi email đặt lại mật khẩu thất bại');
+//       }
+//     } catch (error: any) {
+//       return rejectWithValue(error.message || 'Gửi email đặt lại mật khẩu thất bại');
+//     }
+//   }
+// );
 
-export const resetPassword = createAsyncThunk(
-  'auth/resetPassword',
-  async (resetPasswordData: ResetPasswordRequest, { rejectWithValue }) => {
-    try {
-      const response = await authService.resetPassword(resetPasswordData);
-      if (response.isSuccess) {
-        return response.result;
-      } else {
-        return rejectWithValue(response.errorMessages?.[0] || 'Đặt lại mật khẩu thất bại');
-      }
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Đặt lại mật khẩu thất bại');
-    }
-  }
-);
+// export const resetPassword = createAsyncThunk(
+//   'auth/resetPassword',
+//   async (resetPasswordData: ResetPasswordRequest, { rejectWithValue }) => {
+//     try {
+//       const response = await authService.resetPassword(resetPasswordData);
+//       if (response.isSuccess) {
+//         return response.result;
+//       } else {
+//         return rejectWithValue(response.errorMessages?.[0] || 'Đặt lại mật khẩu thất bại');
+//       }
+//     } catch (error: any) {
+//       return rejectWithValue(error.message || 'Đặt lại mật khẩu thất bại');
+//     }
+//   }
+// );
 
 export const refreshToken = createAsyncThunk(
   'auth/refreshToken',
@@ -128,7 +129,10 @@ export const refreshToken = createAsyncThunk(
     try {
       const response = await authService.refreshToken();
       if (response.isSuccess) {
-        return response.result;
+        return {
+          token: response.result,
+          user: TokenStorage.getUser()
+        };
       } else {
         return rejectWithValue(response.errorMessages?.[0] || 'Refresh token thất bại');
       }
@@ -182,11 +186,11 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(login.fulfilled, (state) => {
+      .addCase(login.fulfilled, (state, action) => {
         state.isLoading = false;
         state.error = null;
         state.isAuthenticated = true;
-        state.user = TokenStorage.getUser(); // Get user from token
+        state.user = action.payload.user; // Get user from payload
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
@@ -195,24 +199,24 @@ const authSlice = createSlice({
         state.user = null;
       });
 
-    // Register
-    builder
-      .addCase(register.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(register.fulfilled, (state) => {
-        state.isLoading = false;
-        state.error = null;
-        state.isAuthenticated = true;
-        state.user = TokenStorage.getUser(); // Get user from token
-      })
-      .addCase(register.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
-        state.isAuthenticated = false;
-        state.user = null;
-      });
+    // // Register
+    // builder
+    //   .addCase(register.pending, (state) => {
+    //     state.isLoading = true;
+    //     state.error = null;
+    //   })
+    //   .addCase(register.fulfilled, (state) => {
+    //     state.isLoading = false;
+    //     state.error = null;
+    //     state.isAuthenticated = true;
+    //     state.user = TokenStorage.getUser(); // Get user from token
+    //   })
+    //   .addCase(register.rejected, (state, action) => {
+    //     state.isLoading = false;
+    //     state.error = action.payload as string;
+    //     state.isAuthenticated = false;
+    //     state.user = null;
+    //   });
 
     // Logout
     builder
@@ -251,35 +255,35 @@ const authSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // Forgot password
-    builder
-      .addCase(forgotPassword.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(forgotPassword.fulfilled, (state) => {
-        state.isLoading = false;
-        state.error = null;
-      })
-      .addCase(forgotPassword.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
-      });
+    // // Forgot password
+    // builder
+    //   .addCase(forgotPassword.pending, (state) => {
+    //     state.isLoading = true;
+    //     state.error = null;
+    //   })
+    //   .addCase(forgotPassword.fulfilled, (state) => {
+    //     state.isLoading = false;
+    //     state.error = null;
+    //   })
+    //   .addCase(forgotPassword.rejected, (state, action) => {
+    //     state.isLoading = false;
+    //     state.error = action.payload as string;
+    //   });
 
-    // Reset password
-    builder
-      .addCase(resetPassword.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(resetPassword.fulfilled, (state) => {
-        state.isLoading = false;
-        state.error = null;
-      })
-      .addCase(resetPassword.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
-      });
+    // // Reset password
+    // builder
+    //   .addCase(resetPassword.pending, (state) => {
+    //     state.isLoading = true;
+    //     state.error = null;
+    //   })
+    //   .addCase(resetPassword.fulfilled, (state) => {
+    //     state.isLoading = false;
+    //     state.error = null;
+    //   })
+    //   .addCase(resetPassword.rejected, (state, action) => {
+    //     state.isLoading = false;
+    //     state.error = action.payload as string;
+    //   });
 
     // Refresh token
     builder
@@ -287,10 +291,10 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(refreshToken.fulfilled, (state) => {
+      .addCase(refreshToken.fulfilled, (state, action) => {
         state.isLoading = false;
         state.error = null;
-        state.user = TokenStorage.getUser(); // Update user from refreshed token
+        state.user = action.payload.user; // Update user from payload
       })
       .addCase(refreshToken.rejected, (state, action) => {
         state.isLoading = false;

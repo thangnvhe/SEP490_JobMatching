@@ -2,11 +2,11 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAppSelector } from '@/store';
 import { TokenStorage } from '@/utils/tokenStorage';
-import type { UserRoleType } from '@/models';
+import type { UserRole } from '@/models/user';
 
 interface AuthGuardProps {
   children: React.ReactNode;
-  requiredRoles?: UserRoleType[];
+  requiredRoles?: UserRole[];
   redirectTo?: string;
 }
 
@@ -25,7 +25,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
 
   // Check role permissions if required
   if (requiredRoles && requiredRoles.length > 0) {
-    if (!user || !requiredRoles.includes(user.role as UserRoleType)) {
+    if (!user || !requiredRoles.includes(user.role as UserRole)) {
       return <Navigate to="/unauthorized" replace />;
     }
   }

@@ -1,4 +1,4 @@
-import type { User } from '@/models';
+import type { User } from '@/models/user';
 
 // JWT token utilities
 export class JWTUtils {
@@ -52,8 +52,7 @@ export class JWTUtils {
         id: decoded.sub || decoded.userId || decoded.id,
         username: decoded.username || decoded.unique_name,
         email: decoded.email,
-        firstName: decoded.given_name || decoded.firstName,
-        lastName: decoded.family_name || decoded.lastName,
+        fullName: decoded.given_name || decoded.fullName,
         role: decoded.role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'],
       };
     } catch (error) {

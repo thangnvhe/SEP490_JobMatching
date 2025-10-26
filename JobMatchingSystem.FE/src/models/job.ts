@@ -5,8 +5,10 @@ export interface Job {
     title: string;
     description: string;
     requirements: string;
+    benefits: string;
     location: string;
-    salary: number;
+    salary_min: number;
+    salary_max: number;
     jobType: string;
     status: JobStatus;
     companyId: string;

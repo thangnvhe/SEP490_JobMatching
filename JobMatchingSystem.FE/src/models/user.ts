@@ -2,16 +2,22 @@ export interface User {
     id: string;
     username: string;
     email: string;
-    firstName: string;
-    lastName: string;
+    fullName: string;
     role: UserRole;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
 }
 
-export type UserRole = {
-    ADMIN: "admin";
-    RECRUITER: "recruiter";
-    CANDIDATE: "candidate";
-}   
+export interface UserLogin {
+    email: string;
+    password: string;
+    rememberMe?: boolean;
+}
+
+export type UserRole =
+  | "admin"
+  | "recruiter"
+  | "candidate"
+  | "staff"
+  | "SuperRecruiter";

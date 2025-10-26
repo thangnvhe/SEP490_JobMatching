@@ -136,7 +136,7 @@ export function ClientHeader() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center space-x-2">
                     <User className="h-4 w-4" />
-                    <span>{user?.firstName || user?.username || "User"}</span>
+                    <span>{user?.fullName || user?.username || "User"}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -192,7 +192,7 @@ export function ClientHeader() {
                 <>
                   <div className="flex items-center space-x-2 text-sm">
                     <User className="h-4 w-4" />
-                    <span>{user?.firstName || user?.username || "User"}</span>
+                    <span>{user?.fullName || user?.username || "User"}</span>
                   </div>
                   <Button
                     variant="ghost"

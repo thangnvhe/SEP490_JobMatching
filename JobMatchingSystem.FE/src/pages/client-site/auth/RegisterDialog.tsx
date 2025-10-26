@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "@/store";
 import type { RootState } from "@/store";
-import { register, clearError } from "@/store/slices/authSlice";
+import { clearError } from "@/store/slices/authSlice";
 import { toast } from "sonner";
 
 interface RegisterDialogProps {
@@ -140,19 +140,19 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
 
     if (!hasError) {
       try {
-        const result = await dispatch(register({
-          firstName: registerForm.firstName,
-          lastName: registerForm.lastName,
-          username: registerForm.username,
-          email: registerForm.email,
-          password: registerForm.password,
-          confirmPassword: registerForm.confirmPassword
-        })).unwrap();
+        // const result = await dispatch(register({
+        //   firstName: registerForm.firstName,
+        //   lastName: registerForm.lastName,
+        //   username: registerForm.username,
+        //   email: registerForm.email,
+        //   password: registerForm.password,
+        //   confirmPassword: registerForm.confirmPassword
+        // })).unwrap();
         
-        if (result) {
-          toast.success("Đăng ký thành công!");
-          onOpenChange(false);
-        }
+        // if (result) {
+        //   toast.success("Đăng ký thành công!");
+        //   onOpenChange(false);
+        // }
       } catch (error) {
         // Error is handled by the slice and shown via toast
         console.error("Register error:", error);

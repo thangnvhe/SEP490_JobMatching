@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "@/store";
 import type { RootState } from "@/store";
-import { forgotPassword, clearError } from "@/store/slices/authSlice";
+import { clearError } from "@/store/slices/authSlice";
 import { toast } from "sonner";
 
 interface ForgotPasswordDialogProps {
@@ -61,7 +61,7 @@ export function ForgotPasswordDialog({ isOpen, onOpenChange, onOpenLogin }: Forg
     setLocalError("");
 
     try {
-      await dispatch(forgotPassword({ email })).unwrap();
+      // await dispatch(forgotPassword({ email })).unwrap();
       setIsSuccess(true);
       toast.success("Email đặt lại mật khẩu đã được gửi!");
     } catch (error) {
