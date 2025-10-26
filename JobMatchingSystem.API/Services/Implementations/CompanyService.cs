@@ -107,6 +107,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             };
 
             var result = await _userManager.CreateAsync(user, "Recruiter@123");
+            
             if (!result.Succeeded)
                 throw new AppException(ErrorCode.InvalidCreate());
 
