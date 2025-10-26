@@ -4,13 +4,16 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import AppRouter from './app-router.tsx'
 import StoreProvider from './store/Provider.tsx'
+import { AppInitializer } from './components/AppInitializer.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <StoreProvider>
-      <BrowserRouter>
-        <AppRouter />
-      </BrowserRouter>
+      <AppInitializer>
+        <BrowserRouter>
+          <AppRouter />
+        </BrowserRouter>
+      </AppInitializer>
     </StoreProvider>
   </StrictMode>,
 )

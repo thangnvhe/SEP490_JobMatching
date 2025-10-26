@@ -11,6 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { useSelector } from "react-redux";
+import { useAppDispatch } from "@/store";
+import type { RootState } from "@/store";
+import { login, clearError } from "@/store/slices/authSlice";
+import { toast } from "sonner";
 
 interface LoginDialogProps {
   isOpen: boolean;
@@ -25,6 +30,9 @@ export function LoginDialog({
   onOpenRegister,
   onOpenForgotPassword
 }: LoginDialogProps) {
+  const dispatch = useAppDispatch();
+  const { isLoading, error } = useSelector((state: RootState) => state.auth);
+  
   const [loginForm, setLoginForm] = React.useState({
     username: "",
     password: "",
@@ -41,10 +49,18 @@ export function LoginDialog({
       setLoginForm({ username: "", password: "" });
       setErrors({ username: "", password: "" });
       setRememberMe(false);
+      dispatch(clearError());
     }
-  }, [isOpen]);
+  }, [isOpen, dispatch]);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  // Show error toast when there's an error
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
@@ -67,11 +83,21 @@ export function LoginDialog({
     setErrors(newErrors);
 
     if (!hasError) {
-      // Handle login logic here
-      console.log("Login attempt:", { ...loginForm, rememberMe });
-      // You can integrate with your auth system here
-      // For now, just close the dialog
-      onOpenChange(false);
+      try {
+        const result = await dispatch(login({
+          username: loginForm.username,
+          password: loginForm.password,
+          rememberMe
+        })).unwrap();
+        
+        if (result) {
+          toast.success("Đăng nhập thành công!");
+          onOpenChange(false);
+        }
+      } catch (error) {
+        // Error is handled by the slice and shown via toast
+        console.error("Login error:", error);
+      }
     }
   };
 
@@ -156,9 +182,10 @@ export function LoginDialog({
 
             <Button
               type="submit"
-              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium "
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              disabled={isLoading}
             >
-              Log In
+              {isLoading ? "Đang đăng nhập..." : "Log In"}
             </Button>
           </form>
         </div>

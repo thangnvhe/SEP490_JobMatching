@@ -8,6 +8,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useSelector } from "react-redux";
+import { useAppDispatch } from "@/store";
+import type { RootState } from "@/store";
+import { forgotPassword, clearError } from "@/store/slices/authSlice";
+import { toast } from "sonner";
 
 interface ForgotPasswordDialogProps {
   isOpen: boolean;
@@ -16,48 +21,52 @@ interface ForgotPasswordDialogProps {
 }
 
 export function ForgotPasswordDialog({ isOpen, onOpenChange, onOpenLogin }: ForgotPasswordDialogProps) {
+  const dispatch = useAppDispatch();
+  const { isLoading, error } = useSelector((state: RootState) => state.auth);
+  
   const [email, setEmail] = React.useState("");
-  const [error, setError] = React.useState("");
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [localError, setLocalError] = React.useState("");
   const [isSuccess, setIsSuccess] = React.useState(false);
 
   // Reset form when dialog closes
   useEffect(() => {
     if (!isOpen) {
       setEmail("");
-      setError("");
-      setIsLoading(false);
+      setLocalError("");
       setIsSuccess(false);
+      dispatch(clearError());
     }
-  }, [isOpen]);
+  }, [isOpen, dispatch]);
+
+  // Show error toast when there's an error
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email) {
-      setError("Email is required");
+      setLocalError("Email is required");
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError("Please enter a valid email address");
+      setLocalError("Please enter a valid email address");
       return;
     }
 
-    setIsLoading(true);
-    setError("");
+    setLocalError("");
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Handle forgot password logic here
-      console.log("Password reset email sent to:", email);
+      await dispatch(forgotPassword({ email })).unwrap();
       setIsSuccess(true);
-    } catch (err) {
-      setError("Failed to send reset email. Please try again.");
-    } finally {
-      setIsLoading(false);
+      toast.success("Email đặt lại mật khẩu đã được gửi!");
+    } catch (error) {
+      // Error is handled by the slice and shown via toast
+      console.error("Forgot password error:", error);
     }
   };
 
@@ -65,9 +74,9 @@ export function ForgotPasswordDialog({ isOpen, onOpenChange, onOpenLogin }: Forg
   const handleClose = () => {
     onOpenChange(false);
     setEmail("");
-    setError("");
-    setIsLoading(false);
+    setLocalError("");
     setIsSuccess(false);
+    dispatch(clearError());
   };
 
   if (isSuccess) {
@@ -158,14 +167,14 @@ export function ForgotPasswordDialog({ isOpen, onOpenChange, onOpenLogin }: Forg
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    setError("");
+                    setLocalError("");
                   }}
                   className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${
-                    error ? "border-red-500" : ""
+                    localError ? "border-red-500" : ""
                   }`}
                 />
-                {error && (
-                  <p className="text-sm text-red-500">{error}</p>
+                {localError && (
+                  <p className="text-sm text-red-500">{localError}</p>
                 )}
               </div>
 
