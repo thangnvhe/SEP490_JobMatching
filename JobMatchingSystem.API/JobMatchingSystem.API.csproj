@@ -24,7 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Mappings\" />
     <Folder Include="wwwroot\images\LicenseFile\" />
   </ItemGroup>
 

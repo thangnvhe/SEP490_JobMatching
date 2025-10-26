@@ -1,9 +1,12 @@
-﻿using JobMatchingSystem.API.Repositories.Implementations;
+﻿using JobMatchingSystem.API.Mappings;
+using JobMatchingSystem.API.Repositories.Implementations;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Implementations;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System;
+using AutoMapper;
 
 namespace JobMatchingSystem.API.Configuration
 {
@@ -14,6 +17,7 @@ namespace JobMatchingSystem.API.Configuration
             //services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IAuthRepository, AuthRepository>();
             services.AddScoped<ICompanyRecruiterRepository, CompanyRecruiterRepository>();
+            services.AddScoped<ICompanyRepository, CompanyRepository>();         
             services.AddScoped<ICompanyRepository, CompanyRepository>();
             services.AddScoped<IJobRepository, JobRepository>();
             services.AddScoped<ICompanyRepository, CompanyRepository>();
@@ -26,6 +30,8 @@ namespace JobMatchingSystem.API.Configuration
             //services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ICompanyService, CompanyService>();
+            services.AddTransient<IEmailService, EmailService>();
+            services.AddScoped<IUserService, UserService>();            
             services.AddScoped<IJobService, JobService>();
             services.AddScoped<ICandidateProfileService, CandidateProfileService>();
             return services;
