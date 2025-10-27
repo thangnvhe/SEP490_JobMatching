@@ -18,5 +18,6 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error PassErr() => new("Password not correct", HttpStatusCode.BadRequest);
 
         public static Error EmailNotExist() => new("Email Not Exist", HttpStatusCode.NotFound);
+        public static Error NotFoundTemplateCV() => new("Not Found TemplateCV", HttpStatusCode.NotFound);
     }
 }
