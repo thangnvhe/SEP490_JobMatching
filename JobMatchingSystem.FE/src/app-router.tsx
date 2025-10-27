@@ -5,6 +5,7 @@ import App from './App';
 import HomePage from './pages/client-site/HomePage';
 import AboutPage from './pages/AboutPage';
 import NotFoundPage from './pages/NotFoundPage';
+import JobsPage from './pages/guest/JobsPage';
 // Guards
 import { AdminGuard, RecruiterGuard, CandidateGuard } from './guards/AuthGuard';
 
@@ -34,6 +35,7 @@ const AppRouter: React.FC = () => {
         <Route element={<ClientLayout />}>
           <Route index element={<HomePage />} />
           <Route path="about" element={<AboutPage />} />
+          <Route path="jobs" element={<JobsPage />} />
         </Route>
       </Route>
 
@@ -41,9 +43,9 @@ const AppRouter: React.FC = () => {
       <Route
         path="/admin"
         element={
-          // <AdminGuard>
+          <AdminGuard>
             <DashboardLayout />
-          // </AdminGuard>
+          </AdminGuard>
         }
       >
         <Route index element={<DashboardPage />} />
@@ -64,9 +66,9 @@ const AppRouter: React.FC = () => {
       <Route
         path="/recruiter"
         element={
-          // <RecruiterGuard>
+          <RecruiterGuard>
             <DashboardLayout />
-          // </RecruiterGuard>
+          </RecruiterGuard>
         }
       >
         <Route index element={<RecruiterDashboard />} />
@@ -76,9 +78,9 @@ const AppRouter: React.FC = () => {
       <Route
         path="/candidate"
         element={
-          // <CandidateGuard>
+          <CandidateGuard>
             <DashboardLayout />
-          // </CandidateGuard>
+          </CandidateGuard>
         }
       >
         <Route index element={<CandidateDashboard />} />
