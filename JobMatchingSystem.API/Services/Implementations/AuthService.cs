@@ -7,9 +7,11 @@ using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Web;
 
 namespace JobMatchingSystem.API.Services.Implementations
 {
@@ -19,14 +21,46 @@ namespace JobMatchingSystem.API.Services.Implementations
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IEmailService _emailService;
         public AuthService(IAuthRepository authRepository,
                        SignInManager<ApplicationUser> signInManager,
-                       IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+                       IConfiguration configuration,
+                       IHttpContextAccessor httpContextAccessor,
+                       UserManager<ApplicationUser> userManager,
+                       IEmailService emailService)
         {
             _authRepository = authRepository;
             _signInManager = signInManager;
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
+            _userManager = userManager;
+            _emailService = emailService;
+        }
+
+        public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
+        {
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user == null)
+                throw new AppException(ErrorCode.EmailNotExist());
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = HttpUtility.UrlEncode(token);
+            var frontendUrl = _configuration["Frontend:ResetPasswordUrl"];
+            var resetLink = $"{frontendUrl}/{encodedToken}?email={user.Email}";
+            await _emailService.SendResetPasswordEmailAsync(user.Email, resetLink);
+        }
+        public async Task ResetPasswordAsync(ResetPasswordRequest request)
+        {
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user == null)
+                throw new AppException(ErrorCode.InvalidCredentials());
+
+            var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new Exception($"Không thể đặt lại mật khẩu: {errors}");
+            }
         }
 
         public async Task<LoginDTO> LoginAsync(LoginRequest request)
@@ -82,6 +116,29 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 token = newAccessToken
             };
+
+        }
+
+        public async Task<string> RegisterAsync(RegisterRequest request)
+        {
+            
+            if (await _authRepository.ExistsAsync(request.Email)) {
+            throw new AppException(ErrorCode.EmailExist());
+            }
+            var user = new ApplicationUser
+            {
+                FullName = request.FullName,
+                Email = request.Email,
+                UserName = request.Email,
+                EmailConfirmed = true
+            };
+            var result = await _userManager.CreateAsync(user, request.Password);
+            if (!result.Succeeded)
+            {
+                throw new AppException(ErrorCode.InvalidCreate());             
+            }
+            await _userManager.AddToRoleAsync(user, Contraints.RoleCandidate);
+            return "Create Candidate Success";
 
         }
     }
