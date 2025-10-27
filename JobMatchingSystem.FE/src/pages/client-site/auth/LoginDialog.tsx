@@ -14,7 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "@/store";
 import type { RootState } from "@/store";
-import { login, clearError } from "@/store/slices/authSlice";
+import { loginAsync, clearError } from "@/store/slices/authSlice";
 import { toast } from "sonner";
 
 interface LoginDialogProps {
@@ -84,7 +84,7 @@ export function LoginDialog({
 
     if (!hasError) {
       try {
-        const result = await dispatch(login({
+        const result = await dispatch(loginAsync({
           email: loginForm.email,
           password: loginForm.password,
           rememberMe
