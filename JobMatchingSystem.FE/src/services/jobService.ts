@@ -355,6 +355,87 @@ class JobService {
       throw error;
     }
   }
+
+  /**
+   * Get similar jobs based on category, location, and experience level
+   */
+  async getSimilarJobs(jobId: string, limit: number = 6): Promise<Job[]> {
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const currentJob = MOCK_JOBS.find(job => job.id === jobId);
+      if (!currentJob) {
+        return [];
+      }
+
+      // Find similar jobs based on category, experience level, and location
+      const similarJobs = MOCK_JOBS.filter(job => {
+        if (job.id === jobId) return false;
+        
+        // Score similarity based on multiple factors
+        let score = 0;
+        
+        // Same category gets highest score
+        if (job.category.id === currentJob.category.id) score += 5;
+        
+        // Same experience level
+        if (job.experienceLevel.id === currentJob.experienceLevel.id) score += 3;
+        
+        // Same location
+        if (job.location.city === currentJob.location.city) score += 2;
+        
+        // Similar salary range
+        const salaryDiff = Math.abs(job.salary.min - currentJob.salary.min);
+        if (salaryDiff <= 10000) score += 2;
+        
+        // Same job type
+        if (job.jobType.id === currentJob.jobType.id) score += 1;
+        
+        // Similar tags
+        const commonTags = job.tags.filter(tag => currentJob.tags.includes(tag));
+        score += commonTags.length;
+        
+        return score >= 3; // Minimum similarity threshold
+      })
+      .sort((a, b) => {
+        // Sort by similarity score (recalculate for sorting)
+        let scoreA = 0, scoreB = 0;
+        
+        if (a.category.id === currentJob.category.id) scoreA += 5;
+        if (b.category.id === currentJob.category.id) scoreB += 5;
+        
+        if (a.experienceLevel.id === currentJob.experienceLevel.id) scoreA += 3;
+        if (b.experienceLevel.id === currentJob.experienceLevel.id) scoreB += 3;
+        
+        return scoreB - scoreA;
+      })
+      .slice(0, limit);
+
+      return similarJobs;
+    } catch (error) {
+      console.error('Error fetching similar jobs:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Apply to a job
+   */
+  async applyToJob(jobId: string): Promise<boolean> {
+    try {
+      // In a real application, this would make an API call to submit application
+      console.log('Applying to job:', jobId);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      return true;
+    } catch (error) {
+      console.error('Error applying to job:', error);
+      throw error;
+    }
+  }
 }
 
 export const jobService = JobService.getInstance();

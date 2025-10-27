@@ -110,6 +110,9 @@ export function ClientHeader() {
                     <ListItem href="/about" title="Employer Grid">
                       View employers in a grid layout.
                     </ListItem>
+                    <ListItem href="/contact-recruiter" title="For Recruiters">
+                      Join our platform to find the best talents.
+                    </ListItem>
                   </ul>
                 </NavigationMenuContent>
               </NavigationMenuItem>
@@ -184,6 +187,9 @@ export function ClientHeader() {
               </Link>
               <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary">
                 Employers
+              </Link>
+              <Link to="/contact-recruiter" className="text-sm font-medium transition-colors hover:text-primary">
+                For Recruiters
               </Link>
               <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary">
                 Candidates
