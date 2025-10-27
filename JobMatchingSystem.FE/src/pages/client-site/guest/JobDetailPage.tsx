@@ -4,7 +4,7 @@ import { JobDetailHeader } from '@/components/jobs/JobDetailHeader';
 import { JobDescription } from '@/components/jobs/JobDescription';
 import { CompanyInfo } from '@/components/jobs/CompanyInfo';
 import { SimilarJobs } from '@/components/jobs/SimilarJobs';
-import { jobService } from '@/services/jobService';
+import { jobService } from '@/services/test-services/jobService';
 import type { JobTest as Job } from '@/models/job';
 
 const JobDetailPage: React.FC = () => {

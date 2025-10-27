@@ -104,8 +104,8 @@ export function ClientHeader() {
                 <NavigationMenuTrigger>Employers</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] lg:grid-cols-2">
-                    <ListItem href="/about" title="Employer List">
-                      See all companies hiring.
+                    <ListItem href="/companies" title="All Companies">
+                      Browse all companies and employers.
                     </ListItem>
                     <ListItem href="/about" title="Employer Grid">
                       View employers in a grid layout.
@@ -185,8 +185,8 @@ export function ClientHeader() {
               <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary">
                 Find Jobs
               </Link>
-              <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary">
-                Employers
+              <Link to="/companies" className="text-sm font-medium transition-colors hover:text-primary">
+                Companies
               </Link>
               <Link to="/contact-recruiter" className="text-sm font-medium transition-colors hover:text-primary">
                 For Recruiters
