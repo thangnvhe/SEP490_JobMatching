@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 // import { toast } from 'react-hot-toast';
 import { JobSearchFilter } from '@/components/ui/jobs/JobSearchFilter';
 import { JobList } from '@/components/ui/jobs/JobList';
-import { jobService } from '@/services/jobService';
+import { jobService } from '@/services/test-services/jobService';
 import type { 
   JobTest as Job, 
   JobSearchFilters, 

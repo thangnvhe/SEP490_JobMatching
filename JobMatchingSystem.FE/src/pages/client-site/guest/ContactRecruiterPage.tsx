@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Phone, Mail, Clock, MapPin, Building2, Send, CheckCircle, AlertCircle } from 'lucide-react';
-import { companyService, type CompanyContactForm } from '@/services/companyService';
+import { companyService, type CompanyContactForm } from '@/services/test-services/companyService';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ContactSuccessModal } from '@/components/ui/ContactSuccessModal';
 
