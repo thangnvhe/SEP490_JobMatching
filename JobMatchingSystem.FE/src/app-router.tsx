@@ -5,7 +5,9 @@ import App from './App';
 import HomePage from './pages/client-site/HomePage';
 import AboutPage from './pages/AboutPage';
 import NotFoundPage from './pages/NotFoundPage';
-import JobsPage from './pages/guest/JobsPage';
+import JobsPage from './pages/client-site/guest/JobsPage';
+import JobDetailPage from './pages/client-site/guest/JobDetailPage';
+import ContactRecruiterPage from './pages/client-site/guest/ContactRecruiterPage';
 // Guards
 import { AdminGuard, RecruiterGuard, CandidateGuard } from './guards/AuthGuard';
 
@@ -36,6 +38,8 @@ const AppRouter: React.FC = () => {
           <Route index element={<HomePage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="jobs" element={<JobsPage />} />
+          <Route path="jobs/:id" element={<JobDetailPage />} />
+          <Route path="contact-recruiter" element={<ContactRecruiterPage />} />
         </Route>
       </Route>
 
