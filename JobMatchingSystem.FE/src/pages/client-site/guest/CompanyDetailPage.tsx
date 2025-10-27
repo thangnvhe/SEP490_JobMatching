@@ -11,11 +11,11 @@ import {
   Camera,
   Info
 } from 'lucide-react';
-import { CompanyDetailHeader } from '@/components/companies/CompanyDetailHeader';
-import { CompanyAbout } from '@/components/companies/CompanyAbout';
-import { CompanyJobs } from '@/components/companies/CompanyJobs';
-import { CompanyGallery } from '@/components/companies/CompanyGallery';
-import { SimilarCompanies } from '@/components/companies/SimilarCompanies';
+import { CompanyDetailHeader } from '@/components/ui/companies/CompanyDetailHeader';
+import { CompanyAbout } from '@/components/ui/companies/CompanyAbout';
+import { CompanyJobs } from '@/components/ui/companies/CompanyJobs';
+import { CompanyGallery } from '@/components/ui/companies/CompanyGallery';
+import { SimilarCompanies } from '@/components/ui/companies/SimilarCompanies';
 import { companyService } from '@/services/test-services/companyService';
 import type { Company } from '@/models/company';
 import { toast } from 'sonner';
