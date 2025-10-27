@@ -18,7 +18,7 @@ import { ForgotPasswordDialog } from "@/pages/client-site/auth/ForgotPasswordDia
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "@/store";
 import type { RootState } from "@/store";
-import { logout } from "@/store/slices/authSlice";
+import { logoutAsync } from "@/store/slices/authSlice";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -38,7 +38,7 @@ export function ClientHeader() {
 
   const handleLogout = async () => {
     try {
-      await dispatch(logout()).unwrap();
+      await dispatch(logoutAsync()).unwrap();
       toast.success("Đăng xuất thành công!");
     } catch (error) {
       console.error("Logout error:", error);
