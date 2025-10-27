@@ -11,7 +11,6 @@ import ContactRecruiterPage from './pages/client-site/guest/ContactRecruiterPage
 import CompanyDetailPage from './pages/client-site/guest/CompanyDetailPage';
 import CompaniesPage from './pages/client-site/guest/CompaniesPage';
 // Guards
-import { AdminGuard, RecruiterGuard, CandidateGuard } from './guards/AuthGuard';
 
 // Layouts
 import { DashboardLayout } from './components/layout/DashboardLayout';
@@ -51,9 +50,7 @@ const AppRouter: React.FC = () => {
       <Route
         path="/admin"
         element={
-          <AdminGuard>
-            <DashboardLayout />
-          </AdminGuard>
+          <DashboardLayout />
         }
       >
         <Route index element={<DashboardPage />} />
@@ -74,9 +71,7 @@ const AppRouter: React.FC = () => {
       <Route
         path="/recruiter"
         element={
-          <RecruiterGuard>
-            <DashboardLayout />
-          </RecruiterGuard>
+          <DashboardLayout />
         }
       >
         <Route index element={<RecruiterDashboard />} />
@@ -86,9 +81,7 @@ const AppRouter: React.FC = () => {
       <Route
         path="/candidate"
         element={
-          <CandidateGuard>
-            <DashboardLayout />
-          </CandidateGuard>
+          <DashboardLayout />
         }
       >
         <Route index element={<CandidateDashboard />} />

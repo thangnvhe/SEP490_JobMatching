@@ -1,5 +1,7 @@
-import React from "react";
 import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,6 +19,22 @@ import type { RootState } from "@/store";
 import { loginAsync, clearError } from "@/store/slices/authSlice";
 import { toast } from "sonner";
 
+// Zod validation schema với messages tiếng Việt
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, { message: 'Email là bắt buộc' })
+    .email({ message: 'Email sai định dạng username@domain.tld' }),
+  password: z
+    .string()
+    .min(1, { message: 'Mật khẩu là bắt buộc' })
+    .min(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' }),
+  rememberMe: z.boolean().optional(),
+});
+
+// Type inference từ schema
+type LoginFormData = z.infer<typeof loginSchema>;
+
 interface LoginDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -31,73 +49,39 @@ export function LoginDialog({
   onOpenForgotPassword
 }: LoginDialogProps) {
   const dispatch = useAppDispatch();
-  const { isLoading, error } = useSelector((state: RootState) => state.auth);
-  
-  const [loginForm, setLoginForm] = React.useState({
-    email: "",
-    password: "",
-  });
-  const [errors, setErrors] = React.useState({
-    email: "",
-    password: "",
-  });
-  const [rememberMe, setRememberMe] = React.useState(false);
+  const { isLoading } = useSelector((state: RootState) => state.auth);
 
-  // Reset form when dialog closes
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      rememberMe: false,
+    }
+  });
+
+  const { register, handleSubmit, formState: { errors }, reset } = form;
+
+  // Reset form khi dialog đóng/mở
   useEffect(() => {
     if (!isOpen) {
-      setLoginForm({ email: "", password: "" });
-      setErrors({ email: "", password: "" });
-      setRememberMe(false);
+      reset();
       dispatch(clearError());
     }
-  }, [isOpen, dispatch]);
+  }, [isOpen, dispatch, reset]);
 
-  // Show error toast when there's an error
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-    }
-  }, [error]);
-
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validation
-    const newErrors = { email: "", password: "" };
-    let hasError = false;
-
-    if (!loginForm.email) {
-      newErrors.email = "Email is required";
-      hasError = true;
-    }
-
-    if (!loginForm.password) {
-      newErrors.password = "Password is required";
-      hasError = true;
-    } else if (loginForm.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-      hasError = true;
-    }
-
-    setErrors(newErrors);
-
-    if (!hasError) {
-      try {
-        const result = await dispatch(loginAsync({
-          email: loginForm.email,
-          password: loginForm.password,
-          rememberMe
-        })).unwrap();
-        
-        if (result) {
-          toast.success("Đăng nhập thành công!");
-          onOpenChange(false);
-        }
-      } catch (error) {
-        // Error is handled by the slice and shown via toast
-        console.error("Login error:", error);
-      }
+  // Handle form submission
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      await dispatch(loginAsync({
+        email: data.email.trim(),
+        password: data.password,
+        rememberMe: data.rememberMe || false
+      })).unwrap();
+      toast.success("Đăng nhập thành công!");
+      onOpenChange(false);
+    } catch (error) {
+      toast.error("Đăng nhập thất bại!");
     }
   };
 
@@ -111,7 +95,7 @@ export function LoginDialog({
             </DialogTitle>
           </DialogHeader>
 
-          <form onSubmit={handleLoginSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">
                 Email
@@ -120,16 +104,11 @@ export function LoginDialog({
                 id="email"
                 type="text"
                 placeholder="Email"
-                value={loginForm.email}
-                onChange={(e) =>
-                  setLoginForm({ ...loginForm, email: e.target.value })
-                }
-                className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${
-                  errors.email ? "border-red-500" : ""
-                }`}
+                {...register("email")}
+                className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${errors.email ? "border-red-500" : ""}`}
               />
               {errors.email && (
-                <p className="text-sm text-red-500">{errors.email}</p>
+                <p className="text-sm text-red-500">{errors.email.message}</p>
               )}
             </div>
 
@@ -141,28 +120,22 @@ export function LoginDialog({
                 id="password"
                 type="password"
                 placeholder="Password"
-                value={loginForm.password}
-                onChange={(e) =>
-                  setLoginForm({ ...loginForm, password: e.target.value })
-                }
-                className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${
-                  errors.password ? "border-red-500" : ""
-                }`}
+                {...register("password")}
+                className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${errors.password ? "border-red-500" : ""}`}
               />
               {errors.password && (
-                <p className="text-sm text-red-500">{errors.password}</p>
+                <p className="text-sm text-red-500">{errors.password.message}</p>
               )}
             </div>
 
             <div className="flex items-center justify-between pt-1">
               <div className="flex items-center space-x-2">
                 <Checkbox
-                  id="remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  id="rememberMe"
+                  {...register("rememberMe")}
                 />
                 <Label
-                  htmlFor="remember"
+                  htmlFor="rememberMe"
                   className="text-sm font-normal text-gray-600 cursor-pointer"
                 >
                   Remember me

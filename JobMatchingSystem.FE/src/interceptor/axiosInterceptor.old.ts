@@ -1,17 +1,15 @@
 import axios, { AxiosError } from 'axios';
 import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
-// Cấu hình API base URL - bạn có thể thay đổi theo môi trường
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "https://localhost:7044/api";
+import { API_BASE_URL } from '../../env.ts';
 
 const axiosInstance = axios.create({
     baseURL: API_BASE_URL,
     timeout: 10000,
-    timeoutErrorMessage: 'Request timeout',
+    timeoutErrorMessage: "Request timeout",
     headers: {
-        'Accept': '*/*',
-        'Content-Type': 'application/json',
+        Accept: "*/*",
+        "Content-Type": "application/json",
     },
     withCredentials: true,
 });
@@ -35,11 +33,11 @@ const notifyRefreshSubscribers = (token: string) => {
 const refreshAccessToken = async (): Promise<string> => {
     const isLocalStorage = localStorage.getItem('accessToken');
     const oldRefreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
-    
-    const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, { 
-        refreshToken: oldRefreshToken 
+
+    const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
+        refreshToken: oldRefreshToken
     });
-    
+
     const { accessToken, refreshToken } = response.data.data;
 
     if (isLocalStorage) {
@@ -49,7 +47,7 @@ const refreshAccessToken = async (): Promise<string> => {
         sessionStorage.setItem('accessToken', accessToken);
         sessionStorage.setItem('refreshToken', refreshToken);
     }
-    
+
     return accessToken;
 };
 
@@ -96,7 +94,7 @@ axiosInstance.interceptors.response.use(
 
             try {
                 const newAccessToken = await refreshAccessToken();
-                
+
                 if (newAccessToken) {
                     isRefreshing = false;
                     notifyRefreshSubscribers(newAccessToken);
