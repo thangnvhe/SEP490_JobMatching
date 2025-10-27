@@ -8,5 +8,8 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task<LoginDTO> LoginAsync(LoginRequest request);
         Task<LoginDTO> RefreshTokenAsync();
         Task Logout(int userId);
+        Task<string> RegisterAsync(RegisterRequest request);
+        Task ForgotPasswordAsync(ForgotPasswordRequest request);
+        Task ResetPasswordAsync(ResetPasswordRequest request);
     }
 }

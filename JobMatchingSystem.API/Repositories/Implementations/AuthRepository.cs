@@ -49,5 +49,16 @@ namespace JobMatchingSystem.API.Repositories.Implementations
         {
             return await _context.ApplicationUsers.AnyAsync(x => x.Email == email);
         }
+
+        public async Task<List<ApplicationUser>> GetAllAsync()
+        {
+            return await _context.ApplicationUsers.ToListAsync();
+        }
+
+        public async Task ChangeStatus(ApplicationUser user)
+        {
+            user.IsActive =!user.IsActive;
+            await _context.SaveChangesAsync();
+        }
     }
 }
