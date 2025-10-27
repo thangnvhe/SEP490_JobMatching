@@ -24,8 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Mappings\" />
     <Folder Include="wwwroot\images\LicenseFile\" />
+    <Folder Include="wwwroot\TemplateCV\" />
   </ItemGroup>
 
   <ItemGroup>

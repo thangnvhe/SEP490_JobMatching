@@ -1,10 +1,12 @@
 ﻿using JobMatchingSystem.API.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace JobMatchingSystem.API.DTOs.Request
 {
     public class CreateJobRequest
     {
-        public string? Title { get; set; }
+        [Required]
+        public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string? Requirements { get; set; }
         public string? Benefits { get; set; }
@@ -13,8 +15,6 @@ namespace JobMatchingSystem.API.DTOs.Request
         public string? Location { get; set; }
         public string? WorkInfo { get; set; }
         public JobType? JobType { get; set; }
-        public int? CompanyId { get; set; }
-        public int? Poster { get; set; }
         public DateTime? OpenedAt { get; set; }
         public DateTime? ExpiredAt { get; set; }
 
