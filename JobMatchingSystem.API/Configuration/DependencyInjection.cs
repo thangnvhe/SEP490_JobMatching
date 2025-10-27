@@ -11,21 +11,22 @@ namespace JobMatchingSystem.API.Configuration
     {
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            //services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IAuthRepository, AuthRepository>();
             services.AddScoped<ICompanyRecruiterRepository, CompanyRecruiterRepository>();
             services.AddScoped<ICompanyRepository, CompanyRepository>();
             services.AddScoped<IJobRepository, JobRepository>();
-            services.AddScoped<ICompanyRepository, CompanyRepository>();
+            services.AddScoped<ICandidateProfileRepository, CandidateProfileRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
             return services;
         }
 
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
-            //services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ICompanyService, CompanyService>();
             services.AddScoped<IJobService, JobService>();
+            services.AddScoped<ICandidateProfileService, CandidateProfileService>();
+            services.AddScoped<IUserService, UserService>();
             return services;
         }
 
