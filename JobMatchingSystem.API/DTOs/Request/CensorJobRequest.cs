@@ -3,10 +3,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace JobMatchingSystem.API.DTOs.Request
 {
-    public class UpdateJobStatusRequest
+    public class CensorJobRequest
     {
-        public int StaffId { get; set; }
+        [Required]
+        public int JobId { get; set; }
 
+        [Required]
         [EnumDataType(typeof(JobStatus))]
         public JobStatus Status { get; set; }
     }
