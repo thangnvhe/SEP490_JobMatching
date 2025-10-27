@@ -22,9 +22,9 @@ namespace JobMatchingSystem.API.Controllers
         [HttpPost("create")]
         [Authorize]
         //[Authorize(Roles = "Staff")] // Chỉ Staff được tạo TemplateCV
-        public async Task<IActionResult> CreateTemplateCV([FromBody] CreateTemplateCVRequest request)
+        public async Task<IActionResult> CreateTemplateCV([FromForm] CreateTemplateCVRequest request, IFormFile file)
         {
-            await _templateCVService.CreateTemplateCVAsync(request);
+            await _templateCVService.CreateTemplateCVAsync(request, file);
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.Created)
                 .WithSuccess(true)
@@ -59,9 +59,9 @@ namespace JobMatchingSystem.API.Controllers
         [HttpPut("update")]
         [Authorize]
         //[Authorize(Roles = "Staff")] // Chỉ Staff được tạo TemplateCV
-        public async Task<IActionResult> UpdateTemplateCV(int id, [FromBody] UpdateTemplateCVRequest request)
+        public async Task<IActionResult> UpdateTemplateCV(int id, [FromForm] UpdateTemplateCVRequest request, IFormFile? file)
         {
-            await _templateCVService.UpdateTemplateCVAsync(id, request);
+            await _templateCVService.UpdateTemplateCVAsync(id, request, file);
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
