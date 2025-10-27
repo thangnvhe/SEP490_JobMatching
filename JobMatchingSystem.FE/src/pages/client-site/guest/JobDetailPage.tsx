@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { JobDetailHeader } from '@/components/jobs/JobDetailHeader';
-import { JobDescription } from '@/components/jobs/JobDescription';
-import { CompanyInfo } from '@/components/jobs/CompanyInfo';
-import { SimilarJobs } from '@/components/jobs/SimilarJobs';
+import { JobDetailHeader } from '@/components/ui/jobs/JobDetailHeader';
+import { JobDescription } from '@/components/ui/jobs/JobDescription';
+import { CompanyInfo } from '@/components/ui/companies/CompanyContact';
+import { SimilarJobs } from '@/components/ui/jobs/SimilarJobs';
 import { jobService } from '@/services/test-services/jobService';
 import type { JobTest as Job } from '@/models/job';
 
