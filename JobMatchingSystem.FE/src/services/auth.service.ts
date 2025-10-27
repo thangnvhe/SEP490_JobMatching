@@ -7,11 +7,35 @@ import { JWTUtils } from '@/utils/jwtUtils';
 import { BaseServices } from './base.service';
 import type { BaseResponse } from '@/models/base';
 
-class AuthService {
+/**
+ * Xử lý lỗi API
+ */
+const handleError = (error: any): Error => {
+  if (error.response) {
+    // Server trả về lỗi
+    const message = error.response.data?.message || 'Có lỗi xảy ra';
+    const status = error.response.status;
+    const errors = error.response.data?.errors || [];
+    
+    const apiError = new Error(message) as any;
+    apiError.status = status;
+    apiError.errors = errors;
+    
+    return apiError;
+  } else if (error.request) {
+    // Network error
+    return new Error('Không thể kết nối đến server');
+  } else {
+    // Other error
+    return new Error(error.message || 'Có lỗi xảy ra');
+  }
+};
+
+export const AuthServices = {
   /**
    * Đăng nhập người dùng
    */
-  async login(loginData: UserLogin): Promise<BaseResponse<{ token: string }>> {
+  login: async (loginData: UserLogin): Promise<BaseResponse<{ token: string }>> => {
     try {
       // Call login API using BaseServices
       const response = await BaseServices.create<{ token: string }>({
@@ -32,14 +56,14 @@ class AuthService {
 
       return response;
     } catch (error: any) {
-      throw this.handleError(error);
+      throw handleError(error);
     }
-  }
+  },
 
   /**
    * Đăng xuất người dùng
    */
-  async logout(): Promise<BaseResponse<string>> {
+  logout: async (): Promise<BaseResponse<string>> => {
     try {
       const token = TokenStorage.getAccessToken();
       
@@ -65,14 +89,14 @@ class AuthService {
     } catch (error: any) {
       // Vẫn xóa token khỏi storage ngay cả khi API call thất bại
       TokenStorage.clearAll();
-      throw this.handleError(error);
+      throw handleError(error);
     }
-  }
+  },
 
   /**
    * Refresh access token
    */
-  async refreshToken(): Promise<BaseResponse<string>> {
+  refreshToken: async (): Promise<BaseResponse<string>> => {
     try {
       const response = await BaseServices.create<string>({}, '/auth/refresh-token');
       
@@ -90,14 +114,14 @@ class AuthService {
 
       return response;
     } catch (error: any) {
-      throw this.handleError(error);
+      throw handleError(error);
     }
-  }
+  },
 
   /**
    * Lấy thông tin người dùng hiện tại
    */
-  async getCurrentUser(): Promise<User | null> {
+  getCurrentUser: async (): Promise<User | null> => {
     try {
       const token = TokenStorage.getAccessToken();
       if (!token) return null;
@@ -113,52 +137,26 @@ class AuthService {
       console.error('Error getting current user:', error);
       return null;
     }
-  }
+  },
 
   /**
    * Kiểm tra trạng thái đăng nhập
    */
-  isAuthenticated(): boolean {
+  isAuthenticated: (): boolean => {
     return TokenStorage.isAuthenticated();
-  }
+  },
 
   /**
    * Lấy access token hiện tại
    */
-  getAccessToken(): string | null {
+  getAccessToken: (): string | null => {
     return TokenStorage.getAccessToken();
-  }
+  },
 
   /**
    * Lấy user hiện tại từ storage
    */
-  getCurrentUserFromStorage(): User | null {
+  getCurrentUserFromStorage: (): User | null => {
     return TokenStorage.getUser();
   }
-
-  /**
-   * Xử lý lỗi API
-   */
-  private handleError(error: any): Error {
-    if (error.response) {
-      // Server trả về lỗi
-      const message = error.response.data?.message || 'Có lỗi xảy ra';
-      const status = error.response.status;
-      const errors = error.response.data?.errors || [];
-      
-      const apiError = new Error(message) as any;
-      apiError.status = status;
-      apiError.errors = errors;
-      
-      return apiError;
-    } else if (error.request) {
-      // Network error
-      return new Error('Không thể kết nối đến server');
-    } else {
-      // Other error
-      return new Error(error.message || 'Có lỗi xảy ra');
-    }
-  }
-} 
-
-export const authService = new AuthService();
+};
