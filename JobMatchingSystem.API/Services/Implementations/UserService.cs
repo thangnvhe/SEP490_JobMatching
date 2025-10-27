@@ -164,6 +164,17 @@ namespace JobMatchingSystem.API.Services.Implementations
                 if (!Directory.Exists(folderPath))
                     Directory.CreateDirectory(folderPath);
 
+                // Xóa avatar cũ nếu tồn tại
+                if (!string.IsNullOrEmpty(user.AvatarUrl))
+                {
+                    var oldFilePath = Path.Combine(env.WebRootPath, user.AvatarUrl.TrimStart('/'));
+                    if (File.Exists(oldFilePath))
+                    {
+                        File.Delete(oldFilePath);
+                    }
+                }
+
+                // Lưu avatar mới
                 var fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.Avatar.FileName)}";
                 var filePath = Path.Combine(folderPath, fileName);
 
@@ -193,7 +204,6 @@ namespace JobMatchingSystem.API.Services.Implementations
                 EmailConfirmed = user.EmailConfirmed,
                 PhoneNumber = user.PhoneNumber
             };
-
         }
     }
 }

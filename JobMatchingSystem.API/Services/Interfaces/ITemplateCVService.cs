@@ -5,9 +5,9 @@ namespace JobMatchingSystem.API.Services.Interfaces
 {
     public interface ITemplateCVService
     {
-        Task CreateTemplateCVAsync(CreateTemplateCVRequest request);
+        Task CreateTemplateCVAsync(CreateTemplateCVRequest request, IFormFile file);
         Task<List<TemplateCVResponse>> GetAllTemplateCVsAsync();
         Task<TemplateCVResponse?> GetTemplateCVByIdAsync(int id);
-        Task UpdateTemplateCVAsync(int id, UpdateTemplateCVRequest request);
+        Task UpdateTemplateCVAsync(int id, UpdateTemplateCVRequest request, IFormFile? file);
     }
 }
