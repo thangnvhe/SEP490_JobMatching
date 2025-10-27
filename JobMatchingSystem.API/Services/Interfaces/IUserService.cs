@@ -9,5 +9,9 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task ChangePasswordAsync(int userId, ChangePasswordRequest request);
         Task<UserResponse?> UpdateUserProfileAsync(int userId, UpdateUserProfileRequest request, IWebHostEnvironment env);
 
+        Task<List<UserResponseDTO>> GetAllUser();
+        Task<UserResponseDTO> GetUserById(int userId);
+        Task CreateUserByAdminAsync(CreateUserByAdminRequest request);
+        Task ChangeStatus(int userId);
     }
 }

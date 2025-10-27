@@ -16,5 +16,7 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundCandidateProfile() => new("Not Found Candidate Profile", HttpStatusCode.NotFound);
         public static Error NotFoundUser() => new("Not Found User", HttpStatusCode.NotFound);
         public static Error PassErr() => new("Password not correct", HttpStatusCode.BadRequest);
+
+        public static Error EmailNotExist() => new("Email Not Exist", HttpStatusCode.NotFound);
     }
 }
