@@ -1,0 +1,150 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{{User.FullName}}</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(120deg, #74b9ff, #a29bfe);
+            color: #2d3436;
+        }
+
+        .cv-container {
+            background: #fff;
+            width: 900px;
+            margin: 40px auto;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            display: flex;
+        }
+
+        .sidebar {
+            width: 35%;
+            background: #0984e3;
+            color: #fff;
+            padding: 30px;
+        }
+
+        .main {
+            width: 65%;
+            padding: 30px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 18px;
+            border-bottom: 2px solid #dfe6e9;
+            margin-top: 20px;
+            padding-bottom: 5px;
+            color: #0984e3;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        .sidebar h2 {
+            color: #ffeaa7;
+            border-color: #ffeaa7;
+        }
+
+        .sidebar a {
+            color: #ffeaa7;
+            text-decoration: underline;
+        }
+
+        .small {
+            color: #636e72;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="cv-container">
+        <div class="sidebar">
+            {{#if User.AvatarUrl}}
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="{{User.AvatarUrl}}" alt="Avatar" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #ffeaa7;">
+            </div>
+            {{/if}}
+            <h1>{{User.FullName}}</h1>
+            <p>{{User.Email}}</p>
+            <p>{{User.PhoneNumber}}</p>
+            <p>Ngày sinh: {{User.Birthday}}</p>
+
+            <h2>Kỹ năng</h2>
+            <ul>
+                {{#each CVSkills}}
+                <li>{{Name}} - Mức độ: {{Level}}/5</li>
+                {{/each}}
+            </ul>
+
+            <h2>Chứng chỉ</h2>
+            <ul>
+                {{#each CVCertificates}}
+                <li>
+                    <b>{{Name}}</b> - {{Organization}}<br>
+                    <span class="small">Ngày cấp: {{CertificateAt}}</span><br>
+                    {{Description}}<br>
+                    {{#if Link}}<a href="{{Link}}" target="_blank">Xem chứng chỉ</a>{{/if}}
+                </li>
+                {{/each}}
+            </ul>
+
+            <h2>Thành tích</h2>
+            <ul>
+                {{#each CVAchievements}}
+                <li>
+                    <b>{{Title}}</b> - {{Organization}}<br>
+                    <span class="small">Thời gian: {{AchievedAt}}</span><br>
+                    {{Description}}
+                </li>
+                {{/each}}
+            </ul>
+        </div>
+
+        <div class="main">
+            <h2>Thông tin CV</h2>
+            <h2>Kinh nghiệm làm việc</h2>
+            <ul>
+                {{#each CVExperiences}}
+                <li>
+                    <b>{{Position}}</b> tại <b>{{CompanyName}}</b><br>
+                    <span class="small">{{StartDate}} - {{EndDate}}</span><br>
+                    {{Description}}
+                </li>
+                {{/each}}
+            </ul>
+
+            <h2>Dự án</h2>
+            <ul>
+                {{#each CVProjects}}
+                <li>
+                    <b>{{ProjectName}}</b> (Vai trò: {{Role}})<br>
+                    <span class="small">{{StartDate}} - {{EndDate}}</span><br>
+                    {{Description}}
+                </li>
+                {{/each}}
+            </ul>
+
+            <h2>Học vấn</h2>
+            <ul>
+                {{#each CVEducations}}
+                <li>
+                    <b>{{SchoolName}}</b> - {{Major}} ({{Degree}})<br>
+                    <span class="small">{{StartDate}} - {{EndDate}}</span><br>
+                    {{Description}}
+                </li>
+                {{/each}}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
