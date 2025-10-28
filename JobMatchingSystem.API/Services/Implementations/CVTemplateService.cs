@@ -59,6 +59,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                     user.FullName,
                     user.Email,
                     user.PhoneNumber,
+                    AvatarUrl = await ConvertAvatarToBase64Async(user.AvatarUrl),
                     Birthday = user.Birthday?.ToString("dd/MM/yyyy") ?? "không có thông tin"
                 },
 
@@ -139,5 +140,26 @@ namespace JobMatchingSystem.API.Services.Implementations
             var body = Expression.Equal(prop, Expression.Constant(userId, typeof(int?)));
             return Expression.Lambda<Func<T, bool>>(body, param);
         }
+
+        private async Task<string?> ConvertAvatarToBase64Async(string? avatarUrl)
+        {
+            if (string.IsNullOrEmpty(avatarUrl)) return null;
+
+            var fullPath = Path.Combine(_env.WebRootPath, avatarUrl.TrimStart('/'));
+            if (!File.Exists(fullPath)) return null;
+
+            var bytes = await File.ReadAllBytesAsync(fullPath);
+            var ext = Path.GetExtension(fullPath).ToLowerInvariant();
+            var mime = ext switch
+            {
+                ".png" => "image/png",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".gif" => "image/gif",
+                _ => "image/jpeg"
+            };
+
+            return $"data:{mime};base64,{Convert.ToBase64String(bytes)}";
+        }
+
     }
 }
