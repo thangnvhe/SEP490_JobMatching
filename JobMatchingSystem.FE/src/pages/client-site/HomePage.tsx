@@ -50,7 +50,7 @@ const HomePage = () => {
                         className="pl-10 h-12"
                       />
                     </div>
-                    
+
                     <Button className="h-12 text-lg">Find Jobs</Button>
                   </div>
                 </CardContent>
@@ -62,13 +62,6 @@ const HomePage = () => {
                     Designer, Developer, Web, IOS, PHP, Senior, Engineer
                   </span>
                 </div>
-                <Button
-                  variant="outline"
-                  className="ml-4"
-                  onClick={() => setLoginOpen(true)}
-                >
-                  Đăng nhập
-                </Button>
 
                 <LoginDialog
                   isOpen={loginOpen}
