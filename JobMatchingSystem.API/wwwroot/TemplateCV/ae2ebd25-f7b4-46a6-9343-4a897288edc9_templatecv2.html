@@ -69,6 +69,11 @@
 <body>
     <div class="cv-container">
         <div class="sidebar">
+            {{#if User.AvatarUrl}}
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="{{User.AvatarUrl}}" alt="Avatar" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #ffeaa7;">
+            </div>
+            {{/if}}
             <h1>{{User.FullName}}</h1>
             <p>{{User.Email}}</p>
             <p>{{User.PhoneNumber}}</p>

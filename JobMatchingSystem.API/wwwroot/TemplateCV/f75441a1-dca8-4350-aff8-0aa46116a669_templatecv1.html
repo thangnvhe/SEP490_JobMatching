@@ -57,6 +57,11 @@
 <body>
     <div class="container">
         <h1>{{User.FullName}}</h1>
+        {{#if User.AvatarUrl}}
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="{{User.AvatarUrl}}" alt="Avatar" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover;">
+        </div>
+        {{/if}}
         <p class="info">
             <b>Email:</b> {{User.Email}} |
             <b>Điện thoại:</b> {{User.PhoneNumber}}<br>
