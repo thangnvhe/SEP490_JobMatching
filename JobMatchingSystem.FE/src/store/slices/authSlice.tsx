@@ -47,7 +47,7 @@ export const loginAsync = createAsyncThunk(
 
 export const logoutAsync = createAsyncThunk('Auth/logout', async (_, { rejectWithValue }) => {
   try {
-    await axiosInstance.post<BaseResponse<any>>('/auth/logout');
+    await axiosInstance.post<BaseResponse<any>>('/Auth/logout');
     localStorage.removeItem('accessToken');
     Cookies.remove('accessToken');
     return initialState;
@@ -55,6 +55,22 @@ export const logoutAsync = createAsyncThunk('Auth/logout', async (_, { rejectWit
     return rejectWithValue(error.response?.data?.errorMessages?.[0] || 'Đăng xuất thất bại');
   }
 });
+
+// Register async thunk
+export const registerAsync = createAsyncThunk(
+  'Auth/register',
+  async (
+    payload: { fullName: string; email: string; password: string; confirmPassword: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await axiosInstance.post<BaseResponse<any>>('/auth/register', payload);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.errorMessages?.[0] || 'Đăng ký thất bại');
+    }
+  }
+);
 
 const authSlice = createSlice({
   name: 'auth',
@@ -109,6 +125,22 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.isAuthenticated = false;
+      })
+      // Register pending
+      .addCase(registerAsync.pending, (state) => {
+        state.loading = true;
+        state.error = undefined;
+      })
+      // Register fulfilled
+      .addCase(registerAsync.fulfilled, (state) => {
+        state.loading = false;
+        // Không tự động đăng nhập sau khi đăng ký; chỉ đánh dấu không lỗi
+        state.error = undefined;
+      })
+      // Register rejected
+      .addCase(registerAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });
