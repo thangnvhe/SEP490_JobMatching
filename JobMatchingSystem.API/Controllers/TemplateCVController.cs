@@ -19,7 +19,7 @@ namespace JobMatchingSystem.API.Controllers
             _templateCVService = templateCVService;
         }
 
-        [HttpPost("create")]
+        [HttpPost]
         [Authorize]
         //[Authorize(Roles = "Staff")] // Chỉ Staff được tạo TemplateCV
         public async Task<IActionResult> CreateTemplateCV([FromForm] CreateTemplateCVRequest request, IFormFile file)
@@ -32,7 +32,7 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
-        [HttpGet("list")]
+        [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetAllTemplateCVs()
         {
@@ -56,7 +56,7 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
-        [HttpPut("update")]
+        [HttpPut]
         [Authorize]
         //[Authorize(Roles = "Staff")] // Chỉ Staff được tạo TemplateCV
         public async Task<IActionResult> UpdateTemplateCV(int id, [FromForm] UpdateTemplateCVRequest request, IFormFile? file)
