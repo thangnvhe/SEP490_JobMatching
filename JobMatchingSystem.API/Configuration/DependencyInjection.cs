@@ -34,6 +34,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<ICandidateProfileService, CandidateProfileService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ITemplateCVService, TemplateCVService>();
+            services.AddScoped<ICVTemplateService, CVTemplateService>();
             return services;
         }
 
