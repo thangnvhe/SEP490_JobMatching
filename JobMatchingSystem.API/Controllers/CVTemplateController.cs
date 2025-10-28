@@ -20,7 +20,7 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpPost("generate")]
-        public async Task<IActionResult> GenerateCV([FromBody] CreateCVFromTemplateRequest request)
+        public async Task<IActionResult> GenerateCV([FromQuery] CreateCVFromTemplateRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
