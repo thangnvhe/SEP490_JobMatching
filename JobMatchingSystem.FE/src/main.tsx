@@ -5,6 +5,7 @@ import './index.css'
 import AppRouter from './app-router.tsx'
 import StoreProvider from './store/Provider.tsx'
 import { AppInitializer } from './components/AppInitializer.tsx'
+import { Toaster } from './components/ui/sonner'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -14,6 +15,7 @@ createRoot(document.getElementById('root')!).render(
           <AppRouter />
         </BrowserRouter>
       </AppInitializer>
+      <Toaster />
     </StoreProvider>
   </StrictMode>,
 )

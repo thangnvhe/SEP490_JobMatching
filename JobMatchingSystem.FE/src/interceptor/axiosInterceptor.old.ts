@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
-import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import type { AxiosResponse } from 'axios';
+import Cookies from 'js-cookie';
 
 import { API_BASE_URL } from '../../env.ts';
 
@@ -14,49 +15,12 @@ const axiosInstance = axios.create({
     withCredentials: true,
 });
 
-// Flag để tránh refresh token nhiều lần đồng thời
-let isRefreshing = false;
-let refreshSubscribers: Array<(token: string) => void> = [];
-
-// Hàm thêm các request vào hàng đợi khi đang refresh token
-const addRefreshSubscriber = (callback: (token: string) => void) => {
-    refreshSubscribers.push(callback);
-};
-
-// Hàm thông báo cho tất cả request đang chờ về token mới
-const notifyRefreshSubscribers = (token: string) => {
-    refreshSubscribers.forEach((callback) => callback(token));
-    refreshSubscribers = [];
-};
-
-// Hàm refresh token
-const refreshAccessToken = async (): Promise<string> => {
-    const isLocalStorage = localStorage.getItem('accessToken');
-    const oldRefreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
-
-    const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
-        refreshToken: oldRefreshToken
-    });
-
-    const { accessToken, refreshToken } = response.data.data;
-
-    if (isLocalStorage) {
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-    } else {
-        sessionStorage.setItem('accessToken', accessToken);
-        sessionStorage.setItem('refreshToken', refreshToken);
-    }
-
-    return accessToken;
-};
-
 // ====== REQUEST INTERCEPTOR ======
 axiosInstance.interceptors.request.use(
     function (config) {
         // Thêm token vào header nếu có
         if (!config.headers.Authorization) {
-            const accessToken = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+            const accessToken = localStorage.getItem('accessToken') || Cookies.get('accessToken');
             if (accessToken) {
                 config.headers.Authorization = `Bearer ${accessToken}`;
             }
@@ -74,43 +38,18 @@ axiosInstance.interceptors.response.use(
         return response;
     },
     async function (error: AxiosError) {
-        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-
         // Xử lý lỗi 401 (Unauthorized) - Token hết hạn
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            if (isRefreshing) {
-                return new Promise((resolve) => {
-                    addRefreshSubscriber((token: string) => {
-                        if (originalRequest.headers) {
-                            originalRequest.headers.Authorization = `Bearer ${token}`;
-                        }
-                        resolve(axiosInstance(originalRequest));
-                    });
-                });
+        if (error.response?.status === 401) {
+            // Xóa token và redirect về trang login
+            localStorage.removeItem('accessToken');
+            Cookies.remove('accessToken');
+            
+            // Redirect về trang login (có thể sử dụng window.location hoặc router)
+            if (typeof window !== 'undefined') {
+                window.location.href = '/login';
             }
-
-            originalRequest._retry = true;
-            isRefreshing = true;
-
-            try {
-                const newAccessToken = await refreshAccessToken();
-
-                if (newAccessToken) {
-                    isRefreshing = false;
-                    notifyRefreshSubscribers(newAccessToken);
-
-                    if (originalRequest.headers) {
-                        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-                    }
-                    return axiosInstance(originalRequest);
-                } else {
-                    throw new Error('Không thể refresh token');
-                }
-            } catch (refreshError) {
-                isRefreshing = false;
-                refreshSubscribers = [];
-                return Promise.reject(refreshError);
-            }
+            
+            return Promise.reject(error);
         }
 
         // Xử lý các lỗi khác (im lặng - không hiển thị toast)
