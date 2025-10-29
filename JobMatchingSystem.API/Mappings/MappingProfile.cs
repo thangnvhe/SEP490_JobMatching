@@ -19,6 +19,8 @@ namespace JobMatchingSystem.API.Mappings
             CreateMap<UpdateCodeRequest, Code>();
             //CodeTestCase
             CreateMap<CreateCodeTestCaseRequest, CodeTestCase>();
+            CreateMap<UpdateCodeTestCaseRequest, CodeTestCase>();
+            CreateMap<CodeTestCase, CodeTestCaseDTO>();
                 
         }
     }
