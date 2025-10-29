@@ -8,7 +8,9 @@ import {
   Search, 
   Filter,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  MapPin,
+  ChevronDown
 } from 'lucide-react';
 import { companyService } from '@/services/test-services/companyService';
 import type { Company } from '@/models/company';
@@ -20,6 +22,7 @@ const CompaniesPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,13 +45,20 @@ const CompaniesPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const filtered = companies.filter(company =>
+    let filtered = companies.filter(company =>
       company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       company.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       company.address.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    if (selectedLocation) {
+      filtered = filtered.filter(company =>
+        company.address.toLowerCase().includes(selectedLocation.toLowerCase())
+      );
+    }
+
     setFilteredCompanies(filtered);
-  }, [searchTerm, companies]);
+  }, [searchTerm, selectedLocation, companies]);
 
   const handleCompanyClick = (companyId: string) => {
     navigate(`/companies/${companyId}`);
@@ -57,6 +67,17 @@ const CompaniesPage: React.FC = () => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
+
+  const handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedLocation(e.target.value);
+  };
+
+  // Get unique locations from companies
+  const uniqueLocations = Array.from(new Set(companies.map(company => {
+    // Extract city from address (assuming format: "City, Country" or "City")
+    const parts = company.address.split(',');
+    return parts[0].trim();
+  }))).filter(Boolean).sort();
 
   if (isLoading) {
     return (
@@ -126,6 +147,23 @@ const CompaniesPage: React.FC = () => {
                 </div>
                 
                 <div className="flex gap-2">
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                    <select
+                      value={selectedLocation}
+                      onChange={handleLocationChange}
+                      className="pl-9 pr-10 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 appearance-none min-w-[180px]"
+                    >
+                      <option value="">Tất cả địa điểm</option>
+                      {uniqueLocations.map((location) => (
+                        <option key={location} value={location}>
+                          {location}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
                   <Button variant="outline" className="flex items-center gap-2">
                     <Filter className="w-4 h-4" />
                     Lọc

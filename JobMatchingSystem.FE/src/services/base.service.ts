@@ -15,8 +15,15 @@ export const BaseServices = {
         return response.data;
     },
     create: async <T>(data: any, url: string): Promise<BaseResponse<T>> => {
-        const response = await axiosInstance.post(url, data);
+      // If FormData is provided, ensure multipart/form-data header is used
+      if (data instanceof FormData) {
+        const response = await axiosInstance.post(url, data, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
         return response.data;
+      }
+      const response = await axiosInstance.post(url, data);
+      return response.data;
     },
     update: async <T>(id: string, data: any, url: string): Promise<BaseResponse<T>> => {
         const response = await axiosInstance.put(`${url}/${id}`, data);

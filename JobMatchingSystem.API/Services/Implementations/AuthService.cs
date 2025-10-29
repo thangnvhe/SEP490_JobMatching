@@ -94,8 +94,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             var user= await _authRepository.GetUserById(userId);
             user.RefreshToken=null;
             user.RefreshTokenExpiryTime = null;
-            await _authRepository.UpdateUserAsync(user);
-            
+            await _authRepository.UpdateUserAsync(user);           
         }
 
         public async Task<LoginDTO> RefreshTokenAsync()
