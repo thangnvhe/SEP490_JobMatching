@@ -6,6 +6,7 @@ namespace JobMatchingSystem.API.Services.Interfaces
     public interface ICandidateProfileService
     {
         Task<CandidateProfileResponse?> GetProfileByUserIdAsync(int userId);
-        Task CreateOrUpdateProfileAsync(CreateOrUpdateCandidateProfileRequest request, int userId);
+        Task CreateProfileAsync(CreateOrUpdateCandidateProfileRequest request, int userId);
+        Task UpdateProfileAsync(CreateOrUpdateCandidateProfileRequest request, int userId);
     }
 }

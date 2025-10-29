@@ -30,7 +30,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.NotFoundCandidateProfile());
 
             var taxonomyIds = await _context.EntityTaxonomies
-                .Where(e => e.EntityType == EntityType.CandidateProfile && e.EntityId == profile.ProfileId)
+                .Where(e => e.EntityType == EntityType.CandidateProfile && e.EntityId == userId)
                 .Select(e => e.TaxonomyId)
                 .ToListAsync();
 
@@ -48,39 +48,44 @@ namespace JobMatchingSystem.API.Services.Implementations
             };
         }
 
-        public async Task CreateOrUpdateProfileAsync(CreateOrUpdateCandidateProfileRequest request, int userId)
+        public async Task CreateProfileAsync(CreateOrUpdateCandidateProfileRequest request, int userId)
+        {
+            // ✅ Tạo mới
+            var newProfile = new CandidateProfile
+            {
+                UserId = userId,
+                ExperienceYears = request.ExperienceYears,
+                SalaryExpect = request.SalaryExpect,
+                Location = request.Location,
+                JobType = request.JobType,
+                CreatedAt = DateTime.Now
+            };
+
+            await _profileRepository.AddAsync(newProfile);
+
+            // Thêm taxonomy
+            if (request.TaxonomyIds != null && request.TaxonomyIds.Any())
+            {
+                var entityTaxonomies = request.TaxonomyIds.Select(id => new EntityTaxonomy
+                {
+                    EntityType = EntityType.CandidateProfile,
+                    EntityId = userId,
+                    TaxonomyId = id,
+                    CreatedAt = DateTime.Now
+                }).ToList();
+
+                await _context.EntityTaxonomies.AddRangeAsync(entityTaxonomies);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task UpdateProfileAsync(CreateOrUpdateCandidateProfileRequest request, int userId)
         {
             var existingProfile = await _profileRepository.GetByUserIdAsync(userId);
 
             if (existingProfile == null)
             {
-                // ✅ Tạo mới
-                var newProfile = new CandidateProfile
-                {
-                    UserId = userId,
-                    ExperienceYears = request.ExperienceYears,
-                    SalaryExpect = request.SalaryExpect,
-                    Location = request.Location,
-                    JobType = request.JobType,
-                    CreatedAt = DateTime.Now
-                };
-
-                await _profileRepository.AddAsync(newProfile);
-
-                // Thêm taxonomy
-                if (request.TaxonomyIds != null && request.TaxonomyIds.Any())
-                {
-                    var entityTaxonomies = request.TaxonomyIds.Select(id => new EntityTaxonomy
-                    {
-                        EntityType = EntityType.CandidateProfile,
-                        EntityId = newProfile.ProfileId,
-                        TaxonomyId = id,
-                        CreatedAt = DateTime.Now
-                    }).ToList();
-
-                    await _context.EntityTaxonomies.AddRangeAsync(entityTaxonomies);
-                    await _context.SaveChangesAsync();
-                }
+                throw new AppException(ErrorCode.NotFoundCandidateProfile());
             }
             else
             {
@@ -95,7 +100,7 @@ namespace JobMatchingSystem.API.Services.Implementations
 
                 // Cập nhật taxonomy (xóa cũ, thêm mới)
                 var oldTaxonomies = await _context.EntityTaxonomies
-                    .Where(e => e.EntityType == EntityType.CandidateProfile && e.EntityId == existingProfile.ProfileId)
+                    .Where(e => e.EntityType == EntityType.CandidateProfile && e.EntityId == userId)
                     .ToListAsync();
 
                 _context.EntityTaxonomies.RemoveRange(oldTaxonomies);
@@ -105,7 +110,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                     var newTaxonomies = request.TaxonomyIds.Select(id => new EntityTaxonomy
                     {
                         EntityType = EntityType.CandidateProfile,
-                        EntityId = existingProfile.ProfileId,
+                        EntityId = userId,
                         TaxonomyId = id,
                         CreatedAt = DateTime.Now
                     }).ToList();

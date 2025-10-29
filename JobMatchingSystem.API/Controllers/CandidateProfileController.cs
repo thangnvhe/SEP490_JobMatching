@@ -20,7 +20,7 @@ namespace JobMatchingSystem.API.Controllers
             _profileService = profileService;
         }
 
-        [HttpGet("getCandidateProfile")]
+        [HttpGet]
         [Authorize(Roles = "Candidate")]
         public async Task<IActionResult> GetMyProfile()
         {
@@ -43,12 +43,26 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
-        [HttpPost("createOrUpdate")]
+        [HttpPost("create")]
         [Authorize(Roles = "Candidate")]
-        public async Task<IActionResult> SaveProfile([FromBody] CreateOrUpdateCandidateProfileRequest request)
+        public async Task<IActionResult> CreateProfile([FromBody] CreateOrUpdateCandidateProfileRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            await _profileService.CreateOrUpdateProfileAsync(request, userId);
+            await _profileService.CreateProfileAsync(request, userId);
+
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult("Candidate profile saved successfully")
+                .Build());
+        }
+
+        [HttpPost("update")]
+        [Authorize(Roles = "Candidate")]
+        public async Task<IActionResult> UpdateProfile([FromBody] CreateOrUpdateCandidateProfileRequest request)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            await _profileService.UpdateProfileAsync(request, userId);
 
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
