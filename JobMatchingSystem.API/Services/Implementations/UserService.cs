@@ -4,6 +4,7 @@ using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Entities;
 using JobMatchingSystem.API.Exceptions;
+using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Repositories.Implementations;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
@@ -30,18 +31,36 @@ namespace JobMatchingSystem.API.Services.Implementations
             _passwordHasher = passwordHasher;
         }
 
-        public async Task<List<UserResponseDTO>> GetAllUser()
+        public async Task<PagedResult<UserResponseDTO>> GetAllUser(int page = 1, int size = 5,string search="",int role=0)
         {
-            var listUser = await _authRepository.GetAllAsync();
+            var listUser = await _authRepository.GetAllAsync(search,role);
             if (listUser == null || !listUser.Any())
-                return new List<UserResponseDTO>();
-            var listUserDTO = _mapper.Map<List<UserResponseDTO>>(listUser);
-            for (int i = 0; i < listUser.Count; i++)
             {
-                var roles = await _userManager.GetRolesAsync(listUser[i]);
-                listUserDTO[i].Role = roles.FirstOrDefault() ?? "NoRole";
+                return new PagedResult<UserResponseDTO>
+                {
+                    Items = new List<UserResponseDTO>(),
+                    Pager = new Pager(0, page, size)
+                };
             }
-            return listUserDTO;
+
+
+            int totalItems = listUser.Count;
+            int skip = (page - 1) * size;
+
+            var pagedUsers = listUser.Skip(skip).Take(size).ToList();
+            var userDtos = _mapper.Map<List<UserResponseDTO>>(pagedUsers);
+
+            for (int i = 0; i < pagedUsers.Count; i++)
+            {
+                var roles = await _userManager.GetRolesAsync(pagedUsers[i]);
+                userDtos[i].Role = roles.FirstOrDefault() ?? "NoRole";
+            }
+
+            return new PagedResult<UserResponseDTO>
+            {
+                Items = userDtos,
+                Pager = new Pager(totalItems, page, size)
+            };
         }
 
         public async Task<UserResponseDTO> GetUserById(int userId)
@@ -64,7 +83,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.EmailExist());
 
 
-            var password = "Aa@" + Guid.NewGuid().ToString("N").Substring(0, 6);
+            var password = PasswordHelper.GenerateRandomPassword();
 
 
 
