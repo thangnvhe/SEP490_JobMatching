@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="15.0.1" />
     <PackageReference Include="EPPlus" Version="8.0.1" />
+    <PackageReference Include="Handlebars.Net" Version="2.1.6" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.20" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.20" />
     <PackageReference Include="Microsoft.CodeAnalysis" Version="4.8.0" />
@@ -30,6 +31,7 @@
   <ItemGroup>
     <Folder Include="wwwroot\images\LicenseFile\" />
     <Folder Include="wwwroot\images\CodeImages\" />
+    <Folder Include="wwwroot\TemplateCV\" />
   </ItemGroup>
 
   <ItemGroup>
