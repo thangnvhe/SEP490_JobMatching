@@ -35,7 +35,7 @@ const HomePage = () => {
             <div className="max-w-xl">
               <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-4 leading-tight">
                 There Are <span className="text-blue-600">93,178</span> Postings
-                Here For you!
+              Here For you!
               </h1>
               <p className="text-lg text-gray-600 mb-8">
                 Find Jobs, Employment & Career Opportunities.

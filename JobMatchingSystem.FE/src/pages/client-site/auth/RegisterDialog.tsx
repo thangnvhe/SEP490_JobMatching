@@ -49,7 +49,10 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
     password: z
       .string()
       .min(1, { message: "Mật khẩu là bắt buộc" })
-      .min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự" }),
+      .min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự" })
+      .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, {
+        message: "Mật khẩu phải có ít nhất 1 ký tự đặc biệt",
+      }),
     confirmPassword: z
       .string()
       .min(1, { message: "Vui lòng xác nhận mật khẩu" }),
@@ -99,7 +102,10 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
         confirmPassword: data.confirmPassword,
       })).unwrap();
       toast.success("Đăng ký thành công!");
-      onOpenChange(false);
+      // Delay một chút để user có thể thấy toast trước khi dialog đóng
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 1000);
     } catch (_) {
       toast.error("Đăng ký thất bại!");
     }

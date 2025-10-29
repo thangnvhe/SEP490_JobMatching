@@ -24,6 +24,7 @@ export const loginAsync = createAsyncThunk(
     try {
       const response = await axiosInstance.post<BaseResponse<any>>('/auth/login', { email, password });
       const token = response.data.result.token;
+      
       if (rememberMe) {
         localStorage.setItem('accessToken', token);
       } else {
@@ -47,7 +48,7 @@ export const loginAsync = createAsyncThunk(
 
 export const logoutAsync = createAsyncThunk('Auth/logout', async (_, { rejectWithValue }) => {
   try {
-    await axiosInstance.post<BaseResponse<any>>('/Auth/logout');
+    await axiosInstance.post<BaseResponse<any>>('/auth/logout');
     localStorage.removeItem('accessToken');
     Cookies.remove('accessToken');
     return initialState;
@@ -141,6 +142,36 @@ const authSlice = createSlice({
       .addCase(registerAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      // Logout pending
+      .addCase(logoutAsync.pending, (state) => {
+        state.loading = true;
+        state.error = undefined;
+      })
+      // Logout fulfilled
+      .addCase(logoutAsync.fulfilled, (state) => {
+        state.loading = false;
+        state.accessToken = '';
+        state.exp = 0;
+        state.name = '';
+        state.nameid = '';
+        state.role = '';
+        state.isAuthenticated = false;
+        state.rememberMe = false;
+        state.error = undefined;
+      })
+      // Logout rejected
+      .addCase(logoutAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        // Vẫn logout local dù API thất bại
+        state.accessToken = '';
+        state.exp = 0;
+        state.name = '';
+        state.nameid = '';
+        state.role = '';
+        state.isAuthenticated = false;
+        state.rememberMe = false;
       });
   },
 });
