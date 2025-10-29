@@ -12,8 +12,6 @@ namespace JobMatchingSystem.API.DTOs.Request
         public string PhoneNumber { get; set; }
         [Required]
         public string CompanyName { get; set; }
-        [Required]
-        public string CompanyLocation { get; set; }
         [Required, Url]
         public string WebsiteUrl { get; set; }
         [Required]
