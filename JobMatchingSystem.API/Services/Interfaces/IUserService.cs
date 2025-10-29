@@ -10,5 +10,8 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task<UserResponseDTO> GetUserById(int userId);
         Task CreateUserByAdminAsync(CreateUserByAdminRequest request);
         Task ChangeStatus(int userId);
+        Task<UserResponse?> GetUserByIdAsync(int id);
+        Task ChangePasswordAsync(int userId, ChangePasswordRequest request);
+        Task<UserResponse?> UpdateUserProfileAsync(int userId, UpdateUserProfileRequest request, IWebHostEnvironment env);
     }
 }
