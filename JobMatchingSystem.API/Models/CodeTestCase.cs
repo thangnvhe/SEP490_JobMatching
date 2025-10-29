@@ -18,5 +18,6 @@ namespace JobMatchingSystem.API.Entities
         // Navigation property
         [ForeignKey("CodeId")]
         public Code? Code { get; set; } = null;
+        public bool isDelete{ get; set; }=false;
     }
 }
