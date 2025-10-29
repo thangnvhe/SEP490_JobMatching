@@ -13,21 +13,19 @@ import CompaniesPage from './pages/client-site/guest/CompaniesPage';
 // Guards
 
 // Layouts
-import { DashboardLayout } from './components/layout/DashboardLayout';
 import { ClientLayout } from './components/layout/Client/ClientLayout';
 // Admin pages
-import DashboardPage from './pages/admin-site/Dashboard/DashboardPage';
 import { ManageCompanyPage } from './pages/admin-site/ManageCompany/ViewCompanyList';
 import { ManageUserPage } from './pages/admin-site/ManageUser/ViewUserList';
 import { ManageJobPage } from './pages/admin-site/ManageJob/ViewJobList';
 import { ManageReportPage } from './pages/admin-site/ManageReport/ViewReportList';
-import Hehe from './pages/admin-site/Test/hehe';
 import { CreateEditUserPage } from './pages/admin-site/ManageUser/CreateEditUser';
 import { CreateEditJobPage } from './pages/admin-site/ManageJob/CreateEditJob';
 import { CreateEditCompanyPage } from './pages/admin-site/ManageCompany/CreateEditCompany';
 import RecruiterDashboard from './pages/client-site/recruiter/Dashboard';
 import CandidateDashboard from './pages/client-site/candidate/Dashboard';
 import FavouriteJobsPage from './pages/client-site/candidate/FavouriteJobs';
+import ProfilePage from './pages/client-site/profile/profile';
 
 // Component chính để render router
 const AppRouter: React.FC = () => {
@@ -43,6 +41,7 @@ const AppRouter: React.FC = () => {
           <Route path="companies" element={<CompaniesPage />} />
           <Route path="companies/:id" element={<CompanyDetailPage />} />
           <Route path="contact-recruiter" element={<ContactRecruiterPage />} />
+          <Route path="profile" element={<ProfilePage />} />
         </Route>
       </Route>
 
@@ -50,10 +49,9 @@ const AppRouter: React.FC = () => {
       <Route
         path="/admin"
         element={
-          <DashboardLayout />
+          <ClientLayout />
         }
       >
-        <Route index element={<DashboardPage />} />
         <Route path="manage-company" element={<ManageCompanyPage />} />
         <Route path="manage-user" element={<ManageUserPage />} />
         <Route path="manage-job" element={<ManageJobPage />} />
@@ -64,14 +62,13 @@ const AppRouter: React.FC = () => {
         <Route path="manage-job/edit/:id" element={<CreateEditJobPage />} />
         <Route path="manage-company/create" element={<CreateEditCompanyPage />} />
         <Route path="manage-company/edit/:id" element={<CreateEditCompanyPage />} />
-        <Route path="test" element={<Hehe />} />
       </Route>
 
       {/* Recruiter routes - Protected */}
       <Route
         path="/recruiter"
         element={
-          <DashboardLayout />
+          <ClientLayout />
         }
       >
         <Route index element={<RecruiterDashboard />} />
@@ -81,7 +78,7 @@ const AppRouter: React.FC = () => {
       <Route
         path="/candidate"
         element={
-          <DashboardLayout />
+          <ClientLayout />
         }
       >
         <Route index element={<CandidateDashboard />} />

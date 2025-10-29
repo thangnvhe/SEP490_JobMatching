@@ -95,7 +95,7 @@ const HomePage = () => {
             </div>
             <div className="hidden md:block">
               <img
-                src="public/banner-img-1.png"
+                src="/banner-img-1.png"
                 alt="Job search illustration"
                 className="w-full h-auto"
               />
@@ -159,8 +159,8 @@ const HomePage = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex items-start">
                       <Avatar className="h-14 w-14 mr-4">
-                        <AvatarImage src={job.logo} alt={job.company} />
-                        <AvatarFallback>
+                        {job.logo && <AvatarImage src={job.logo} alt={job.company} />}
+                        <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
                           {job.company.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
@@ -253,7 +253,7 @@ const featuredJobs = [
     location: "London, UK",
     posted: "11 hours ago",
     salary: "$35k - $45k",
-    logo: "https://superio-react.ibthemes.com/images/resource/company-logo-1.png",
+    logo: null, // Sẽ sử dụng AvatarFallback
     tags: [
       { text: "Full Time", className: "bg-blue-50 text-blue-700" },
       { text: "Private", className: "bg-green-50 text-green-700" },
@@ -267,7 +267,7 @@ const featuredJobs = [
     location: "London, UK",
     posted: "11 hours ago",
     salary: "$35k - $45k",
-    logo: "https://superio-react.ibthemes.com/images/resource/company-logo-2.png",
+    logo: null, // Sẽ sử dụng AvatarFallback
     tags: [
       { text: "Freelancer", className: "bg-blue-50 text-blue-700" },
       { text: "Private", className: "bg-green-50 text-green-700" },
@@ -281,7 +281,7 @@ const featuredJobs = [
     location: "London, UK",
     posted: "11 hours ago",
     salary: "$35k - $45k",
-    logo: "https://superio-react.ibthemes.com/images/resource/company-logo-3.png",
+    logo: null, // Sẽ sử dụng AvatarFallback
     tags: [
       { text: "Part Time", className: "bg-blue-50 text-blue-700" },
       { text: "Private", className: "bg-green-50 text-green-700" },
@@ -295,7 +295,7 @@ const featuredJobs = [
     location: "London, UK",
     posted: "11 hours ago",
     salary: "$35k - $45k",
-    logo: "https://superio-react.ibthemes.com/images/resource/company-logo-4.png",
+    logo: null, // Sẽ sử dụng AvatarFallback
     tags: [
       { text: "Temporary", className: "bg-blue-50 text-blue-700" },
       { text: "Private", className: "bg-green-50 text-green-700" },
@@ -309,7 +309,7 @@ const featuredJobs = [
     location: "London, UK",
     posted: "11 hours ago",
     salary: "$35k - $45k",
-    logo: "https://superio-react.ibthemes.com/images/resource/company-logo-5.png",
+    logo: null, // Sẽ sử dụng AvatarFallback
     tags: [
       { text: "Full Time", className: "bg-blue-50 text-blue-700" },
       { text: "Private", className: "bg-green-50 text-green-700" },
@@ -323,7 +323,7 @@ const featuredJobs = [
     location: "London, UK",
     posted: "11 hours ago",
     salary: "$35k - $45k",
-    logo: "https://superio-react.ibthemes.com/images/resource/company-logo-6.png",
+    logo: null, // Sẽ sử dụng AvatarFallback
     tags: [
       { text: "Freelancer", className: "bg-blue-50 text-blue-700" },
       { text: "Private", className: "bg-green-50 text-green-700" },

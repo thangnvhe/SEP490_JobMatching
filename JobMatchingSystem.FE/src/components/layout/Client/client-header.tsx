@@ -153,9 +153,11 @@ export function ClientHeader() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="flex items-center w-full">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} disabled={isLoading}>
@@ -210,6 +212,9 @@ export function ClientHeader() {
                     <User className="h-4 w-4" />
                     <span>{user?.fullName || user?.username || "User"}</span>
                   </div>
+                  <Link to="/profile" className="text-sm font-medium transition-colors hover:text-primary">
+                    Profile
+                  </Link>
                   <Button
                     variant="ghost"
                     className="w-fit text-sm"

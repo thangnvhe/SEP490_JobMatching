@@ -1,12 +1,18 @@
 export interface User {
-    id: string;
-    username: string;
+    id: number;
+    userName: string;
     email: string;
     fullName: string;
-    role: UserRole;
+    avatarUrl: string | null;
+    gender: string | null;
+    birthday: string | null;
+    score: number;
     isActive: boolean;
     createdAt: string;
-    updatedAt: string;
+    updatedAt: string | null;
+    emailConfirmed: boolean;
+    phoneNumber: string;
+    role?: UserRole;
 }
 
 export interface UserLogin {

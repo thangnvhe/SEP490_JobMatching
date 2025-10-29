@@ -50,7 +50,7 @@ export class JWTUtils {
 
       return {
         id: decoded.sub || decoded.userId || decoded.id,
-        username: decoded.username || decoded.unique_name,
+        userName: decoded.username || decoded.unique_name,
         email: decoded.email,
         fullName: decoded.given_name || decoded.fullName,
         role: decoded.role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'],
