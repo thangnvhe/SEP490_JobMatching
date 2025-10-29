@@ -6,5 +6,7 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
     {
         Task<Company?> GetByIdAsync(int id);
         Task AddAsync(Company company);
+        Task<List<Company>> GetAllWithPendingAsync();
+        Task Update(Company company);
     }
 }

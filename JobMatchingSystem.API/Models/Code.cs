@@ -14,6 +14,9 @@ namespace JobMatchingSystem.API.Entities
         public string? Title { get; set; }
         public string? Description { get; set; }
         public string? Image { get; set; }
+        public bool IsDeleted { get; set; }=false;
+        public string ParameterTypes { get; set; }  
+        public string ReturnType { get; set; }
         // Navigation properties
         public virtual ICollection<CodeTestCase>? CodeTestCases { get; set; } = new List<CodeTestCase>();
         public virtual CandidateStage? CandidateStage { get; set; }
