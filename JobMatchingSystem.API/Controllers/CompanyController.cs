@@ -1,10 +1,12 @@
 ﻿using JobMatchingSystem.API.Data;
 using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Entities;
 using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
@@ -51,6 +53,26 @@ namespace JobMatchingSystem.API.Controllers
             await _companyService.RejectCompanyAsync(request, userId);
             return Ok(APIResponse<string>.Builder()
                 .WithResult("Reject Company Success")
+                .WithSuccess(true)
+                .WithStatusCode(HttpStatusCode.OK)
+                .Build());
+        }
+        [HttpGet("pending")]
+        public async Task<IActionResult> GetAllWithPending()
+        {
+            var result = await _companyService.GetAllWithPending();
+            return Ok(APIResponse<List<CompanyDTO>>.Builder()
+                .WithResult(result)
+                .WithSuccess(true)
+                .WithStatusCode(HttpStatusCode.OK)
+                .Build());
+        }
+        [HttpGet("{companyId}")]
+        public async Task<IActionResult> GetDetailCompany(int companyId)
+        {
+            var result = await _companyService.GetDetailCompany(companyId);
+            return Ok(APIResponse<CompanyDTO>.Builder()
+                .WithResult(result)
                 .WithSuccess(true)
                 .WithStatusCode(HttpStatusCode.OK)
                 .Build());
