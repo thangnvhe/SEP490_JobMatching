@@ -3,6 +3,7 @@ using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Exceptions;
+using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Services.Implementations;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -22,14 +23,16 @@ namespace JobMatchingSystem.API.Controllers
             _userService = userService;
         }
         [HttpGet]
-        public async Task<IActionResult> GetAllUsers()
+        public async Task<IActionResult> GetAllUsers([FromQuery] int page = 1, [FromQuery] int size = 5, [FromQuery] string search = "",
+        [FromQuery] int role = 0)
         {
-            var users = await _userService.GetAllUser();
-            return Ok(APIResponse<List<UserResponseDTO>>.Builder()
-                    .WithResult(users)
-                    .WithSuccess(true)
-                    .WithStatusCode(HttpStatusCode.OK)
-                    .Build());
+            var result = await _userService.GetAllUser(page, size,search,role);
+
+            return Ok(APIResponse<PagedResult<UserResponseDTO>>.Builder()
+                .WithResult(result)
+                .WithSuccess(true)
+                .WithStatusCode(HttpStatusCode.OK)
+                .Build());
         }
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetUserById(int id)

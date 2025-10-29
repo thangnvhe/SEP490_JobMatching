@@ -16,5 +16,6 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundJob() => new("Not Found Job", HttpStatusCode.BadRequest);
         public static Error SalaryError() => new("Salary min large than Salary max", HttpStatusCode.BadRequest);
         public static Error NotFoundCandidateProfile() => new("Not Found Candidate Profile", HttpStatusCode.BadRequest);
+        public static Error NotFoundCode()=> new ("Not Found Code", HttpStatusCode.NotFound);
     }
 }

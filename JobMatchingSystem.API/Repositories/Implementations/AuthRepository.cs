@@ -50,9 +50,23 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             return await _context.ApplicationUsers.AnyAsync(x => x.Email == email);
         }
 
-        public async Task<List<ApplicationUser>> GetAllAsync()
+        public async Task<List<ApplicationUser>> GetAllAsync(string search, int roleId)
         {
-            return await _context.ApplicationUsers.ToListAsync();
+            IQueryable<ApplicationUser> query = _context.Users;
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(u => u.UserName != null && u.UserName.Contains(search));
+
+            }
+            if (roleId != 0)
+            {
+                var userIdsInRole = _context.UserRoles
+                    .Where(ur => ur.RoleId == roleId)
+                    .Select(ur => ur.UserId);
+
+                query = query.Where(u => userIdsInRole.Contains(u.Id));
+            }
+            return await query.ToListAsync();
         }
 
         public async Task ChangeStatus(ApplicationUser user)
