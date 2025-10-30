@@ -55,6 +55,9 @@ namespace JobMatchingSystem.API.Data
             // Company
             modelBuilder.Entity<Company>(entity =>
             {
+                entity.HasIndex(e => e.CompanyName).IsUnique();
+                entity.HasIndex(e => e.Email).IsUnique();  
+                entity.HasIndex(e => e.TaxCode).IsUnique();
                 entity.Property(e => e.Status).HasConversion<byte>().HasColumnType("tinyint");
                 entity.HasOne(e => e.VerifiedByUser)
                       .WithMany(e => e.VerifiedCompanies)
