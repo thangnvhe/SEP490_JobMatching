@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-// Import các component của shadcn/ui
+// shadcn/ui components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -22,10 +23,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"; // Component Form của shadcn
+} from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ContactSuccessModal } from "@/components/ui/ContactSuccessModal";
-// Icons
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+
 import {
   Phone,
   Mail,
@@ -37,12 +45,9 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-// --- DTO và Schema ---
-// Định nghĩa các hằng số cho validation file
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+// --- validation/schema ---
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_MIME_TYPES = ["application/pdf"];
-
-// Tạo Zod schema dựa trên DTO và yêu cầu
 const phoneRegex = /^(0|\+84)[0-9]{9,10}$/;
 
 const companyCreateSchema = z.object({
@@ -58,13 +63,14 @@ const companyCreateSchema = z.object({
       "Số điện thoại không hợp lệ (ví dụ: 09... hoặc +849...)."
     ),
   companyName: z.string().min(1, "Vui lòng nhập tên công ty."),
-  companyLocation: z.string().min(1, "Vui lòng nhập vị trí (Tỉnh/Thành phố)."),
   websiteURL: z
     .string()
     .min(1, "Vui lòng nhập website.")
     .url("URL website không hợp lệ (ví dụ: https://company.com)."),
   taxCode: z.string().min(1, "Vui lòng nhập mã số thuế."),
-  address: z.string().min(1, "Vui lòng nhập địa chỉ công ty."),
+  province: z.string().min(1, "Vui lòng chọn Tỉnh/Thành phố."),
+  ward: z.string().min(1, "Vui lòng chọn Phường/Xã."),
+  street: z.string().min(1, "Vui lòng nhập số nhà, tên đường."),
   licenseFile: z
     .custom<FileList>(
       (val) => val instanceof FileList,
@@ -78,11 +84,10 @@ const companyCreateSchema = z.object({
     )
     .refine(
       (files) => files[0]?.size <= MAX_FILE_SIZE,
-      `Kích thước file tối đa là 5MB.`
+      "Kích thước file tối đa là 5MB."
     ),
 });
 
-// Tạo type cho form từ schema
 type CompanyCreateForm = z.infer<typeof companyCreateSchema>;
 
 const ContactRecruiterPage: React.FC = () => {
@@ -93,6 +98,14 @@ const ContactRecruiterPage: React.FC = () => {
   } | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submittedCompanyName, setSubmittedCompanyName] = useState("");
+  const navigate = useNavigate();
+  // address data
+  const [provinces, setProvinces] = useState<any[]>([]);
+  const [wards, setWards] = useState<any[]>([]);
+  const [isProvincesLoading, setIsProvincesLoading] = useState(false);
+  const [isWardsLoading, setIsWardsLoading] = useState(false);
+
+  const API_BASE_URL = "https://provinces.open-api.vn/api/v2";
 
   const form = useForm<CompanyCreateForm>({
     resolver: zodResolver(companyCreateSchema),
@@ -101,133 +114,142 @@ const ContactRecruiterPage: React.FC = () => {
       workEmail: "",
       phoneNumber: "",
       companyName: "",
-      companyLocation: "",
       websiteURL: "",
       taxCode: "",
-      address: "",
+      province: "",
+      ward: "",
+      street: "",
       licenseFile: undefined,
     },
   });
 
- const onSubmit = async (data: CompanyCreateForm) => {
-   setIsLoading(true);
-   setSubmitResult(null);
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      setIsProvincesLoading(true);
+      try {
+        const res = await fetch(`${API_BASE_URL}/p?depth=1`);
+        const data = await res.json();
+        setProvinces(data || []);
+      } catch (err) {
+        console.error("Lỗi tải tỉnh:", err);
+      } finally {
+        setIsProvincesLoading(false);
+      }
+    };
+    fetchProvinces();
+  }, []);
 
-   // 1. Tạo đối tượng FormData
-   const formData = new FormData();
+  const handleProvinceChange = async (provinceCode: string) => {
+    // set form province (we store province code as string)
+    form.setValue("province", provinceCode);
+    // reset ward
+    form.setValue("ward", "");
+    setWards([]);
+    setIsWardsLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/p/${provinceCode}?depth=2`);
+      const data = await res.json();
+      setWards(data?.wards || []);
+    } catch (err) {
+      console.error("Lỗi tải xã:", err);
+    } finally {
+      setIsWardsLoading(false);
+    }
+  };
 
-   // 2. Thêm TẤT CẢ các trường vào FormData
-   // Quan trọng: Tên key ("FullName", "WorkEmail") phải khớp
-   // chính xác với tên thuộc tính trong DTO của backend (là PascalCase, theo như log lỗi của bạn).
+  const onSubmit = async (data: CompanyCreateForm) => {
+    setIsLoading(true);
+    setSubmitResult(null);
 
-   formData.append("FullName", data.fullName);
-   formData.append("WorkEmail", data.workEmail);
-   formData.append("PhoneNumber", data.phoneNumber);
-   formData.append("CompanyName", data.companyName);
-   formData.append("CompanyLocation", data.companyLocation);
-   formData.append("WebsiteUrl", data.websiteURL); // Log lỗi của bạn là "WebsiteUrl", hãy kiểm tra kỹ DTO
-   formData.append("TaxCode", data.taxCode);
-   formData.append("Address", data.address);
-   formData.append("LicenseFile", data.licenseFile[0]); // Thêm file
+    try {
+      const formData = new FormData();
+      const provinceName =
+        provinces.find((p) => p.code.toString() === data.province)?.name || "";
+      const fullAddress = `${data.street}, ${data.ward}, ${provinceName}`;
 
-   try {
-     // 3. Gửi FormData đi
-     // Service của bạn (CompanyServices.createCompany) giờ đây sẽ nhận FormData
-     // Bạn có thể cần tạm thời ép kiểu `as any` nếu TypeScript báo lỗi
-     const resultMessage = await CompanyServices.createCompany(formData as any);
+      formData.append("FullName", data.fullName);
+      formData.append("WorkEmail", data.workEmail);
+      formData.append("PhoneNumber", data.phoneNumber);
+      formData.append("CompanyName", data.companyName);
+      formData.append("WebsiteUrl", data.websiteURL);
+      formData.append("TaxCode", data.taxCode);
+      formData.append("Address", fullAddress);
+      formData.append("LicenseFile", data.licenseFile[0]);
 
-     console.log("API Response Success:", resultMessage);
+      const resultMessage = await CompanyServices.createCompany(
+        formData as any
+      );
+      console.log("API Response Success:", resultMessage);
 
-     // (Giữ nguyên phần còn lại của try...)
-     setSubmitResult({
-       success: true,
-       message: "Gửi thông tin thành công! Chúng tôi sẽ liên hệ với bạn sớm.",
-     });
-
-     setSubmittedCompanyName(data.companyName);
-     setShowSuccessModal(true);
-     form.reset();
-   } catch (error) {
-     // Improve error parsing for ASP.NET validation responses
-     let errorMessage = "Có lỗi không xác định xảy ra, vui lòng thử lại.";
-
-     const apiError = error as any;
-     if (apiError?.response?.data) {
-       const data = apiError.response.data;
-       // If ModelState errors exist, they are in data.errors as an object
-       if (data.errors && typeof data.errors === "object") {
-         const messages: string[] = [];
-         Object.keys(data.errors).forEach((key) => {
-           const val = data.errors[key];
-           if (Array.isArray(val)) {
-             messages.push(...val.map((m) => String(m)));
-           } else if (typeof val === "string") {
-             messages.push(val);
-           }
-         });
-         if (messages.length > 0) errorMessage = messages.join(" \n");
-       } else if (data.title) {
-         // e.g. "One or more validation errors occurred."
-         errorMessage = data.title;
-       } else if (data.message) {
-         errorMessage = data.message;
-       } else {
-         errorMessage = JSON.stringify(data);
-       }
-     } else if (error instanceof Error) {
-       errorMessage = error.message;
-     }
-
-     console.error("API Response Error:", error);
-     setSubmitResult({
-       success: false,
-       message: errorMessage,
-     });
-   } finally {
-     setIsLoading(false);
-   }
- };
+      setSubmitResult({
+        success: true,
+        message: "Gửi thông tin thành công! Chúng tôi sẽ liên hệ với bạn sớm.",
+      });
+      setSubmittedCompanyName(data.companyName);
+      setShowSuccessModal(true);
+      // Reset form and also clear wards
+      form.reset();
+      setWards([]);
+    } catch (error) {
+      let errorMessage = "Có lỗi không xác định xảy ra, vui lòng thử lại.";
+      const apiError = error as any;
+      if (apiError?.response?.data) {
+        const d = apiError.response.data;
+        if (d.errors && typeof d.errors === "object") {
+          const messages: string[] = [];
+          Object.keys(d.errors).forEach((k) => {
+            const val = d.errors[k];
+            if (Array.isArray(val)) messages.push(...val.map(String));
+            else if (typeof val === "string") messages.push(val);
+          });
+          if (messages.length) errorMessage = messages.join(" \n");
+        } else if (d.title) errorMessage = d.title;
+        else if (d.message) errorMessage = d.message;
+        else errorMessage = JSON.stringify(d);
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      console.error("API Response Error:", error);
+      setSubmitResult({ success: false, message: errorMessage });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <>
       <ContactSuccessModal
         isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
-        companyName={submittedCompanyName} // Truyền tên công ty đã submit
+        onClose={() => {
+          setShowSuccessModal(false);
+          navigate("/"); // ✅ Sau khi nhấn OK thì về Home
+        }}
+        companyName={submittedCompanyName}
       />
 
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
-            {/* Left Section - Information (Không đổi) */}
+            {/* Left Info */}
             <div className="space-y-8">
-              {/* Header Text */}
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
-                    Kết Nối Với Những Tài Năng Xuất Sắc
-                  </h1>
-                  <p className="text-lg text-gray-600 leading-relaxed">
-                    Tham gia cùng chúng tôi để tìm kiếm và tuyển dụng những ứng
-                    viên tài năng nhất. Hệ thống matching thông minh giúp bạn
-                    tiết kiệm thời gian và chi phí tuyển dụng.
-                  </p>
-                </div>
+              <div className="space-y-4">
+                <h1 className="text-4xl lg:text-5xl font-bold text-gray-900">
+                  Kết Nối Với Những Tài Năng Xuất Sắc
+                </h1>
+                <p className="text-lg text-gray-600">
+                  Tham gia cùng chúng tôi để tìm kiếm và tuyển dụng những ứng
+                  viên tài năng nhất.
+                </p>
               </div>
 
-              {/* Contact Information */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center">
-                        <Phone className="w-4 h-4 text-white" />
-                      </div>
+                    <div className="w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center">
+                      <Phone className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-1">
-                        Hotline tư vấn
-                      </h3>
+                      <h3 className="text-xl font-bold">Hotline tư vấn</h3>
                       <p className="text-lg font-medium text-gray-700">
                         +84 (28) 3822-6895
                       </p>
@@ -235,15 +257,11 @@ const ContactRecruiterPage: React.FC = () => {
                   </div>
 
                   <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center">
-                        <Mail className="w-4 h-4 text-white" />
-                      </div>
+                    <div className="w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center">
+                      <Mail className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-1">
-                        Email hỗ trợ
-                      </h3>
+                      <h3 className="text-xl font-bold">Email hỗ trợ</h3>
                       <p className="text-lg font-medium text-gray-700">
                         support@jobmatching.vn
                       </p>
@@ -253,15 +271,11 @@ const ContactRecruiterPage: React.FC = () => {
 
                 <div className="space-y-4">
                   <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center">
-                        <Clock className="w-4 h-4 text-white" />
-                      </div>
+                    <div className="w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center">
+                      <Clock className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-1">
-                        Giờ làm việc
-                      </h3>
+                      <h3 className="text-xl font-bold">Giờ làm việc</h3>
                       <p className="text-lg font-medium text-gray-700">
                         T2 - T6: 8:00 - 18:00
                       </p>
@@ -269,18 +283,13 @@ const ContactRecruiterPage: React.FC = () => {
                   </div>
 
                   <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center">
-                        <MapPin className="w-4 h-4 text-white" />
-                      </div>
+                    <div className="w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center">
+                      <MapPin className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-1">
-                        Văn phòng
-                      </h3>
+                      <h3 className="text-xl font-bold">Văn phòng</h3>
                       <p className="text-lg font-medium text-gray-700">
-                        Lô E2a-7, Đường D1, Đ. D1, Long Thạnh Mỹ, Thành Phố Thủ
-                        Đức, Hồ Chí Minh
+                        Lô E2a-7, Đường D1, Long Thạnh Mỹ, TP.Thủ Đức, HCM
                       </p>
                     </div>
                   </div>
@@ -288,7 +297,7 @@ const ContactRecruiterPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Section - Form (Đã cập nhật) */}
+            {/* Right - Form */}
             <div>
               <Card className="bg-teal-50 border-0 shadow-lg">
                 <CardHeader className="text-center pb-6">
@@ -329,57 +338,34 @@ const ContactRecruiterPage: React.FC = () => {
                     </Alert>
                   )}
 
-                  {/* 3. Bọc form bằng <Form> của shadcn */}
                   <Form {...form}>
                     <form
                       onSubmit={form.handleSubmit(onSubmit)}
                       className="space-y-6"
                     >
-                      {/* Tên công ty & Vị trí */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="companyName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-semibold text-gray-700">
-                                Tên công ty{" "}
-                                <span className="text-red-500">*</span>
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Tên công ty của bạn"
-                                  {...field}
-                                  className="bg-white border-gray-200 focus:border-teal-500 focus:ring-teal-500"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="companyLocation"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-semibold text-gray-700">
-                                Vị trí (Tỉnh/Thành phố){" "}
-                                <span className="text-red-500">*</span>
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Ví dụ: Hồ Chí Minh"
-                                  {...field}
-                                  className="bg-white border-gray-200 focus:border-teal-500 focus:ring-teal-500"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                      {/* Tên công ty */}
+                      <FormField
+                        control={form.control}
+                        name="companyName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-semibold text-gray-700">
+                              Tên công ty{" "}
+                              <span className="text-red-500">*</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                placeholder="Tên công ty của bạn"
+                                className="bg-white border-gray-200 focus:border-teal-500 focus:ring-teal-500"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                      {/* Email công ty & Website */}
+                      {/* Email & Website */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
@@ -393,8 +379,8 @@ const ContactRecruiterPage: React.FC = () => {
                               <FormControl>
                                 <Input
                                   type="email"
-                                  placeholder="contact@company.com"
                                   {...field}
+                                  placeholder="contact@company.com"
                                   className="bg-white border-gray-200 focus:border-teal-500 focus:ring-teal-500"
                                 />
                               </FormControl>
@@ -402,6 +388,7 @@ const ContactRecruiterPage: React.FC = () => {
                             </FormItem>
                           )}
                         />
+
                         <FormField
                           control={form.control}
                           name="websiteURL"
@@ -413,8 +400,8 @@ const ContactRecruiterPage: React.FC = () => {
                               <FormControl>
                                 <Input
                                   type="url"
-                                  placeholder="https://company.com"
                                   {...field}
+                                  placeholder="https://company.com"
                                   className="bg-white border-gray-200 focus:border-teal-500 focus:ring-teal-500"
                                 />
                               </FormControl>
@@ -437,8 +424,8 @@ const ContactRecruiterPage: React.FC = () => {
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="Họ và tên"
                                   {...field}
+                                  placeholder="Họ và tên"
                                   className="bg-white border-gray-200 focus:border-teal-500 focus:ring-teal-500"
                                 />
                               </FormControl>
@@ -446,6 +433,7 @@ const ContactRecruiterPage: React.FC = () => {
                             </FormItem>
                           )}
                         />
+
                         <FormField
                           control={form.control}
                           name="phoneNumber"
@@ -458,8 +446,8 @@ const ContactRecruiterPage: React.FC = () => {
                               <FormControl>
                                 <Input
                                   type="tel"
-                                  placeholder="09..."
                                   {...field}
+                                  placeholder="09..."
                                   className="bg-white border-gray-200 focus:border-teal-500 focus:ring-teal-500"
                                 />
                               </FormControl>
@@ -480,8 +468,8 @@ const ContactRecruiterPage: React.FC = () => {
                             </FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="Mã số đăng ký kinh doanh"
                                 {...field}
+                                placeholder="Mã số đăng ký kinh doanh"
                                 className="bg-white border-gray-200 focus:border-teal-500 focus:ring-teal-500"
                               />
                             </FormControl>
@@ -490,21 +478,102 @@ const ContactRecruiterPage: React.FC = () => {
                         )}
                       />
 
-                      {/* Địa chỉ công ty */}
+                      {/* Địa chỉ: province + ward */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="province"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-semibold text-gray-700">
+                                Tỉnh/Thành phố{" "}
+                                <span className="text-red-500">*</span>
+                              </FormLabel>
+                              <Select
+                                onValueChange={(v) => handleProvinceChange(v)}
+                                value={field.value}
+                                disabled={isProvincesLoading}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="w-full bg-white border-gray-200 focus:border-teal-500 focus:ring-teal-500">
+                                    <SelectValue
+                                      placeholder={
+                                        isProvincesLoading
+                                          ? "Đang tải..."
+                                          : "Chọn tỉnh/thành"
+                                      }
+                                    />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {provinces.map((p) => (
+                                    <SelectItem
+                                      key={p.code}
+                                      value={p.code.toString()}
+                                    >
+                                      {p.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="ward"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-semibold text-gray-700">
+                                Phường/Xã{" "}
+                                <span className="text-red-500">*</span>
+                              </FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}
+                                disabled={isWardsLoading || wards.length === 0}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="w-full bg-white border-gray-200 focus:border-teal-500 focus:ring-teal-500">
+                                    <SelectValue
+                                      placeholder={
+                                        isWardsLoading
+                                          ? "Đang tải..."
+                                          : "Chọn phường/xã"
+                                      }
+                                    />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {wards.map((w) => (
+                                    <SelectItem key={w.code} value={w.name}>
+                                      {w.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Số nhà, tên đường */}
                       <FormField
                         control={form.control}
-                        name="address"
+                        name="street"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-sm font-semibold text-gray-700">
-                              Địa chỉ công ty{" "}
+                              Số nhà, tên đường{" "}
                               <span className="text-red-500">*</span>
                             </FormLabel>
                             <FormControl>
-                              <Textarea
-                                placeholder="Địa chỉ chi tiết của công ty"
-                                rows={3}
+                              <Input
                                 {...field}
+                                placeholder="Ví dụ: 123 Nguyễn Huệ"
                                 className="bg-white border-gray-200 focus:border-teal-500 focus:ring-teal-500"
                               />
                             </FormControl>
@@ -513,8 +582,7 @@ const ContactRecruiterPage: React.FC = () => {
                         )}
                       />
 
-                      {/* Giấy phép kinh doanh (File) */}
-                      {/* File input hơi khác một chút */}
+                      {/* File giấy phép */}
                       <FormField
                         control={form.control}
                         name="licenseFile"
@@ -528,13 +596,12 @@ const ContactRecruiterPage: React.FC = () => {
                             </FormLabel>
                             <FormControl>
                               <Input
-                                {...fieldProps} // Bỏ `value` và `onChange` mặc định
+                                {...fieldProps}
                                 type="file"
                                 accept="application/pdf"
-                                onChange={(event) => {
-                                  // Gán FileList cho react-hook-form
-                                  onChange(event.target.files);
-                                }}
+                                onChange={(e) =>
+                                  onChange(e.target.files as FileList)
+                                }
                                 className="bg-white border-gray-200 file:text-teal-700 file:font-semibold file:bg-teal-50 file:border-0 hover:file:bg-teal-100 focus:border-teal-500 focus:ring-teal-500"
                               />
                             </FormControl>
@@ -543,7 +610,6 @@ const ContactRecruiterPage: React.FC = () => {
                         )}
                       />
 
-                      {/* Submit Button */}
                       <Button
                         type="submit"
                         disabled={isLoading}
