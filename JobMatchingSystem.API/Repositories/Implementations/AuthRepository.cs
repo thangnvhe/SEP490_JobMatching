@@ -50,24 +50,39 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             return await _context.ApplicationUsers.AnyAsync(x => x.Email == email);
         }
 
-        public async Task<List<ApplicationUser>> GetAllAsync(string search, int roleId)
+        public async Task<List<(ApplicationUser User, string RoleName)>> GetAllAsync(
+        string search,
+        int roleId,
+        string sortBy = "",
+        bool isDescending = false)
         {
-            IQueryable<ApplicationUser> query = _context.Users;
+            var query = from u in _context.Users
+                        join ur in _context.UserRoles on u.Id equals ur.UserId into userRoles
+                        from ur in userRoles.DefaultIfEmpty()
+                        join r in _context.Roles on ur.RoleId equals r.Id into roles
+                        from r in roles.DefaultIfEmpty()
+                        select new { User = u, RoleName = r.Name };
             if (!string.IsNullOrWhiteSpace(search))
-            {
-                query = query.Where(u => u.UserName != null && u.UserName.Contains(search));
-
-            }
+                query = query.Where(x => x.User.UserName.Contains(search));
             if (roleId != 0)
             {
-                var userIdsInRole = _context.UserRoles
-                    .Where(ur => ur.RoleId == roleId)
-                    .Select(ur => ur.UserId);
-
-                query = query.Where(u => userIdsInRole.Contains(u.Id));
+                query = query.Where(x =>
+                    _context.UserRoles.Any(ur => ur.UserId == x.User.Id && ur.RoleId == roleId));
             }
-            return await query.ToListAsync();
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                query = isDescending
+                    ? query.OrderByDescending(x => EF.Property<object>(x.User, sortBy))
+                    : query.OrderBy(x => EF.Property<object>(x.User, sortBy));
+            }
+
+            var result = await query
+                .Select(x => new ValueTuple<ApplicationUser, string>(x.User, x.RoleName))
+                .ToListAsync();
+
+            return result;
         }
+
 
         public async Task ChangeStatus(ApplicationUser user)
         {

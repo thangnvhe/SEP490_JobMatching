@@ -27,10 +27,10 @@ namespace JobMatchingSystem.API.Controllers
             _env = env;
         }
         [HttpGet]
-        public async Task<IActionResult> GetAllUsers([FromQuery] int page = 1, [FromQuery] int size = 5, [FromQuery] string search = "",
+        public async Task<IActionResult> GetAllUsers([FromQuery] int page = 1, [FromQuery] int size = 5, [FromQuery] string search = "", [FromQuery]string sortby = "", [FromQuery] bool isDescending=false,
         [FromQuery] int role = 0)
         {
-            var result = await _userService.GetAllUser(page, size,search,role);
+            var result = await _userService.GetAllUser(page, size,search,role,sortby,isDescending);
 
             return Ok(APIResponse<PagedResult<UserResponseDTO>>.Builder()
                 .WithResult(result)

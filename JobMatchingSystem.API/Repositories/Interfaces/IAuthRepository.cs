@@ -10,7 +10,7 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
         Task<ApplicationUser?>GetUserByRefreshToken(string refreshToken);
         Task<ApplicationUser?> GetUserById(int id);
         Task<bool> ExistsAsync(string email);
-        Task<List<ApplicationUser>> GetAllAsync(string search, int roleId);
+        Task<List<(ApplicationUser User, string RoleName)>> GetAllAsync(string search, int roleId, string sortBy, bool isDescending);
         Task ChangeStatus(ApplicationUser user);
     }
 }

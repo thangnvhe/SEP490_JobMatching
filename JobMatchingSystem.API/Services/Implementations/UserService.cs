@@ -31,35 +31,39 @@ namespace JobMatchingSystem.API.Services.Implementations
             _passwordHasher = passwordHasher;
         }
 
-        public async Task<PagedResult<UserResponseDTO>> GetAllUser(int page = 1, int size = 5,string search="",int role=0)
+        public async Task<PagedResult<UserResponseDTO>> GetAllUser(int page = 1, int size = 5,string search="",int role=0,string sortBy="", bool isDecending=false)
         {
-            var listUser = await _authRepository.GetAllAsync(search,role);
+            var listUser = await _authRepository.GetAllAsync(search, role, sortBy, isDecending);
+
             if (listUser == null || !listUser.Any())
             {
                 return new PagedResult<UserResponseDTO>
                 {
                     Items = new List<UserResponseDTO>(),
-                    Pager = new Pager(0, page, size)
+                    pageInfo = new PageInfo(0, page, size, sortBy, isDecending)
                 };
             }
-
 
             int totalItems = listUser.Count;
             int skip = (page - 1) * size;
 
             var pagedUsers = listUser.Skip(skip).Take(size).ToList();
-            var userDtos = _mapper.Map<List<UserResponseDTO>>(pagedUsers);
 
-            for (int i = 0; i < pagedUsers.Count; i++)
+            // 🧭 Map sang DTO
+            var userDtos = pagedUsers.Select(tuple =>
             {
-                var roles = await _userManager.GetRolesAsync(pagedUsers[i]);
-                userDtos[i].Role = roles.FirstOrDefault() ?? "NoRole";
-            }
+                var user = tuple.Item1;
+                var roleName = tuple.Item2 ?? "NoRole";
+
+                var dto = _mapper.Map<UserResponseDTO>(user);
+                dto.Role = roleName;
+                return dto;
+            }).ToList();
 
             return new PagedResult<UserResponseDTO>
             {
                 Items = userDtos,
-                Pager = new Pager(totalItems, page, size)
+                pageInfo = new PageInfo(totalItems, page, size, sortBy, isDecending)
             };
         }
 

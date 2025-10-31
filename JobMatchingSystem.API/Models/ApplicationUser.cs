@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using JobMatchingSystem.API.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using JobMatchingSystem.API.Models;
 
 namespace JobMatchingSystem.API.Entities
 {
@@ -26,7 +27,8 @@ namespace JobMatchingSystem.API.Entities
         public string? RefreshToken { get; set; }
        
         public DateTime? RefreshTokenExpiryTime { get; set; }
-
+        public int? RoleId { get; set; }
+        public virtual ApplicationRole? Role { get; set; }
         // Navigation properties
         public virtual CandidateProfile? CandidateProfile { get; set; }
         public virtual CompanyRecruiter? CompanyRecruiter { get; set; } 
