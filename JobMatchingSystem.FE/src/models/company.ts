@@ -1,16 +1,15 @@
 
 export interface Company {
-    id: string;
-    name: string;
-    description: string;
-    website: string;
-    logo: string;
-    address: string;
-    phone: string;
-    email: string;
-    status: CompanyStatus;
-    createdAt: string;
-    updatedAt: string;
+  CompanyId: string;
+  CompanyName: string;
+  Description: string;
+  Logo: string;
+  Email: string;
+  Website: string;
+  Address: string;
+  PhoneContact: string;
+  TaxCode: string;
+  LicenseFile: string;
 }
 
 export type CompanyStatus = {

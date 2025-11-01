@@ -8,8 +8,8 @@ import NotFoundPage from './pages/NotFoundPage';
 import JobsPage from './pages/client-site/guest/JobsPage';
 import JobDetailPage from './pages/client-site/guest/JobDetailPage';
 import ContactRecruiterPage from './pages/client-site/guest/ContactRecruiterPage';
-import CompanyDetailPage from './pages/client-site/guest/CompanyDetailPage';
-import CompaniesPage from './pages/client-site/guest/CompaniesPage';
+// import CompanyDetailPage from './pages/client-site/guest/CompanyDetailPage';
+// import CompaniesPage from './pages/client-site/guest/CompaniesPage';
 // Guards
 
 // Layouts
@@ -38,8 +38,8 @@ const AppRouter: React.FC = () => {
           <Route path="about" element={<AboutPage />} />
           <Route path="jobs" element={<JobsPage />} />
           <Route path="jobs/:id" element={<JobDetailPage />} />
-          <Route path="companies" element={<CompaniesPage />} />
-          <Route path="companies/:id" element={<CompanyDetailPage />} />
+          {/* <Route path="companies" element={<CompaniesPage />} /> */}
+          {/* <Route path="companies/:id" element={<CompanyDetailPage />} /> */}
           <Route path="contact-recruiter" element={<ContactRecruiterPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
