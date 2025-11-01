@@ -50,8 +50,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseCors("FrontendCors");
 app.UseAuthentication();
 app.UseAuthorization();

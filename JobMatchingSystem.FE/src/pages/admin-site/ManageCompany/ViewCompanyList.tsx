@@ -29,6 +29,7 @@ import {
   DialogDescription,
   DialogClose,
 } from "@/components/ui/dialog";
+import { API_BASE_URL_V2 } from "../../../../env";
 
 // ------------------------------------------------------------
 // MAIN COMPONENT
@@ -229,7 +230,7 @@ export function ManageCompanyPage() {
 
       {/* Company Detail Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+    <DialogContent className="max-w-5xl w-full">
           <DialogHeader>
             <DialogTitle>Company details</DialogTitle>
             <DialogDescription>
@@ -248,9 +249,8 @@ export function ManageCompanyPage() {
                   // If already an absolute URL, use it
                   if (/^https?:\/\//i.test(path)) return path;
 
-                  // Try environment base first (Vite env variable), then fall back to current origin
-                  const envBase = (import.meta.env.VITE_API_BASE_URL as string) || (import.meta.env.VITE_APP_API_URL as string) || "";
-                  const base = envBase || window.location.origin || "";
+                  // Use explicit backend base from env.ts (API_BASE_URL_V2) then fall back to current origin
+                  const base = API_BASE_URL_V2 || window.location.origin || "";
 
                   // Ensure slashes are normalized
                   const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;
@@ -307,14 +307,14 @@ export function ManageCompanyPage() {
                             <img
                               src={licenseUrl}
                               alt={`License for ${selectedCompany.CompanyName}`}
-                              className="max-w-full max-h-[360px] object-contain border rounded shadow-sm"
+                              className="max-w-full max-h-[480px] object-contain border rounded shadow-sm"
                             />
                           ) : isPdf(licenseUrl) ? (
                             // PDF embed (falls back to link on browsers that block embedding)
                             <iframe
                               src={licenseUrl}
                               title="License PDF"
-                              className="w-full h-96 border rounded"
+                              className="w-full h-[480px] border rounded"
                             />
                           ) : (
                             // Unknown file type: show link
@@ -322,13 +322,6 @@ export function ManageCompanyPage() {
                               Xem file giấy phép
                             </a>
                           )}
-
-                          {/* Also provide a direct link for convenience */}
-                          <div className="mt-2 text-sm text-muted-foreground">
-                            <a href={licenseUrl} target="_blank" rel="noreferrer" className="underline">
-                              Mở file trong tab mới
-                            </a>
-                          </div>
                         </div>
                       ) : (
                         <div>Không có file License.</div>
