@@ -21,5 +21,6 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundTemplateCV() => new("Not Found TemplateCV", HttpStatusCode.NotFound);
         public static Error NotFoundCV() => new("Not Found CV", HttpStatusCode.NotFound);
         public static Error InvalidFile() => new("Invalid File", HttpStatusCode.BadRequest);
+        public static Error CodeTestCaseNotFound() => new ("Can not Find Code Test Case", HttpStatusCode.NotFound);
     }
 }

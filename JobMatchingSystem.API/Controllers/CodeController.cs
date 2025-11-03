@@ -108,8 +108,15 @@ namespace JobMatchingSystem.API.Controllers
             // 3️⃣ Compile code bằng Roslyn
             string userCode = $@"
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Diagnostics;
 public static class UserCodeClass
 {{
     {request.Code}
@@ -121,7 +128,9 @@ public static class UserCodeClass
         MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
         MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
         MetadataReference.CreateFromFile(typeof(List<>).Assembly.Location),
-        MetadataReference.CreateFromFile(typeof(Math).Assembly.Location)
+        MetadataReference.CreateFromFile(typeof(Math).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(System.Text.RegularExpressions.Regex).Assembly.Location),
+        MetadataReference.CreateFromFile(typeof(System.Net.Http.HttpClient).Assembly.Location)
     };
             var compilation = CSharpCompilation.Create(
                 "UserAssembly",
