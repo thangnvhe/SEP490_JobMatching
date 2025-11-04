@@ -41,6 +41,7 @@ namespace JobMatchingSystem.API.Entities
         public DateTime? OpenedAt { get; set; }
 
         public DateTime? ExpiredAt { get; set; }
+        public bool? IsDeleted { get; set; } = false;
 
         // Navigation properties
         [ForeignKey("CompanyId")]
