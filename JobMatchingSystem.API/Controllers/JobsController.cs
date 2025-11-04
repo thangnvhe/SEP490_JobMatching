@@ -33,7 +33,7 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
-        [HttpPost("censor")]
+        [HttpPut("censor")]
         [Authorize(Roles = "Staff")]
         public async Task<IActionResult> ReviewJob([FromBody] CensorJobRequest request)
         {

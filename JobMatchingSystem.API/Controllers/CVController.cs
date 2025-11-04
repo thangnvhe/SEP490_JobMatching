@@ -58,7 +58,7 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
-        [HttpPut("delete/{cvId}")]
+        [HttpDelete("{cvId}")]
         public async Task<IActionResult> DeleteCV(int cvId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");

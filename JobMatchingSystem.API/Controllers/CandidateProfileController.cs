@@ -43,7 +43,7 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
-        [HttpPost("create")]
+        [HttpPost]
         [Authorize(Roles = "Candidate")]
         public async Task<IActionResult> CreateProfile([FromBody] CreateOrUpdateCandidateProfileRequest request)
         {
@@ -57,7 +57,7 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
-        [HttpPost("update")]
+        [HttpPut]
         [Authorize(Roles = "Candidate")]
         public async Task<IActionResult> UpdateProfile([FromBody] CreateOrUpdateCandidateProfileRequest request)
         {
