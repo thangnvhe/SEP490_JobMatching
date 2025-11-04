@@ -21,6 +21,18 @@ namespace JobMatchingSystem.API.Controllers
             _jobService = jobService;
         }
 
+        [HttpGet("{id}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetJobById(int id)
+        {
+            var job = await _jobService.GetJobByIdAsync(id);
+            return Ok(APIResponse<JobResponse>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(job)
+                .Build());
+        }
+
         [HttpPost]
         [Authorize(Roles = "Recruiter")]
         public async Task<IActionResult> CreateJob([FromBody] CreateJobRequest request)
@@ -51,6 +63,30 @@ namespace JobMatchingSystem.API.Controllers
                     Status = request.Status.ToString(),
                     VerifiedBy = staffId
                 })
+                .Build());
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Recruiter")]
+        public async Task<IActionResult> UpdateJob(int id, [FromBody] CreateJobRequest request)
+        {
+            await _jobService.UpdateJobAsync(id, request);
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult("Job updated successfully")
+                .Build());
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Recruiter")]
+        public async Task<IActionResult> DeleteJob(int id)
+        {
+            await _jobService.DeleteJobAsync(id);
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult("Job deleted successfully")
                 .Build());
         }
 
