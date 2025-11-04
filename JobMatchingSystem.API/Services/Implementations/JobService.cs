@@ -1,5 +1,6 @@
 ﻿using JobMatchingSystem.API.Data;
 using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Entities;
 using JobMatchingSystem.API.Enums;
 using JobMatchingSystem.API.Exceptions;
@@ -105,5 +106,35 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             await _jobRepository.UpdateAsync(job);
         }
+
+        public async Task<List<JobResponse>> GetAllJobsAsync(string? title, int? salaryMin, int? salaryMax, string? location, JobType? jobType, JobStatus? status, int? companyId, int? poster, List<int>? taxonomyIds)
+        {
+            var jobs = await _jobRepository.GetAllAsync(title, salaryMin, salaryMax, location, jobType, status, companyId, poster, taxonomyIds);
+
+            return jobs.Select(j => new JobResponse
+            {
+                JobId = j.JobId,
+                Title = j.Title,
+                Description = j.Description,
+                Requirements = j.Requirements,
+                Benefits = j.Benefits,
+                SalaryMin = j.SalaryMin,
+                SalaryMax = j.SalaryMax,
+                Location = j.Location,
+                WorkInfo = j.WorkInfo,
+                JobType = j.JobType,
+                Status = j.Status,
+                ViewsCount = j.ViewsCount,
+                AppliesCount = j.AppliesCount,
+                CompanyId = j.CompanyId,
+                Poster = j.Poster,
+                VerifiedBy = j.VerifiedBy,
+                CreatedAt = j.CreatedAt,
+                OpenedAt = j.OpenedAt,
+                ExpiredAt = j.ExpiredAt,
+                IsDeleted = j.IsDeleted
+            }).ToList();
+        }
+
     }
 }
