@@ -96,7 +96,7 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
-        [HttpPost("change-password")]
+        [HttpPut("change-password")]
         [Authorize]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
@@ -111,7 +111,7 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
-        [HttpPost("update-profile")]
+        [HttpPut("update-me")]
         [Authorize]
         public async Task<IActionResult> UpdateProfile([FromForm] UpdateUserProfileRequest request)
         {

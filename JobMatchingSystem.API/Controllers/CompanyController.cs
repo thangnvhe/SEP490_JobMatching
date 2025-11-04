@@ -35,7 +35,7 @@ namespace JobMatchingSystem.API.Controllers
                 .WithStatusCode(HttpStatusCode.Created)
                 .Build());
         }
-        [HttpPost("accept")]
+        [HttpPut("accept")]
         public async Task<IActionResult> AcceptCompany([FromBody] AccepRejectCompanyRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -46,7 +46,7 @@ namespace JobMatchingSystem.API.Controllers
                 .WithStatusCode(HttpStatusCode.OK)
                 .Build());
         }
-        [HttpPost("reject")]
+        [HttpPut("reject")]
         public async Task<IActionResult> RejectCompany([FromBody] AccepRejectCompanyRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
