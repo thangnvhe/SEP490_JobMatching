@@ -24,8 +24,7 @@ namespace JobMatchingSystem.API.Repositories.Implementations
 
         public async Task<Job?> GetByIdAsync(int id)
         {
-            return await _context.Jobs
-                .Include(j => j.Company)
+            return await _context.Jobs.Where(j => j.IsDeleted == false)
                 .FirstOrDefaultAsync(j => j.JobId == id);
         }
 
