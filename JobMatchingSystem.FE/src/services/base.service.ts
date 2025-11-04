@@ -1,12 +1,12 @@
 import axiosInstance from "@/interceptor/axiosInterceptor.old";
-import type { BaseResponse } from "@/models/base";
+import type { BaseResponse, PaginatedResponse } from "@/models/base";
 
 export const BaseServices = {
     getAll: async <T>(params: any, url: string): Promise<BaseResponse<T>> => {
         const response = await axiosInstance.get(url, { params });
         return response.data;
     },
-    getAllWithPagination: async <T>(params: any, url: string): Promise<BaseResponse<T>> => {
+    getAllWithPagination: async <T>(params: any, url: string): Promise<PaginatedResponse<T>> => {
         const response = await axiosInstance.get(url, { params });
         return response.data;
     },

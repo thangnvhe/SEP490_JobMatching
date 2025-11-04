@@ -4,3 +4,32 @@ export interface BaseResponse<T> {
     errorMessages: string[];
     result: T;
 }
+
+// Response cho các API có phân trang
+export interface PaginatedResponse<T> {
+    statusCode: number;
+    isSuccess: boolean;
+    errorMessages: string[];
+    result: {
+        items: T[];        // items luôn là array
+        pager: PageInfo;
+    };
+}
+
+export interface PaginationParamsInput {
+    page: number;
+    size: number;
+    search?: string;
+    sortBy?: string;
+    direction?: 'asc' | 'desc';
+    [key: string]: any;
+}
+
+export interface PageInfo {
+    totalItem: number;
+    totalPage: number;
+    currentPage: number;
+    pageSize: number;
+    hasPreviousPage: boolean;
+    hasNextPage: boolean;
+}

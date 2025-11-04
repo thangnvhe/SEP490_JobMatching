@@ -23,14 +23,12 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { IconInnerShadowTop } from "@tabler/icons-react";
 import { NavUser } from "@/components/nav-user";
 import React from "react";
 
@@ -43,7 +41,7 @@ function useIsActivePath(path: string) {
 function AdminNav() {
   return (
     <>
-      <SidebarMenu>
+      <SidebarMenu className="mt-4">
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
@@ -482,21 +480,7 @@ export function DynamicSidebar({
 
   return (
     <Sidebar {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
-            >
-              <a href="#">
-                <IconInnerShadowTop className="size-5!" />
-                <span className="text-base font-semibold">{getSidebarTitle()}</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
+
 
       <ScrollArea className="flex-1">
         <SidebarContent className="p-0">
