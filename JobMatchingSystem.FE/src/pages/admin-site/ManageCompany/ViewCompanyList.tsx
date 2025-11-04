@@ -29,7 +29,7 @@ import {
   DialogDescription,
   DialogClose,
 } from "@/components/ui/dialog";
-import { API_BASE_URL_V2 } from "../../../../env";
+import { API_BASE_URL } from "../../../../env";
 
 // ------------------------------------------------------------
 // MAIN COMPONENT
@@ -250,7 +250,7 @@ export function ManageCompanyPage() {
                   if (/^https?:\/\//i.test(path)) return path;
 
                   // Use explicit backend base from env.ts (API_BASE_URL_V2) then fall back to current origin
-                  const base = API_BASE_URL_V2 || window.location.origin || "";
+                  const base = API_BASE_URL || window.location.origin || "";
 
                   // Ensure slashes are normalized
                   const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;

@@ -9,6 +9,7 @@ export function ClientLayout() {
   // Các màn muốn bật sidebar cho client
   const SIDEBAR_ENABLED_PATHS = [
     "/profile",
+    "/admin",
   ];
   const showSidebar = SIDEBAR_ENABLED_PATHS.some((p) =>
     location.pathname.startsWith(p)
