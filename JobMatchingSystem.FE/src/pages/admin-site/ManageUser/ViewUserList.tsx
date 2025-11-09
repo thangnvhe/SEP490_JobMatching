@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, RefreshCcw, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, Edit, KeyRound, Trash2, AlertTriangle } from "lucide-react";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useAppSelector } from "@/store";
 
 export default function ViewUserList() {
     // Khai báo local state
@@ -60,7 +61,6 @@ export default function ViewUserList() {
         };
         getAllWithPagination(params);
     }, [getAllWithPagination, debouncedKeyword, paginationInput]);
-
 
     // Handler functions
     const handleAddNew = () => {
