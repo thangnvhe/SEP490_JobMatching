@@ -35,9 +35,9 @@ export const loginAsync = createAsyncThunk(
       return {
         token,
         exp: decodedToken?.exp,
-        name: decodedToken?.name,
-        nameid: decodedToken?.nameid,
-        role: decodedToken?.role,
+        name: decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'],
+        nameid: decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'],
+        role: decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'],
         rememberMe,
       };
     } catch (error: any) {
@@ -105,9 +105,9 @@ const authSlice = createSlice({
         if (decodedToken && !JWTUtils.isTokenExpired(token)) {
           state.accessToken = token;
           state.exp = decodedToken?.exp;
-          state.name = decodedToken?.name;
-          state.nameid = decodedToken?.nameid;
-          state.role = decodedToken?.role;
+          state.name = decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
+          state.nameid = decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+          state.role = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
           state.isAuthenticated = true;
           state.rememberMe = localStorage.getItem('accessToken') ? true : false;
         }
