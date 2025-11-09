@@ -1,5 +1,7 @@
 ﻿using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
+using JobMatchingSystem.API.Enums;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +21,19 @@ namespace JobMatchingSystem.API.Controllers
             _jobService = jobService;
         }
 
-        [HttpPost("create")]
+        [HttpGet("{id}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetJobById(int id)
+        {
+            var job = await _jobService.GetJobByIdAsync(id);
+            return Ok(APIResponse<JobResponse>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(job)
+                .Build());
+        }
+
+        [HttpPost]
         [Authorize(Roles = "Recruiter")]
         public async Task<IActionResult> CreateJob([FromBody] CreateJobRequest request)
         {
@@ -51,5 +65,43 @@ namespace JobMatchingSystem.API.Controllers
                 })
                 .Build());
         }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Recruiter")]
+        public async Task<IActionResult> UpdateJob(int id, [FromBody] CreateJobRequest request)
+        {
+            await _jobService.UpdateJobAsync(id, request);
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult("Job updated successfully")
+                .Build());
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Recruiter")]
+        public async Task<IActionResult> DeleteJob(int id)
+        {
+            await _jobService.DeleteJobAsync(id);
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult("Job deleted successfully")
+                .Build());
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllJobs([FromQuery] string? title, [FromQuery] int? salaryMin, [FromQuery] int? salaryMax,
+                                            [FromQuery] string? location, [FromQuery] JobType? jobType, [FromQuery] JobStatus? status,
+                                            [FromQuery] int? companyId, [FromQuery] int? poster, [FromQuery] List<int>? taxonomyIds)
+        {
+            var result = await _jobService.GetAllJobsAsync(title, salaryMin, salaryMax, location, jobType, status, companyId, poster, taxonomyIds);
+            return Ok(APIResponse<List<JobResponse>>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(result)
+                .Build());
+        }
+
     }
 }
