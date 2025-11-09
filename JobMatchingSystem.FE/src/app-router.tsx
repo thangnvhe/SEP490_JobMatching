@@ -20,11 +20,15 @@ import CandidateDashboard from './pages/client-site/candidate/Dashboard';
 import FavouriteJobsPage from './pages/client-site/candidate/FavouriteJobs';
 import ProfilePage from './pages/client-site/profile/profile';
 import ViewUserList from './pages/admin-site/ManageUser/ViewUserList';
+import ResetPasswordPage from './pages/client-site/auth/ResetPasswordPage';
 
 // Component chính để render router
 const AppRouter: React.FC = () => {
   return (
     <Routes>
+      {/* Reset password route - Public */}
+      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+
       {/* Client routes with ClientLayout */}
       <Route path="/" element={<App />}>
         <Route element={<ClientLayout />}>

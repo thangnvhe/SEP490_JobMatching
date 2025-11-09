@@ -12,8 +12,17 @@ export const UserServices = {
   update: (id: string, data: Partial<User>) => BaseServices.update<User>(id, data, '/User'),
   delete: (id: string) => BaseServices.delete(id, '/User'),
   changeStatus: (id: string, isActive: boolean) => BaseServices.update<User>(id, { isActive }, '/User'),
-  resetPassword: async (id: string | number, newPassword: string): Promise<BaseResponse<unknown>> => {
-    const response = await axiosInstance.post(`/User/${id}/reset-password`, { newPassword });
+  forgotPassword: async (email: string): Promise<BaseResponse<unknown>> => {
+    const response = await axiosInstance.post(`/Auth/forgot-password`, { email });
+    return response.data;
+  },
+  resetPassword: async (email: string, token: string, newPassword: string, confirmPassword: string): Promise<BaseResponse<unknown>> => {
+    const response = await axiosInstance.post(`/Auth/reset-password`, {
+      email,
+      token,
+      newPassword,
+      confirmPassword
+    });
     return response.data;
   },
   updateUser: async (payload: Partial<User> & { id: string | number }): Promise<BaseResponse<User>> => {

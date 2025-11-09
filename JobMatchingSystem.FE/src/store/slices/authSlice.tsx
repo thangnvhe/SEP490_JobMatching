@@ -73,6 +73,19 @@ export const registerAsync = createAsyncThunk(
   }
 );
 
+// Forgot password async thunk
+export const forgotPassword = createAsyncThunk(
+  'Auth/forgotPassword',
+  async (email: string, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post<BaseResponse<any>>('/Auth/forgot-password', { email });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.errorMessages?.[0] || 'Gửi email quên mật khẩu thất bại');
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -172,6 +185,21 @@ const authSlice = createSlice({
         state.role = '';
         state.isAuthenticated = false;
         state.rememberMe = false;
+      })
+      // Forgot password pending
+      .addCase(forgotPassword.pending, (state) => {
+        state.loading = true;
+        state.error = undefined;
+      })
+      // Forgot password fulfilled
+      .addCase(forgotPassword.fulfilled, (state) => {
+        state.loading = false;
+        state.error = undefined;
+      })
+      // Forgot password rejected
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });
