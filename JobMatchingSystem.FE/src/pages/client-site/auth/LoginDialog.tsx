@@ -142,6 +142,7 @@ export function LoginDialog({
                 </Label>
               </div>
               <Button
+                type="button"
                 variant="link"
                 className="p-0 h-auto text-sm text-blue-600 hover:text-blue-800"
                 onClick={() => {
