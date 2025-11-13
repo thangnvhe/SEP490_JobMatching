@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using JobMatchingSystem.API.Entities;
+using JobMatchingSystem.API.Models;
 
 namespace JobMatchingSystem.API.Data
 {
@@ -14,31 +14,25 @@ namespace JobMatchingSystem.API.Data
 
         // DbSets for all entities
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
-        public DbSet<CandidateProfile> CandidateProfiles { get; set; }
         public DbSet<Company> Companies { get; set; }
-        public DbSet<CompanyRecruiter> CompanyRecruiters { get; set; }
         public DbSet<Job> Jobs { get; set; }
         public DbSet<CandidateJob> CandidateJobs { get; set; }
         public DbSet<SavedJob> SavedJobs { get; set; }
         public DbSet<SavedCV> SavedCVs { get; set; }
-        public DbSet<DataCV> DataCVs { get; set; }
+        public DbSet<CVUpload> CVUploads { get; set; }
         public DbSet<CVExperience> CVExperiences { get; set; }
         public DbSet<CVEducation> CVEducations { get; set; }
         public DbSet<CVProject> CVProjects { get; set; }
         public DbSet<CVCertificate> CVCertificates { get; set; }
         public DbSet<CVAchievement> CVAchievements { get; set; }
-        public DbSet<CVSkill> CVSkills { get; set; }
         public DbSet<Taxonomy> Taxonomies { get; set; }
-        public DbSet<EntityTaxonomy> EntityTaxonomies { get; set; }
         public DbSet<Report> Reports { get; set; }
-        public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<TemplateCV> TemplateCVs { get; set; }
-        public DbSet<Offer> Offers { get; set; }
-        public DbSet<ReportSolved> ReportSolveds { get; set; }
         public DbSet<JobStage> JobStages { get; set; }
         public DbSet<CandidateStage> CandidateStages { get; set; }
-        public DbSet<Code> Codes { get; set; }
-        public DbSet<CodeTestCase> CodeTestCases { get; set; }
+        public DbSet<JobTaxonomy> JobTaxonomies { get; set; }
+        public DbSet<CandidateTaxonomy> CandidateTaxonomies { get; set; }
+        public DbSet<ServicePlan> ServicePlans { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -60,6 +54,15 @@ namespace JobMatchingSystem.API.Data
                       .WithMany(e => e.VerifiedCompanies)
                       .HasForeignKey(e => e.VerifiedBy)
                       .OnDelete(DeleteBehavior.NoAction);
+                entity.HasMany(e => e.Jobs)
+                        .WithOne(e => e.Company)
+                        .HasForeignKey(e => e.CompanyId)
+                        .OnDelete(DeleteBehavior.NoAction);
+                entity.HasMany(e=>e.ApplicationUsers)
+                        .WithOne(e=>e.CompanyRecruiter)
+                        .HasForeignKey(e=>e.CompanyId)
+                        .OnDelete(DeleteBehavior.NoAction);
+                entity.HasIndex(e => e.Email).IsUnique();
             });
 
             // Identity junctions: chặn cascade delete để không tự động xóa UserRoles khi xóa Users/Roles
@@ -113,30 +116,6 @@ namespace JobMatchingSystem.API.Data
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // CandidateProfile
-            modelBuilder.Entity<CandidateProfile>(entity =>
-            {
-                entity.HasIndex(e => e.UserId).IsUnique();
-                entity.Property(e => e.JobType).HasConversion<string>();
-                entity.HasOne(e => e.User)
-                      .WithOne(e => e.CandidateProfile)
-                      .HasForeignKey<CandidateProfile>(e => e.UserId)
-                      .OnDelete(DeleteBehavior.NoAction);
-            });
-
-            // CompanyRecruiter
-            modelBuilder.Entity<CompanyRecruiter>(entity =>
-            {
-                entity.HasIndex(e => new { e.CompanyId, e.UserId }).IsUnique();
-                entity.HasOne(e => e.Company)
-                      .WithMany(e => e.CompanyRecruiters)
-                      .HasForeignKey(e => e.CompanyId)
-                      .OnDelete(DeleteBehavior.NoAction);
-                entity.HasOne(e => e.User)
-                      .WithOne(e => e.CompanyRecruiter)
-                      .OnDelete(DeleteBehavior.NoAction);
-            });
-
             // Job
             modelBuilder.Entity<Job>(entity =>
             {
@@ -148,7 +127,7 @@ namespace JobMatchingSystem.API.Data
                       .OnDelete(DeleteBehavior.NoAction);
                 entity.HasOne(e => e.Recruiter)
                       .WithMany(e => e.CreatedJobs)
-                      .HasForeignKey(e => e.Poster)
+                      .HasForeignKey(e => e.RecuiterId)
                       .OnDelete(DeleteBehavior.NoAction);
                 entity.HasOne(e => e.Staff)
                       .WithMany(e => e.StaffJobs)
@@ -160,10 +139,6 @@ namespace JobMatchingSystem.API.Data
             modelBuilder.Entity<CandidateJob>(entity =>
             {
                 entity.Property(e => e.Status).HasConversion<byte>().HasColumnType("tinyint");
-                entity.HasOne(e => e.User)
-                      .WithMany(e => e.ApplyJobs)
-                      .HasForeignKey(e => e.UserId)
-                      .OnDelete(DeleteBehavior.NoAction);
                 entity.HasOne(e => e.Job)
                       .WithMany(e => e.CandidateJobs)
                       .HasForeignKey(e => e.JobId)
@@ -171,7 +146,7 @@ namespace JobMatchingSystem.API.Data
                 entity.HasOne(e => e.CandidateCV)
                         .WithMany(e => e.CandidateJobs)
                         .HasForeignKey(e => e.CVId)
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.Cascade);
             });
 
             // SavedJob
@@ -199,11 +174,11 @@ namespace JobMatchingSystem.API.Data
                 entity.HasOne(e => e.CV)
                       .WithMany(e => e.SavedCVs)
                       .HasForeignKey(e => e.CVId)
-                      .OnDelete(DeleteBehavior.NoAction);
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             // DataCV
-            modelBuilder.Entity<DataCV>(entity =>
+            modelBuilder.Entity<CVUpload>(entity =>
             {
                 entity.HasOne(e => e.User)
                       .WithMany(e => e.DataCVs)
@@ -212,12 +187,29 @@ namespace JobMatchingSystem.API.Data
 
             });
 
-            // EntityTaxonomy
-            modelBuilder.Entity<EntityTaxonomy>(entity =>
+            // JobTaxonomy
+            modelBuilder.Entity<JobTaxonomy>(entity =>
             {
-                entity.Property(e => e.EntityType).HasConversion<byte>().HasColumnType("tinyint");
+                entity.HasKey(e => new { e.JobId, e.TaxonomyId });
+                entity.HasOne(e => e.Job)
+                      .WithMany(e => e.JobTaxonomies)
+                      .HasForeignKey(e => e.JobId)
+                      .OnDelete(DeleteBehavior.NoAction);
                 entity.HasOne(e => e.Taxonomy)
-                      .WithMany(e => e.EntityTaxonomies)
+                      .WithMany(e => e.JobTaxonomies)
+                      .HasForeignKey(e => e.TaxonomyId)
+                      .OnDelete(DeleteBehavior.NoAction);
+            });
+            // CandidateTaxonomy
+            modelBuilder.Entity<CandidateTaxonomy>(entity =>
+            {
+                entity.HasKey(e => new { e.CandidateId, e.TaxonomyId });
+                entity.HasOne(e => e.Candidate)
+                      .WithMany(e => e.CandidateTaxonomies)
+                      .HasForeignKey(e => e.CandidateId)
+                      .OnDelete(DeleteBehavior.NoAction);
+                entity.HasOne(e => e.Taxonomy)
+                      .WithMany(e => e.CandidateTaxonomies)
                       .HasForeignKey(e => e.TaxonomyId)
                       .OnDelete(DeleteBehavior.NoAction);
             });
@@ -232,10 +224,6 @@ namespace JobMatchingSystem.API.Data
         {
             builder.Entity<CVExperience>(entity =>
             {
-                entity.HasOne(e => e.DataCV)
-                      .WithMany(e => e.CVExperiences)
-                      .HasForeignKey(e => e.CVId)
-                      .OnDelete(DeleteBehavior.NoAction);
                 entity.HasOne(e => e.User)
                       .WithMany(e=>e.CVExperiences)
                       .HasForeignKey(e => e.UserId)
@@ -244,10 +232,6 @@ namespace JobMatchingSystem.API.Data
 
             builder.Entity<CVEducation>(entity =>
             {
-                entity.HasOne(e => e.DataCV)
-                      .WithMany(e => e.CVEducations)
-                      .HasForeignKey(e => e.CVId)
-                      .OnDelete(DeleteBehavior.NoAction);
                 entity.HasOne(e => e.User)
                       .WithMany(e=>e.CVEducations)
                       .HasForeignKey(e => e.UserId)
@@ -256,10 +240,6 @@ namespace JobMatchingSystem.API.Data
 
             builder.Entity<CVProject>(entity =>
             {
-                entity.HasOne(e => e.DataCV)
-                      .WithMany(e => e.CVProjects)
-                      .HasForeignKey(e => e.CVId)
-                      .OnDelete(DeleteBehavior.NoAction);
                 entity.HasOne(e => e.User)
                       .WithMany(e=>e.CVProjects)
                       .HasForeignKey(e => e.UserId)
@@ -268,10 +248,6 @@ namespace JobMatchingSystem.API.Data
 
             builder.Entity<CVCertificate>(entity =>
             {
-                entity.HasOne(e => e.DataCV)
-                      .WithMany(e => e.CVCertificates)
-                      .HasForeignKey(e => e.CVId)
-                      .OnDelete(DeleteBehavior.NoAction);
                 entity.HasOne(e => e.User)
                       .WithMany(e=>e.CVCertificates)
                       .HasForeignKey(e => e.UserId)
@@ -280,24 +256,8 @@ namespace JobMatchingSystem.API.Data
 
             builder.Entity<CVAchievement>(entity =>
             {
-                entity.HasOne(e => e.DataCV)
-                      .WithMany(e => e.CVAchievements)
-                      .HasForeignKey(e => e.CVId)
-                      .OnDelete(DeleteBehavior.NoAction);
                 entity.HasOne(e => e.User)
                       .WithMany(e=>e.CVAchievements)
-                      .HasForeignKey(e => e.UserId)
-                      .OnDelete(DeleteBehavior.NoAction);
-            });
-
-            builder.Entity<CVSkill>(entity =>
-            {
-                entity.HasOne(e => e.DataCV)
-                      .WithMany(e => e.CVSkills)
-                      .HasForeignKey(e => e.CVId)
-                      .OnDelete(DeleteBehavior.NoAction);
-                entity.HasOne(e => e.User)
-                      .WithMany(e=>e.CVSkills)
                       .HasForeignKey(e => e.UserId)
                       .OnDelete(DeleteBehavior.NoAction);
             });
@@ -311,30 +271,15 @@ namespace JobMatchingSystem.API.Data
                       .HasForeignKey(e => e.JobId)
                       .OnDelete(DeleteBehavior.NoAction);
                 entity.HasOne(e => e.Reporter)
-                      .WithMany(e => e.Reports)
+                      .WithMany(e => e.CreateReports)
                       .HasForeignKey(e => e.ReporterId)
                       .OnDelete(DeleteBehavior.NoAction);
-            });
-            builder.Entity<ReportSolved>(
-                entity =>
-                {
-                    entity.HasMany(e => e.Reports)
-                          .WithOne(e => e.ReportSolved)
-                          .OnDelete(DeleteBehavior.NoAction);
-                    entity.HasOne(e => e.User)
-                            .WithMany(e => e.ReviewedReports)
-                            .HasForeignKey(e => e.SolvedBy)
-                            .OnDelete(DeleteBehavior.NoAction);
-                });
-            builder.Entity<Feedback>(entity => {
-            });
-            builder.Entity<Offer>(entity =>
-            {
-                entity.HasOne(e=>e.CandidateJob)
-                        .WithOne(e=>e.Offer)
-                        .HasForeignKey<Offer>(e=>e.CandidateJobId)
+                entity.HasOne(e => e.VerifiedBy)
+                        .WithMany(e => e.VerifiedReports)
+                        .HasForeignKey(e => e.VerifiedId)
                         .OnDelete(DeleteBehavior.NoAction);
             });
+
             builder.Entity<JobStage>(entity =>
             {
                 entity.HasOne(e => e.Job)
@@ -342,6 +287,7 @@ namespace JobMatchingSystem.API.Data
                      .HasForeignKey(e => e.JobId)
                      .OnDelete(DeleteBehavior.NoAction);
             });
+
             builder.Entity<CandidateStage>(entity =>
             {
                 entity.HasOne(e => e.CandidateJob)
@@ -349,23 +295,9 @@ namespace JobMatchingSystem.API.Data
                      .HasForeignKey(e => e.CandidateJobId)
                      .OnDelete(DeleteBehavior.NoAction);
                 entity.HasOne(e => e.JobStage)
-                     .WithMany(e => e.CandidateStages)
-                     .HasForeignKey(e => e.JobStageId)
-                     .OnDelete(DeleteBehavior.NoAction);
-                entity.HasOne(e => e.Code)
-                      .WithOne(e => e.CandidateStage)
-                      .HasForeignKey<CandidateStage>(e => e.CodeId)
-                      .OnDelete(DeleteBehavior.NoAction);
-            });
-            builder.Entity<Code>(entity =>
-            {
-            });
-            builder.Entity<CodeTestCase>(entity =>
-            {
-                entity.HasOne(e => e.Code)
-                     .WithMany(e => e.CodeTestCases)
-                     .HasForeignKey(e => e.CodeId)
-                     .OnDelete(DeleteBehavior.NoAction);
+                        .WithMany(e => e.CandidateStages)
+                        .HasForeignKey(e => e.JobStageId)
+                        .OnDelete(DeleteBehavior.NoAction);
             });
         }
     }

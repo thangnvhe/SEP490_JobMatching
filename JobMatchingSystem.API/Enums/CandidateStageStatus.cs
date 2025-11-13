@@ -8,11 +8,9 @@ namespace JobMatchingSystem.API.Enums
 {
     public enum CandidateStageStatus
     {
-        Pending,
+        Draft,
         Schedule,
         Passed,
-        Failed,
-        Skipped,
-        Cancelled
+        Failed
     }
 }

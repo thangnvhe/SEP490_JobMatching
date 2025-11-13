@@ -9,9 +9,18 @@ builder.Services.AddExceptionHandler<GlobalResponseExceptionHandler>();      // 
 // Thêm dịch vụ hỗ trợ IExceptionHandler
 builder.Services.AddProblemDetails();
 
-
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendCors", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // URL frontend của bạn
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // Quan trọng: cho phép gửi cookie/token
+    });
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

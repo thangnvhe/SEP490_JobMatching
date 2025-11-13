@@ -1,13 +1,7 @@
-﻿using JobMatchingSystem.API.Entities;
-using JobMatchingSystem.API.Enums;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
+﻿using JobMatchingSystem.API.Enums;
+using JobMatchingSystem.API.Models;
 using System.Globalization;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace JobMatchingSystem.API.Data.SeedData
 {
@@ -74,7 +68,7 @@ namespace JobMatchingSystem.API.Data.SeedData
 
                 return new Company
                 {
-                    CompanyName = name,
+                    Name = name,
                     Description = $"Công ty {name} là một trong những đơn vị hàng đầu trong lĩnh vực CNTT và chuyển đổi số tại Việt Nam.",
                     Logo = $"/company-logos/{i + 1}.png",
                     Email = $"contact@{RemoveDiacritics(name).Replace(" ", "-").ToLowerInvariant()}.com",
@@ -84,7 +78,7 @@ namespace JobMatchingSystem.API.Data.SeedData
                     TaxCode = $"{rnd.Next(100000000, 999999999)}",
                     LicenseFile = $"license-{i + 1}.pdf",
                     Status = CompanyStatus.Approved,
-                    Point = rnd.Next(50, 500),
+                    
                     VerifiedAt = now,
                     CreatedAt = now.AddDays(-rnd.Next(1, 300)),
                     UpdatedAt = now,

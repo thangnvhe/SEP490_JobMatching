@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JobMatchingSystem.API.Entities
+namespace JobMatchingSystem.API.Models
 {
     public class JobStage
     {
@@ -14,10 +14,12 @@ namespace JobMatchingSystem.API.Entities
         public int Id { get; set; }
         public int JobId { get; set; }
         public int StageNumber { get; set; }
-        public bool Type { get; set; } = false;
+        public int? HiringManagerId { get; set; }
         // Navigation properties
         [ForeignKey("JobId")]
         public virtual Job? Job { get; set; } = null;
-        public virtual ICollection<CandidateStage>? CandidateStages { get; set; } = new List<CandidateStage>();
+        [ForeignKey("HiringManagerId")]
+        public virtual ApplicationUser? HiringManager { get; set; } = null;
+        public virtual ICollection<CandidateStage>? CandidateStages { get; set; }
     }
 }

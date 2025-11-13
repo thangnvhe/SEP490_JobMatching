@@ -1,6 +1,6 @@
 ﻿using JobMatchingSystem.API.Data;
-using JobMatchingSystem.API.Entities;
 using JobMatchingSystem.API.Helpers;
+using JobMatchingSystem.API.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,7 +30,7 @@ namespace JobMatchingSystem.API.Configuration
                                 Contraints.RoleAdmin,
                                 Contraints.RoleRecruiter,
                                 Contraints.RoleCandidate,
-                                Contraints.RoleStaff
+                                Contraints.RoleHiringManager
                                 };
 
             // ✅ Tạo role nếu chưa có

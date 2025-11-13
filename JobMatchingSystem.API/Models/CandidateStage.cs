@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JobMatchingSystem.API.Entities
+namespace JobMatchingSystem.API.Models
 {
     public class CandidateStage
     {
@@ -15,15 +15,11 @@ namespace JobMatchingSystem.API.Entities
         public int Id { get; set; }
         public int CandidateJobId { get; set; }
         public int JobStageId { get; set; }
-        public CandidateStageStatus? Status { get; set; } = CandidateStageStatus.Pending;
-        public string? InterviewerName { get; set; }
-        public int? CodeId { get; set; }
+        public CandidateStageStatus? Status { get; set; } = CandidateStageStatus.Draft;
         public DateTime? ScheduleTime { get; set; }
         // Navigation properties
         [ForeignKey("CandidateJobId")]
         public virtual CandidateJob? CandidateJob { get; set; } = null;
-        [ForeignKey("CodeId")]
-        public virtual Code? Code { get; set; } = null;
         [ForeignKey("JobStageId")]
         public virtual JobStage? JobStage { get; set; } = null;
 
