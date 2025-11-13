@@ -1,8 +1,6 @@
-﻿using JobMatchingSystem.API.Entities;
-using JobMatchingSystem.API.Helpers;
-using Microsoft.AspNetCore.Builder;
+﻿using JobMatchingSystem.API.Helpers;
+using JobMatchingSystem.API.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
 using System.Text;
 
@@ -25,10 +23,17 @@ namespace JobMatchingSystem.API.Data.SeedData
             var middleNames = new[] { "Văn", "Thị", "Minh", "Ngọc", "Hữu", "Bảo", "Quang", "Thu", "Đức", "Trọng" };
             var givenNames = new[]
             {
-            "An","Bình","Chi","Dũng","Hà","Hạnh","Hiếu","Hoa","Hùng","Khánh",
-            "Lan","Linh","Minh","Nam","Phúc","Quang","Sơn","Thảo","Thúy","Trang",
-            "Tuấn","Tùng","Vy","Yến","Khang","Trung","Tâm","Thanh","Phương","Nhật"
-        };
+                "An","Bình","Chi","Dũng","Hà","Hạnh","Hiếu","Hoa","Hùng","Khánh",
+                "Lan","Linh","Minh","Nam","Phúc","Quang","Sơn","Thảo","Thúy","Trang",
+                "Tuấn","Tùng","Vy","Yến","Khang","Trung","Tâm","Thanh","Phương","Nhật"
+            };
+
+            var addresses = new[]
+            {
+                "Hà Nội", "TP. Hồ Chí Minh", "Đà Nẵng", "Cần Thơ", "Hải Phòng",
+                "Huế", "Nha Trang", "Biên Hòa", "Vũng Tàu", "Bình Dương",
+                "Thái Nguyên", "Nam Định", "Bắc Ninh", "Quảng Ninh", "Hòa Bình"
+            };
 
             var rnd = new Random();
 
@@ -74,14 +79,15 @@ namespace JobMatchingSystem.API.Data.SeedData
                     Score = rnd.Next(0, 300),
                     IsActive = true,
                     AccessFailedCount = 0,
-                    EmailConfirmed = true
+                    EmailConfirmed = true,
+                    Address = addresses[rnd.Next(addresses.Length)] // 🔹 thêm địa chỉ ngẫu nhiên
                 };
 
                 var createResult = await userManager.CreateAsync(candidate, "Candidate123@");
                 if (createResult.Succeeded)
                 {
                     await userManager.AddToRoleAsync(candidate, Contraints.RoleCandidate);
-                    Console.WriteLine($"✅ Seeded candidate: {email} ({fullName})");
+                    Console.WriteLine($"✅ Seeded candidate: {email} ({fullName}) - {candidate.Address}");
                 }
                 else
                 {

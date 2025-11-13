@@ -1,20 +1,17 @@
-using JobMatchingSystem.API.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace JobMatchingSystem.API.Entities
+namespace JobMatchingSystem.API.Models
 {
     public class Taxonomy
     {
         [Key]
-        public int TaxonomyId { get; set; }
-
-        public TaxonomyType Type { get; set; }
+        public int Id { get; set; }
 
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
-        public DateTime? CreatedAt { get; set; }
-
-        public virtual ICollection<EntityTaxonomy> EntityTaxonomies { get; set; } = new List<EntityTaxonomy>();
+        // Navigation properties
+        public virtual ICollection<CandidateTaxonomy> CandidateTaxonomies { get; set; } = new List<CandidateTaxonomy>();
+        public virtual ICollection<JobTaxonomy> JobTaxonomies { get; set; } = new List<JobTaxonomy>();
     }
 }

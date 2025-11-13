@@ -1,10 +1,7 @@
-﻿using JobMatchingSystem.API.Entities;
-using JobMatchingSystem.API.Enums;
-using Microsoft.AspNetCore.Builder;
+﻿using JobMatchingSystem.API.Enums;
+using JobMatchingSystem.API.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using OfficeOpenXml;
-using System.IO;
 
 namespace JobMatchingSystem.API.Data.SeedData
 {
@@ -72,9 +69,8 @@ namespace JobMatchingSystem.API.Data.SeedData
                     Description = worksheet.Cells[row, 1].Text,
                     Benefits = worksheet.Cells[row, 2].Text,
                     Location = worksheet.Cells[row, 4].Text,
-                    WorkInfo = worksheet.Cells[row, 6].Text,
                     Requirements = worksheet.Cells[row, 7].Text,
-                    Poster = posterId,
+                    RecuiterId = posterId,
                     SalaryMin = minSalary,
                     SalaryMax = maxSalary,
                     CompanyId = companyId,

@@ -2,15 +2,15 @@ using JobMatchingSystem.API.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace JobMatchingSystem.API.Entities
+namespace JobMatchingSystem.API.Models
 {
     public class Company
     {
         [Key]
-        public int CompanyId { get; set; }
-        public string CompanyName { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public string? Logo { get; set; }
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; }
+        public string Logo { get; set; }
         public string Email { get; set; }
         public string? Website { get; set; }
         public string Address { get; set; }
@@ -22,7 +22,7 @@ namespace JobMatchingSystem.API.Entities
 
         public string? RejectReason { get; set; }
 
-        public int Point { get; set; } = 0;
+        public int Score { get; set; } = 100;
 
         public int? VerifiedBy { get; set; }
 
@@ -37,7 +37,7 @@ namespace JobMatchingSystem.API.Entities
         // Navigation properties
         [ForeignKey("VerifiedBy")]
         public virtual ApplicationUser? VerifiedByUser { get; set; }
-        public virtual ICollection<CompanyRecruiter> CompanyRecruiters { get; set; } = new List<CompanyRecruiter>();
+        public virtual ICollection<ApplicationUser> ApplicationUsers { get; set; } = new List<ApplicationUser>();
         public virtual ICollection<Job> Jobs { get; set; } = new List<Job>();
     }
 }

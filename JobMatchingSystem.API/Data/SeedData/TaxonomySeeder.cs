@@ -1,7 +1,4 @@
-﻿using JobMatchingSystem.API.Entities;
-using JobMatchingSystem.API.Enums;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Builder;
+﻿using JobMatchingSystem.API.Models;
 
 namespace JobMatchingSystem.API.Data.SeedData
 {
@@ -14,71 +11,87 @@ namespace JobMatchingSystem.API.Data.SeedData
 
             if (context.Taxonomies.Any()) return; // tránh seed trùng
 
-            var now = DateTime.UtcNow;
-
-            // =========================
-            // 🔹 Skill: Kỹ năng phổ biến trong ngành IT
-            // =========================
-            var skills = new[]
-            {
-            "C#", "ASP.NET Core", "Entity Framework", "SQL Server", "Java",
-            "Spring Boot", "Python", "Django", "Flask", "JavaScript", "TypeScript",
-            "React", "Angular", "Vue.js", "Node.js", "Express.js", "PHP", "Laravel",
-            "HTML", "CSS", "Bootstrap", "TailwindCSS", "REST API", "GraphQL",
-            "AWS", "Azure", "Docker", "Kubernetes", "Git", "CI/CD", "Agile",
-            "Scrum", "Jira", "Unit Testing", "Microservices", "Clean Architecture",
-            "OOP", "SOLID", "Design Patterns", "MongoDB", "PostgreSQL",
-            "Redis", "ElasticSearch", "Machine Learning", "Deep Learning", "AI",
-            "Mobile Development", "Android", "iOS", "Flutter", "React Native"
-        };
-
-            // =========================
-            // 🔹 Category: Loại công việc / ngành nghề trong IT
-            // =========================
-            var categories = new[]
-            {
-            "Software Development",
-            "Web Development",
-            "Mobile Development",
-            "Game Development",
-            "AI / Machine Learning",
-            "Data Engineer / Data Scientist",
-            "DevOps / Cloud Engineer",
-            "QA / QC / Tester",
-            "System Administrator",
-            "Network Engineer",
-            "Project Manager / Scrum Master",
-            "UI/UX Design",
-            "Business Analyst",
-            "Product Manager",
-            "IT Support",
-            "Cybersecurity",
-            "Embedded Systems",
-            "Blockchain Developer",
-            "Automation Engineer",
-            "Technical Leader / Architect"
-        };
-
             var taxonomies = new List<Taxonomy>();
 
-            taxonomies.AddRange(skills.Select(s => new Taxonomy
+            // =========================
+            // 🔹 Frontend Skills
+            // =========================
+            var frontendSkills = new[]
             {
-                Type = TaxonomyType.Skill,
-                Name = s,
-                CreatedAt = now
-            }));
+                "HTML", "CSS", "JavaScript", "TypeScript", "React", "Angular", "Vue.js",
+                "Next.js", "Nuxt.js", "TailwindCSS", "Bootstrap", "SASS/SCSS", "Redux", "Webpack", "Vite"
+            };
 
-            taxonomies.AddRange(categories.Select(c => new Taxonomy
+            // =========================
+            // 🔹 Backend Skills
+            // =========================
+            var backendSkills = new[]
             {
-                Type = TaxonomyType.Category,
-                Name = c,
-                CreatedAt = now
-            }));
+                "C#", "ASP.NET Core", "Entity Framework", "Java", "Spring Boot", "Python",
+                "Django", "Flask", "Node.js", "Express.js", "PHP", "Laravel", "Go", "Ruby on Rails",
+                "REST API", "GraphQL", "gRPC", "Microservices", "Clean Architecture", "Design Patterns"
+            };
 
-            await context.Taxonomies.AddRangeAsync(taxonomies);
+            // =========================
+            // 🔹 Database & Cloud
+            // =========================
+            var dataAndCloudSkills = new[]
+            {
+                "SQL Server", "MySQL", "PostgreSQL", "MongoDB", "Redis", "ElasticSearch",
+                "Firebase", "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes", "CI/CD", "Git"
+            };
+
+            // =========================
+            // 🔹 Mobile Development
+            // =========================
+            var mobileSkills = new[]
+            {
+                "Android", "Kotlin", "Java (Mobile)", "iOS", "Swift", "Flutter", "React Native", "Xamarin"
+            };
+
+            // =========================
+            // 🔹 AI / Data
+            // =========================
+            var aiAndDataSkills = new[]
+            {
+                "Machine Learning", "Deep Learning", "TensorFlow", "PyTorch", "Pandas", "NumPy",
+                "Data Analysis", "Data Visualization", "Big Data", "Natural Language Processing (NLP)"
+            };
+
+            // =========================
+            // 🔹 DevOps & Security
+            // =========================
+            var devOpsAndSecuritySkills = new[]
+            {
+                "DevOps", "Linux", "Shell Script", "Ansible", "Terraform", "Jenkins",
+                "Agile", "Scrum", "Network", "Cybersecurity", "Penetration Testing"
+            };
+
+            // =========================
+            // 🔹 Soft Skills
+            // =========================
+            var softSkills = new[]
+            {
+                "Communication", "Teamwork", "Problem Solving", "Critical Thinking",
+                "Time Management", "Leadership", "Adaptability", "Creativity"
+            };
+
+            // ✅ Gộp tất cả kỹ năng vào danh sách
+            var allSkills = frontendSkills
+                .Concat(backendSkills)
+                .Concat(dataAndCloudSkills)
+                .Concat(mobileSkills)
+                .Concat(aiAndDataSkills)
+                .Concat(devOpsAndSecuritySkills)
+                .Concat(softSkills)
+                .Distinct() // loại bỏ trùng lặp
+                .Select(s => new Taxonomy { Name = s })
+                .ToList();
+
+            await context.Taxonomies.AddRangeAsync(allSkills);
             await context.SaveChangesAsync();
 
-            Console.WriteLine($"✅ Seeded {skills.Length} skills and {categories.Length} categories successfully!");
+            Console.WriteLine($"✅ Seeded {allSkills.Count} skills successfully!");
         }
     }
 }

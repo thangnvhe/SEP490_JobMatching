@@ -1,8 +1,6 @@
-﻿using JobMatchingSystem.API.Entities;
-using JobMatchingSystem.API.Helpers;
-using Microsoft.AspNetCore.Builder;
+﻿using JobMatchingSystem.API.Helpers;
+using JobMatchingSystem.API.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
 using System.Text;
 
@@ -75,7 +73,7 @@ namespace JobMatchingSystem.API.Data.SeedData
                     FullName = fullName,
                     PhoneNumber = $"09{rnd.Next(10000000, 99999999)}",
                     AvatarUrl = null,
-                    Gender = (givenNames.Take(i + 1).Last().Length % 2 == 0) ? (bool?)true : (bool?)false, // simple alternate
+                    Gender = ((givenNames.Take(i + 1).Last().Length % 2 == 0) ? true : false), // simple alternate
                     Birthday = DateTime.UtcNow.AddYears(-rnd.Next(25, 45)).AddDays(-rnd.Next(0, 365)),
                     Score = rnd.Next(0, 500),
                     IsActive = true,

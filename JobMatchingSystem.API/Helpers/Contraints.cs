@@ -11,6 +11,6 @@ namespace JobMatchingSystem.API.Helpers
         public const string RoleAdmin = "Admin";
         public const string RoleRecruiter = "Recruiter";
         public const string RoleCandidate = "Candidate";
-        public const string RoleStaff = "Staff";
+        public const string RoleHiringManager = "HiringManager";
     }
 }
