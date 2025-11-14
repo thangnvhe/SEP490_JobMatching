@@ -32,7 +32,7 @@ namespace JobMatchingSystem.API.Models
         [ForeignKey("CompanyId")]
         public virtual Company? CompanyRecruiter { get; set; }
         public virtual ICollection<Job> CreatedJobs { get; set; } = new List<Job>();
-        public virtual ICollection<Job> StaffJobs { get; set; } = new List<Job>();
+        public virtual ICollection<Job> AdminJobs { get; set; } = new List<Job>();
         public virtual ICollection<Company> VerifiedCompanies { get; set; } = new List<Company>();
         public virtual ICollection<CandidateJob> ApplyJobs { get; set; } = new List<CandidateJob>();
         public virtual ICollection<SavedJob> SavedJobs { get; set; } = new List<SavedJob>();

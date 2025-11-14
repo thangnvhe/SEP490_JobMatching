@@ -26,5 +26,6 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error CantDelete() => new("Can't Delete", HttpStatusCode.BadRequest);
         public static Error NotConfirmEmail() => new("Email is Not Confirm",HttpStatusCode.BadRequest);
         public static Error AccountIsBand() => new("Account is Band",HttpStatusCode.BadRequest);
+        public static Error CantUpdate() => new("Can't update", HttpStatusCode.BadRequest);
     }
 }
