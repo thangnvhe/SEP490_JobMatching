@@ -14,6 +14,7 @@ namespace JobMatchingSystem.API.Configuration
             //services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IAuthRepository, AuthRepository>();
             services.AddScoped<IJobRepository, JobRepository>();
+            services.AddScoped<IJobStageRepository, JobStageRepository>();
             return services;
         }
 
@@ -25,6 +26,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddTransient<IEmailService, EmailService>();
             services.AddScoped<IUserService, UserService>();
             services.AddTransient<IJobService, JobService>();
+            services.AddTransient<IJobStageService, JobStageService>();
             return services;
         }
 
