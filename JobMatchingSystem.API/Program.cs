@@ -47,8 +47,8 @@ app.UseStaticFiles();
 app.UseCors("FrontendCors");
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.UseExceptionHandler();
+
 app.MapControllers();
 
 app.Run();

@@ -40,9 +40,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.EmailNotExist());
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var encodedToken = HttpUtility.UrlEncode(token);
-            var frontendUrl = _configuration["Frontend:ResetPasswordUrl"];
-            var resetLink = $"{frontendUrl}/{encodedToken}?email={user.Email}";
-            await _emailService.SendResetPasswordEmailAsync(user.Email, resetLink);
+            await _emailService.SendResetPasswordEmailAsync(user.Email, encodedToken);
         }
         public async Task ResetPasswordAsync(ResetPasswordRequest request)
         {
@@ -64,8 +62,14 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (user == null)
                 throw new AppException(ErrorCode.InvalidCredentials());
             var result = await _signInManager.CheckPasswordSignInAsync(user, request.PassWord, false);
+            if (result.IsNotAllowed)
+            {
+                throw new AppException(ErrorCode.NotConfirmEmail());
+            }
             if (!result.Succeeded)
+            {
                 throw new AppException(ErrorCode.InvalidCredentials());
+            }
             var roles = await _authRepository.GetRolesAsync(user);
             var accessToken = Untity.GenerateAccessToken(user, roles, _configuration);
             var refreshToken = Untity.GenerateRefreshToken();
@@ -126,7 +130,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 FullName = request.FullName,
                 Email = request.Email,
                 UserName = request.Email,
-                EmailConfirmed = true
+                EmailConfirmed = false
             };
             var result = await _userManager.CreateAsync(user, request.Password);
             if (!result.Succeeded)
@@ -134,8 +138,38 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.InvalidCreate());
             }
             await _userManager.AddToRoleAsync(user, Contraints.RoleCandidate);
-            return "Create Candidate Success";
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = HttpUtility.UrlEncode(token);
+            await _emailService.SendEmailConfirmationAsync(user.Email, user.FullName, $"{user.Id}:{encodedToken}");
+            return "Please Check Email to Active Account";
 
         }
+        public async Task<bool> VerifyEmailAsync(string tokenLink)
+        {
+            try
+            {
+                var parts = tokenLink.Split(':');
+                if (parts.Length != 2)
+                    return false;
+                var userId = parts[0];
+                var token = parts[1];
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                    return false;
+                var result = await _userManager.ConfirmEmailAsync(user, token);
+
+                if (result.Succeeded)
+                {
+                    await _emailService.SendWelcomeEmailAsync(user.Email!, user.FullName!);
+                }
+
+                return result.Succeeded;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
     }
 }
