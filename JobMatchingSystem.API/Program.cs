@@ -3,10 +3,6 @@ using JobMatchingSystem.API.Data.SeedData;
 using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Helpers;
-using JobMatchingSystem.API.Mappings;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
-using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 // Đăng ký các dịch vụ IExceptionHandler
@@ -34,10 +30,13 @@ builder.Services.AddSwaggerGen();
 builder.Services.ConfigureIdentity(builder.Configuration);
 builder.Services.AddRepositories();
 builder.Services.AddServices();
+<<<<<<< HEAD
 builder.Services.AddAutoMapper(cfg =>
 {
     cfg.AddProfile(new MappingProfile());                                                                                        
 });
+=======
+>>>>>>> origin/Sprint_02
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 var app = builder.Build();

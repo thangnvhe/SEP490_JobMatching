@@ -29,14 +29,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\images\CodeImages\" />
-    <Folder Include="wwwroot\TemplateCV\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Update="appsettings.Development.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Folder Include="Mappings\" />
+    <Folder Include="Migrations\" />
   </ItemGroup>
 
   <ItemGroup>
