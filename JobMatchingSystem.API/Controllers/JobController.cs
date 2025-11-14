@@ -1,5 +1,6 @@
 ﻿using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -18,6 +19,30 @@ namespace JobMatchingSystem.API.Controllers
         public JobController(IJobService jobService)
         {
             _jobService = jobService;
+        }
+
+        [HttpGet("{jobId}")]
+        public async Task<IActionResult> GetJob(int jobId)
+        {
+            var job = await _jobService.GetJobByIdAsync(jobId);
+
+            return Ok(APIResponse<JobDetailResponse>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(job)
+                .Build());
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetJobs([FromQuery] GetJobRequest request)
+        {
+            var jobs = await _jobService.GetJobsAsync(request);
+
+            return Ok(APIResponse<List<JobDetailResponse>>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(jobs)
+                .Build());
         }
 
         [HttpPost]
