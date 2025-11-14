@@ -1,5 +1,6 @@
 ﻿using JobMatchingSystem.API.Data;
 using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Enums;
 using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Models;
@@ -150,6 +151,68 @@ namespace JobMatchingSystem.API.Services.Implementations
             job.VerifiedBy = userId;
 
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<JobDetailResponse> GetJobByIdAsync(int jobId)
+        {
+            var job = await _context.Jobs
+                .Include(j => j.JobTaxonomies)
+                .ThenInclude(jt => jt.Taxonomy)
+                .FirstOrDefaultAsync(j => j.JobId == jobId);
+
+            if (job == null)
+                throw new AppException(ErrorCode.NotFoundJob());
+
+            var response = new JobDetailResponse
+            {
+                JobId = job.JobId,
+                Title = job.Title,
+                Description = job.Description,
+                Requirements = job.Requirements,
+                Benefits = job.Benefits,
+                SalaryMin = job.SalaryMin,
+                SalaryMax = job.SalaryMax,
+                Location = job.Location,
+                JobType = job.JobType.ToString(),
+                Status = job.Status.ToString(),
+                ViewsCount = job.ViewsCount,
+                CompanyId = job.CompanyId,
+                RecuiterId = job.RecuiterId,
+                VerifiedBy = job.VerifiedBy,
+                CreatedAt = job.CreatedAt,
+                OpenedAt = job.OpenedAt,
+                ExpiredAt = job.ExpiredAt,
+                Taxonomies = job.JobTaxonomies.Select(jt => jt.Taxonomy!.Name).ToList()
+            };
+
+            return response;
+        }
+
+        public async Task<List<JobDetailResponse>> GetJobsAsync(GetJobRequest request)
+        {
+            var jobs = await _jobRepository.GetJobsAsync(request);
+
+            return jobs.Select(j => new JobDetailResponse
+            {
+                JobId = j.JobId,
+                Title = j.Title,
+                Description = j.Description,
+                Requirements = j.Requirements,
+                Benefits = j.Benefits,
+                SalaryMin = j.SalaryMin,
+                SalaryMax = j.SalaryMax,
+                Location = j.Location,
+                JobType = j.JobType.ToString(),
+                Status = j.Status.ToString(),
+                ViewsCount = j.ViewsCount,
+                CompanyId = j.CompanyId,
+                RecuiterId = j.RecuiterId,
+                VerifiedBy = j.VerifiedBy,
+                CreatedAt = j.CreatedAt,
+                OpenedAt = j.OpenedAt,
+                ExpiredAt = j.ExpiredAt,
+                Taxonomies = j.JobTaxonomies.Select(t => t.Taxonomy.Name).ToList()
+            }).ToList();
         }
     }
 }
