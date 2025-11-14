@@ -70,6 +70,10 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 throw new AppException(ErrorCode.InvalidCredentials());
             }
+            if (!user.IsActive)
+            {
+                throw new AppException(ErrorCode.AccountIsBand());
+            }
             var roles = await _authRepository.GetRolesAsync(user);
             var accessToken = Untity.GenerateAccessToken(user, roles, _configuration);
             var refreshToken = Untity.GenerateRefreshToken();

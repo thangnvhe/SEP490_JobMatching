@@ -20,8 +20,10 @@ namespace JobMatchingSystem.API.Configuration
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
             //services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddTransient<IEmailService, EmailService>();
+            services.AddScoped<IUserService, UserService>();
             services.AddTransient<IJobService, JobService>();
             return services;
         }

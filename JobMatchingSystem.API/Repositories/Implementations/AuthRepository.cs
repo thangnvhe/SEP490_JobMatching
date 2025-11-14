@@ -3,6 +3,7 @@ using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace JobMatchingSystem.API.Repositories.Implementations
 {
@@ -19,7 +20,7 @@ namespace JobMatchingSystem.API.Repositories.Implementations
 
         public async Task<ApplicationUser?> GetUserByEmailAsync(string email)
         {
-            return await _userManager.FindByEmailAsync(email);
+            return await _userManager.FindByEmailAsync(email);           
         }
 
         public async Task<IList<string>> GetRolesAsync(ApplicationUser user)
@@ -27,10 +28,11 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             return await _userManager.GetRolesAsync(user);
         }
 
-        public async Task UpdateUserAsync(ApplicationUser user)
+        public  Task UpdateUserAsync(ApplicationUser user)
         {
             _context.ApplicationUsers.Update(user);
-            await _context.SaveChangesAsync();
+            return Task.CompletedTask;
+            
         }
 
         public async Task<ApplicationUser?> GetUserByRefreshToken(string refreshToken)
@@ -49,7 +51,7 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             return await _context.ApplicationUsers.AnyAsync(x => x.Email == email);
         }
 
-        public async Task<List<ApplicationUser>> GetAllAsync(string search, int roleId)
+        public async Task<List<ApplicationUser>> GetAllAsync(string search, string sortBy,bool IsDescending)
         {
             IQueryable<ApplicationUser> query = _context.Users;
             if (!string.IsNullOrWhiteSpace(search))
@@ -57,21 +59,21 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                 query = query.Where(u => u.UserName != null && u.UserName.Contains(search));
 
             }
-            if (roleId != 0)
+            if (!string.IsNullOrEmpty(sortBy))
             {
-                var userIdsInRole = _context.UserRoles
-                    .Where(ur => ur.RoleId == roleId)
-                    .Select(ur => ur.UserId);
-
-                query = query.Where(u => userIdsInRole.Contains(u.Id));
+                query = IsDescending
+                    ? query.OrderByDescending(x => EF.Property<object>(x, sortBy))
+                    : query.OrderBy(x => EF.Property<object>(x, sortBy));
             }
             return await query.ToListAsync();
         }
 
-        public async Task ChangeStatus(ApplicationUser user)
+        public  Task ChangeStatus(ApplicationUser user)
         {
             user.IsActive = !user.IsActive;
-            await _context.SaveChangesAsync();
+            return Task.CompletedTask;
         }
+
+        
     }
 }
