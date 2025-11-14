@@ -129,8 +129,8 @@ namespace JobMatchingSystem.API.Data
                       .WithMany(e => e.CreatedJobs)
                       .HasForeignKey(e => e.RecuiterId)
                       .OnDelete(DeleteBehavior.NoAction);
-                entity.HasOne(e => e.Staff)
-                      .WithMany(e => e.StaffJobs)
+                entity.HasOne(e => e.Admin)
+                      .WithMany(e => e.AdminJobs)
                       .HasForeignKey(e => e.VerifiedBy)
                       .OnDelete(DeleteBehavior.NoAction);
             });
@@ -190,7 +190,13 @@ namespace JobMatchingSystem.API.Data
             // JobTaxonomy
             modelBuilder.Entity<JobTaxonomy>(entity =>
             {
-                entity.HasKey(e => new { e.JobId, e.TaxonomyId });
+                // Dùng Id làm khóa chính
+                entity.HasKey(e => e.Id);
+
+                // Bật tự động tăng cho Id
+                entity.Property(e => e.Id)
+                      .ValueGeneratedOnAdd(); // Đây là identity
+
                 entity.HasOne(e => e.Job)
                       .WithMany(e => e.JobTaxonomies)
                       .HasForeignKey(e => e.JobId)
@@ -203,7 +209,13 @@ namespace JobMatchingSystem.API.Data
             // CandidateTaxonomy
             modelBuilder.Entity<CandidateTaxonomy>(entity =>
             {
-                entity.HasKey(e => new { e.CandidateId, e.TaxonomyId });
+                // Dùng Id làm khóa chính
+                entity.HasKey(e => e.Id);
+
+                // Bật tự động tăng cho Id
+                entity.Property(e => e.Id)
+                      .ValueGeneratedOnAdd(); // Đây là identity
+
                 entity.HasOne(e => e.Candidate)
                       .WithMany(e => e.CandidateTaxonomies)
                       .HasForeignKey(e => e.CandidateId)
