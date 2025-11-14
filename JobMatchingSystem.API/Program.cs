@@ -2,6 +2,7 @@
 using JobMatchingSystem.API.Data.SeedData;
 using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Helpers;
+using JobMatchingSystem.API.Mappings;
 
 var builder = WebApplication.CreateBuilder(args);
 // Đăng ký các dịch vụ IExceptionHandler
@@ -29,6 +30,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.ConfigureIdentity(builder.Configuration);
 builder.Services.AddRepositories();
 builder.Services.AddServices();
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddProfile(new MappingProfile());
+});
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 var app = builder.Build();
