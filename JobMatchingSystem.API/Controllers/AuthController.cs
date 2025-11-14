@@ -81,5 +81,34 @@ namespace JobMatchingSystem.API.Controllers
                 .WithSuccess(true)
                 .Build());
         }
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromQuery] string TokenLink)
+        {
+            if (string.IsNullOrEmpty(TokenLink))
+            {
+                return BadRequest(APIResponse<string>.Builder()
+                    .WithResult("Token không hợp lệ")
+                    .WithStatusCode(HttpStatusCode.BadRequest)
+                    .WithSuccess(false)
+                    .Build());
+            }
+
+            var success = await _authService.VerifyEmailAsync(TokenLink);
+
+            if (!success)
+            {
+                return BadRequest(APIResponse<string>.Builder()
+                    .WithResult("Xác nhận email thất bại hoặc token đã hết hạn")
+                    .WithStatusCode(HttpStatusCode.BadRequest)
+                    .WithSuccess(false)
+                    .Build());
+            }
+
+            return Ok(APIResponse<string>.Builder()
+                .WithResult("Email đã được xác nhận thành công! Bạn có thể đăng nhập.")
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .Build());
+        }
     }
 }
