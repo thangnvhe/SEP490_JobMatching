@@ -34,5 +34,35 @@ namespace JobMatchingSystem.API.Controllers
                 .WithResult("Job created successfully")
                 .Build());
         }
+
+        [HttpPut("{jobId}")]
+        [Authorize(Roles = "Recruiter")]
+        public async Task<IActionResult> UpdateJob(int jobId, [FromBody] UpdateJobRequest request)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+            await _jobService.UpdateJobAsync(jobId, request, userId);
+
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult("Job updated successfully")
+                .Build());
+        }
+
+        [HttpPut("{jobId}/censor")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> CensorJob(int jobId, [FromBody] CensorJobRequest request)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+            await _jobService.CensorJobAsync(jobId, request, userId);
+
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult("Job censored successfully")
+                .Build());
+        }
     }
 }
