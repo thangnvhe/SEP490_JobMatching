@@ -13,14 +13,20 @@ namespace JobMatchingSystem.API.Configuration
         {
             //services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IAuthRepository, AuthRepository>();
+            services.AddScoped<IJobRepository, JobRepository>();
+            services.AddScoped<IJobStageRepository, JobStageRepository>();
             return services;
         }
 
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
             //services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddTransient<IEmailService, EmailService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddTransient<IJobService, JobService>();
+            services.AddTransient<IJobStageService, JobStageService>();
             return services;
         }
 

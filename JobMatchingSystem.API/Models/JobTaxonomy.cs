@@ -1,7 +1,10 @@
-﻿namespace JobMatchingSystem.API.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace JobMatchingSystem.API.Models
 {
     public class JobTaxonomy
     {
+        [Key]
         public int Id { get; set; }
         public int JobId { get; set; }
         public int TaxonomyId { get; set; }

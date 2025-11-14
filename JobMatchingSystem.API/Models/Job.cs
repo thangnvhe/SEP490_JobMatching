@@ -33,7 +33,7 @@ namespace JobMatchingSystem.API.Models
         [ForeignKey("RecuiterId")]
         public virtual ApplicationUser? Recruiter { get; set; }
         [ForeignKey("VerifiedBy")]
-        public virtual ApplicationUser? Staff { get; set; }
+        public virtual ApplicationUser? Admin { get; set; }
         public virtual ICollection<CandidateJob> CandidateJobs { get; set; } = new List<CandidateJob>();
         public virtual ICollection<SavedJob> SavedJobs { get; set; } = new List<SavedJob>();
         public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
