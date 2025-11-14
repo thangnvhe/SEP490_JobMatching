@@ -1,6 +1,7 @@
 ﻿using JobMatchingSystem.API.Configuration;
 using JobMatchingSystem.API.Data.SeedData;
 using JobMatchingSystem.API.Exceptions;
+using JobMatchingSystem.API.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 // Đăng ký các dịch vụ IExceptionHandler
@@ -8,6 +9,7 @@ builder.Services.AddExceptionHandler<ValidationResponseExceptionHandler>(); // �
 builder.Services.AddExceptionHandler<GlobalResponseExceptionHandler>();      // Đăng ký Global Handler sau
 // Thêm dịch vụ hỗ trợ IExceptionHandler
 builder.Services.AddProblemDetails();
+builder.Services.AddHttpContextAccessor();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -25,7 +27,10 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.ConfigureIdentity(builder.Configuration);
-
+builder.Services.AddRepositories();
+builder.Services.AddServices();
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
 var app = builder.Build();
 await app.AutoMigration();
 await app.SeedAdminUserAsync();
