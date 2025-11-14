@@ -85,9 +85,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddIdentity<ApplicationUser, IdentityRole<int>>(
                 options =>
                 {
-                    options.SignIn.RequireConfirmedEmail = false;
-
-                    // (Tuỳ chọn) cấu hình password
+                    options.SignIn.RequireConfirmedEmail = true;
                     options.Password.RequireDigit = false;
                     options.Password.RequireLowercase = false;
                     options.Password.RequireUppercase = false;

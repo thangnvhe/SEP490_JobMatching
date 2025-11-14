@@ -24,5 +24,6 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error CodeTestCaseNotFound() => new ("Can not Find Code Test Case", HttpStatusCode.NotFound);
         public static Error NotFoundSkill() => new("Not Found Skill", HttpStatusCode.NotFound);
         public static Error CantDelete() => new("Can't Delete", HttpStatusCode.BadRequest);
+        public static Error NotConfirmEmail() => new("Email is Not Confirm",HttpStatusCode.BadRequest);
     }
 }
