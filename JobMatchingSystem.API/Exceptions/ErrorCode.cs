@@ -12,6 +12,7 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundRecruiter() => new("Not Found Recruiter", HttpStatusCode.NotFound);
         public static Error InvalidStatus() => new("Invalid Status", HttpStatusCode.BadRequest);
         public static Error NotFoundJob() => new("Not Found Job", HttpStatusCode.NotFound);
+        public static Error NotFoundJobStage() => new("Not Found JobStage", HttpStatusCode.NotFound);
         public static Error SalaryError() => new("Salary min large than Salary max", HttpStatusCode.BadRequest);
         public static Error NotFoundCandidateProfile() => new("Not Found Candidate Profile", HttpStatusCode.BadRequest);
         public static Error NotFoundCode()=> new ("Not Found Code", HttpStatusCode.NotFound);
