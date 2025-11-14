@@ -30,13 +30,6 @@ builder.Services.AddSwaggerGen();
 builder.Services.ConfigureIdentity(builder.Configuration);
 builder.Services.AddRepositories();
 builder.Services.AddServices();
-<<<<<<< HEAD
-builder.Services.AddAutoMapper(cfg =>
-{
-    cfg.AddProfile(new MappingProfile());                                                                                        
-});
-=======
->>>>>>> origin/Sprint_02
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 var app = builder.Build();
