@@ -33,6 +33,8 @@
     <Folder Include="Mappings\" />
     <Folder Include="wwwroot\images\LicenseFile\" />
     <Folder Include="wwwroot\images\Logo\" />
+    <Folder Include="wwwroot\cv\" />
+    <Folder Include="wwwroot\template_cv\" />
   </ItemGroup>
 
   <ItemGroup>
