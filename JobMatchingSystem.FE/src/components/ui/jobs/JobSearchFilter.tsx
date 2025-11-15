@@ -26,11 +26,12 @@ const JobSearchFilter: React.FC<JobSearchFilterProps> = ({
     { value: "FullTime", label: "Toàn thời gian" },
     { value: "PartTime", label: "Bán thời gian" },
     { value: "Remote", label: "Làm từ xa" },
+    { value: "Other", label: "Khác" },
   ];
 
   const experienceLevels = [
     { value: "", label: "Tất cả" },
-    { value: "entry", label: "Không yêu cầu kinh nghiệm" },
+    { value: "entry", label: "Không yêu cầu" },
     { value: "junior", label: "Dưới 1 năm" },
     { value: "mid", label: "1-3 năm" },
     { value: "senior", label: "3-5 năm" },
@@ -44,6 +45,7 @@ const JobSearchFilter: React.FC<JobSearchFilterProps> = ({
     { value: "15-20", label: "15-20 triệu" },
     { value: "20-25", label: "20-25 triệu" },
     { value: "25+", label: "Trên 25 triệu" },
+    { value: "0-0", label: "Thỏa Thuận" },
   ];
 
   const handleFilterChange = (field: keyof JobSearchFilters, value: string) => {

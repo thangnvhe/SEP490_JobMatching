@@ -1,10 +1,10 @@
-import React from "react";
-import { MapPin, Briefcase, DollarSign, Bookmark, Clock } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { MapPin, Briefcase, Bookmark, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { JobDetailResponse } from "@/models/job";
-
+import { CompanyServices } from "@/services/company.service";
 interface JobCardProps {
   job: JobDetailResponse;
   onJobDetails: (jobId: number) => void;
@@ -33,13 +33,27 @@ const formatTimeAgo = (dateString: string) => {
 };
 
 const formatSalary = (salaryMin?: number, salaryMax?: number) => {
+  // Display salaries in millions without currency symbol, e.g. "8 - 12 triệu"
   if (!salaryMin && !salaryMax) return "Thương lượng";
-  if (salaryMin === salaryMax) return `${salaryMin?.toLocaleString()} VND`;
-  if (salaryMin && salaryMax) {
-    return `${salaryMin.toLocaleString()} - ${salaryMax.toLocaleString()} VND`;
+
+  const toMillions = (value?: number) => {
+    if (!value) return undefined;
+    const m = value / 1_000_000;
+    // Show integer when whole number, otherwise one decimal
+    return Number.isInteger(m) ? `${m}` : `${m.toFixed(1)}`;
+  };
+
+  const minM = toMillions(salaryMin);
+  const maxM = toMillions(salaryMax);
+
+  if (minM && maxM) {
+    if (minM === maxM) return `${minM} triệu VND`;
+    return `${minM} - ${maxM} triệu VND`;
   }
-  if (salaryMin) return `Từ ${salaryMin.toLocaleString()} VND`;
-  if (salaryMax) return `Lên đến ${salaryMax.toLocaleString()} VND`;
+
+  if (minM) return `Từ ${minM} triệu VND`;
+  if (maxM) return `Lên đến ${maxM} triệu VND`;
+
   return "Thương lượng";
 };
 
@@ -50,6 +64,25 @@ const getJobTypeDisplay = (jobType: string) => {
     'Remote': 'Làm từ xa'
   };
   return jobTypeMap[jobType] || jobType;
+};
+
+const cleanLocation = (location: string) => {
+  // Remove common prefixes from location string
+  const prefixesToRemove = [
+    'Địa điểm làm việc\n',
+    'Địa điểm làm việc ',
+    'Địa chỉ làm việc\n',
+    'Địa chỉ làm việc ',
+  ];
+  
+  let cleanedLocation = location;
+  prefixesToRemove.forEach(prefix => {
+    if (cleanedLocation.startsWith(prefix)) {
+      cleanedLocation = cleanedLocation.substring(prefix.length);
+    }
+  });
+  
+  return cleanedLocation.trim();
 };
 
 const getStatusColor = (status: string) => {
@@ -70,6 +103,23 @@ export const JobCard: React.FC<JobCardProps> = ({
   onSaveJob,
   className = "",
 }) => {
+  const [companyName, setCompanyName] = useState<string>(`Company ${job.companyId}`);
+
+  useEffect(() => {
+    const fetchCompanyName = async () => {
+      try {
+        const response = await CompanyServices.getCompanyById(job.companyId.toString());
+        if (response.isSuccess && response.result) {
+          setCompanyName(response.result.name || `Company ${job.companyId}`);
+        }
+      } catch (error) {
+        console.error('Error fetching company name:', error);
+        // Keep default name if API call fails
+      }
+    };
+
+    fetchCompanyName();
+  }, [job.companyId]);
   return (
     <Card
       className={`bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200 ${className}`}
@@ -86,7 +136,7 @@ export const JobCard: React.FC<JobCardProps> = ({
               {job.title}
             </h3>
             <p className="text-gray-600 font-medium text-sm">
-              Company ID: {job.companyId}
+              {companyName}
             </p>
           </div>
           
@@ -118,7 +168,7 @@ export const JobCard: React.FC<JobCardProps> = ({
             className="text-gray-600 border-gray-200 bg-gray-50 text-xs font-normal"
           >
             <MapPin className="h-3 w-3 mr-1" />
-            {job.location}
+            {cleanLocation(job.location)}
           </Badge>
           
           <Badge
@@ -133,19 +183,8 @@ export const JobCard: React.FC<JobCardProps> = ({
             variant="outline"
             className="text-emerald-700 border-emerald-200 bg-emerald-50 text-xs font-normal"
           >
-            <DollarSign className="h-3 w-3 mr-1" />
             {formatSalary(job.salaryMin, job.salaryMax)}
           </Badge>
-
-          {/* Views Count */}
-          {job.viewsCount > 0 && (
-            <Badge
-              variant="outline"
-              className="text-blue-600 border-blue-200 bg-blue-50 text-xs font-normal"
-            >
-              {job.viewsCount} lượt xem
-            </Badge>
-          )}
         </div>
 
         {/* Skills/Taxonomies */}
@@ -170,11 +209,6 @@ export const JobCard: React.FC<JobCardProps> = ({
             )}
           </div>
         )}
-
-        {/* Description Preview */}
-        <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-          {job.description}
-        </p>
 
         {/* Footer: Time + Action */}
         <div className="flex justify-between items-center pt-2 border-t border-gray-100">

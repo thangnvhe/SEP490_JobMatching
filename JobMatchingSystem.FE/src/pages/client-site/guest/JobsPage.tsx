@@ -117,6 +117,7 @@ const JobsPage: React.FC = () => {
         page: state.pagination.page,
         size: state.pagination.size,
         sortBy: state.pagination.sortBy,
+        Status: 3, // Only show opened jobs
       };
 
       // Add search filters
@@ -143,8 +144,8 @@ const JobsPage: React.FC = () => {
       if (response.isSuccess) {
         setJobs(response.result.items);
         setPaginationInfo({
-          totalItems: response.result.pager.totalItem,
-          totalPages: response.result.pager.totalPage,
+          totalItems: response.result.pageInfo.totalItem,
+          totalPages: response.result.pageInfo.totalPage,
           currentPage: state.pagination.page,
         });
       } else {
@@ -246,7 +247,7 @@ const JobsPage: React.FC = () => {
       },
       pagination: {
         page: parseInt(searchParams.get("page") || "1"),
-        size: 12,
+        size: 8,
         sortBy: searchParams.get("sortBy") || "latest",
       },
     };
