@@ -90,5 +90,39 @@ namespace JobMatchingSystem.API.Services.Implementations
             // Gọi hàm gửi email chung
             await SendEmailAsync(toEmail, subject, body);
         }
+
+        public async Task SendCompanyApprovedEmailAsync(string toEmail, string fullName, string token, string companyName)
+        {
+            string resetLink = $"{_frontendBaseUrl}/reset-password?token={token}&email={toEmail}";
+            string subject = "Công ty của bạn đã được duyệt - JobMatching System";
+
+            string body = $@"
+    <h2>Chào {WebUtility.HtmlEncode(fullName)}</h2>
+    <p>Xin chúc mừng! Công ty <strong>{WebUtility.HtmlEncode(companyName)}</strong> của bạn đã được duyệt.</p>
+    <p>Để hoàn tất việc kích hoạt tài khoản recruiter và đặt mật khẩu, vui lòng nhấn vào nút bên dưới:</p>
+    <a href='{resetLink}' 
+       style='display:inline-block; padding:10px 20px; background-color:#007bff; color:#fff; border-radius:5px; text-decoration:none;'>
+       Đặt mật khẩu và đăng nhập
+    </a>
+    <p>Nếu bạn không yêu cầu điều này, vui lòng bỏ qua email này.</p>
+    ";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
+        public async Task SendCompanyRejectedEmailAsync(string toEmail, string fullName, string companyName, string rejectReason)
+        {
+            string subject = "Công ty của bạn đã bị từ chối - JobMatching System";
+
+            string body = $@"
+        <h2>Chào {WebUtility.HtmlEncode(fullName)}</h2>
+        <p>Rất tiếc! Công ty <strong>{WebUtility.HtmlEncode(companyName)}</strong> của bạn đã bị từ chối đăng ký.</p>
+        <p>Lý do từ chối: {WebUtility.HtmlEncode(rejectReason)}</p>
+        <p>Vui lòng liên hệ bộ phận hỗ trợ nếu bạn có thắc mắc.</p>
+        <hr>
+        <p>JobMatching System Team</p>
+    ";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
     }
 }

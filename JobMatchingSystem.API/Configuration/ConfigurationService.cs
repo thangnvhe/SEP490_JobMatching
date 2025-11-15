@@ -46,33 +46,37 @@ namespace JobMatchingSystem.API.Configuration
                 }
             }
 
-            // ✅ Tạo user admin nếu chưa có
-            var adminEmail = "admin123@gmail.com";
-            var adminUser = await userManager.FindByEmailAsync(adminEmail);
+            var password = "Admin123@";
 
-            if (adminUser == null)
+            for (int i = 1; i <= 3; i++)
             {
-                var newAdmin = new ApplicationUser
+                var email = $"admin{i}@gmail.com";
+                var existingUser = await userManager.FindByEmailAsync(email);
+                if (existingUser != null)
                 {
-                    UserName = adminEmail,
-                    Email = adminEmail,
-                    FullName = "Admin",
-                    PhoneNumber = "0123456789",
+                    Console.WriteLine($"⚠️ User {email} already exists, skipping.");
+                    continue;
+                }
+
+                var user = new ApplicationUser
+                {
+                    UserName = email,
+                    Email = email,
+                    FullName = $"Admin {i}",
                     EmailConfirmed = true,
-                    IsActive = true,
-                    AccessFailedCount = 0
+                    IsActive = true
                 };
 
-                var createResult = await userManager.CreateAsync(newAdmin, "Admin123@");
-
-                if (createResult.Succeeded)
+                var result = await userManager.CreateAsync(user, password);
+                if (result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(newAdmin, Contraints.RoleAdmin);
+                    await userManager.AddToRoleAsync(user, Contraints.RoleAdmin);
+                    Console.WriteLine($"✅ Seeded admin: {email} / {password}");
                 }
                 else
                 {
-                    var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
-                    Console.WriteLine($"❌ Seed admin failed: {errors}");
+                    var errs = string.Join("; ", result.Errors.Select(e => e.Description));
+                    Console.WriteLine($"❌ Failed to create {email}: {errs}");
                 }
             }
         }
