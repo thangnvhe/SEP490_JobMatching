@@ -2,7 +2,7 @@ import type { Company } from "@/models/company";
 import { BaseServices } from "./base.service";
 export const CompanyServices = {
   getAllCompanies: (params: any) =>
-    BaseServices.getAll<any>(params, "/company"),
+      BaseServices.getAll<any>(params, "/company"),
   getCompanyById: (id: string) => BaseServices.getById<Company>(id, "/company"),
   createCompany: (companyFormData: FormData) =>
     BaseServices.create<string>(companyFormData, "/company"),
