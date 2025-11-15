@@ -59,6 +59,9 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                 }
             }
 
+            int skip = (request.PageNumber - 1) * request.PageSize;
+            query = query.Skip(skip).Take(request.PageSize);
+
             return await query.ToListAsync();
         }
     }

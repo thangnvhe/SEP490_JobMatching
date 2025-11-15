@@ -16,5 +16,8 @@ namespace JobMatchingSystem.API.DTOs.Request
         public int? CompanyId { get; set; }
         public int? RecuiterId { get; set; }
         public List<int>? TaxonomyIds { get; set; }
+
+        public int PageNumber { get; set; } = 1; // default page 1
+        public int PageSize { get; set; } = 10;  // default 10 items per page
     }
 }
