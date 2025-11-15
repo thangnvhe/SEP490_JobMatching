@@ -12,7 +12,7 @@ export interface PaginatedResponse<T> {
     errorMessages: string[];
     result: {
         items: T[];        // items luôn là array
-        pager: PageInfo;
+        pageInfo: PageInfo;
     };
 }
 
@@ -32,4 +32,6 @@ export interface PageInfo {
     pageSize: number;
     hasPreviousPage: boolean;
     hasNextPage: boolean;
+    sortBy: string;
+    isDecending: boolean;
 }

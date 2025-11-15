@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, MapPin, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ProvinceService, type Province } from "@/services/province.service";
 
 interface JobSearchHeaderProps {
   keyword: string;
@@ -27,10 +29,29 @@ const JobSearchHeader: React.FC<JobSearchHeaderProps> = ({
 }) => {
   const [localKeyword, setLocalKeyword] = useState(keyword);
   const [localLocation, setLocalLocation] = useState(location);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+
+  // Load provinces on component mount
+  useEffect(() => {
+    const loadProvinces = async () => {
+      setLoadingProvinces(true);
+      try {
+        const provinceList = await ProvinceService.getProvinces();
+        setProvinces(provinceList);
+      } catch (error) {
+        console.error('Error loading provinces:', error);
+      } finally {
+        setLoadingProvinces(false);
+      }
+    };
+
+    loadProvinces();
+  }, []);
 
   const handleSearch = () => {
     onKeywordChange(localKeyword);
-    onLocationChange(localLocation);
+    onLocationChange(localLocation === 'all' ? '' : localLocation);
     onSearch();
   };
 
@@ -41,7 +62,9 @@ const JobSearchHeader: React.FC<JobSearchHeaderProps> = ({
   };
 
   return (
-    <div className={`bg-gradient-to-r from-emerald-600 to-emerald-700 ${className}`}>
+    <div
+      className={`bg-gradient-to-r from-emerald-600 to-emerald-700 ${className}`}
+    >
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto text-center space-y-6">
           {/* Tiêu đề */}
@@ -75,15 +98,28 @@ const JobSearchHeader: React.FC<JobSearchHeaderProps> = ({
 
               {/* Location Search */}
               <div className="flex-1 relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Thành phố, khu vực..."
-                  value={localLocation}
-                  onChange={(e) => setLocalLocation(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="pl-10 pr-4 py-3 border-0 focus-visible:ring-0 text-base"
-                />
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
+                <Select
+                  value={localLocation || "all"}
+                  onValueChange={setLocalLocation}
+                  disabled={loadingProvinces}
+                >
+                  <SelectTrigger className="pl-10 pr-4 py-3 border-0 focus-visible:ring-0 text-base h-auto w-full">
+                    <SelectValue
+                      placeholder={
+                        loadingProvinces ? "Đang tải..." : "Chọn tỉnh thành..."
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả tỉnh thành</SelectItem>
+                    {provinces.map((province) => (
+                      <SelectItem key={province.id} value={province.name}>
+                        {province.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Search Button */}
@@ -115,11 +151,11 @@ const JobSearchHeader: React.FC<JobSearchHeaderProps> = ({
             <div className="flex flex-wrap justify-center gap-2">
               {[
                 "Frontend Developer",
-                "Backend Developer", 
+                "Backend Developer",
                 "UI/UX Designer",
                 "Product Manager",
                 "Data Analyst",
-                "Marketing"
+                "Marketing",
               ].map((tag) => (
                 <Button
                   key={tag}

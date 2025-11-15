@@ -24,10 +24,7 @@ interface JobListProps {
 const SORT_OPTIONS = [
   { value: "latest", label: "Mới nhất" },
   { value: "oldest", label: "Cũ nhất" },
-  { value: "salary-high", label: "Lương: Cao đến thấp" },
-  { value: "salary-low", label: "Lương: Thấp đến cao" },
-  { value: "relevance", label: "Phù hợp nhất" },
-  { value: "views", label: "Nhiều lượt xem" },
+  { value: "salary-high", label: "Lương: Cao đến thấp" }
 ];
 
 const JobList: React.FC<JobListProps> = ({
