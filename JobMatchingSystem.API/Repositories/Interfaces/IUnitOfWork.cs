@@ -3,6 +3,7 @@
     public interface IUnitOfWork
     {
         IAuthRepository AuthRepository { get; }
+        ICompanyRepository CompanyRepository { get; }
 
         Task SaveAsync();
     }

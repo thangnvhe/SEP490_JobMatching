@@ -6,5 +6,9 @@
         Task SendResetPasswordEmailAsync(string toEmail, string token);
         Task SendEmailConfirmationAsync(string toEmail, string fullName, string tokenLink);
         Task SendWelcomeEmailAsync(string toEmail, string fullName);
+        Task SendCompanyApprovedEmailAsync(string toEmail, string fullName, string token, string companyName);
+        Task SendCompanyRejectedEmailAsync(string toEmail, string fullName, string companyName, string rejectReason);
+
+
     }
 }

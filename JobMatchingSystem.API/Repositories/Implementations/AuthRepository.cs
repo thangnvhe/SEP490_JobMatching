@@ -74,6 +74,9 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             return Task.CompletedTask;
         }
 
-        
+        public async Task<ApplicationUser?> FindUserByCompanyId(int companyId)
+        {
+            return await _context.Users.FirstOrDefaultAsync(x=>x.CompanyId == companyId);
+        }
     }
 }
