@@ -1,6 +1,7 @@
 ﻿using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
+using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -87,6 +88,17 @@ namespace JobMatchingSystem.API.Controllers
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
                 .WithResult("Job censored successfully")
+                .Build());
+        }
+
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetJobsPaged([FromQuery] GetJobPagedRequest request)
+        {
+            var result = await _jobService.GetJobsPagedAsync(request);
+            return Ok(APIResponse<PagedResult<JobDetailResponse>>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(result)
                 .Build());
         }
     }
