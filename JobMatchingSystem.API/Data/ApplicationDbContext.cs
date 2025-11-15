@@ -190,13 +190,6 @@ namespace JobMatchingSystem.API.Data
             // JobTaxonomy
             modelBuilder.Entity<JobTaxonomy>(entity =>
             {
-                // Dùng Id làm khóa chính
-                entity.HasKey(e => e.Id);
-
-                // Bật tự động tăng cho Id
-                entity.Property(e => e.Id)
-                      .ValueGeneratedOnAdd(); // Đây là identity
-
                 entity.HasOne(e => e.Job)
                       .WithMany(e => e.JobTaxonomies)
                       .HasForeignKey(e => e.JobId)
@@ -209,13 +202,6 @@ namespace JobMatchingSystem.API.Data
             // CandidateTaxonomy
             modelBuilder.Entity<CandidateTaxonomy>(entity =>
             {
-                // Dùng Id làm khóa chính
-                entity.HasKey(e => e.Id);
-
-                // Bật tự động tăng cho Id
-                entity.Property(e => e.Id)
-                      .ValueGeneratedOnAdd(); // Đây là identity
-
                 entity.HasOne(e => e.Candidate)
                       .WithMany(e => e.CandidateTaxonomies)
                       .HasForeignKey(e => e.CandidateId)
