@@ -77,9 +77,22 @@ namespace JobMatchingSystem.API.Data.SeedData
                     JobType = randomJobType,
                     Status = JobStatus.Draft,
                     CreatedAt = DateTime.Now,
+                    OpenedAt = DateTime.Now,
+                    ExpiredAt = DateTime.Now.AddMonths(1),
+                    VerifiedBy = 1
                 };
-
-                jobs.Add(job);
+                // Thêm taxnomies for mỗi job
+                var taxonomyCount = rand.Next(1, 4); // mỗi job có 1-3 taxonomies
+                for (int i = 0; i < taxonomyCount; i++)
+                {
+                    var jobTaxonomy = new JobTaxonomy
+                    {
+                        TaxonomyId = rand.Next(1, 80), // giả sử có 80 taxonomy trong DB
+                        JobId = job.JobId
+                    };
+                    job.JobTaxonomies.Add(jobTaxonomy);
+                }
+                    jobs.Add(job);
             }
 
             await db.Jobs.AddRangeAsync(jobs);
