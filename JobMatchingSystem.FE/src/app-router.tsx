@@ -5,12 +5,12 @@ import HomePage from './pages/client-site/HomePage';
 import AboutPage from './pages/AboutPage';
 import NotFoundPage from './pages/NotFoundPage';
 import JobsPage from './pages/client-site/guest/JobsPage';
-import JobDetailPage from './pages/client-site/guest/JobDetailPage';
+// import JobDetailPage from './pages/client-site/guest/JobDetailPage';
 import ContactRecruiterPage from './pages/client-site/guest/ContactRecruiterPage';
 import { ClientLayout } from './components/layout/Client/ClientLayout';
 // Admin pages
 import { ManageCompanyPage } from './pages/admin-site/ManageCompany/ViewCompanyList';
-import { ManageJobPage } from './pages/admin-site/ManageJob/ViewJobList';
+import ViewJobList from './pages/admin-site/ManageJob/ViewJobList';
 import { ManageReportPage } from './pages/admin-site/ManageReport/ViewReportList';
 import { CreateEditUserPage } from './pages/admin-site/ManageUser/CreateEditUser';
 import { CreateEditJobPage } from './pages/admin-site/ManageJob/CreateEditJob';
@@ -35,7 +35,7 @@ const AppRouter: React.FC = () => {
           <Route index element={<HomePage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="jobs" element={<JobsPage />} />
-          <Route path="jobs/:id" element={<JobDetailPage />} />
+          {/* <Route path="jobs/:id" element={<JobDetailPage />} /> */}
           {/* <Route path="companies" element={<CompaniesPage />} /> */}
           {/* <Route path="companies/:id" element={<CompanyDetailPage />} /> */}
           <Route path="contact-recruiter" element={<ContactRecruiterPage />} />
@@ -53,7 +53,7 @@ const AppRouter: React.FC = () => {
       >
         <Route path="manage-user" element={<ViewUserList />} />
         <Route path="manage-company" element={<ManageCompanyPage />} />
-        <Route path="manage-job" element={<ManageJobPage />} />
+        <Route path="manage-job" element={<ViewJobList />} />
         <Route path="manage-report" element={<ManageReportPage />} />
         <Route path="manage-user/create" element={<CreateEditUserPage />} />
         <Route path="manage-user/edit/:id" element={<CreateEditUserPage />} />

@@ -29,7 +29,7 @@ import {
   DialogDescription,
   DialogClose,
 } from "@/components/ui/dialog";
-import { API_BASE_URL } from "../../../../env";
+import { API_BASE_URL } from "../../../../env.ts";
 
 // ------------------------------------------------------------
 // MAIN COMPONENT
