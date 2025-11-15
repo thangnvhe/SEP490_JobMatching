@@ -1,26 +1,26 @@
-// Đặt file này tại: src/pages/Admin-Side/ManageJobPage.tsx
-import * as React from "react";
-import {
-  SearchIcon,
-  Plus, // Icon cho "Create"
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { 
   Eye,
+  Edit,
   Trash2,
-  Check, // Icon cho "Approve" (Duyệt)
-  X, // Icon cho "Reject" (Từ chối)
-  Archive, // Icon cho "Close" (Đóng)
-  Clock, // Icon cho "Pending"
-  CheckCircle, // Icon cho "Open"
-  XCircle, // Icon cho "Rejected"
-  ArchiveIcon, // Icon cho "Closed"
-  Edit, // Icon cho "Edit"
+  Check,
+  X,
+  Clock,
+  CheckCircle,
+  XCircle,
+  RefreshCcw,
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from "lucide-react";
 
-// Import các UI components của bạn
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+// Import các UI components
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -28,435 +28,683 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
-// ------------------------------------------------------------------
-// PHẦN 1: DỮ LIỆU GIẢ VÀ TYPES (Bạn sẽ thay thế bằng API)
-// ------------------------------------------------------------------
+// Import types và services
+import { JobServices } from "@/services/job.service";
+import { type JobDetailResponse } from "@/models/job";
+import { useDebounce } from "@/hooks/useDebounce";
+import type { ColumnDef, SortingState } from "@tanstack/react-table";
 
-type JobStatus = "pending" | "open" | "closed" | "rejected";
-
-type Job = {
-  id: string;
-  title: string; // Tên tuyển dụng
-  companyName: string; // Tên công ty đăng
-  status: JobStatus;
-  datePosted: string;
-  description?: string; // Mô tả công việc
-  location?: string; // Địa điểm
-  salary?: string; // Mức lương
-  requirements?: string; // Yêu cầu
+// Helper function để cắt ngắn text
+const truncateText = (text: string, maxLength: number = 100): string => {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + '...';
 };
 
-// Dữ liệu giả
-const mockJobData: Job[] = [
-  {
-    id: "J001",
-    title: "Senior React Developer",
-    companyName: "TechCorp Solutions",
-    status: "open",
-    datePosted: "2024-05-10",
-    description:
-      "We are looking for an experienced React developer to join our team...",
-    location: "Ho Chi Minh City",
-    salary: "15-25M VND",
-    requirements: "3+ years React experience, TypeScript, Redux",
-  },
-  {
-    id: "J002",
-    title: "UI/UX Designer",
-    companyName: "Innovate Hub",
-    status: "pending",
-    datePosted: "2024-05-12",
-    description:
-      "Creative UI/UX designer needed for our innovative projects...",
-    location: "Hanoi",
-    salary: "12-20M VND",
-    requirements: "Figma, Adobe Creative Suite, 2+ years experience",
-  },
-  {
-    id: "J003",
-    title: "Marketing Manager",
-    companyName: "Business Dynamics",
-    status: "closed",
-    datePosted: "2024-04-01",
-    description: "Lead our marketing team and drive growth strategies...",
-    location: "Da Nang",
-    salary: "20-30M VND",
-    requirements: "5+ years marketing experience, team leadership",
-  },
-  {
-    id: "J004",
-    title: "Data Scientist",
-    companyName: "TechCorp Solutions",
-    status: "rejected",
-    datePosted: "2024-05-09",
-    description: "Analyze complex data sets and build predictive models...",
-    location: "Ho Chi Minh City",
-    salary: "18-28M VND",
-    requirements: "Python, Machine Learning, Statistics background",
-  },
-  {
-    id: "J005",
-    title: "Junior Node.js Developer",
-    companyName: "FutureSoft",
-    status: "open",
-    datePosted: "2024-05-11",
-    description: "Entry-level position for Node.js backend development...",
-    location: "Remote",
-    salary: "8-15M VND",
-    requirements: "Node.js basics, JavaScript, REST APIs",
-  },
-  {
-    id: "J006",
-    title: "Project Manager",
-    companyName: "Eco Builders Ltd.",
-    status: "pending",
-    datePosted: "2024-05-13",
-    description: "Manage construction projects from planning to completion...",
-    location: "Can Tho",
-    salary: "16-24M VND",
-    requirements: "Construction experience, PMP certification preferred",
-  },
-];
+export default function ViewJobList() {
+  // Khai báo local state
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [jobs, setJobs] = useState<JobDetailResponse[]>([]);
+  const [filteredJobs, setFilteredJobs] = useState<JobDetailResponse[]>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [keyword, setKeyword] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedJob, setSelectedJob] = useState<JobDetailResponse | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  
+  // Pagination state (client-side pagination vì API chưa hỗ trợ)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  
+  const debouncedKeyword = useDebounce(keyword, 700);
+  const pageSizeOptions = [5, 10, 20, 50];
 
-// ------------------------------------------------------------------
-// PHẦN 2: COMPONENT CHÍNH CỦA TRANG
-// ------------------------------------------------------------------
+  // Fetch all jobs
+  const getAllJobs = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await JobServices.searchJobs({});
+      if (response.isSuccess) {
+        setJobs(response.result);
+      } else {
+        setError("Không thể tải danh sách công việc");
+      }
+    } catch (err: any) {
+      setError(err.message || "Lỗi khi tải dữ liệu công việc");
+      console.error("Error fetching jobs:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-export function ManageJobPage() {
-  // State cho thanh search và combobox filter
-  const [searchTerm, setSearchTerm] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState("all");
+  // Filter jobs dựa trên keyword và status
+  useEffect(() => {
+    let filtered = jobs;
 
-  // Lọc dữ liệu dựa trên state
-  const filteredData = React.useMemo(() => {
-    return mockJobData
-      .filter((job) => {
-        // Lọc theo status
-        if (statusFilter === "all") return true;
-        return job.status === statusFilter;
-      })
-      .filter((job) => {
-        // Lọc theo search term (tìm theo tên tuyển dụng)
-        return job.title.toLowerCase().includes(searchTerm.toLowerCase());
-      });
-  }, [statusFilter, searchTerm]); // Chạy lại khi 2 state này thay đổi
+    // Filter theo status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(job => job.status === statusFilter);
+    }
 
-  return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-bold tracking-tight">Manage Jobs</h1>
-
-      {/* ------------------------------------------- */}
-      {/* PHẦN ĐIỀU KHIỂN (SEARCH, FILTER VÀ CREATE)   */}
-      {/* ------------------------------------------- */}
-      <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
-        {/* Thanh Search (bên trái) - Theo Tên tuyển dụng */}
-        <div className="w-full md:w-auto md:flex-1 lg:max-w-xs">
-          <InputGroup>
-            <InputGroupAddon>
-              <SearchIcon className="size-4" />
-            </InputGroupAddon>
-            <InputGroupInput
-              placeholder="Tìm theo tên tuyển dụng..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </InputGroup>
-        </div>
-
-        {/* Combobox Filter và Create Button (bên phải) */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[240px]">
-              <SelectValue placeholder="Lọc theo trạng thái tin" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả trạng thái</SelectItem>
-              <SelectItem value="pending">Tin chờ duyệt</SelectItem>
-              <SelectItem value="open">Tin đang mở</SelectItem>
-              <SelectItem value="closed">Tin đã đóng</SelectItem>
-              <SelectItem value="rejected">Tin bị reject</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Nút Create Job */}
-          <Button
-            className="w-full sm:w-auto"
-            onClick={() => (window.location.href = "/admin/manage-job/create")}
-          >
-            <Plus className="mr-2 size-4" />
-            Tạo tin tuyển dụng
-          </Button>
-        </div>
-      </div>
-
-      {/* ------------------------------------------- */}
-      {/* PHẦN BẢNG DỮ LIỆU (TABLE)                  */}
-      {/* ------------------------------------------- */}
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Tên tuyển dụng</TableHead>
-              <TableHead className="hidden md:table-cell">Công ty</TableHead>
-              <TableHead className="hidden lg:table-cell">Ngày đăng</TableHead>
-              <TableHead>Trạng thái</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredData.length === 0 ? (
-              // Trường hợp không có dữ liệu
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
-                  Không tìm thấy tin tuyển dụng nào.
-                </TableCell>
-              </TableRow>
-            ) : (
-              // Lặp qua dữ liệu đã lọc
-              filteredData.map((job) => (
-                <TableRow key={job.id}>
-                  <TableCell className="font-medium">{job.title}</TableCell>
-                  <TableCell className="hidden md:table-cell text-muted-foreground">
-                    {job.companyName}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell text-muted-foreground">
-                    {job.datePosted}
-                  </TableCell>
-                  <TableCell>
-                    {/* Dùng Badge để hiển thị status */}
-                    <JobStatusBadge status={job.status} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {/* Dùng Buttons cho các Actions */}
-                    <JobActions jobId={job.id} currentStatus={job.status} />
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
-  );
-}
-
-// ------------------------------------------------------------------
-// PHẦN 3: CÁC COMPONENT PHỤ
-// ------------------------------------------------------------------
-
-/**
- * Component hiển thị Badge dựa trên trạng thái
- */
-function JobStatusBadge({ status }: { status: JobStatus }) {
-  switch (status) {
-    case "open":
-      return (
-        <Badge variant="default" className="bg-green-600 hover:bg-green-600">
-          <CheckCircle className="mr-1.5 size-3.5" />
-          Đang mở
-        </Badge>
+    // Filter theo keyword
+    if (debouncedKeyword) {
+      filtered = filtered.filter(job => 
+        job.title.toLowerCase().includes(debouncedKeyword.toLowerCase()) ||
+        job.location.toLowerCase().includes(debouncedKeyword.toLowerCase()) ||
+        job.description.toLowerCase().includes(debouncedKeyword.toLowerCase())
       );
-    case "pending":
-      return (
-        <Badge
-          variant="secondary"
-          className="bg-yellow-500 text-white hover:bg-yellow-500"
-        >
-          <Clock className="mr-1.5 size-3.5" />
-          Chờ duyệt
-        </Badge>
-      );
-    case "closed":
-      return (
-        <Badge variant="secondary">
-          <ArchiveIcon className="mr-1.5 size-3.5" />
-          Đã đóng
-        </Badge>
-      );
-    case "rejected":
-      return (
-        <Badge variant="destructive">
-          <XCircle className="mr-1.5 size-3.5" />
-          Bị reject
-        </Badge>
-      );
-    default:
-      return <Badge variant="secondary">{status}</Badge>;
-  }
-}
+    }
 
-/**
- * Component hiển thị Buttons cho các hành động
- */
-function JobActions({
-  jobId,
-  currentStatus,
-}: {
-  jobId: string;
-  currentStatus: JobStatus;
-}) {
-  const [isViewDialogOpen, setIsViewDialogOpen] = React.useState(false);
+    setFilteredJobs(filtered);
+    setCurrentPage(1); // Reset to first page when filtering
+  }, [jobs, statusFilter, debouncedKeyword]);
 
-  // TODO: Bạn sẽ viết logic thật cho các hàm này
-  const handleApprove = () => alert(`Duyệt tin: ${jobId}`);
-  const handleReject = () => alert(`Từ chối tin: ${jobId}`);
-  const handleCloseJob = () => alert(`Đóng tin: ${jobId}`);
-  const handleDelete = () => alert(`Xóa vĩnh viễn tin: ${jobId}`);
-  const handleEdit = () => {
-    // Navigate to edit page
-    window.location.href = `/admin/manage-job/edit/${jobId}`;
+  // Load jobs on component mount
+  useEffect(() => {
+    getAllJobs();
+  }, [getAllJobs]);
+
+  // Handler functions
+  const handleRefresh = () => {
+    getAllJobs();
   };
 
-  // Tìm job data để hiển thị trong dialog
-  const jobData = mockJobData.find((job) => job.id === jobId);
+  const handleSortingChange = (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
+    const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(sorting) : updaterOrValue;
+    setSorting(newSorting);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: string) => {
+    setPageSize(parseInt(size));
+    setCurrentPage(1);
+  };
+
+  const handleView = (job: JobDetailResponse) => {
+    setSelectedJob(job);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleEdit = (job: JobDetailResponse) => {
+    // TODO: Navigate to edit page
+    console.log("Edit job:", job);
+  };
+
+  const handleApprove = async (jobId: number) => {
+    try {
+      await JobServices.censorJob(jobId.toString(), { Status: 1 }); // Moderated
+      getAllJobs(); // Refresh data
+    } catch (error) {
+      console.error("Error approving job:", error);
+    }
+  };
+
+  const handleReject = async (jobId: number) => {
+    try {
+      await JobServices.censorJob(jobId.toString(), { Status: 2 }); // Rejected
+      getAllJobs(); // Refresh data
+    } catch (error) {
+      console.error("Error rejecting job:", error);
+    }
+  };
+
+  const handleDelete = (job: JobDetailResponse) => {
+    // TODO: Implement soft delete
+    console.log("Delete job:", job);
+  };
+
+  // Helper functions
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'Draft':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Moderated':
+        return 'bg-green-100 text-green-800';
+      case 'Rejected':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'Draft':
+        return <Clock className="h-3 w-3 mr-1" />;
+      case 'Moderated':
+        return <CheckCircle className="h-3 w-3 mr-1" />;
+      case 'Rejected':
+        return <XCircle className="h-3 w-3 mr-1" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'Draft':
+        return 'Chờ duyệt';
+      case 'Moderated':
+        return 'Đã duyệt';
+      case 'Rejected':
+        return 'Bị từ chối';
+      default:
+        return status;
+    }
+  };
+
+  // Calculate pagination
+  const totalItems = filteredJobs.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalItems);
+  const paginatedJobs = filteredJobs.slice(startIndex, endIndex);
+
+  // Define columns
+  const columns = useMemo<ColumnDef<JobDetailResponse>[]>(() => [
+    {
+      id: "stt",
+      header: "STT",
+      cell: ({ row }) => {
+        const index = row.index;
+        return startIndex + index + 1;
+      },
+      enableSorting: false,
+    },
+    {
+      id: "title",
+      accessorKey: "title",
+      header: "Tên công việc",
+      enableSorting: true,
+      cell: ({ row }) => {
+        const title = row.getValue("title") as string;
+        return (
+          <div title={title} className="max-w-[200px] truncate text-sm">
+            {truncateText(title, 30)}
+          </div>
+        );
+      },
+    },
+    {
+      id: "location",
+      accessorKey: "location",
+      header: "Địa điểm",
+      enableSorting: true,
+      cell: ({ row }) => {
+        const location = row.getValue("location") as string;
+        // Loại bỏ prefix "Địa điểm làm việc:" nếu có trước khi cắt ngắn
+        const cleanLocation = location.replace(/^Địa điểm làm việc\s*/i, "");
+        const displayText = truncateText(cleanLocation, 20);
+        return (
+          <div title={location} className="max-w-[180px] truncate text-sm">
+            {displayText}
+          </div>
+        );
+      },
+    },
+    {
+      id: "salaryRange",
+      header: "Mức lương",
+      cell: ({ row }) => {
+        const job = row.original;
+        if (!job.salaryMin && !job.salaryMax) return 'Thỏa thuận';
+        
+        const formatSalary = (amount: number) => {
+          if (amount >= 1000000) {
+            return (amount / 1000000).toFixed(amount % 1000000 === 0 ? 0 : 1) + ' triệu';
+          }
+          return amount.toLocaleString();
+        };
+        
+        if (job.salaryMin === job.salaryMax) {
+          return `${formatSalary(job.salaryMin!)}`;
+        }
+        return `${formatSalary(job.salaryMin || 0)} - ${formatSalary(job.salaryMax || 0)}`;
+      },
+      enableSorting: false,
+    },
+    {
+      id: "jobType",
+      accessorKey: "jobType",
+      header: "Loại công việc",
+      cell: ({ row }) => {
+        const jobType = row.getValue("jobType") as number;
+        const typeMap: { [key: string]: string } = {
+          0: 'Toàn thời gian',
+          1: 'Bán thời gian',
+          2: 'Làm từ xa'
+        };
+        return typeMap[jobType] || jobType;
+      },
+      enableSorting: true,
+    },
+    {
+      id: "createdAt",
+      accessorKey: "createdAt",
+      header: "Ngày tạo",
+      cell: ({ row }) => {
+        const date = row.getValue("createdAt") as string;
+        return new Date(date).toLocaleDateString('vi-VN');
+      },
+      enableSorting: true,
+    },
+    {
+      id: "status",
+      accessorKey: "status",
+      header: "Trạng thái",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string;
+        return (
+          <Badge className={getStatusBadgeColor(status)}>
+            {getStatusIcon(status)}
+            {getStatusLabel(status)}
+          </Badge>
+        );
+      },
+      enableSorting: true,
+    },
+    {
+      id: "actions",
+      header: "Thao tác",
+      cell: ({ row }) => {
+        const job = row.original;
+        return (
+          <div className="flex items-center space-x-1">
+            <Button
+              onClick={() => handleView(job)}
+              variant="outline"
+              size="sm"
+              title="Xem chi tiết"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={() => handleEdit(job)}
+              variant="outline"
+              size="sm"
+              title="Chỉnh sửa"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            
+            {/* Actions based on status */}
+            {/* {job.status === 'Draft' && (
+              <>
+                <Button
+                  onClick={() => handleApprove(job.jobId)}
+                  variant="outline"
+                  size="sm"
+                  className="text-green-600 hover:text-green-700"
+                  title="Duyệt"
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button
+                  onClick={() => handleReject(job.jobId)}
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700"
+                  title="Từ chối"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </>
+            )} */}
+            
+            {(job.status === 'Rejected') && (
+              <Button
+                onClick={() => handleDelete(job)}
+                variant="outline"
+                size="sm"
+                className="text-orange-600 hover:text-orange-700"
+                title="Xóa"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        );
+      },
+      enableSorting: false,
+    },
+  ], [startIndex]);
 
   return (
-    <div className="flex items-center gap-1">
-      {/* Nút View - luôn hiển thị */}
+    <div className="p-6 space-y-6">
+      {/* Search and Actions */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Input
+                placeholder="Tìm kiếm công việc..."
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                className="w-80"
+              />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Lọc theo trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                  <SelectItem value="Draft">Chờ duyệt</SelectItem>
+                  <SelectItem value="Moderated">Đã duyệt</SelectItem>
+                  <SelectItem value="Rejected">Bị từ chối</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                onClick={handleRefresh}
+                variant="outline"
+                size="icon"
+                aria-label="Làm mới"
+                title="Làm mới dữ liệu"
+                disabled={loading}
+              >
+                <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading && !jobs.length ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                <p className="mt-2 text-sm text-muted-foreground">Đang tải dữ liệu...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-8 space-y-2">
+              <AlertTriangle className="h-8 w-8 text-red-500" />
+              <p className="text-sm text-red-500">{error}</p>
+              <Button onClick={handleRefresh} variant="outline" size="sm">
+                Thử lại
+              </Button>
+            </div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={paginatedJobs}
+              loading={loading}
+              sorting={sorting}
+              onSortingChange={handleSortingChange}
+            />
+          )}
+          
+          {/* Pagination */}
+          {!error && filteredJobs.length > 0 && (
+            <div className="flex items-center justify-between mt-4 gap-6">
+              <div className="text-sm text-muted-foreground">
+                Hiển thị {startIndex + 1} - {endIndex} của {totalItems} kết quả
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3">
+                  <p className="text-sm font-medium">Dòng trên trang</p>
+                  <Select
+                    value={pageSize.toString()}
+                    onValueChange={handlePageSizeChange}
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      {pageSizeOptions.map((size) => (
+                        <SelectItem key={size} value={size.toString()}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="text-sm font-medium">
+                    Trang {currentPage} trên {totalPages}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(1)}
+                      disabled={currentPage === 1 || loading}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronsLeft />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1 || loading}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronLeft />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage >= totalPages || loading}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronRight />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(totalPages)}
+                      disabled={currentPage >= totalPages || loading}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronsRight />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* View Job Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogTrigger asChild>
-          <Button variant="ghost" size="sm">
-            <Eye className="size-4" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chi tiết tin tuyển dụng</DialogTitle>
+            <DialogTitle>Chi tiết công việc</DialogTitle>
             <DialogDescription>
-              Thông tin chi tiết về tin tuyển dụng
+              Thông tin chi tiết về vị trí tuyển dụng
             </DialogDescription>
           </DialogHeader>
-          {jobData && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+          
+          {selectedJob && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
                     Tên công việc
                   </label>
-                  <p className="text-sm">{jobData.title}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Công ty
-                  </label>
-                  <p className="text-sm">{jobData.companyName}</p>
+                  <p className="text-sm mt-1">{selectedJob.title}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
                     Địa điểm
                   </label>
-                  <p className="text-sm">{jobData.location}</p>
+                  <p className="text-sm mt-1">{selectedJob.location}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
                     Mức lương
                   </label>
-                  <p className="text-sm">{jobData.salary}</p>
+                  <p className="text-sm mt-1">
+                    {!selectedJob.salaryMin && !selectedJob.salaryMax ? 'Thỏa thuận' :
+                     selectedJob.salaryMin === selectedJob.salaryMax ? `${selectedJob.salaryMin?.toLocaleString()} VND` :
+                     `${selectedJob.salaryMin?.toLocaleString() || 0} - ${selectedJob.salaryMax?.toLocaleString() || 0} VND`}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
-                    Ngày đăng
+                    Loại công việc
                   </label>
-                  <p className="text-sm">{jobData.datePosted}</p>
+                  <p className="text-sm mt-1">
+                    {selectedJob.jobType === 'FullTime' ? 'Toàn thời gian' :
+                     selectedJob.jobType === 'PartTime' ? 'Bán thời gian' :
+                     selectedJob.jobType === 'Remote' ? 'Làm từ xa' : selectedJob.jobType}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Lượt xem
+                  </label>
+                  <p className="text-sm mt-1">{selectedJob.viewsCount}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
                     Trạng thái
                   </label>
-                  <JobStatusBadge status={jobData.status} />
+                  <div className="mt-1">
+                    <Badge className={getStatusBadgeColor(selectedJob.status)}>
+                      {getStatusIcon(selectedJob.status)}
+                      {getStatusLabel(selectedJob.status)}
+                    </Badge>
+                  </div>
                 </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Ngày tạo
+                  </label>
+                  <p className="text-sm mt-1">
+                    {new Date(selectedJob.createdAt).toLocaleString('vi-VN')}
+                  </p>
+                </div>
+                {selectedJob.openedAt && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Ngày mở
+                    </label>
+                    <p className="text-sm mt-1">
+                      {new Date(selectedJob.openedAt).toLocaleString('vi-VN')}
+                    </p>
+                  </div>
+                )}
+                {selectedJob.expiredAt && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Ngày hết hạn
+                    </label>
+                    <p className="text-sm mt-1">
+                      {new Date(selectedJob.expiredAt).toLocaleString('vi-VN')}
+                    </p>
+                  </div>
+                )}
               </div>
+
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
                   Mô tả công việc
                 </label>
-                <p className="text-sm mt-1">{jobData.description}</p>
+                <div className="text-sm mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap">
+                  {selectedJob.description}
+                </div>
               </div>
+
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
                   Yêu cầu
                 </label>
-                <p className="text-sm mt-1">{jobData.requirements}</p>
+                <div className="text-sm mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap">
+                  {selectedJob.requirements}
+                </div>
               </div>
-              <div className="flex justify-end gap-2 pt-4">
+
+              {selectedJob.benefits && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Quyền lợi
+                  </label>
+                  <div className="text-sm mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap">
+                    {selectedJob.benefits}
+                  </div>
+                </div>
+              )}
+
+              {selectedJob.taxonomies && selectedJob.taxonomies.length > 0 && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Kỹ năng yêu cầu
+                  </label>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {selectedJob.taxonomies.map((skill: string, index: number) => (
+                      <Badge key={index} variant="secondary">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-between pt-4 border-t">
                 <Button
                   variant="outline"
                   onClick={() => setIsViewDialogOpen(false)}
                 >
                   Đóng
                 </Button>
-                <Button onClick={handleEdit}>
-                  <Edit className="mr-2 size-4" />
-                  Chỉnh sửa
-                </Button>
+                <div className="flex space-x-2">
+                  {selectedJob.status === 'Draft' && (
+                    <>
+                      <Button
+                        onClick={() => {
+                          handleApprove(selectedJob.jobId);
+                          setIsViewDialogOpen(false);
+                        }}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Check className="mr-2 h-4 w-4" />
+                        Duyệt
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          handleReject(selectedJob.jobId);
+                          setIsViewDialogOpen(false);
+                        }}
+                        variant="destructive"
+                      >
+                        <X className="mr-2 h-4 w-4" />
+                        Từ chối
+                      </Button>
+                    </>
+                  )}
+                  <Button
+                    onClick={() => {
+                      handleEdit(selectedJob);
+                      setIsViewDialogOpen(false);
+                    }}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Chỉnh sửa
+                  </Button>
+                </div>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Nút Edit - luôn hiển thị */}
-      <Button variant="ghost" size="sm" onClick={handleEdit}>
-        <Edit className="size-4" />
-      </Button>
-
-      {/* Các nút action theo trạng thái */}
-      {currentStatus === "pending" && (
-        <>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleApprove}
-            className="text-green-600 hover:text-green-700"
-          >
-            <Check className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleReject}
-            className="text-red-600 hover:text-red-700"
-          >
-            <X className="size-4" />
-          </Button>
-        </>
-      )}
-
-      {currentStatus === "open" && (
-        <Button variant="ghost" size="sm" onClick={handleCloseJob}>
-          <Archive className="size-4" />
-        </Button>
-      )}
-
-      {(currentStatus === "closed" || currentStatus === "rejected") && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleDelete}
-          className="text-red-600 hover:text-red-700"
-        >
-          <Trash2 className="size-4" />
-        </Button>
-      )}
     </div>
   );
 }

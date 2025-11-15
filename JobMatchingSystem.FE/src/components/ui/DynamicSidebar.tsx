@@ -442,23 +442,29 @@ export function DynamicSidebar({
       case 'candidate':
         return <CandidateNav />;
       default:
-        return <AdminNav />; // Fallback to admin nav
+        // Fallback to 404 page for unknown roles
+        return (
+          <div className="p-4 text-center text-red-600">
+            <h2 className="text-lg font-semibold">404 - Page Not Found</h2>
+            <p className="mt-2">The page you are looking for does not exist.</p>
+          </div>
+        );
     }
   };
 
   // Determine sidebar title based on role
-  const getSidebarTitle = () => {
-    switch (userRole) {
-      case 'admin':
-        return 'Admin Panel';
-      case 'recruiter':
-        return 'Recruiter Dashboard';
-      case 'candidate':
-        return 'Candidate Portal';
-      default:
-        return 'Dashboard';
-    }
-  };
+  // const getSidebarTitle = () => {
+  //   switch (userRole) {
+  //     case 'admin':
+  //       return 'Admin Panel';
+  //     case 'recruiter':
+  //       return 'Recruiter Dashboard';
+  //     case 'candidate':
+  //       return 'Candidate Portal';
+  //     default:
+  //       return 'Dashboard';
+  //   }
+  // };
 
   // Get user info for NavUser component
   const getUserInfo = () => {
