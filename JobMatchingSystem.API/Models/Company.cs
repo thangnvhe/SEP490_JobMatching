@@ -32,7 +32,7 @@ namespace JobMatchingSystem.API.Models
 
         public DateTime? UpdatedAt { get; set; }
 
-        public bool IsActive { get; set; } = false;
+        public bool IsActive { get; set; } = true;
 
         // Navigation properties
         [ForeignKey("VerifiedBy")]
