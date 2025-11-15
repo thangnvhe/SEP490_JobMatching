@@ -1,9 +1,17 @@
-﻿using JobMatchingSystem.API.Enums;
+﻿// File: DTOs/Request/GetJobPagedRequest.cs
+using JobMatchingSystem.API.Enums;
 
 namespace JobMatchingSystem.API.DTOs.Request
 {
-    public class GetJobRequest
+    public class GetJobPagedRequest
     {
+        public int Page { get; set; } = 1;
+        public int Size { get; set; } = 10;
+        public string? Search { get; set; } = "";
+        public string? SortBy { get; set; } = "";
+        public bool IsDescending { get; set; } = false;
+
+        // Các filter hiện có
         public string? Title { get; set; }
         public string? Description { get; set; }
         public string? Requirements { get; set; }
