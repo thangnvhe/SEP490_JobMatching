@@ -12,5 +12,6 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
         Task<bool> ExistsAsync(string email);
         Task<List<ApplicationUser>> GetAllAsync(string search, string sortBy, bool IsDecending);
         Task ChangeStatus(ApplicationUser user);
+        Task<ApplicationUser?> FindUserByCompanyId(int companyId);
     }
 }
