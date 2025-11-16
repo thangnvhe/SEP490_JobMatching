@@ -11,7 +11,8 @@ namespace JobMatchingSystem.API.DTOs.Request
         public int? SalaryMin { get; set; }
         public int? SalaryMax { get; set; }
         public string? Location { get; set; }
-        public JobType? JobType { get; set; }
+        public int? ExperienceYear { get; set; }
+        public string? JobType { get; set; }
         public DateTime? OpenedAt { get; set; }
         public DateTime? ExpiredAt { get; set; }
 
