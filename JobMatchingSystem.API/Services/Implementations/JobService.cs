@@ -3,6 +3,7 @@ using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Enums;
 using JobMatchingSystem.API.Exceptions;
+using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
@@ -51,6 +52,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 SalaryMin = request.SalaryMin,
                 SalaryMax = request.SalaryMax,
                 Location = request.Location,
+                ExperienceYear = request.ExperienceYear,
                 JobType = request.JobType,
                 CompanyId = user.CompanyId.Value,
                 RecuiterId = user.Id,
@@ -117,6 +119,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             job.SalaryMin = request.SalaryMin ?? job.SalaryMin;
             job.SalaryMax = request.SalaryMax ?? job.SalaryMax;
             job.Location = request.Location ?? job.Location;
+            job.ExperienceYear = request.ExperienceYear ?? job.ExperienceYear;
             job.JobType = request.JobType ?? job.JobType;
             job.OpenedAt = request.OpenedAt ?? job.OpenedAt;
             job.ExpiredAt = request.ExpiredAt ?? job.ExpiredAt;
@@ -173,7 +176,8 @@ namespace JobMatchingSystem.API.Services.Implementations
                 SalaryMin = job.SalaryMin,
                 SalaryMax = job.SalaryMax,
                 Location = job.Location,
-                JobType = job.JobType.ToString(),
+                ExperienceYear = job.ExperienceYear,
+                JobType = job.JobType,
                 Status = job.Status.ToString(),
                 ViewsCount = job.ViewsCount,
                 CompanyId = job.CompanyId,
@@ -202,7 +206,8 @@ namespace JobMatchingSystem.API.Services.Implementations
                 SalaryMin = j.SalaryMin,
                 SalaryMax = j.SalaryMax,
                 Location = j.Location,
-                JobType = j.JobType.ToString(),
+                ExperienceYear = j.ExperienceYear,
+                JobType = j.JobType,
                 Status = j.Status.ToString(),
                 ViewsCount = j.ViewsCount,
                 CompanyId = j.CompanyId,
@@ -213,6 +218,54 @@ namespace JobMatchingSystem.API.Services.Implementations
                 ExpiredAt = j.ExpiredAt,
                 Taxonomies = j.JobTaxonomies.Select(t => t.Taxonomy.Name).ToList()
             }).ToList();
+        }
+
+        public async Task<PagedResult<JobDetailResponse>> GetJobsPagedAsync(GetJobPagedRequest request)
+        {
+            var jobs = await _jobRepository.GetAllJobsPaged(request);
+
+            if (jobs == null || !jobs.Any())
+            {
+                return new PagedResult<JobDetailResponse>
+                {
+                    Items = new List<JobDetailResponse>(),
+                    pageInfo = new PageInfo(0, request.Page, request.Size, request.SortBy ?? "", request.IsDescending)
+                };
+            }
+
+            var pagedJobs = jobs
+                .Skip((request.Page - 1) * request.Size)
+                .Take(request.Size)
+                .ToList();
+
+            var jobDtos = pagedJobs.Select(j => new JobDetailResponse
+            {
+                JobId = j.JobId,
+                Title = j.Title,
+                Description = j.Description,
+                Requirements = j.Requirements,
+                Benefits = j.Benefits,
+                SalaryMin = j.SalaryMin,
+                SalaryMax = j.SalaryMax,
+                Location = j.Location,
+                ExperienceYear = j.ExperienceYear,
+                JobType = j.JobType,
+                Status = j.Status.ToString(),
+                ViewsCount = j.ViewsCount,
+                CompanyId = j.CompanyId,
+                RecuiterId = j.RecuiterId,
+                VerifiedBy = j.VerifiedBy,
+                CreatedAt = j.CreatedAt,
+                OpenedAt = j.OpenedAt,
+                ExpiredAt = j.ExpiredAt,
+                Taxonomies = j.JobTaxonomies.Select(t => t.Taxonomy?.Name ?? "").ToList()
+            }).ToList();
+
+            return new PagedResult<JobDetailResponse>
+            {
+                Items = jobDtos,
+                pageInfo = new PageInfo(jobs.Count, request.Page, request.Size, request.SortBy ?? "", request.IsDescending)
+            };
         }
     }
 }
