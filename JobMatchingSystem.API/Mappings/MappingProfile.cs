@@ -16,6 +16,10 @@ namespace JobMatchingSystem.API.Mappings
             CreateMap<Company,CompanyDTO>();
             CreateMap<UpdateCompanyRequest, Company>()
             .ForMember(dest => dest.Logo, opt => opt.Ignore());
+            //CandidateJob
+            CreateMap<CreateCandidateJobRequest, CandidateJob>();
+            CreateMap<UpdateCandidateJobRequest, CandidateJobDTO>();
+            CreateMap<CandidateJob, CandidateJobDTO>();
         }
     }
 }

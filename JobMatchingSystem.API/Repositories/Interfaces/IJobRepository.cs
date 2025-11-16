@@ -7,5 +7,6 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
     {
         Task CreateAsync(Job job);
         Task<List<Job>> GetJobsAsync(GetJobRequest request);
+        Task<Job?> GetById(int id);
     }
 }
