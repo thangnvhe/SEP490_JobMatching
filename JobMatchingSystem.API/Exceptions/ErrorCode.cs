@@ -22,6 +22,7 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundCVAchievement() => new("Not Found CVAchievement", HttpStatusCode.NotFound);
         public static Error NotFoundCVEducation() => new("Not Found CVEducation", HttpStatusCode.NotFound);
         public static Error NotFoundCVExperience() => new("Not Found CVExperience", HttpStatusCode.NotFound);
+        public static Error NotFoundCVProject() => new("Not Found CVProject", HttpStatusCode.NotFound);
         public static Error InvalidFile() => new("Invalid File", HttpStatusCode.BadRequest);
         public static Error NotFoundSkill() => new("Not Found Skill", HttpStatusCode.NotFound);
         public static Error CantDelete() => new("Can't Delete", HttpStatusCode.BadRequest);
