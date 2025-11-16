@@ -21,6 +21,11 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             await _context.SaveChangesAsync();
         }
 
+        public async Task<Job?> GetById(int id)
+        {
+            return await _context.Jobs.FindAsync(id);
+        }
+
         public async Task<List<Job>> GetJobsAsync(GetJobRequest request)
         {
             var query = _context.Jobs
