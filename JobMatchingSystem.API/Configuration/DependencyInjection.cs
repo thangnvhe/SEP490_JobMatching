@@ -22,6 +22,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<ITemplateCvRepository, TemplateCvRepository>();
             services.AddScoped<ICVRepository, CVRepository>();
             services.AddScoped<ICVAchievementRepository, CVAchievementRepository>();
+            services.AddScoped<ICVCertificateRepository, CVCertificateRepository>();
             return services;
         }
 
@@ -40,6 +41,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<ITemplateCvService, TemplateCvService>();
             services.AddScoped<ICVService, CVService>();
             services.AddScoped<ICVAchievementService, CVAchievementService>();
+            services.AddScoped<ICVCertificateService, CVCertificateService>();
             return services;
         }
 
