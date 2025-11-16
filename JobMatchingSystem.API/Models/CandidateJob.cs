@@ -10,7 +10,7 @@ namespace JobMatchingSystem.API.Models
         public int Id { get; set; }
         public int JobId { get; set; }
         public int? CVId { get; set; }
-        public CandidateJobStatus Status { get; set; }
+        public CandidateJobStatus Status { get; set; } = CandidateJobStatus.Pending;
         public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties

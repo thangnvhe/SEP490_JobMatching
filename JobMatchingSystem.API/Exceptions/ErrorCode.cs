@@ -24,5 +24,7 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotConfirmEmail() => new("Email is Not Confirm",HttpStatusCode.BadRequest);
         public static Error AccountIsBand() => new("Account is Band",HttpStatusCode.BadRequest);
         public static Error CantUpdate() => new("Can't update", HttpStatusCode.BadRequest);
+        public static Error IsApplyJob() => new("Job is apply",HttpStatusCode.BadRequest);
+        public static Error NotFoundCandidateJob() => new("NotFound CandidateJob",HttpStatusCode.NotFound);
     }
 }
