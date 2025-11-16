@@ -3,12 +3,9 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import {
   LayoutDashboard,
-  Building,
   Users,
   Briefcase,
-  Flag,
   BarChart3,
-  Folder,
   User,
   Search,
   FileText,
@@ -35,122 +32,6 @@ import React from "react";
 function useIsActivePath(path: string) {
   const location = useLocation();
   return location.pathname.startsWith(path);
-}
-
-// Admin Navigation
-function AdminNav() {
-  return (
-    <>
-      <SidebarMenu className="mt-4">
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/admin")}
-            tooltip="Dashboard"
-          >
-            <Link to="/admin">
-              <LayoutDashboard />
-              <span>Dashboard</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/admin/analytics")}
-            tooltip="Analytics"
-          >
-            <Link to="/admin/analytics">
-              <BarChart3 />
-              <span>Analytics</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/admin/projects")}
-            tooltip="Projects"
-          >
-            <Link to="/admin/projects">
-              <Folder />
-              <span>Projects</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/admin/team")}
-            tooltip="Team"
-          >
-            <Link to="/admin/team">
-              <User />
-              <span>Team</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-
-      <SidebarGroupLabel className="mt-4">Management</SidebarGroupLabel>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/admin/manage-company")}
-            tooltip="Manage Company"
-          >
-            <Link to="/admin/manage-company">
-              <Building />
-              <span>Manage Company</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/admin/manage-user")}
-            tooltip="Manage User"
-          >
-            <Link to="/admin/manage-user">
-              <Users />
-              <span>Manage User</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/admin/manage-job")}
-            tooltip="Manage Job"
-          >
-            <Link to="/admin/manage-job">
-              <Briefcase />
-              <span>Manage Job</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/admin/manage-report")}
-            tooltip="Manage Report"
-          >
-            <Link to="/admin/manage-report">
-              <Flag />
-              <span>Manage Report</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    </>
-  );
 }
 
 // Recruiter Navigation
@@ -427,16 +308,20 @@ function CandidateNav() {
 export function DynamicSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useSelector((state: RootState) => state.auth);
+  const authState = useSelector((state: RootState) => state.auth);
   
-  // Get user role from Redux store or token
-  const userRole = user?.role?.toLowerCase() || 'guest';
+  // Debug logging
+  console.log('DynamicSidebar - Full auth state:', authState);
+  console.log('DynamicSidebar - Role from state:', authState.role);
+  console.log('DynamicSidebar - Is authenticated:', authState.isAuthenticated);
+  
+  // Get user role from Redux store auth state
+  const userRole = authState.role?.toLowerCase() || 'guest';
+  console.log('DynamicSidebar - Final userRole:', userRole);
   
   // Determine navigation component based on role
   const getNavigationComponent = () => {
     switch (userRole) {
-      case 'admin':
-        return <AdminNav />;
       case 'recruiter':
         return <RecruiterNav />;
       case 'candidate':
@@ -468,11 +353,11 @@ export function DynamicSidebar({
 
   // Get user info for NavUser component
   const getUserInfo = () => {
-    if (user) {
+    if (authState.isAuthenticated && authState.name) {
       return {
-        name: user.fullName,
-        email: user.email,
-        avatar: `https://i.pravatar.cc/150?u=${user.email}`,
+        name: authState.name,
+        email: authState.email || 'user@example.com', // fallback if email not in token
+        avatar: `https://i.pravatar.cc/150?u=${authState.name}`,
       };
     }
     

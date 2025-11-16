@@ -26,6 +26,8 @@ export default function ViewUserList() {
         totalPage: 0,
         hasPreviousPage: false,
         hasNextPage: false,
+        sortBy: '',
+        isDecending: false,
     });
     const [paginationInput, setPaginationInput] = useState<PaginationParamsInput>({
         page: 1,
@@ -44,7 +46,8 @@ export default function ViewUserList() {
             setError(null);
             const response = await UserServices.getAllWithPagination(params);
             setUsers(response.result.items);
-            setPaginationInfo(response.result.pager);
+            // API now returns pagination metadata in `pageInfo`
+            setPaginationInfo(response.result.pageInfo);
         } catch (err: any) {
             setError(err.response?.data?.message || "Lỗi khi tải dữ liệu người dùng");
         } finally {
