@@ -21,6 +21,11 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             await _context.SaveChangesAsync();
         }
 
+        public async Task<Job?> GetById(int id)
+        {
+            return await _context.Jobs.FindAsync(id);
+        }
+
         public async Task<List<Job>> GetJobsAsync(GetJobRequest request)
         {
             var query = _context.Jobs
@@ -39,13 +44,15 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             if (!string.IsNullOrEmpty(request.Location))
                 query = query.Where(j => j.Location.Contains(request.Location));
             if (request.SalaryMin.HasValue)
-                query = query.Where(j => j.SalaryMin >= request.SalaryMin);
+                query = query.Where(j => j.SalaryMax >= request.SalaryMin);
             if (request.SalaryMax.HasValue)
-                query = query.Where(j => j.SalaryMax <= request.SalaryMax);
-            if (request.JobType.HasValue)
-                query = query.Where(j => j.JobType == request.JobType.Value);
+                query = query.Where(j => j.SalaryMin <= request.SalaryMax);
+            if (!string.IsNullOrEmpty(request.JobType))
+                query = query.Where(j => j.JobType.Contains(request.JobType));
             if (request.Status.HasValue)
                 query = query.Where(j => j.Status == request.Status.Value);
+            if (request.ExperienceYear.HasValue)
+                query = query.Where(j => j.ExperienceYear == request.ExperienceYear.Value);
             if (request.CompanyId.HasValue)
                 query = query.Where(j => j.CompanyId == request.CompanyId.Value);
             if (request.RecuiterId.HasValue)
@@ -92,14 +99,16 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                 query = query.Where(j => j.Location.Contains(request.Location));
 
             if (request.SalaryMin.HasValue)
-                query = query.Where(j => j.SalaryMin >= request.SalaryMin.Value);
+                query = query.Where(j => j.SalaryMax >= request.SalaryMin.Value);
             if (request.SalaryMax.HasValue)
-                query = query.Where(j => j.SalaryMax <= request.SalaryMax.Value);
+                query = query.Where(j => j.SalaryMin <= request.SalaryMax.Value);
 
-            if (request.JobType.HasValue)
-                query = query.Where(j => j.JobType == request.JobType.Value);
+            if (!string.IsNullOrEmpty(request.JobType))
+                query = query.Where(j => j.JobType.Contains(request.JobType));
             if (request.Status.HasValue)
                 query = query.Where(j => j.Status == request.Status.Value);
+            if (request.ExperienceYear.HasValue)
+                query = query.Where(j => j.ExperienceYear == request.ExperienceYear.Value);
             if (request.CompanyId.HasValue)
                 query = query.Where(j => j.CompanyId == request.CompanyId.Value);
             if (request.RecuiterId.HasValue)

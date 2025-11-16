@@ -12,26 +12,27 @@ namespace JobMatchingSystem.API.Data.SeedData
             using var scope = webApplication.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            // Nếu đã có job rồi thì bỏ qua
             if (await db.Jobs.AnyAsync())
             {
                 Console.WriteLine("⚠️ Jobs table already has data, skipping seed...");
                 return;
             }
-            // Lấy danh sách user có thể đăng job (loại bỏ admin)
+
             var userIds = await db.Users
-                .Where(u => u.Email != "admin123@gmail.com") // 👈 hoặc Role != "Admin"
+                .Where(u => u.Email != "admin123@gmail.com")
                 .Select(u => u.Id)
                 .ToListAsync();
+
             if (!userIds.Any())
             {
                 Console.WriteLine("⚠️ Không có user nào trong hệ thống — không thể seed Jobs!");
                 return;
             }
 
-
-            // Đường dẫn file Excel trong thư mục dự án
-            string filePath = Path.Combine(webApplication.Environment.ContentRootPath, "Data", "SeedData", "Excels", "jobs.xlsx");
+            string filePath = Path.Combine(
+                webApplication.Environment.ContentRootPath,
+                "Data", "SeedData", "Excels", "jobs.xlsx"
+            );
 
             if (!File.Exists(filePath))
             {
@@ -39,9 +40,7 @@ namespace JobMatchingSystem.API.Data.SeedData
                 return;
             }
 
-            // Nếu bạn không muốn dùng EPPlus có license, thì dùng ClosedXML hoặc MiniExcel (mình sẽ gợi ý bên dưới)
             ExcelPackage.License.SetNonCommercialPersonal("Nguyen Van Thang");
-
             using var package = new ExcelPackage(new FileInfo(filePath));
             var worksheet = package.Workbook.Worksheets[0];
             int rowCount = worksheet.Dimension.Rows;
@@ -49,19 +48,16 @@ namespace JobMatchingSystem.API.Data.SeedData
             var jobs = new List<Job>();
             var rand = new Random();
 
-            for (int row = 2; row <= rowCount; row++) // bỏ dòng tiêu đề
+            // 🔥 Danh sách JobType string
+            string[] jobTypeList = { "Parttime", "Fulltime", "Remote" };
+
+            for (int row = 2; row <= rowCount; row++)
             {
-                // random lương 5 - 70 triệu
-                var minSalary = rand.Next(5, 20) * 1_000_000;   // 5 - 50 triệu
-                var maxSalary = rand.Next(20, 70) * 1_000_000;  // 50 - 70 triệu
+                var minSalary = rand.Next(5, 20) * 1_000_000;
+                var maxSalary = rand.Next(20, 70) * 1_000_000;
 
-                // random công ty 1-70
                 int companyId = rand.Next(1, 71);
-                var posterId = userIds[rand.Next(userIds.Count)]; // ✅ lấy userId thật từ DB
-
-                // random job type (enum)
-                var jobTypes = Enum.GetValues(typeof(JobType));
-                var randomJobType = (JobType)jobTypes.GetValue(rand.Next(jobTypes.Length))!;
+                var posterId = userIds[rand.Next(userIds.Count)];
 
                 var job = new Job
                 {
@@ -74,7 +70,13 @@ namespace JobMatchingSystem.API.Data.SeedData
                     SalaryMin = minSalary,
                     SalaryMax = maxSalary,
                     CompanyId = companyId,
-                    JobType = randomJobType,
+
+                    // ⭐ JobType random string
+                    JobType = jobTypeList[rand.Next(jobTypeList.Length)],
+
+                    // ⭐ Random số năm kinh nghiệm 1–10
+                    ExperienceYear = rand.Next(1, 11),
+
                     Status = JobStatus.Draft,
                     CreatedAt = DateTime.Now,
                     OpenedAt = DateTime.Now,

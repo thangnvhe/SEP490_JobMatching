@@ -119,7 +119,6 @@ namespace JobMatchingSystem.API.Data
             // Job
             modelBuilder.Entity<Job>(entity =>
             {
-                entity.Property(e => e.JobType).HasConversion<byte>().HasColumnType("tinyint");
                 entity.Property(e => e.Status).HasConversion<byte>().HasColumnType("tinyint");
                 entity.HasOne(e => e.Company)
                       .WithMany(e => e.Jobs)
