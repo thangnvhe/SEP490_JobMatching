@@ -17,7 +17,8 @@ namespace JobMatchingSystem.API.Models
         [Column(TypeName = "decimal(18,2)")]
         public int? SalaryMax { get; set; }
         public string Location { get; set; }
-        public JobType JobType { get; set; }
+        public int ExperienceYear { get; set; } = 0;
+        public string JobType { get; set; }
         public JobStatus Status { get; set; } = JobStatus.Draft;
         public int ViewsCount { get; set; } = 0;
         public int CompanyId { get; set; }

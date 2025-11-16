@@ -52,6 +52,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 SalaryMin = request.SalaryMin,
                 SalaryMax = request.SalaryMax,
                 Location = request.Location,
+                ExperienceYear = request.ExperienceYear,
                 JobType = request.JobType,
                 CompanyId = user.CompanyId.Value,
                 RecuiterId = user.Id,
@@ -118,6 +119,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             job.SalaryMin = request.SalaryMin ?? job.SalaryMin;
             job.SalaryMax = request.SalaryMax ?? job.SalaryMax;
             job.Location = request.Location ?? job.Location;
+            job.ExperienceYear = request.ExperienceYear ?? job.ExperienceYear;
             job.JobType = request.JobType ?? job.JobType;
             job.OpenedAt = request.OpenedAt ?? job.OpenedAt;
             job.ExpiredAt = request.ExpiredAt ?? job.ExpiredAt;
@@ -174,7 +176,8 @@ namespace JobMatchingSystem.API.Services.Implementations
                 SalaryMin = job.SalaryMin,
                 SalaryMax = job.SalaryMax,
                 Location = job.Location,
-                JobType = job.JobType.ToString(),
+                ExperienceYear = job.ExperienceYear,
+                JobType = job.JobType,
                 Status = job.Status.ToString(),
                 ViewsCount = job.ViewsCount,
                 CompanyId = job.CompanyId,
@@ -203,7 +206,8 @@ namespace JobMatchingSystem.API.Services.Implementations
                 SalaryMin = j.SalaryMin,
                 SalaryMax = j.SalaryMax,
                 Location = j.Location,
-                JobType = j.JobType.ToString(),
+                ExperienceYear = j.ExperienceYear,
+                JobType = j.JobType,
                 Status = j.Status.ToString(),
                 ViewsCount = j.ViewsCount,
                 CompanyId = j.CompanyId,
@@ -244,7 +248,8 @@ namespace JobMatchingSystem.API.Services.Implementations
                 SalaryMin = j.SalaryMin,
                 SalaryMax = j.SalaryMax,
                 Location = j.Location,
-                JobType = j.JobType.ToString(),
+                ExperienceYear = j.ExperienceYear,
+                JobType = j.JobType,
                 Status = j.Status.ToString(),
                 ViewsCount = j.ViewsCount,
                 CompanyId = j.CompanyId,
