@@ -18,6 +18,7 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error EmailNotExist() => new("Email Not Exist", HttpStatusCode.NotFound);
         public static Error NotFoundTemplateCV() => new("Not Found TemplateCV", HttpStatusCode.NotFound);
         public static Error NotFoundCV() => new("Not Found CV", HttpStatusCode.NotFound);
+        public static Error NotFoundCVAchievement() => new("Not Found CVAchievement", HttpStatusCode.NotFound);
         public static Error InvalidFile() => new("Invalid File", HttpStatusCode.BadRequest);
         public static Error NotFoundSkill() => new("Not Found Skill", HttpStatusCode.NotFound);
         public static Error CantDelete() => new("Can't Delete", HttpStatusCode.BadRequest);

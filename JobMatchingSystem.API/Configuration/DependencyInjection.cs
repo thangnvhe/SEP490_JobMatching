@@ -21,6 +21,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<ICvUploadRepository, CvUploadRepository>();
             services.AddScoped<ITemplateCvRepository, TemplateCvRepository>();
             services.AddScoped<ICVRepository, CVRepository>();
+            services.AddScoped<ICVAchievementRepository, CVAchievementRepository>();
             return services;
         }
 
@@ -31,13 +32,14 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IAuthService, AuthService>();
             services.AddTransient<IEmailService, EmailService>();
             services.AddScoped<IUserService, UserService>();
-            services.AddTransient<IJobService, JobService>();
+            services.AddScoped<IJobService, JobService>();
             services.AddScoped<ICompanyService, CompanyService>();
-            services.AddTransient<IJobStageService, JobStageService>();
-            services.AddTransient<ITaxonomyService, TaxonomyService>();
+            services.AddScoped<IJobStageService, JobStageService>();
+            services.AddScoped<ITaxonomyService, TaxonomyService>();
             services.AddScoped<ICandidateJobService, CandidateJobService>();
-            services.AddTransient<ITemplateCvService, TemplateCvService>();
-            services.AddTransient<ICVService, CVService>();
+            services.AddScoped<ITemplateCvService, TemplateCvService>();
+            services.AddScoped<ICVService, CVService>();
+            services.AddScoped<ICVAchievementService, CVAchievementService>();
             return services;
         }
 
