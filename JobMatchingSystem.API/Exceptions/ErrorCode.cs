@@ -31,5 +31,6 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error CantUpdate() => new("Can't update", HttpStatusCode.BadRequest);
         public static Error IsApplyJob() => new("Job is apply",HttpStatusCode.BadRequest);
         public static Error NotFoundCandidateJob() => new("NotFound CandidateJob",HttpStatusCode.NotFound);
+        public static Error NotFoundReport() => new("Not Found Report", HttpStatusCode.NotFound);
     }
 }

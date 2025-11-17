@@ -43,16 +43,40 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                 query = query.Where(j => j.Benefits.Contains(request.Benefits));
             if (!string.IsNullOrEmpty(request.Location))
                 query = query.Where(j => j.Location.Contains(request.Location));
-            if (request.SalaryMin.HasValue)
-                query = query.Where(j => j.SalaryMax >= request.SalaryMin);
-            if (request.SalaryMax.HasValue)
-                query = query.Where(j => j.SalaryMin <= request.SalaryMax);
+
+            if (request.SalaryMin.HasValue && request.SalaryMin.Value != -1)
+                query = query.Where(j => j.SalaryMax >= request.SalaryMin.Value);
+            if (request.SalaryMax.HasValue && request.SalaryMax.Value != -1)
+                query = query.Where(j => j.SalaryMin <= request.SalaryMax.Value);
+
+            if (request.SalaryMax.Value == -1 && request.SalaryMin.Value == -1)
+                query = query.Where(j => j.SalaryMin == null && j.SalaryMax == null);
+
+
             if (!string.IsNullOrEmpty(request.JobType))
-                query = query.Where(j => j.JobType.Contains(request.JobType));
+            {
+                if (request.JobType.ToLower().Equals("fultime") || request.JobType.ToLower().Equals("partime")
+                    || request.JobType.ToLower().Equals("remote"))
+                {
+                    query = query.Where(j => j.JobType.ToLower().Contains(request.JobType.ToLower()));
+                }
+                else
+                {
+                    query = query.Where(j => !j.JobType.ToLower().Contains(request.JobType.ToLower()));
+                }
+            }
+
             if (request.Status.HasValue)
                 query = query.Where(j => j.Status == request.Status.Value);
-            if (request.ExperienceYear.HasValue)
-                query = query.Where(j => j.ExperienceYear == request.ExperienceYear.Value);
+
+            if (request.ExperienceYearMin.HasValue && request.ExperienceYearMin.Value != -1)
+                query = query.Where(j => j.ExperienceYear >= request.ExperienceYearMin.Value);
+            if (request.ExperienceYearMax.HasValue && request.ExperienceYearMax.Value != -1)
+                query = query.Where(j => j.ExperienceYear <= request.ExperienceYearMax.Value);
+
+            if (request.ExperienceYearMax.Value == -1 && request.ExperienceYearMin.Value == -1)
+                query = query.Where(j => j.ExperienceYear == null);
+
             if (request.CompanyId.HasValue)
                 query = query.Where(j => j.CompanyId == request.CompanyId.Value);
             if (request.RecuiterId.HasValue)
@@ -98,17 +122,38 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             if (!string.IsNullOrEmpty(request.Location))
                 query = query.Where(j => j.Location.Contains(request.Location));
 
-            if (request.SalaryMin.HasValue)
+            if (request.SalaryMin.HasValue && request.SalaryMin.Value != -1)
                 query = query.Where(j => j.SalaryMax >= request.SalaryMin.Value);
-            if (request.SalaryMax.HasValue)
+            if (request.SalaryMax.HasValue && request.SalaryMax.Value != -1)
                 query = query.Where(j => j.SalaryMin <= request.SalaryMax.Value);
 
+            if (request.SalaryMax.Value == -1 && request.SalaryMin.Value == -1)
+                query = query.Where(j => j.SalaryMin == null && j.SalaryMax == null);
+
             if (!string.IsNullOrEmpty(request.JobType))
-                query = query.Where(j => j.JobType.Contains(request.JobType));
+            {
+                if (request.JobType.ToLower().Equals("fultime") || request.JobType.ToLower().Equals("partime")
+                    || request.JobType.ToLower().Equals("remote"))
+                {
+                    query = query.Where(j => j.JobType.ToLower().Contains(request.JobType.ToLower()));
+                }
+                else
+                {
+                    query = query.Where(j => !j.JobType.ToLower().Contains(request.JobType.ToLower()));
+                }
+            }
+
             if (request.Status.HasValue)
                 query = query.Where(j => j.Status == request.Status.Value);
-            if (request.ExperienceYear.HasValue)
-                query = query.Where(j => j.ExperienceYear == request.ExperienceYear.Value);
+
+            if (request.ExperienceYearMin.HasValue && request.ExperienceYearMin.Value != -1)
+                query = query.Where(j => j.ExperienceYear >= request.ExperienceYearMin.Value);
+            if (request.ExperienceYearMax.HasValue && request.ExperienceYearMax.Value != -1)
+                query = query.Where(j => j.ExperienceYear <= request.ExperienceYearMax.Value);
+
+            if (request.ExperienceYearMax.Value == -1 && request.ExperienceYearMin.Value == -1)
+                query = query.Where(j => j.ExperienceYear == null);
+
             if (request.CompanyId.HasValue)
                 query = query.Where(j => j.CompanyId == request.CompanyId.Value);
             if (request.RecuiterId.HasValue)
