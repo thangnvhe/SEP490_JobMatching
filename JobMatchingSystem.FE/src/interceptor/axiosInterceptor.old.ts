@@ -43,8 +43,6 @@ axiosInstance.interceptors.response.use(
             // Xóa token và redirect về trang login
             localStorage.removeItem('accessToken');
             Cookies.remove('accessToken');
-        
-            
             return Promise.reject(error);
         }
 

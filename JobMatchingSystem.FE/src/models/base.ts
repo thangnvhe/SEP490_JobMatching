@@ -21,7 +21,7 @@ export interface PaginationParamsInput {
     size: number;
     search?: string;
     sortBy?: string;
-    direction?: 'asc' | 'desc';
+    isDecending?: boolean;
     [key: string]: any;
 }
 
