@@ -44,10 +44,6 @@ axiosInstance.interceptors.response.use(
             localStorage.removeItem('accessToken');
             Cookies.remove('accessToken');
             
-            // Redirect về trang login (có thể sử dụng window.location hoặc router)
-            if (typeof window !== 'undefined') {
-                window.location.href = '/login';
-            }
             
             return Promise.reject(error);
         }
