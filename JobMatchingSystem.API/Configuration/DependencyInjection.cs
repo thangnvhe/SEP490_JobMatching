@@ -21,6 +21,12 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<ICvUploadRepository, CvUploadRepository>();
             services.AddScoped<ITemplateCvRepository, TemplateCvRepository>();
             services.AddScoped<ICVRepository, CVRepository>();
+            services.AddScoped<ICVAchievementRepository, CVAchievementRepository>();
+            services.AddScoped<ICVCertificateRepository, CVCertificateRepository>();
+            services.AddScoped<ICVEducationRepository, CVEducationRepository>();
+            services.AddScoped<ICVExperienceRepository, CVExperienceRepository>();
+            services.AddScoped<ICVProjectRepository, CVProjectRepository>();
+            services.AddScoped<IReportRepository, ReportRepository>();
             return services;
         }
 
@@ -31,13 +37,19 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IAuthService, AuthService>();
             services.AddTransient<IEmailService, EmailService>();
             services.AddScoped<IUserService, UserService>();
-            services.AddTransient<IJobService, JobService>();
+            services.AddScoped<IJobService, JobService>();
             services.AddScoped<ICompanyService, CompanyService>();
-            services.AddTransient<IJobStageService, JobStageService>();
-            services.AddTransient<ITaxonomyService, TaxonomyService>();
+            services.AddScoped<IJobStageService, JobStageService>();
+            services.AddScoped<ITaxonomyService, TaxonomyService>();
             services.AddScoped<ICandidateJobService, CandidateJobService>();
-            services.AddTransient<ITemplateCvService, TemplateCvService>();
-            services.AddTransient<ICVService, CVService>();
+            services.AddScoped<ITemplateCvService, TemplateCvService>();
+            services.AddScoped<ICVService, CVService>();
+            services.AddScoped<ICVAchievementService, CVAchievementService>();
+            services.AddScoped<ICVCertificateService, CVCertificateService>();
+            services.AddScoped<ICVEducationService, CVEducationService>();
+            services.AddScoped<ICVExperienceService, CVExperienceService>();
+            services.AddScoped<ICVProjectService, CVProjectService>();
+            services.AddScoped<IReportService, ReportService>();
             return services;
         }
 
