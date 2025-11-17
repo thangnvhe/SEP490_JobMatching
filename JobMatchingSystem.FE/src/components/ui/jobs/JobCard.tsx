@@ -3,8 +3,11 @@ import { MapPin, Briefcase, Bookmark, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { JobDetailResponse } from "@/models/job";
+import type { Company } from "@/models/company";
 import { CompanyServices } from "@/services/company.service";
+import { API_BASE_URL } from "../../../../env.ts";
 interface JobCardProps {
   job: JobDetailResponse;
   onJobDetails: (jobId: number) => void;
@@ -13,6 +16,20 @@ interface JobCardProps {
 }
 
 // --- Helper Functions ---
+
+// Function to handle logo URL - similar to licenseFile in ViewCompanyList
+const getLogoUrl = (logoPath?: string): string | undefined => {
+  if (!logoPath) return undefined;
+  
+  // If it's already a full URL, return as is
+  if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
+    return logoPath;
+  }
+  
+  // If it's a relative path, prepend the base URL (without /api)
+  const baseUrl = API_BASE_URL.replace('/api', '');
+  return `${baseUrl}${logoPath.startsWith('/') ? '' : '/'}${logoPath}`;
+};
 
 const formatTimeAgo = (dateString: string) => {
   const date = new Date(dateString);
@@ -67,6 +84,19 @@ const getJobTypeDisplay = (jobType: string) => {
   return jobTypeMap[jobType] || jobType;
 };
 
+const formatExperience = (experienceYear?: number) => {
+  if (!experienceYear || experienceYear < 0) {
+    return "Không yêu cầu";
+  }
+  if (experienceYear === 0) {
+    return "Không yêu cầu";
+  }
+  if (experienceYear === 1) {
+    return "1 năm";
+  }
+  return `${experienceYear} năm`;
+};
+
 const cleanLocation = (location: string) => {
   // Remove common prefixes from location string
   const prefixesToRemove = [
@@ -104,22 +134,27 @@ export const JobCard: React.FC<JobCardProps> = ({
   onSaveJob,
   className = "",
 }) => {
-  const [companyName, setCompanyName] = useState<string>(`Company ${job.companyId}`);
+  const [company, setCompany] = useState<Company | null>(null);
+  const [companyLoading, setCompanyLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCompanyName = async () => {
+    const fetchCompanyData = async () => {
       try {
+        setCompanyLoading(true);
         const response = await CompanyServices.getCompanyById(job.companyId.toString());
         if (response.isSuccess && response.result) {
-          setCompanyName(response.result.name || `Company ${job.companyId}`);
+          console.log('Company data:', response.result); // Debug log
+          console.log('Logo path from DB:', response.result.logo); // Debug log
+          setCompany(response.result);
         }
       } catch (error) {
-        console.error('Error fetching company name:', error);
-        // Keep default name if API call fails
+        console.error('Error fetching company data:', error);
+      } finally {
+        setCompanyLoading(false);
       }
     };
 
-    fetchCompanyName();
+    fetchCompanyData();
   }, [job.companyId]);
   return (
     <Card
@@ -128,17 +163,40 @@ export const JobCard: React.FC<JobCardProps> = ({
       <CardContent className="p-4 space-y-3">
         {/* Header: Title, Status, Bookmark */}
         <div className="flex items-start justify-between">
-          <div className="flex-1 space-y-1">
-            <h3
-              className="text-base font-semibold text-gray-900 line-clamp-2 hover:text-emerald-600 cursor-pointer leading-tight"
-              onClick={() => onJobDetails(job.jobId)}
-              title={job.title}
-            >
-              {job.title}
-            </h3>
-            <p className="text-gray-600 font-medium text-sm">
-              {companyName}
-            </p>
+          <div className="flex items-start space-x-3 flex-1">
+            {/* Company Avatar */}
+            <div className="flex-shrink-0">
+              {companyLoading ? (
+                <div className="w-12 h-12 bg-gray-200 rounded-lg animate-pulse" />
+              ) : (
+                <Avatar className="w-12 h-12 rounded-lg">
+                  <AvatarImage 
+                    src={getLogoUrl(company?.logo)} 
+                    alt={company?.name || `Company ${job.companyId}`}
+                    className="object-cover"
+                    onLoad={() => console.log('Logo loaded successfully:', getLogoUrl(company?.logo))} // Debug
+                    onError={() => console.log('Logo failed to load:', getLogoUrl(company?.logo))} // Debug
+                  />
+                  <AvatarFallback className="bg-emerald-100 text-emerald-700 font-semibold rounded-lg">
+                    {company?.name?.charAt(0)?.toUpperCase() || 'C'}
+                  </AvatarFallback>
+                </Avatar>
+              )}
+            </div>
+            
+            {/* Job Info */}
+            <div className="flex-1 min-w-0 space-y-1">
+              <h3
+                className="text-base font-semibold text-gray-900 line-clamp-2 hover:text-emerald-600 cursor-pointer leading-tight"
+                onClick={() => onJobDetails(job.jobId)}
+                title={job.title}
+              >
+                {job.title}
+              </h3>
+              <p className="text-gray-600 font-medium text-sm truncate">
+                {companyLoading ? 'Đang tải...' : (company?.name || `Company ${job.companyId}`)}
+              </p>
+            </div>
           </div>
           
           <div className="flex items-center gap-2 flex-shrink-0 ml-2">
@@ -179,6 +237,15 @@ export const JobCard: React.FC<JobCardProps> = ({
             <Briefcase className="h-3 w-3 mr-1" />
             {getJobTypeDisplay(job.jobType)}
           </Badge>
+          
+          {job.experienceYear !== undefined && (
+            <Badge
+              variant="outline"
+              className="text-blue-700 border-blue-200 bg-blue-50 text-xs font-normal"
+            >
+              Kinh nghiệm: {formatExperience(job.experienceYear)}
+            </Badge>
+          )}
           
           <Badge
             variant="outline"

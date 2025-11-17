@@ -43,8 +43,28 @@ const getSalaryRange = (salaryRange: string): [number, number] => {
       return [20000000, 25000000];
     case '25+':
       return [25000000, 999999999];
+    case '-1--1':
+      return [-1, -1]; // Thỏa thuận
     default:
-      return [0, 999999999];
+      return [-1, -1];
+  }
+};
+
+// Thêm function để xử lý experience range
+const getExperienceRange = (experienceLevel: string): [number, number] => {
+  switch (experienceLevel) {
+    case '-1--1':
+      return [-1, -1]; // Không yêu cầu
+    case '0-1':
+      return [0, 1];
+    case '1-3':
+      return [1, 3];
+    case '3-5':
+      return [3, 5];
+    case '5+':
+      return [5, 999];
+    default:
+      return [-1, -1];
   }
 };
 
@@ -121,7 +141,7 @@ const JobsPage: React.FC = () => {
       const apiParams: JobSearchParams = {
         Page: state.pagination.page,
         Size: state.pagination.size,
-        // Status: 3, // Remove status filter temporarily to see all jobs
+        Status: 3, // Only show opened jobs (Status.Opened = 3)
       };
 
       console.log('API params being sent:', apiParams);
@@ -135,8 +155,17 @@ const JobsPage: React.FC = () => {
       }
       if (state.filters.salaryRange) {
         const [min, max] = getSalaryRange(state.filters.salaryRange);
-        apiParams.SalaryMin = min;
-        apiParams.SalaryMax = max;
+        if (min !== -1 || max !== -1) {
+          apiParams.SalaryMin = min;
+          apiParams.SalaryMax = max;
+        }
+      }
+      if (state.filters.experienceLevel) {
+        const [minExp, maxExp] = getExperienceRange(state.filters.experienceLevel);
+        // Use average or minimum experience for filtering
+        if (minExp !== -1) {
+          apiParams.ExperienceYear = minExp;
+        }
       }
       if (state.filters.jobType) {
         apiParams.JobType = mapJobTypeToAPI(state.filters.jobType);
