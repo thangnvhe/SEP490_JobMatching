@@ -10,7 +10,7 @@
         public int? SalaryMin { get; set; }
         public int? SalaryMax { get; set; }
         public string Location { get; set; }
-        public int ExperienceYear { get; set; }
+        public int? ExperienceYear { get; set; }
         public string JobType { get; set; }
         public string Status { get; set; }
         public int ViewsCount { get; set; }
