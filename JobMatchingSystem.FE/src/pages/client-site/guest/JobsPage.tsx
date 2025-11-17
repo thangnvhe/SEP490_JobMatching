@@ -21,13 +21,14 @@ import { X } from "lucide-react";
 
 
 // Mapping functions
-const mapJobTypeToAPI = (jobType: string): number => {
-  const mapping: { [key: string]: number } = {
-    'FullTime': 0,
-    'PartTime': 1,
-    'Remote': 2,
+const mapJobTypeToAPI = (jobType: string): string => {
+  const mapping: { [key: string]: string } = {
+    'FullTime': 'FullTime',
+    'PartTime': 'Parttime',  // Match API response format
+    'Remote': 'Remote',
+    'Other': 'Other'
   };
-  return mapping[jobType] ?? 0;
+  return mapping[jobType] ?? 'FullTime';
 };
 
 const getSalaryRange = (salaryRange: string): [number, number] => {
@@ -48,6 +49,7 @@ const getSalaryRange = (salaryRange: string): [number, number] => {
 };
 
 const JobsPage: React.FC = () => {
+  console.log('JobsPage component mounted');
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   
@@ -55,6 +57,8 @@ const JobsPage: React.FC = () => {
   const [jobs, setJobs] = useState<JobDetailResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [showMobileFilter, setShowMobileFilter] = useState(false);
+  
+  console.log('JobsPage current state - jobs:', jobs.length, 'loading:', loading);
   
   // Search state
   const [searchState, setSearchState] = useState<SearchState>(() => ({
@@ -110,21 +114,21 @@ const JobsPage: React.FC = () => {
 
   // Search jobs function
   const searchJobs = useCallback(async (state: SearchState) => {
+    console.log('searchJobs called with state:', state);
     setLoading(true);
     try {
       // Build API parameters
       const apiParams: JobSearchParams = {
-        page: state.pagination.page,
-        size: state.pagination.size,
-        sortBy: state.pagination.sortBy,
-        Status: 3, // Only show opened jobs
+        Page: state.pagination.page,
+        Size: state.pagination.size,
+        // Status: 3, // Remove status filter temporarily to see all jobs
       };
+
+      console.log('API params being sent:', apiParams);
 
       // Add search filters
       if (state.keyword) {
         apiParams.Title = state.keyword;
-        apiParams.Description = state.keyword;
-        apiParams.Requirements = state.keyword;
       }
       if (state.location) {
         apiParams.Location = state.location;
@@ -138,10 +142,15 @@ const JobsPage: React.FC = () => {
         apiParams.JobType = mapJobTypeToAPI(state.filters.jobType);
       }
       
+      console.log('Final API params:', apiParams);
+      
       // Call API
       const response: PaginatedResponse<JobDetailResponse> = await JobServices.getJobsWithPagination(apiParams);
       
+      console.log('API response:', response);
+      
       if (response.isSuccess) {
+        console.log('Jobs found:', response.result.items.length);
         setJobs(response.result.items);
         setPaginationInfo({
           totalItems: response.result.pageInfo.totalItem,
@@ -149,6 +158,7 @@ const JobsPage: React.FC = () => {
           currentPage: state.pagination.page,
         });
       } else {
+        console.log('API failed with response:', response);
         toast.error("Không thể tải danh sách việc làm");
         setJobs([]);
         setPaginationInfo({

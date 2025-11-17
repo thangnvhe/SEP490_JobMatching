@@ -60,8 +60,9 @@ const formatSalary = (salaryMin?: number, salaryMax?: number) => {
 const getJobTypeDisplay = (jobType: string) => {
   const jobTypeMap: { [key: string]: string } = {
     'FullTime': 'Toàn thời gian',
-    'PartTime': 'Bán thời gian', 
-    'Remote': 'Làm từ xa'
+    'Parttime': 'Bán thời gian',  // Updated to match API response
+    'Remote': 'Làm từ xa',
+    'Other': 'Khác'
   };
   return jobTypeMap[jobType] || jobType;
 };

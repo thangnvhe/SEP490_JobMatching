@@ -145,34 +145,7 @@ const JobSearchHeader: React.FC<JobSearchHeaderProps> = ({
             </div>
           </Card>
 
-          {/* Từ khóa phổ biến */}
-          <div className="space-y-3">
-            <p className="text-emerald-100 text-sm">Từ khóa phổ biến:</p>
-            <div className="flex flex-wrap justify-center gap-2">
-              {[
-                "Frontend Developer",
-                "Backend Developer",
-                "UI/UX Designer",
-                "Product Manager",
-                "Data Analyst",
-                "Marketing",
-              ].map((tag) => (
-                <Button
-                  key={tag}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setLocalKeyword(tag);
-                    onKeywordChange(tag);
-                    onSearch();
-                  }}
-                  className="text-emerald-700 border-emerald-200 bg-white/90 hover:bg-white hover:border-emerald-300 text-xs px-3 py-1"
-                >
-                  {tag}
-                </Button>
-              ))}
-            </div>
-          </div>
+
         </div>
       </div>
     </div>
