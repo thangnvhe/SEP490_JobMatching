@@ -3,16 +3,20 @@ using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace JobMatchingSystem.API.Services.Implementations
 {
     public class CVProjectService : ICVProjectService
     {
         private readonly ICVProjectRepository _repository;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public CVProjectService(ICVProjectRepository repository)
+        public CVProjectService(ICVProjectRepository repository, UserManager<ApplicationUser> userManager)
         {
             _repository = repository;
+            _userManager = userManager;
         }
 
         public async Task<CVProject> GetByIdAsync(int id)
@@ -25,7 +29,8 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<List<CVProject>> GetByCurrentUserAsync(int userId)
         {
-            if (userId == null)
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
             var projects = await _repository.GetByUserIdAsync(userId);
@@ -52,7 +57,8 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<CVProject> UpdateAsync(int id, CVProjectRequest request, int userId)
         {
-            if (userId == null)
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
             var project = await _repository.GetByIdAsync(id);
@@ -70,7 +76,8 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task DeleteAsync(int id, int userId)
         {
-            if (userId == null)
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
             var project = await _repository.GetByIdAsync(id);

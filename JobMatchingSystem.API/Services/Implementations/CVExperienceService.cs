@@ -3,16 +3,20 @@ using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace JobMatchingSystem.API.Services.Implementations
 {
     public class CVExperienceService : ICVExperienceService
     {
         private readonly ICVExperienceRepository _repository;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public CVExperienceService(ICVExperienceRepository repository)
+        public CVExperienceService(ICVExperienceRepository repository, UserManager<ApplicationUser> userManager)
         {
             _repository = repository;
+            _userManager = userManager;
         }
 
         public async Task<CVExperience> GetByIdAsync(int id)
@@ -25,7 +29,8 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<List<CVExperience>> GetByCurrentUserAsync(int userId)
         {
-            if (userId == null)
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
             var experiences = await _repository.GetByUserIdAsync(userId);
@@ -53,7 +58,8 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<CVExperience> UpdateAsync(int id, CVExperienceRequest request, int userId)
         {
-            if (userId == null)
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
             var experience = await _repository.GetByIdAsync(id);
@@ -72,7 +78,8 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task DeleteAsync(int id, int userId)
         {
-            if (userId == null)
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
             var experience = await _repository.GetByIdAsync(id);

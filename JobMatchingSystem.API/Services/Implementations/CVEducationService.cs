@@ -3,16 +3,20 @@ using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace JobMatchingSystem.API.Services.Implementations
 {
     public class CVEducationService : ICVEducationService
     {
         private readonly ICVEducationRepository _repository;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public CVEducationService(ICVEducationRepository repository)
+        public CVEducationService(ICVEducationRepository repository, UserManager<ApplicationUser> userManager)
         {
             _repository = repository;
+            _userManager = userManager;
         }
 
         public async Task<CVEducation> GetByIdAsync(int id)
@@ -25,7 +29,8 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<List<CVEducation>> GetByCurrentUserAsync(int userId)
         {
-            if (userId == null)
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
             var educations = await _repository.GetByUserIdAsync(userId);
@@ -53,7 +58,8 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<CVEducation> UpdateAsync(int id, CVEducationRequest request, int userId)
         {
-            if (userId == null)
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
             var education = await _repository.GetByIdAsync(id);
@@ -74,7 +80,8 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task DeleteAsync(int id, int userId)
         {
-            if (userId == null)
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
             var education = await _repository.GetByIdAsync(id);

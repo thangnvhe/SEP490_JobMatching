@@ -3,16 +3,20 @@ using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace JobMatchingSystem.API.Services.Implementations
 {
     public class CVCertificateService : ICVCertificateService
     {
         private readonly ICVCertificateRepository _repository;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public CVCertificateService(ICVCertificateRepository repository)
+        public CVCertificateService(ICVCertificateRepository repository, UserManager<ApplicationUser> userManager)
         {
             _repository = repository;
+            _userManager = userManager;
         }
 
         public async Task<CVCertificate> GetByIdAsync(int id)
@@ -25,8 +29,10 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<List<CVCertificate>> GetByCurrentUserAsync(int userId)
         {
-            if (userId == null)
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
+
             var certificates = await _repository.GetByUserIdAsync(userId);
             if (certificates == null || !certificates.Any())
                 throw new AppException(ErrorCode.NotFoundCVCertificate());
@@ -51,7 +57,8 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<CVCertificate> UpdateAsync(int id, CVCertificateRequest request, int userId)
         {
-            if (userId == null)
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
             var certificate = await _repository.GetByIdAsync(id);
@@ -71,7 +78,8 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task DeleteAsync(int id, int userId)
         {
-            if (userId == null)
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
             var certificate = await _repository.GetByIdAsync(id);
