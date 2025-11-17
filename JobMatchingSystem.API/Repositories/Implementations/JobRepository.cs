@@ -49,9 +49,11 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             if (request.SalaryMax.HasValue && request.SalaryMax.Value != -1)
                 query = query.Where(j => j.SalaryMin <= request.SalaryMax.Value);
 
-            if (request.SalaryMax.Value == -1 && request.SalaryMin.Value == -1)
+            if (request.SalaryMax.HasValue && request.SalaryMin.HasValue &&
+                request.SalaryMax.Value == -1 && request.SalaryMin.Value == -1)
+            {
                 query = query.Where(j => j.SalaryMin == null && j.SalaryMax == null);
-
+            }
 
             if (!string.IsNullOrEmpty(request.JobType))
             {
@@ -74,8 +76,11 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             if (request.ExperienceYearMax.HasValue && request.ExperienceYearMax.Value != -1)
                 query = query.Where(j => j.ExperienceYear <= request.ExperienceYearMax.Value);
 
-            if (request.ExperienceYearMax.Value == -1 && request.ExperienceYearMin.Value == -1)
+            if (request.ExperienceYearMax.HasValue && request.ExperienceYearMin.HasValue &&
+                request.ExperienceYearMax.Value == -1 && request.ExperienceYearMin.Value == -1)
+            {
                 query = query.Where(j => j.ExperienceYear == null);
+            }
 
             if (request.CompanyId.HasValue)
                 query = query.Where(j => j.CompanyId == request.CompanyId.Value);
@@ -127,8 +132,11 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             if (request.SalaryMax.HasValue && request.SalaryMax.Value != -1)
                 query = query.Where(j => j.SalaryMin <= request.SalaryMax.Value);
 
-            if (request.SalaryMax.Value == -1 && request.SalaryMin.Value == -1)
+            if (request.SalaryMax.HasValue && request.SalaryMin.HasValue &&
+                request.SalaryMax.Value == -1 && request.SalaryMin.Value == -1)
+            {
                 query = query.Where(j => j.SalaryMin == null && j.SalaryMax == null);
+            }
 
             if (!string.IsNullOrEmpty(request.JobType))
             {
@@ -151,8 +159,11 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             if (request.ExperienceYearMax.HasValue && request.ExperienceYearMax.Value != -1)
                 query = query.Where(j => j.ExperienceYear <= request.ExperienceYearMax.Value);
 
-            if (request.ExperienceYearMax.Value == -1 && request.ExperienceYearMin.Value == -1)
+            if (request.ExperienceYearMax.HasValue && request.ExperienceYearMin.HasValue &&
+                request.ExperienceYearMax.Value == -1 && request.ExperienceYearMin.Value == -1)
+            {
                 query = query.Where(j => j.ExperienceYear == null);
+            }
 
             if (request.CompanyId.HasValue)
                 query = query.Where(j => j.CompanyId == request.CompanyId.Value);
