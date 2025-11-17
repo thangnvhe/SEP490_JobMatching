@@ -12,6 +12,7 @@ export interface JobSearchParams {
   CompanyId?: number;
   RecuiterId?: number;
   TaxonomyIds?: number[];
+  ExperienceYear?: number; // Added experience filter
   Page?: number;   // Changed from page to Page
   Size?: number;   // Changed from size to Size
   sortBy?: string;
@@ -26,6 +27,7 @@ export interface JobDetailResponse {
   salaryMin?: number;
   salaryMax?: number;
   location: string;
+  experienceYear?: number;  // Added experience field
   jobType: string;
   status: string;
   viewsCount: number;
