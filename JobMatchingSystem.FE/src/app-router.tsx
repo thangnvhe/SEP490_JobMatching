@@ -21,7 +21,8 @@ import FavouriteJobsPage from './pages/client-site/candidate/FavouriteJobs';
 import ProfilePage from './pages/client-site/profile/profile';
 import ViewUserList from './pages/admin-site/ManageUser/ViewUserList';
 import ResetPasswordPage from './pages/client-site/auth/ResetPasswordPage';
-
+import CompaniesPage from './pages/client-site/guest/CompaniesPage';
+import CompanyDetailPage from './pages/client-site/guest/CompanyDetailPage';
 // Component chính để render router
 const AppRouter: React.FC = () => {
   return (
@@ -36,8 +37,8 @@ const AppRouter: React.FC = () => {
           <Route path="about" element={<AboutPage />} />
           <Route path="jobs" element={<JobsPage />} />
           {/* <Route path="jobs/:id" element={<JobDetailPage />} /> */}
-          {/* <Route path="companies" element={<CompaniesPage />} /> */}
-          {/* <Route path="companies/:id" element={<CompanyDetailPage />} /> */}
+          <Route path="companies" element={<CompaniesPage />} />
+          <Route path="companies/:id" element={<CompanyDetailPage />} />
           <Route path="contact-recruiter" element={<ContactRecruiterPage />} />
           <Route path="profile" element={<ProfilePage />} />
 
