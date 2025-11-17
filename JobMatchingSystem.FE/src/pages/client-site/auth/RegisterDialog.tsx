@@ -27,21 +27,12 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
   const dispatch = useAppDispatch();
   const { loading: isLoading, error } = useSelector((state: RootState) => state.auth);
 
-  // Zod schema theo pattern LoginDialog với message tiếng Việt
+  // Zod schema chỉ giữ các trường cần thiết
   const registerSchema = z.object({
-    firstName: z
+    fullName: z
       .string()
-      .min(1, { message: "Họ là bắt buộc" }),
-    lastName: z
-      .string()
-      .min(1, { message: "Tên là bắt buộc" }),
-    username: z
-      .string()
-      .min(3, { message: "Username phải có ít nhất 3 ký tự" })
-      .max(30, { message: "Username tối đa 30 ký tự" })
-      .regex(/^[A-Za-z][A-Za-z0-9._]*$/, {
-        message: "Username bắt đầu bằng chữ và chỉ gồm chữ, số, ., _",
-      }),
+      .min(1, { message: "Họ tên là bắt buộc" })
+      .max(100, { message: "Họ tên tối đa 100 ký tự" }),
     email: z
       .string()
       .min(1, { message: "Email là bắt buộc" })
@@ -66,9 +57,7 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      username: "",
+      fullName: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -96,7 +85,7 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
   const onSubmit = async (data: RegisterFormData) => {
     try {
       await dispatch(registerAsync({
-        fullName: `${data.firstName} ${data.lastName}`.trim(),
+        fullName: data.fullName.trim(),
         email: data.email.trim(),
         password: data.password,
         confirmPassword: data.confirmPassword,
@@ -122,59 +111,21 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-sm font-medium">
-                  First Name
-                </Label>
-                <Input
-                  id="firstName"
-                  type="text"
-                  placeholder="First Name"
-                  {...register("firstName")}
-                  className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${
-                    errors.firstName ? "border-red-500" : ""
-                  }`}
-                />
-                {errors.firstName && (
-                  <p className="text-sm text-red-500">{errors.firstName.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-sm font-medium">
-                  Last Name
-                </Label>
-                <Input
-                  id="lastName"
-                  type="text"
-                  placeholder="Last Name"
-                  {...register("lastName")}
-                  className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${
-                    errors.lastName ? "border-red-500" : ""
-                  }`}
-                />
-                {errors.lastName && (
-                  <p className="text-sm text-red-500">{errors.lastName.message}</p>
-                )}
-              </div>
-            </div>
-
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-sm font-medium">
-                Username
+              <Label htmlFor="fullName" className="text-sm font-medium">
+                Full Name
               </Label>
               <Input
-                id="username"
+                id="fullName"
                 type="text"
-                placeholder="Username"
-                {...register("username")}
+                placeholder="Full Name"
+                {...register("fullName")}
                 className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${
-                  errors.username ? "border-red-500" : ""
+                  errors.fullName ? "border-red-500" : ""
                 }`}
               />
-              {errors.username && (
-                <p className="text-sm text-red-500">{errors.username.message}</p>
+              {errors.fullName && (
+                <p className="text-sm text-red-500">{errors.fullName.message}</p>
               )}
             </div>
 
