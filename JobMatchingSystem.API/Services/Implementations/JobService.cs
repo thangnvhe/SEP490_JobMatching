@@ -166,6 +166,8 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (job == null)
                 throw new AppException(ErrorCode.NotFoundJob());
 
+            job.ViewsCount += 1;
+
             var response = new JobDetailResponse
             {
                 JobId = job.JobId,
@@ -186,7 +188,11 @@ namespace JobMatchingSystem.API.Services.Implementations
                 CreatedAt = job.CreatedAt,
                 OpenedAt = job.OpenedAt,
                 ExpiredAt = job.ExpiredAt,
-                Taxonomies = job.JobTaxonomies.Select(jt => jt.Taxonomy!.Name).ToList()
+                Taxonomies = job.JobTaxonomies.Select(t => new TaxonomyResponse
+                {
+                    Id = t.TaxonomyId,
+                    Name = t.Taxonomy != null ? t.Taxonomy.Name : ""
+                }).ToList()
             };
 
             return response;
@@ -216,7 +222,11 @@ namespace JobMatchingSystem.API.Services.Implementations
                 CreatedAt = j.CreatedAt,
                 OpenedAt = j.OpenedAt,
                 ExpiredAt = j.ExpiredAt,
-                Taxonomies = j.JobTaxonomies.Select(t => t.Taxonomy.Name).ToList()
+                Taxonomies = j.JobTaxonomies.Select(t => new TaxonomyResponse
+                {
+                    Id = t.TaxonomyId,
+                    Name = t.Taxonomy != null ? t.Taxonomy.Name : ""
+                }).ToList()
             }).ToList();
         }
 
@@ -258,7 +268,11 @@ namespace JobMatchingSystem.API.Services.Implementations
                 CreatedAt = j.CreatedAt,
                 OpenedAt = j.OpenedAt,
                 ExpiredAt = j.ExpiredAt,
-                Taxonomies = j.JobTaxonomies.Select(t => t.Taxonomy?.Name ?? "").ToList()
+                Taxonomies = j.JobTaxonomies.Select(t => new TaxonomyResponse
+                {
+                    Id = t.TaxonomyId,
+                    Name = t.Taxonomy != null ? t.Taxonomy.Name : ""
+                }).ToList()
             }).ToList();
 
             return new PagedResult<JobDetailResponse>

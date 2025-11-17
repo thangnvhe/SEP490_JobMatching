@@ -21,6 +21,6 @@
         public DateTime? OpenedAt { get; set; }
         public DateTime? ExpiredAt { get; set; }
 
-        public List<string> Taxonomies { get; set; } = new List<string>();
+        public List<TaxonomyResponse> Taxonomies { get; set; } = new();
     }
 }
