@@ -1,5 +1,12 @@
+// Taxonomy interface for jobs
+export interface JobTaxonomy {
+  id: number;
+  name: string;
+}
+
 // Interfaces cho API request/response theo backend
 export interface JobSearchParams {
+  Search?: string;   // Added Search parameter
   Title?: string;
   Description?: string;
   Requirements?: string;
@@ -12,7 +19,8 @@ export interface JobSearchParams {
   CompanyId?: number;
   RecuiterId?: number;
   TaxonomyIds?: number[];
-  ExperienceYear?: number; // Added experience filter
+  ExperienceYearMin?: number; // Changed to Min/Max range
+  ExperienceYearMax?: number; // Added Max range
   Page?: number;   // Changed from page to Page
   Size?: number;   // Changed from size to Size
   sortBy?: string;
@@ -37,7 +45,7 @@ export interface JobDetailResponse {
   createdAt: string;
   openedAt?: string;
   expiredAt?: string;
-  taxonomies: string[];
+  taxonomies: JobTaxonomy[];  // Updated to use object array
 }
 
 export interface JobSearchFilters {

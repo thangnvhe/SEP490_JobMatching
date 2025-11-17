@@ -32,6 +32,15 @@ const JobSearchHeader: React.FC<JobSearchHeaderProps> = ({
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [loadingProvinces, setLoadingProvinces] = useState(false);
 
+  // Sync with parent props changes
+  useEffect(() => {
+    setLocalKeyword(keyword);
+  }, [keyword]);
+
+  useEffect(() => {
+    setLocalLocation(location);
+  }, [location]);
+
   // Load provinces on component mount
   useEffect(() => {
     const loadProvinces = async () => {
@@ -40,7 +49,7 @@ const JobSearchHeader: React.FC<JobSearchHeaderProps> = ({
         const provinceList = await ProvinceService.getProvinces();
         setProvinces(provinceList);
       } catch (error) {
-        console.error('Error loading provinces:', error);
+        // Error loading provinces
       } finally {
         setLoadingProvinces(false);
       }
@@ -52,7 +61,11 @@ const JobSearchHeader: React.FC<JobSearchHeaderProps> = ({
   const handleSearch = () => {
     onKeywordChange(localKeyword);
     onLocationChange(localLocation === 'all' ? '' : localLocation);
-    onSearch();
+    
+    // Trigger search after a small delay to ensure state is updated
+    setTimeout(() => {
+      onSearch();
+    }, 10);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
