@@ -19,9 +19,7 @@ export const JobServices = {
   // Lấy danh sách công việc với phân trang
   getJobsWithPagination: async (params: JobSearchParams): Promise<PaginatedResponse<JobDetailResponse>> => {
     try {
-      console.log('JobServices.getJobsWithPagination called with params:', params);
       const response = await BaseServices.getAllWithPagination<JobDetailResponse>(params, '/job/paged');
-      console.log('JobServices.getJobsWithPagination response:', response);
       return response;
     } catch (error) {
       console.error('Error fetching jobs with pagination:', error);

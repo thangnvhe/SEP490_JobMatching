@@ -23,6 +23,7 @@ import ViewUserList from './pages/admin-site/ManageUser/ViewUserList';
 import ResetPasswordPage from './pages/client-site/auth/ResetPasswordPage';
 import CompaniesPage from './pages/client-site/guest/CompaniesPage';
 import CompanyDetailPage from './pages/client-site/guest/CompanyDetailPage';
+import JobDetailPage from './pages/client-site/guest/JobDetailPage';
 // Component chính để render router
 const AppRouter: React.FC = () => {
   return (
@@ -36,7 +37,7 @@ const AppRouter: React.FC = () => {
           <Route index element={<HomePage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="jobs" element={<JobsPage />} />
-          {/* <Route path="jobs/:id" element={<JobDetailPage />} /> */}
+          <Route path="jobs/:id" element={<JobDetailPage />} />
           <Route path="companies" element={<CompaniesPage />} />
           <Route path="companies/:id" element={<CompanyDetailPage />} />
           <Route path="contact-recruiter" element={<ContactRecruiterPage />} />

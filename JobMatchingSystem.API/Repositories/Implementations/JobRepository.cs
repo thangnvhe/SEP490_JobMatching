@@ -44,42 +44,56 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             if (!string.IsNullOrEmpty(request.Location))
                 query = query.Where(j => j.Location.Contains(request.Location));
 
-            if (request.SalaryMin.HasValue && request.SalaryMin.Value != -1)
-                query = query.Where(j => j.SalaryMax >= request.SalaryMin.Value);
-            if (request.SalaryMax.HasValue && request.SalaryMax.Value != -1)
-                query = query.Where(j => j.SalaryMin <= request.SalaryMax.Value);
-
-            if (request.SalaryMax.HasValue && request.SalaryMin.HasValue &&
-                request.SalaryMax.Value == -1 && request.SalaryMin.Value == -1)
+            // Xử lý salary filtering
+            if (request.SalaryMin.HasValue && request.SalaryMax.HasValue &&
+                request.SalaryMin.Value == -1 && request.SalaryMax.Value == -1)
             {
-                query = query.Where(j => j.SalaryMin == null && j.SalaryMax == null);
+                // Thỏa thuận - jobs không có salary hoặc có salary null/0
+                query = query.Where(j => (j.SalaryMin == null || j.SalaryMin == 0) && 
+                                        (j.SalaryMax == null || j.SalaryMax == 0));
+            }
+            else
+            {
+                // Range cụ thể
+                if (request.SalaryMin.HasValue && request.SalaryMin.Value != -1)
+                    query = query.Where(j => j.SalaryMax >= request.SalaryMin.Value);
+                if (request.SalaryMax.HasValue && request.SalaryMax.Value != -1)
+                    query = query.Where(j => j.SalaryMin <= request.SalaryMax.Value);
             }
 
             if (!string.IsNullOrEmpty(request.JobType))
             {
-                if (request.JobType.ToLower().Equals("fultime") || request.JobType.ToLower().Equals("partime")
-                    || request.JobType.ToLower().Equals("remote"))
+                if (request.JobType.ToLower() == "other")
                 {
-                    query = query.Where(j => j.JobType.ToLower().Contains(request.JobType.ToLower()));
+                    // Other = không phải FullTime, PartTime, Remote
+                    query = query.Where(j => !j.JobType.ToLower().Contains("fulltime") && 
+                                            !j.JobType.ToLower().Contains("parttime") && 
+                                            !j.JobType.ToLower().Contains("remote"));
                 }
                 else
                 {
-                    query = query.Where(j => !j.JobType.ToLower().Contains(request.JobType.ToLower()));
+                    // Exact match cho FullTime, PartTime, Remote
+                    query = query.Where(j => j.JobType.ToLower().Contains(request.JobType.ToLower()));
                 }
             }
 
             if (request.Status.HasValue)
                 query = query.Where(j => j.Status == request.Status.Value);
 
-            if (request.ExperienceYearMin.HasValue && request.ExperienceYearMin.Value != -1)
-                query = query.Where(j => j.ExperienceYear >= request.ExperienceYearMin.Value);
-            if (request.ExperienceYearMax.HasValue && request.ExperienceYearMax.Value != -1)
-                query = query.Where(j => j.ExperienceYear <= request.ExperienceYearMax.Value);
-
-            if (request.ExperienceYearMax.HasValue && request.ExperienceYearMin.HasValue &&
-                request.ExperienceYearMax.Value == -1 && request.ExperienceYearMin.Value == -1)
+            // Thay đổi logic experience filtering
+            if (request.ExperienceYearMin.HasValue && request.ExperienceYearMax.HasValue &&
+                request.ExperienceYearMin.Value == -1 && request.ExperienceYearMax.Value == -1)
             {
+                // User chọn "Không yêu cầu kinh nghiệm" - chỉ lấy jobs không yêu cầu
                 query = query.Where(j => j.ExperienceYear == null);
+            }
+            else
+            {
+                // User chọn khoảng kinh nghiệm cụ thể - chỉ lấy jobs có ExperienceYear trong khoảng đó
+                if (request.ExperienceYearMin.HasValue && request.ExperienceYearMin.Value != -1)
+                    query = query.Where(j => j.ExperienceYear != null && j.ExperienceYear >= request.ExperienceYearMin.Value);
+                if (request.ExperienceYearMax.HasValue && request.ExperienceYearMax.Value != -1)
+                    query = query.Where(j => j.ExperienceYear != null && j.ExperienceYear <= request.ExperienceYearMax.Value);
             }
 
             if (request.CompanyId.HasValue)
@@ -127,42 +141,56 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             if (!string.IsNullOrEmpty(request.Location))
                 query = query.Where(j => j.Location.Contains(request.Location));
 
-            if (request.SalaryMin.HasValue && request.SalaryMin.Value != -1)
-                query = query.Where(j => j.SalaryMax >= request.SalaryMin.Value);
-            if (request.SalaryMax.HasValue && request.SalaryMax.Value != -1)
-                query = query.Where(j => j.SalaryMin <= request.SalaryMax.Value);
-
-            if (request.SalaryMax.HasValue && request.SalaryMin.HasValue &&
-                request.SalaryMax.Value == -1 && request.SalaryMin.Value == -1)
+            // Xử lý salary filtering
+            if (request.SalaryMin.HasValue && request.SalaryMax.HasValue &&
+                request.SalaryMin.Value == -1 && request.SalaryMax.Value == -1)
             {
-                query = query.Where(j => j.SalaryMin == null && j.SalaryMax == null);
+                // Thỏa thuận - jobs không có salary hoặc có salary null/0
+                query = query.Where(j => (j.SalaryMin == null || j.SalaryMin == 0) && 
+                                        (j.SalaryMax == null || j.SalaryMax == 0));
+            }
+            else
+            {
+                // Range cụ thể
+                if (request.SalaryMin.HasValue && request.SalaryMin.Value != -1)
+                    query = query.Where(j => j.SalaryMax >= request.SalaryMin.Value);
+                if (request.SalaryMax.HasValue && request.SalaryMax.Value != -1)
+                    query = query.Where(j => j.SalaryMin <= request.SalaryMax.Value);
             }
 
             if (!string.IsNullOrEmpty(request.JobType))
             {
-                if (request.JobType.ToLower().Equals("fultime") || request.JobType.ToLower().Equals("partime")
-                    || request.JobType.ToLower().Equals("remote"))
+                if (request.JobType.ToLower() == "other")
                 {
-                    query = query.Where(j => j.JobType.ToLower().Contains(request.JobType.ToLower()));
+                    // Other = không phải FullTime, PartTime, Remote
+                    query = query.Where(j => !j.JobType.ToLower().Contains("fulltime") && 
+                                            !j.JobType.ToLower().Contains("parttime") && 
+                                            !j.JobType.ToLower().Contains("remote"));
                 }
                 else
                 {
-                    query = query.Where(j => !j.JobType.ToLower().Contains(request.JobType.ToLower()));
+                    // Exact match cho FullTime, PartTime, Remote
+                    query = query.Where(j => j.JobType.ToLower().Contains(request.JobType.ToLower()));
                 }
             }
 
             if (request.Status.HasValue)
                 query = query.Where(j => j.Status == request.Status.Value);
 
-            if (request.ExperienceYearMin.HasValue && request.ExperienceYearMin.Value != -1)
-                query = query.Where(j => j.ExperienceYear >= request.ExperienceYearMin.Value);
-            if (request.ExperienceYearMax.HasValue && request.ExperienceYearMax.Value != -1)
-                query = query.Where(j => j.ExperienceYear <= request.ExperienceYearMax.Value);
-
-            if (request.ExperienceYearMax.HasValue && request.ExperienceYearMin.HasValue &&
-                request.ExperienceYearMax.Value == -1 && request.ExperienceYearMin.Value == -1)
+            // Thay đổi logic experience filtering
+            if (request.ExperienceYearMin.HasValue && request.ExperienceYearMax.HasValue &&
+                request.ExperienceYearMin.Value == -1 && request.ExperienceYearMax.Value == -1)
             {
+                // User chọn "Không yêu cầu kinh nghiệm" - chỉ lấy jobs không yêu cầu
                 query = query.Where(j => j.ExperienceYear == null);
+            }
+            else
+            {
+                // User chọn khoảng kinh nghiệm cụ thể - chỉ lấy jobs có ExperienceYear trong khoảng đó
+                if (request.ExperienceYearMin.HasValue && request.ExperienceYearMin.Value != -1)
+                    query = query.Where(j => j.ExperienceYear != null && j.ExperienceYear >= request.ExperienceYearMin.Value);
+                if (request.ExperienceYearMax.HasValue && request.ExperienceYearMax.Value != -1)
+                    query = query.Where(j => j.ExperienceYear != null && j.ExperienceYear <= request.ExperienceYearMax.Value);
             }
 
             if (request.CompanyId.HasValue)

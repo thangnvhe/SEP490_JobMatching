@@ -649,9 +649,9 @@ export default function ViewJobList() {
                     Kỹ năng yêu cầu
                   </label>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {selectedJob.taxonomies.map((skill: string, index: number) => (
-                      <Badge key={index} variant="secondary">
-                        {skill}
+                    {selectedJob.taxonomies.map((taxonomy: any, index: number) => (
+                      <Badge key={taxonomy.id || index} variant="secondary">
+                        {taxonomy.name}
                       </Badge>
                     ))}
                   </div>

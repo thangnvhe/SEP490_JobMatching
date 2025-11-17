@@ -113,18 +113,12 @@ const cleanLocation = (location: string) => {
     }
   });
   
-  return cleanedLocation.trim();
+  const trimmed = cleanedLocation.trim();
+  // Limit to 40 characters with ellipsis
+  return trimmed.length > 40 ? `${trimmed.substring(0, 30)}...` : trimmed;
 };
 
-const getStatusColor = (status: string) => {
-  const statusMap: { [key: string]: string } = {
-    'Draft': 'bg-gray-100 text-gray-800',
-    'Moderated': 'bg-green-100 text-green-800',
-    'Rejected': 'bg-red-100 text-red-800',
-    'Expired': 'bg-yellow-100 text-yellow-800'
-  };
-  return statusMap[status] || 'bg-gray-100 text-gray-800';
-};
+
 
 // --- JobCard Component ---
 
@@ -143,8 +137,6 @@ export const JobCard: React.FC<JobCardProps> = ({
         setCompanyLoading(true);
         const response = await CompanyServices.getCompanyById(job.companyId.toString());
         if (response.isSuccess && response.result) {
-          console.log('Company data:', response.result); // Debug log
-          console.log('Logo path from DB:', response.result.logo); // Debug log
           setCompany(response.result);
         }
       } catch (error) {
@@ -174,8 +166,6 @@ export const JobCard: React.FC<JobCardProps> = ({
                     src={getLogoUrl(company?.logo)} 
                     alt={company?.name || `Company ${job.companyId}`}
                     className="object-cover"
-                    onLoad={() => console.log('Logo loaded successfully:', getLogoUrl(company?.logo))} // Debug
-                    onError={() => console.log('Logo failed to load:', getLogoUrl(company?.logo))} // Debug
                   />
                   <AvatarFallback className="bg-emerald-100 text-emerald-700 font-semibold rounded-lg">
                     {company?.name?.charAt(0)?.toUpperCase() || 'C'}
@@ -200,11 +190,6 @@ export const JobCard: React.FC<JobCardProps> = ({
           </div>
           
           <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-            {/* Status Badge */}
-            <Badge className={`text-xs ${getStatusColor(job.status)}`}>
-              {job.status}
-            </Badge>
-            
             {/* Bookmark Button */}
             {onSaveJob && (
               <Button
@@ -258,13 +243,13 @@ export const JobCard: React.FC<JobCardProps> = ({
         {/* Skills/Taxonomies */}
         {job.taxonomies && job.taxonomies.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {job.taxonomies.slice(0, 3).map((skill, index) => (
+            {job.taxonomies.slice(0, 3).map((taxonomy, index) => (
               <Badge
-                key={index}
+                key={taxonomy.id || index}
                 variant="secondary"
                 className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700"
               >
-                {skill}
+                {taxonomy.name}
               </Badge>
             ))}
             {job.taxonomies.length > 3 && (

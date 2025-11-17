@@ -56,20 +56,19 @@ const getExperienceRange = (experienceLevel: string): [number, number] => {
     case '-1--1':
       return [-1, -1]; // Không yêu cầu
     case '0-1':
-      return [0, 1];
+      return [0, 1];   // Từ 0 đến 1 năm (chính xác)
     case '1-3':
-      return [1, 3];
+      return [1, 3];   // Từ 1 đến 3 năm
     case '3-5':
-      return [3, 5];
+      return [3, 5];   // Từ 3 đến 5 năm
     case '5+':
-      return [5, 999];
+      return [5, 999]; // Từ 5 năm trở lên
     default:
       return [-1, -1];
   }
 };
 
 const JobsPage: React.FC = () => {
-  console.log('JobsPage component mounted');
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   
@@ -77,8 +76,6 @@ const JobsPage: React.FC = () => {
   const [jobs, setJobs] = useState<JobDetailResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [showMobileFilter, setShowMobileFilter] = useState(false);
-  
-  console.log('JobsPage current state - jobs:', jobs.length, 'loading:', loading);
   
   // Search state
   const [searchState, setSearchState] = useState<SearchState>(() => ({
@@ -134,7 +131,6 @@ const JobsPage: React.FC = () => {
 
   // Search jobs function
   const searchJobs = useCallback(async (state: SearchState) => {
-    console.log('searchJobs called with state:', state);
     setLoading(true);
     try {
       // Build API parameters
@@ -144,7 +140,14 @@ const JobsPage: React.FC = () => {
         Status: 3, // Only show opened jobs (Status.Opened = 3)
       };
 
-      console.log('API params being sent:', apiParams);
+      // Build search string from keyword and location
+      const searchTerms = [];
+      if (state.keyword) searchTerms.push(state.keyword);
+      if (state.location) searchTerms.push(state.location);
+      
+      if (searchTerms.length > 0) {
+        apiParams.Search = searchTerms.join(' ');
+      }
 
       // Add search filters
       if (state.keyword) {
@@ -155,31 +158,33 @@ const JobsPage: React.FC = () => {
       }
       if (state.filters.salaryRange) {
         const [min, max] = getSalaryRange(state.filters.salaryRange);
-        if (min !== -1 || max !== -1) {
-          apiParams.SalaryMin = min;
-          apiParams.SalaryMax = max;
-        }
+        // Gửi -1 cho cả min và max khi chọn thỏa thuận
+        apiParams.SalaryMin = min;
+        apiParams.SalaryMax = max;
       }
       if (state.filters.experienceLevel) {
         const [minExp, maxExp] = getExperienceRange(state.filters.experienceLevel);
-        // Use average or minimum experience for filtering
+        // Gửi cả min và max để backend xử lý chính xác
         if (minExp !== -1) {
-          apiParams.ExperienceYear = minExp;
+          apiParams.ExperienceYearMin = minExp;
+        }
+        if (maxExp !== -1 && maxExp !== 999) { // 999 là giá trị max cho '5+'
+          apiParams.ExperienceYearMax = maxExp;
+        }
+        // Nếu cả min và max đều là -1 (không yêu cầu) thì gửi -1
+        if (minExp === -1 && maxExp === -1) {
+          apiParams.ExperienceYearMin = -1;
+          apiParams.ExperienceYearMax = -1;
         }
       }
       if (state.filters.jobType) {
         apiParams.JobType = mapJobTypeToAPI(state.filters.jobType);
       }
       
-      console.log('Final API params:', apiParams);
-      
       // Call API
       const response: PaginatedResponse<JobDetailResponse> = await JobServices.getJobsWithPagination(apiParams);
       
-      console.log('API response:', response);
-      
       if (response.isSuccess) {
-        console.log('Jobs found:', response.result.items.length);
         setJobs(response.result.items);
         setPaginationInfo({
           totalItems: response.result.pageInfo.totalItem,
@@ -187,7 +192,6 @@ const JobsPage: React.FC = () => {
           currentPage: state.pagination.page,
         });
       } else {
-        console.log('API failed with response:', response);
         toast.error("Không thể tải danh sách việc làm");
         setJobs([]);
         setPaginationInfo({
@@ -197,7 +201,6 @@ const JobsPage: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error("Search jobs error:", error);
       toast.error("Có lỗi xảy ra khi tìm kiếm việc làm");
       setJobs([]);
       setPaginationInfo({
@@ -286,7 +289,7 @@ const JobsPage: React.FC = () => {
       },
       pagination: {
         page: parseInt(searchParams.get("page") || "1"),
-        size: 8,
+        size: 12,  // Match với initial state
         sortBy: searchParams.get("sortBy") || "latest",
       },
     };
