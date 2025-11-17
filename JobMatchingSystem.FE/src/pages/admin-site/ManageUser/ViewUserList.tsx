@@ -33,8 +33,8 @@ export default function ViewUserList() {
         page: 1,
         size: 10,
         search: '',
-        sortBy: 'email',
-        direction: 'asc',
+        sortBy: '',
+        isDecending: false,
     });
     const pageSizeOptions = [5, 10, 20, 50];
     const debouncedKeyword = useDebounce(keyword, 700);
@@ -77,14 +77,22 @@ export default function ViewUserList() {
     const handleSortingChange = (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
         const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(sorting) : updaterOrValue;
         setSorting(newSorting);
-        if (newSorting.length > 0) {
+        setPaginationInput(prev => {
+            if (!newSorting.length) {
+                return {
+                    ...prev,
+                    sortBy: undefined,
+                    isDecending: undefined,
+                };
+            }
+
             const sort = newSorting[0];
-            setPaginationInput(prev => ({
+            return {
                 ...prev,
                 sortBy: sort.id,
-                direction: sort.desc ? 'desc' : 'asc'
-            }));
-        }
+                isDecending: !!sort.desc,
+            };
+        });
     };
 
     const handlePageChange = (page: number) => {
@@ -116,22 +124,6 @@ export default function ViewUserList() {
     };
 
     // Helper functions
-    const getRoleBadgeColor = (role: string) => {
-        switch (role?.toLowerCase()) {
-            case 'admin':
-                return 'bg-red-100 text-red-800';
-            case 'recruiter':
-            case 'superrecruiter':
-                return 'bg-blue-100 text-blue-800';
-            case 'candidate':
-                return 'bg-green-100 text-green-800';
-            case 'staff':
-                return 'bg-yellow-100 text-yellow-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
-
     const columns = useMemo<ColumnDef<User>[]>(() => [
         {
             id: "id",
@@ -192,20 +184,13 @@ export default function ViewUserList() {
             enableSorting: true,
         },
         {
-            id: "role",
-            accessorKey: "role",
-            header: "Vai trò",
+            id: "score",
+            accessorKey: "score",
+            header: "Điểm đánh giá",
             cell: ({ row }) => {
-                const role = row.getValue("role") as string
-                return (
-                    <Badge className={getRoleBadgeColor(role || '')}>
-                        {role === 'Admin' ? 'Quản trị viên' :
-                            role === 'Recruiter' ? 'Nhà tuyển dụng' :
-                                role === 'Candidate' ? 'Ứng viên' :
-                                    role === 'Staff' ? 'Nhân viên' :
-                                        role === 'SuperRecruiter' ? 'Nhà tuyển dụng cao cấp' : 'Không xác định'}
-                    </Badge>
-                )
+                const score = row.getValue("score") as number | null
+                if (score === null || score === undefined) return 'Chưa có'
+                return score
             },
             enableSorting: true,
         },
