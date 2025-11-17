@@ -7,13 +7,13 @@ export interface JobSearchParams {
   Location?: string;
   SalaryMin?: number;
   SalaryMax?: number;
-  JobType?: number;
+  JobType?: string; // Changed from number to string
   Status?: number;
   CompanyId?: number;
   RecuiterId?: number;
   TaxonomyIds?: number[];
-  page?: number;
-  size?: number;
+  Page?: number;   // Changed from page to Page
+  Size?: number;   // Changed from size to Size
   sortBy?: string;
 }
 
