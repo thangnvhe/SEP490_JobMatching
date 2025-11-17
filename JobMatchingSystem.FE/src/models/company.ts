@@ -7,7 +7,7 @@ export interface Company {
   website: string;
   address: string;
   phoneContact: string;
-  status: number; // 1: Pending, 2: Approved, 3: Rejected
+  status: number; // 0: Pending, 1: Approved, 3: Rejected
   taxCode: string;
   licenseFile: string;
 }
@@ -15,11 +15,11 @@ export interface Company {
 // Helper để convert status number thành string để hiển thị
 export const getStatusString = (status: number): 'Pending' | 'Approved' | 'Rejected' => {
   switch (status) {
-    case 1:
+    case 0:
       return 'Pending';
-    case 2:
+    case 1:
       return 'Approved';  
-    case 3:
+    case 2:
       return 'Rejected';
     default:
       return 'Pending';
@@ -30,12 +30,12 @@ export const getStatusString = (status: number): 'Pending' | 'Approved' | 'Rejec
 export const getStatusNumber = (status: 'Pending' | 'Approved' | 'Rejected'): number => {
   switch (status) {
     case 'Pending':
-      return 1;
+      return 0;
     case 'Approved':
-      return 2;
-    case 'Rejected':
-      return 3;
-    default:
       return 1;
+    case 'Rejected':
+      return 2;
+    default:
+      return 0;
   }
 };

@@ -1,887 +1,529 @@
-// import React, { useState, useEffect } from "react";
-// import { useParams, useNavigate } from "react-router-dom";
-// import { Button } from "@/components/ui/button";
-// import { Badge } from "@/components/ui/badge";
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// import { JobCard } from "@/components/ui/jobs/JobCard";
-// import { CompanyCard } from "@/components/ui/companies/CompanyCard";
-// import {
-//   MapPin,
-//   Globe,
-//   Users,
-//   Calendar,
-//   Heart,
-//   ExternalLink,
-//   Building2,
-//   Mail,
-//   Phone,
-//   Target,
-//   Eye,
-//   Award,
-//   Briefcase,
-//   ArrowRight,
-//   Loader2,
-//   Camera,
-//   X,
-//   ChevronLeft,
-//   ChevronRight,
-//   ArrowLeft,
-//   AlertCircle,
-//   Info,
-// } from "lucide-react";
-
-// // Services
-// import { companyService } from "@/services/test-services/companyService";
-
-// // Types
-// import type { Company } from "@/models/company";
-// import type { JobTest } from "@/models/job"; // Đổi tên từ JobTest
-
-// // Utils
-// import { toast } from "sonner";
-
-// // --- KẾT THÚC IMPORTS ---
-
-// // -----------------------------------------------------------------
-// // COMPONENT 1: CompanyDetailHeader (đã xóa 'export')
-// // -----------------------------------------------------------------
-
-// interface CompanyDetailHeaderProps {
-//   company: Company;
-//   isFollowing?: boolean;
-//   onFollow?: () => void;
-//   onUnfollow?: () => void;
-// }
-
-// const CompanyDetailHeader: React.FC<CompanyDetailHeaderProps> = ({
-//   company,
-//   isFollowing = false,
-//   onFollow,
-//   onUnfollow,
-// }) => {
-//   const [following, setFollowing] = useState(isFollowing);
-//   const [isLoading, setIsLoading] = useState(false);
-
-//   // Đồng bộ state khi prop isFollowing thay đổi từ bên ngoài
-//   useEffect(() => {
-//     setFollowing(isFollowing);
-//   }, [isFollowing]);
-
-//   const handleFollowToggle = async () => {
-//     setIsLoading(true);
-//     try {
-//       if (following) {
-//         await onUnfollow?.();
-//         // setFollowing(false); // Để component cha quyết định state
-//         // toast.success('Đã bỏ theo dõi công ty');
-//       } else {
-//         await onFollow?.();
-//         // setFollowing(true); // Để component cha quyết định state
-//         // toast.success('Đã theo dõi công ty');
-//       }
-//     } catch (error) {
-//       toast.error("Có lỗi xảy ra, vui lòng thử lại");
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
-
-
-//   const handleVisitWebsite = () => {
-//     if (company.website) {
-//       window.open(company.website, "_blank");
-//     }
-//   };
-
-//   return (
-//     <Card className="bg-white border-0 shadow-sm">
-//       <CardContent className="p-8">
-//         <div className="flex flex-col lg:flex-row gap-6">
-//           {/* Company Logo */}
-//           <div className="flex-shrink-0">
-//             <div className="w-24 h-24 lg:w-32 lg:h-32 bg-gray-100 rounded-2xl overflow-hidden border-2 border-gray-200">
-//               {company.logo ? (
-//                 <img
-//                   src={company.logo}
-//                   alt={`${company.name} logo`}
-//                   className="w-full h-full object-cover"
-//                 />
-//               ) : (
-//                 <div className="w-full h-full flex items-center justify-center">
-//                   <Building2 className="w-8 h-8 lg:w-12 lg:h-12 text-gray-400" />
-//                 </div>
-//               )}
-//             </div>
-//           </div>
-
-//           {/* Company Info */}
-//           <div className="flex-1 min-w-0">
-//             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-//               <div className="flex-1 min-w-0">
-//                 {/* Company Name & Status */}
-//                 <div className="flex items-center gap-3 mb-2">
-//                   <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 truncate">
-//                     {company.name}
-//                   </h1>
-//                   <Badge
-//                     variant={
-//                       company.status.ACTIVE === "active"
-//                         ? "default"
-//                         : "secondary"
-//                     }
-//                     className="flex-shrink-0"
-//                   >
-//                     {company.status.ACTIVE === "active"
-//                       ? "Đang tuyển dụng"
-//                       : "Tạm dừng"}
-//                   </Badge>
-//                 </div>
-
-//                 {/* Location */}
-//                 {company.address && (
-//                   <div className="flex items-center gap-2 text-gray-600 mb-3">
-//                     <MapPin className="w-4 h-4 flex-shrink-0" />
-//                     <span className="text-sm lg:text-base truncate">
-//                       {company.address}
-//                     </span>
-//                   </div>
-//                 )}
-
-//                 {/* Description */}
-//                 <p className="text-gray-600 text-sm lg:text-base line-clamp-2 mb-4">
-//                   {company.description}
-//                 </p>
-
-//                 {/* Quick Info Grid (Dữ liệu mock) */}
-//                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-//                   <div className="text-center p-3 bg-gray-50 rounded-lg">
-//                     <Users className="w-5 h-5 text-gray-600 mx-auto mb-1" />
-//                     <div className="text-sm font-semibold text-gray-900">
-//                       500+
-//                     </div>
-//                     <div className="text-xs text-gray-500">Nhân viên</div>
-//                   </div>
-
-//                   <div className="text-center p-3 bg-gray-50 rounded-lg">
-//                     <Building2 className="w-5 h-5 text-gray-600 mx-auto mb-1" />
-//                     <div className="text-sm font-semibold text-gray-900">
-//                       IT
-//                     </div>
-//                     <div className="text-xs text-gray-500">Ngành nghề</div>
-//                   </div>
-
-//                   <div className="text-center p-3 bg-gray-50 rounded-lg">
-//                     <Calendar className="w-5 h-5 text-gray-600 mx-auto mb-1" />
-//                     <div className="text-sm font-semibold text-gray-900">
-//                       {new Date(company.createdAt).getFullYear()}
-//                     </div>
-//                     <div className="text-xs text-gray-500">Thành lập</div>
-//                   </div>
-
-//                   <div className="text-center p-3 bg-gray-50 rounded-lg">
-//                     <Heart className="w-5 h-5 text-gray-600 mx-auto mb-1" />
-//                     <div className="text-sm font-semibold text-gray-900">
-//                       1.2k
-//                     </div>
-//                     <div className="text-xs text-gray-500">Theo dõi</div>
-//                   </div>
-//                 </div>
-
-//                 {/* Contact Info */}
-//                 <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-//                   {company.website && (
-//                     <div className="flex items-center gap-1">
-//                       <Globe className="w-4 h-4" />
-//                       <span>{new URL(company.website).hostname}</span>
-//                     </div>
-//                   )}
-//                   {company.email && (
-//                     <div className="flex items-center gap-1">
-//                       <Mail className="w-4 h-4" />
-//                       <span>{company.email}</span>
-//                     </div>
-//                   )}
-//                   {company.phone && (
-//                     <div className="flex items-center gap-1">
-//                       <Phone className="w-4 h-4" />
-//                       <span>{company.phone}</span>
-//                     </div>
-//                   )}
-//                 </div>
-//               </div>
-
-//               {/* Action Buttons */}
-//               <div className="flex lg:flex-col gap-2 lg:w-40">
-//                 <Button
-//                   onClick={handleFollowToggle}
-//                   disabled={isLoading}
-//                   variant={following ? "outline" : "default"}
-//                   className="flex-1 lg:w-full"
-//                 >
-//                   <Heart
-//                     className={`w-4 h-4 mr-2 ${
-//                       following ? "fill-current text-red-500" : ""
-//                     }`}
-//                   />
-//                   {isLoading
-//                     ? "Đang xử lý..."
-//                     : following
-//                     ? "Đã theo dõi"
-//                     : "Theo dõi"}
-//                 </Button>
-
-//                 {company.website && (
-//                   <Button
-//                     onClick={handleVisitWebsite}
-//                     variant="outline"
-//                     size="sm"
-//                     className="lg:w-full"
-//                   >
-//                     <ExternalLink className="w-4 h-4 mr-2" />
-//                     Website
-//                   </Button>
-//                 )}
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-//       </CardContent>
-//     </Card>
-//   );
-// };
-
-// // -----------------------------------------------------------------
-// // COMPONENT 2: CompanyAbout (đã xóa 'export')
-// // -----------------------------------------------------------------
-
-// interface CompanyAboutProps {
-//   company: Company;
-// }
-
-// const CompanyAbout: React.FC<CompanyAboutProps> = ({ company }) => {
-//   // Mock additional data
-//   const companyDetails = {
-//     industry: "Công nghệ thông tin",
-//     companySize: "500-1000 nhân viên",
-//     foundedYear: new Date(company.createdAt).getFullYear(),
-//     workingDays: "Thứ 2 - Thứ 6",
-//     workingHours: "8:00 - 17:30",
-//     benefits: [
-//       "Bảo hiểm sức khỏe toàn diện",
-//       "Thưởng hiệu suất hàng tháng",
-//       "Đào tạo và phát triển nghề nghiệp",
-//       "Môi trường làm việc năng động",
-//       "Team building hàng quý",
-//       "Flexible working time",
-//     ],
-//     mission:
-//       "Cung cấp các giải pháp công nghệ tiên tiến, giúp doanh nghiệp chuyển đổi số thành công và phát triển bền vững trong kỷ nguyên số.",
-//     vision:
-//       "Trở thành công ty công nghệ hàng đầu Việt Nam, đồng hành cùng khách hàng trong hành trình chuyển đổi số và phát triển kinh doanh.",
-//     values: [
-//       "Đổi mới sáng tao",
-//       "Chất lượng đầu tiên",
-//       "Khách hàng là trung tâm",
-//       "Làm việc nhóm hiệu quả",
-//       "Phát triển bền vững",
-//     ],
-//   };
-
-//   return (
-//     <div className="space-y-6">
-//       {/* Company Overview */}
-//       <Card>
-//         <CardHeader>
-//           <CardTitle className="flex items-center gap-2">
-//             <Building2 className="w-5 h-5 text-blue-600" />
-//             Tổng quan công ty
-//           </CardTitle>
-//         </CardHeader>
-//         <CardContent className="space-y-4">
-//           <p className="text-gray-600 leading-relaxed">{company.description}</p>
-
-//           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-//             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-//               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-//                 <Briefcase className="w-5 h-5 text-blue-600" />
-//               </div>
-//               <div>
-//                 <div className="text-sm text-gray-500">Ngành nghề</div>
-//                 <div className="font-semibold text-gray-900">
-//                   {companyDetails.industry}
-//                 </div>
-//               </div>
-//             </div>
-
-//             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-//               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-//                 <Users className="w-5 h-5 text-green-600" />
-//               </div>
-//               <div>
-//                 <div className="text-sm text-gray-500">Quy mô</div>
-//                 <div className="font-semibold text-gray-900">
-//                   {companyDetails.companySize}
-//                 </div>
-//               </div>
-//             </div>
-
-//             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-//               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-//                 <Calendar className="w-5 h-5 text-purple-600" />
-//               </div>
-//               <div>
-//                 <div className="text-sm text-gray-500">Thành lập</div>
-//                 <div className="font-semibold text-gray-900">
-//                   {companyDetails.foundedYear}
-//                 </div>
-//               </div>
-//             </div>
-
-//             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-//               <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-//                 <MapPin className="w-5 h-5 text-orange-600" />
-//               </div>
-//               <div>
-//                 <div className="text-sm text-gray-500">Địa điểm</div>
-//                 <div className="font-semibold text-gray-900">
-//                   {company.address || "Chưa cập nhật"}
-//                 </div>
-//               </div>
-//             </div>
-
-//             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-//               <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
-//                 <Globe className="w-5 h-5 text-teal-600" />
-//               </div>
-//               <div>
-//                 <div className="text-sm text-gray-500">Website</div>
-//                 <div className="font-semibold text-gray-900 truncate">
-//                   {company.website
-//                     ? new URL(company.website).hostname
-//                     : "Chưa cập nhật"}
-//                 </div>
-//               </div>
-//             </div>
-
-//             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-//               <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-//                 <Calendar className="w-5 h-5 text-red-600" />
-//               </div>
-//               <div>
-//                 <div className="text-sm text-gray-500">Giờ làm việc</div>
-//                 <div className="font-semibold text-gray-900">
-//                   {companyDetails.workingHours}
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         </CardContent>
-//       </Card>
-
-//       {/* Mission & Vision */}
-//       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-//         <Card>
-//           <CardHeader>
-//             <CardTitle className="flex items-center gap-2">
-//               <Target className="w-5 h-5 text-green-600" />
-//               Sứ mệnh
-//             </CardTitle>
-//           </CardHeader>
-//           <CardContent>
-//             <p className="text-gray-600 leading-relaxed">
-//               {companyDetails.mission}
-//             </p>
-//           </CardContent>
-//         </Card>
-
-//         <Card>
-//           <CardHeader>
-//             <CardTitle className="flex items-center gap-2">
-//               <Eye className="w-5 h-5 text-blue-600" />
-//               Tầm nhìn
-//             </CardTitle>
-//           </CardHeader>
-//           <CardContent>
-//             <p className="text-gray-600 leading-relaxed">
-//               {companyDetails.vision}
-//             </p>
-//           </CardContent>
-//         </Card>
-//       </div>
-
-//       {/* Core Values */}
-//       <Card>
-//         <CardHeader>
-//           <CardTitle className="flex items-center gap-2">
-//             <Award className="w-5 h-5 text-purple-600" />
-//             Giá trị cốt lõi
-//           </CardTitle>
-//         </CardHeader>
-//         <CardContent>
-//           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-//             {companyDetails.values.map((value, index) => (
-//               <Badge
-//                 key={index}
-//                 variant="secondary"
-//                 className="justify-center py-2 px-3"
-//               >
-//                 {value}
-//               </Badge>
-//             ))}
-//           </div>
-//         </CardContent>
-//       </Card>
-
-//       {/* Benefits & Perks */}
-//       <Card>
-//         <CardHeader>
-//           <CardTitle className="flex items-center gap-2">
-//             <Award className="w-5 h-5 text-orange-600" />
-//             Quyền lợi & Phúc lợi
-//           </CardTitle>
-//         </CardHeader>
-//         <CardContent>
-//           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-//             {companyDetails.benefits.map((benefit, index) => (
-//               <div
-//                 key={index}
-//                 className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
-//               >
-//                 <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-//                 <span className="text-gray-700">{benefit}</span>
-//               </div>
-//             ))}
-//           </div>
-//         </CardContent>
-//       </Card>
-
-//       {/* Working Environment */}
-//       <Card>
-//         <CardHeader>
-//           <CardTitle className="flex items-center gap-2">
-//             <Users className="w-5 h-5 text-indigo-600" />
-//             Môi trường làm việc
-//           </CardTitle>
-//         </CardHeader>
-//         <CardContent>
-//           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//             <div>
-//               <h4 className="font-semibold text-gray-900 mb-2">
-//                 Thời gian làm việc
-//               </h4>
-//               <p className="text-gray-600">{companyDetails.workingDays}</p>
-//               <p className="text-gray-600">{companyDetails.workingHours}</p>
-//             </div>
-//             <div>
-//               <h4 className="font-semibold text-gray-900 mb-2">
-//                 Văn hóa công ty
-//               </h4>
-//               <p className="text-gray-600">
-//                 Môi trường làm việc thân thiện, cởi mở và khuyến khích sự sáng
-//                 tạo. Công ty luôn tạo điều kiện để nhân viên phát triển và thăng
-//                 tiến trong sự nghiệp.
-//               </p>
-//             </div>
-//           </div>
-//         </CardContent>
-//       </Card>
-//     </div>
-//   );
-// };
-
-// // -----------------------------------------------------------------
-// // COMPONENT 3: CompanyJobs (đã xóa 'export')
-// // -----------------------------------------------------------------
-
-// interface CompanyJobsProps {
-//   companyId: string;
-//   companyName: string;
-// }
-
-// const CompanyJobs: React.FC<CompanyJobsProps> = ({
-//   companyId,
-//   companyName,
-// }) => {
-//   const [jobs, setJobs] = useState<JobTest[]>([]);
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-//   const navigate = useNavigate();
-
-//   useEffect(() => {
-//     const fetchJobs = async () => {
-//       try {
-//         setIsLoading(true);
-//         setError(null);
-//         const companyJobs = await companyService.getCompanyJobs(companyId);
-//         setJobs(companyJobs);
-//       } catch (err) {
-//         setError("Không thể tải danh sách việc làm");
-//         console.error("Error fetching company jobs:", err);
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-
-//     fetchJobs();
-//   }, [companyId]);
-
-//   const handleJobClick = (jobId: string) => {
-//     navigate(`/jobs/${jobId}`);
-//   };
-
-//   const handleViewAllJobs = () => {
-//     navigate(`/jobs?company=${encodeURIComponent(companyName)}`);
-//   };
-
-//   if (isLoading) {
-//     return (
-//       <Card>
-//         <CardHeader>
-//           <CardTitle className="flex items-center gap-2">
-//             <Briefcase className="w-5 h-5 text-blue-600" />
-//             Việc làm tại {companyName}
-//           </CardTitle>
-//         </CardHeader>
-//         <CardContent>
-//           <div className="flex items-center justify-center py-12">
-//             <div className="text-center">
-//               <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-//               <p className="text-gray-500">Đang tải danh sách việc làm...</p>
-//             </div>
-//           </div>
-//         </CardContent>
-//       </Card>
-//     );
-//   }
-
-//   if (error) {
-//     return (
-//       <Card>
-//         <CardHeader>
-//           <CardTitle className="flex items-center gap-2">
-//             <Briefcase className="w-5 h-5 text-blue-600" />
-//             Việc làm tại {companyName}
-//           </CardTitle>
-//         </CardHeader>
-//         <CardContent>
-//           <div className="text-center py-12">
-//             <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-//             <p className="text-gray-500 mb-2">{error}</p>
-//             <Button variant="outline" onClick={() => window.location.reload()}>
-//               Thử lại
-//             </Button>
-//           </div>
-//         </CardContent>
-//       </Card>
-//     );
-//   }
-
-//   if (jobs.length === 0) {
-//     return (
-//       <Card>
-//         <CardHeader>
-//           <CardTitle className="flex items-center gap-2">
-//             <Briefcase className="w-5 h-5 text-blue-600" />
-//             Việc làm tại {companyName}
-//           </CardTitle>
-//         </CardHeader>
-//         <CardContent>
-//           <div className="text-center py-12">
-//             <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-//             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-//               Chưa có việc làm nào
-//             </h3>
-//             <p className="text-gray-500 mb-4">
-//               Công ty này hiện tại chưa có vị trí tuyển dụng nào.
-//             </p>
-//             <Button variant="outline" onClick={handleViewAllJobs}>
-//               Xem tất cả việc làm
-//             </Button>
-//           </div>
-//         </CardContent>
-//       </Card>
-//     );
-//   }
-
-//   return (
-//     <Card>
-//       <CardHeader>
-//         <div className="flex items-center justify-between">
-//           <CardTitle className="flex items-center gap-2">
-//             <Briefcase className="w-5 h-5 text-blue-600" />
-//             Việc làm tại {companyName}
-//             <Badge variant="secondary" className="ml-2">
-//               {jobs.length} vị trí
-//             </Badge>
-//           </CardTitle>
-
-//           {jobs.length > 0 && (
-//             <Button
-//               variant="outline"
-//               onClick={handleViewAllJobs}
-//               className="hidden sm:flex items-center gap-2"
-//             >
-//               Xem tất cả
-//               <ArrowRight className="w-4 h-4" />
-//             </Button>
-//           )}
-//         </div>
-//       </CardHeader>
-
-//       <CardContent className="space-y-4">
-//         {/* Job Grid */}
-//         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-//           {jobs.map((job) => (
-//             <JobCard
-//               key={job.id}
-//               job={job}
-//               onJobDetails={handleJobClick}
-//               className="h-full hover:shadow-md transition-shadow"
-//             />
-//           ))}
-//         </div>
-
-//         {/* View All Button (Mobile) */}
-//         {jobs.length > 0 && (
-//           <div className="flex justify-center sm:hidden pt-4">
-//             <Button
-//               variant="outline"
-//               onClick={handleViewAllJobs}
-//               className="w-full"
-//             >
-//               Xem tất cả {jobs.length} việc làm
-//               <ArrowRight className="w-4 h-4 ml-2" />
-//             </Button>
-//           </div>
-//         )}
-//       </CardContent>
-//     </Card>
-//   );
-// };
-
-// // -----------------------------------------------------------------
-// // COMPONENT 4: SimilarCompanies (đã xóa 'export')
-// // -----------------------------------------------------------------
-
-// interface SimilarCompaniesProps {
-//   currentCompanyId: string;
-//   currentCompanyName: string;
-// }
-
-// const SimilarCompanies: React.FC<SimilarCompaniesProps> = ({
-//   currentCompanyId,
-//   currentCompanyName,
-// }) => {
-//   const [companies, setCompanies] = useState<Company[]>([]);
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-//   const navigate = useNavigate();
-
-//   useEffect(() => {
-//     const fetchSimilarCompanies = async () => {
-//       try {
-//         setIsLoading(true);
-//         setError(null);
-//         const similarCompanies = await companyService.getSimilarCompanies(
-//           currentCompanyId,
-//           6
-//         );
-//         setCompanies(similarCompanies);
-//       } catch (err) {
-//         setError("Không thể tải danh sách công ty tương tự");
-//         console.error("Error fetching similar companies:", err);
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-
-//     fetchSimilarCompanies();
-//   }, [currentCompanyId]);
-
-//   const handleCompanyClick = (companyId: string) => {
-//     navigate(`/companies/${companyId}`);
-//   };
-
-//   const handleViewAllCompanies = () => {
-//     navigate("/companies");
-//   };
-
-//   if (isLoading) {
-//     return (
-//       <Card>
-//         <CardHeader>
-//           <CardTitle className="flex items-center gap-2">
-//             <Building2 className="w-5 h-5 text-green-600" />
-//             Công ty tương tự
-//           </CardTitle>
-//         </CardHeader>
-//         <CardContent>
-//           <div className="flex items-center justify-center py-12">
-//             <div className="text-center">
-//               <Loader2 className="w-8 h-8 animate-spin text-green-600 mx-auto mb-4" />
-//               <p className="text-gray-500">Đang tải danh sách công ty...</p>
-//             </div>
-//           </div>
-//         </CardContent>
-//       </Card>
-//     );
-//   }
-
-//   if (error) {
-//     return (
-//       <Card>
-//         <CardHeader>
-//           <CardTitle className="flex items-center gap-2">
-//             <Building2 className="w-5 h-5 text-green-600" />
-//             Công ty tương tự
-//           </CardTitle>
-//         </CardHeader>
-//         <CardContent>
-//           <div className="text-center py-12">
-//             <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-//             <p className="text-gray-500 mb-2">{error}</p>
-//             <Button variant="outline" onClick={() => window.location.reload()}>
-//               Thử lại
-//             </Button>
-//           </div>
-//         </CardContent>
-//       </Card>
-//     );
-//   }
-
-//   if (companies.length === 0) {
-//     return (
-//       <Card>
-//         <CardHeader>
-//           <CardTitle className="flex items-center gap-2">
-//             <Building2 className="w-5 h-5 text-green-600" />
-//             Công ty tương tự
-//           </CardTitle>
-//         </CardHeader>
-//         <CardContent>
-//           <div className="text-center py-12">
-//             <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-//             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-//               Không tìm thấy công ty tương tự
-//             </h3>
-//             <p className="text-gray-500 mb-4">
-//               Hiện tại chưa có công ty nào tương tự như {currentCompanyName}.
-//             </p>
-//             <Button variant="outline" onClick={handleViewAllCompanies}>
-//               Xem tất cả công ty
-//             </Button>
-//           </div>
-//         </CardContent>
-//       </Card>
-//     );
-//   }
-
-//   return (
-//     <Card>
-//       <CardHeader>
-//         <div className="flex items-center justify-between">
-//           <CardTitle className="flex items-center gap-2">
-//             <Building2 className="w-5 h-5 text-green-600" />
-//             Công ty tương tự
-//           </CardTitle>
-
-//           <Button
-//             variant="outline"
-//             onClick={handleViewAllCompanies}
-//             className="hidden sm:flex items-center gap-2"
-//           >
-//             Xem tất cả
-//             <ArrowRight className="w-4 h-4" />
-//           </Button>
-//         </div>
-//       </CardHeader>
-
-//       <CardContent className="space-y-4">
-//         {/* Company Grid */}
-//         <div className="grid grid-cols-1 gap-4">
-//           {companies.map((company) => (
-//             <CompanyCard
-//               key={company.id}
-//               company={company}
-//               onViewDetails={handleCompanyClick}
-//               className="h-full"
-//             />
-//           ))}
-//         </div>
-
-//         {/* View All Button (Mobile) */}
-//         <div className="flex justify-center sm:hidden pt-4">
-//           <Button
-//             variant="outline"
-//             onClick={handleViewAllCompanies}
-//             className="w-full"
-//           >
-//             Xem tất cả công ty
-//             <ArrowRight className="w-4 h-4 ml-2" />
-//           </Button>
-//         </div>
-//       </CardContent>
-//     </Card>
-//   );
-// };
-
-// // -----------------------------------------------------------------
-// // COMPONENT 5: CompanyGallery (đã xóa 'export')
-// // -----------------------------------------------------------------
-
-// interface CompanyGalleryProps {
-//   companyName: string;
-// }
-
-// interface GalleryImage {
-//   id: string;
-//   url: string;
-//   title: string;
-//   category: "office" | "team" | "event" | "product";
-//   description?: string;
-// }
-
-// const CompanyGallery: React.FC<CompanyGalleryProps> = ({ companyName }) => {
-//   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
-//   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-
-//   // Mock gallery images
-//   const galleryImages: GalleryImage[] = [
-//     {
-//       id: "1",
-//       url: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=500",
-//       title: "Văn phòng làm việc chính",
-//       category: "office",
-//       description: "Không gian làm việc hiện đại và thoáng mát",
-//     },
-//     {
-//       id: "2",
-//       url: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=500",
-//       title: "Khu vực nghỉ ngơi",
-//       category: "office",
-//       description: "Không gian thư giãn cho nhân viên",
-//     },
-//     {
-//       id: "3",
-//       url: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500",
-//       title: "Đội ngũ phát triển",
-//       category: "team",
-//       description: "Team developers năng động và sáng tạo",
-//     },
-//     {
-//       id: "4",
-//       url: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=500",
-//       title: "Phòng họp Executive",
-//       category: "office",
-//       description: "Phòng họp hiện đại với đầy đủ tiện nghi",
-//     },
-//     {
-//       id: "5",
-//       url: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=500",
-//       title: "Team Building 2024",
-//       category: "event",
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  MapPin,
+  Globe,
+  Users,
+  Building2,
+  Mail,
+  Phone,
+  ArrowLeft,
+  Loader2,
+  AlertCircle,
+  ExternalLink,
+  Award,
+  Target,
+  Eye,
+  Calendar,
+  Briefcase
+} from "lucide-react";
+
+// Services
+import { CompanyServices } from "@/services/company.service";
+
+// Types
+import type { Company } from "@/models/company";
+import { getStatusString } from "@/models/company";
+
+// Utils
+import { API_BASE_URL } from "../../../../env.ts";
+
+// -----------------------------------------------------------------
+// COMPONENT: CompanyDetailHeader
+// -----------------------------------------------------------------
+
+interface CompanyDetailHeaderProps {
+  company: Company;
+}
+
+const CompanyDetailHeader: React.FC<CompanyDetailHeaderProps> = ({ company }) => {
+  const navigate = useNavigate();
+
+  // Helper function to get logo URL
+  const getLogoUrl = (logoPath?: string): string | undefined => {
+    if (!logoPath) return undefined;
+    
+    if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
+      return logoPath;
+    }
+    
+    const baseUrl = API_BASE_URL.replace('/api', '');
+    return `${baseUrl}${logoPath.startsWith('/') ? '' : '/'}${logoPath}`;
+  };
+
+  const handleVisitWebsite = () => {
+    if (company.website) {
+      window.open(company.website, "_blank");
+    }
+  };
+
+  const statusBadgeColor = company.status === 1 ? "default" : "secondary";
+  const statusText = company.status === 1 ? "Đã được duyệt" : getStatusString(company.status);
+
+  return (
+    <Card className="bg-white border-0 shadow-sm">
+      <CardContent className="p-8">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Company Logo */}
+          <div className="flex-shrink-0">
+            <div className="w-24 h-24 lg:w-32 lg:h-32 bg-gray-100 rounded-2xl overflow-hidden border-2 border-gray-200">
+              {company.logo ? (
+                <img
+                  src={getLogoUrl(company.logo)}
+                  alt={`${company.name} logo`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    target.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+              ) : null}
+              <div className={`w-full h-full flex items-center justify-center ${company.logo ? 'hidden' : ''}`}>
+                <Building2 className="w-8 h-8 lg:w-12 lg:h-12 text-gray-400" />
+              </div>
+            </div>
+          </div>
+
+          {/* Company Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                {/* Company Name & Status */}
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 truncate">
+                    {company.name}
+                  </h1>
+                  <Badge variant={statusBadgeColor} className="flex-shrink-0">
+                    {statusText}
+                  </Badge>
+                </div>
+
+                {/* Location */}
+                {company.address && (
+                  <div className="flex items-center gap-2 text-gray-600 mb-3">
+                    <MapPin className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-sm lg:text-base truncate">
+                      {company.address}
+                    </span>
+                  </div>
+                )}
+
+                {/* Description */}
+                <p className="text-gray-600 text-sm lg:text-base line-clamp-3 mb-4">
+                  {company.description}
+                </p>
+
+                {/* Contact Info */}
+                <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+                  {company.website && (
+                    <div className="flex items-center gap-1">
+                      <Globe className="w-4 h-4" />
+                      <span>{new URL(company.website).hostname}</span>
+                    </div>
+                  )}
+                  {company.email && (
+                    <div className="flex items-center gap-1">
+                      <Mail className="w-4 h-4" />
+                      <span>{company.email}</span>
+                    </div>
+                  )}
+                  {company.phoneContact && (
+                    <div className="flex items-center gap-1">
+                      <Phone className="w-4 h-4" />
+                      <span>{company.phoneContact}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex lg:flex-col gap-2 lg:w-40">
+                <Button
+                  onClick={() => navigate('/companies')}
+                  variant="outline"
+                  className="flex-1 lg:w-full"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Quay lại
+                </Button>
+
+                {company.website && (
+                  <Button
+                    onClick={handleVisitWebsite}
+                    variant="default"
+                    className="flex-1 lg:w-full"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Website
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// -----------------------------------------------------------------
+// COMPONENT: CompanyAbout
+// -----------------------------------------------------------------
+
+interface CompanyAboutProps {
+  company: Company;
+}
+
+const CompanyAbout: React.FC<CompanyAboutProps> = ({ company }) => {
+  // Mock additional data cho demo
+  const companyDetails = {
+    industry: "Công nghệ thông tin",
+    companySize: "500-1000 nhân viên",
+    foundedYear: "2010",
+    workingDays: "Thứ 2 - Thứ 6",
+    workingHours: "8:00 - 17:30",
+    benefits: [
+      "Bảo hiểm sức khỏe toàn diện",
+      "Thưởng hiệu suất hàng tháng", 
+      "Đào tạo và phát triển nghề nghiệp",
+      "Môi trường làm việc năng động",
+      "Team building hàng quý",
+      "Flexible working time",
+    ],
+    mission: "Cung cấp các giải pháp công nghệ tiên tiến, giúp doanh nghiệp chuyển đổi số thành công và phát triển bền vững trong kỷ nguyên số.",
+    vision: "Trở thành công ty công nghệ hàng đầu Việt Nam, đồng hành cùng khách hàng trong hành trình chuyển đổi số và phát triển kinh doanh.",
+    values: [
+      "Đổi mới sáng tạo",
+      "Chất lượng đầu tiên", 
+      "Khách hàng là trung tâm",
+      "Làm việc nhóm hiệu quả",
+      "Phát triển bền vững",
+    ],
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Company Overview */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-blue-600" />
+            Tổng quan công ty
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-gray-600 leading-relaxed">{company.description}</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Briefcase className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">Ngành nghề</div>
+                <div className="font-semibold text-gray-900">
+                  {companyDetails.industry}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">Quy mô</div>
+                <div className="font-semibold text-gray-900">
+                  {companyDetails.companySize}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">Thành lập</div>
+                <div className="font-semibold text-gray-900">
+                  {companyDetails.foundedYear}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <MapPin className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">Địa điểm</div>
+                <div className="font-semibold text-gray-900">
+                  {company.address || "Chưa cập nhật"}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                <Globe className="w-5 h-5 text-teal-600" />
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">Website</div>
+                <div className="font-semibold text-gray-900 truncate">
+                  {company.website
+                    ? new URL(company.website).hostname
+                    : "Chưa cập nhật"}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <Phone className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">Liên hệ</div>
+                <div className="font-semibold text-gray-900">
+                  {company.phoneContact || "Chưa cập nhật"}
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Mission & Vision */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-green-600" />
+              Sứ mệnh
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 leading-relaxed">
+              {companyDetails.mission}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-blue-600" />
+              Tầm nhìn
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 leading-relaxed">
+              {companyDetails.vision}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Core Values */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Award className="w-5 h-5 text-purple-600" />
+            Giá trị cốt lõi
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {companyDetails.values.map((value, index) => (
+              <Badge
+                key={index}
+                variant="secondary"
+                className="justify-center py-2 px-3"
+              >
+                {value}
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Benefits & Perks */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Award className="w-5 h-5 text-orange-600" />
+            Quyền lợi & Phúc lợi
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {companyDetails.benefits.map((benefit, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+              >
+                <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                <span className="text-gray-700">{benefit}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Working Environment */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-indigo-600" />
+            Môi trường làm việc
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Thời gian làm việc
+              </h4>
+              <p className="text-gray-600">{companyDetails.workingDays}</p>
+              <p className="text-gray-600">{companyDetails.workingHours}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Văn hóa công ty
+              </h4>
+              <p className="text-gray-600">
+                Môi trường làm việc thân thiện, cởi mở và khuyến khích sự sáng tạo. 
+                Công ty luôn tạo điều kiện để nhân viên phát triển và thăng tiến trong sự nghiệp.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+// -----------------------------------------------------------------
+// MAIN COMPONENT: CompanyDetailPage
+// -----------------------------------------------------------------
+
+const CompanyDetailPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [company, setCompany] = useState<Company | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCompanyDetail = async () => {
+      if (!id) {
+        setError("ID công ty không hợp lệ");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await CompanyServices.getCompanyById(id);
+        
+        if (response?.isSuccess && response?.result) {
+          setCompany(response.result);
+        } else {
+          setError("Không thể tải thông tin công ty");
+        }
+      } catch (err) {
+        setError("Không thể tải thông tin công ty");
+        console.error("Error fetching company details:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCompanyDetail();
+  }, [id]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                Đang tải thông tin công ty...
+              </h2>
+              <p className="text-gray-500">Vui lòng đợi trong giây lát</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !company) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                {error || "Không tìm thấy thông tin công ty"}
+              </h2>
+              <p className="text-gray-500 mb-6">
+                Có lỗi xảy ra khi tải thông tin công ty hoặc công ty không tồn tại.
+              </p>
+              <div className="flex gap-4 justify-center">
+                <Button onClick={() => navigate('/companies')} variant="outline">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Quay lại danh sách
+                </Button>
+                <Button onClick={() => window.location.reload()}>
+                  Thử lại
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main content
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        {/* Company Header */}
+        <CompanyDetailHeader company={company} />
+
+        {/* Company Details Tabs */}
+        <div className="mt-8">
+          <Tabs defaultValue="about" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-1 lg:w-auto lg:grid-cols-1 lg:flex lg:h-auto lg:bg-transparent lg:p-0 lg:space-x-2">
+              <TabsTrigger value="about" className="lg:bg-white lg:border lg:border-gray-200 lg:shadow-sm lg:data-[state=active]:bg-blue-50 lg:data-[state=active]:text-blue-700 lg:data-[state=active]:border-blue-200">
+                Về công ty
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="about" className="space-y-6">
+              <CompanyAbout company={company} />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CompanyDetailPage;
 //       description: "Hoạt động team building hàng năm",
 //     },
 //     {
