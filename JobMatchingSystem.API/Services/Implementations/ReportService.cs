@@ -1,7 +1,9 @@
 ﻿using JobMatchingSystem.API.Data;
 using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Enums;
 using JobMatchingSystem.API.Exceptions;
+using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
@@ -24,6 +26,36 @@ namespace JobMatchingSystem.API.Services.Implementations
             _userManager = userManager;
             _context = context;
         }
+
+        public async Task<Report> GetReportByIdAsync(int id)
+        {
+            var report = await _reportRepository.GetByIdAsync(id);
+            if (report == null)
+                throw new AppException(ErrorCode.NotFoundReport());
+
+            return report;
+        }
+
+        public async Task CensorReportAsync(int id, int adminId, CensorReportRequest request)
+        {
+            var admin = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == adminId);
+            if (admin == null)
+                throw new AppException(ErrorCode.NotFoundUser());
+
+            var report = await _reportRepository.GetByIdAsync(id);
+            if (report == null)
+                throw new AppException(ErrorCode.NotFoundReport());
+
+            if (request.Status != ReportStatus.Approved && request.Status != ReportStatus.Rejected)
+                throw new AppException(ErrorCode.InvalidStatus());
+
+            report.VerifiedId = admin.Id;
+            report.Status = request.Status;
+            report.Note = request.Note;
+
+            await _reportRepository.UpdateAsync(report);
+        }
+
 
         public async Task CreateReportAsync(CreateReportRequest request, int userId)
         {
@@ -49,6 +81,44 @@ namespace JobMatchingSystem.API.Services.Implementations
             };
 
             await _reportRepository.CreateAsync(report);
+        }
+
+        public async Task<PagedResult<ReportDetailResponse>> GetReportsPagedAsync(GetReportPagedRequest request)
+        {
+            var reports = await _reportRepository.GetAllReportsPagedAsync(request);
+
+            if (reports == null || !reports.Any())
+            {
+                return new PagedResult<ReportDetailResponse>
+                {
+                    Items = new List<ReportDetailResponse>(),
+                    pageInfo = new PageInfo(0, request.Page, request.Size, request.SortBy ?? "", request.IsDescending)
+                };
+            }
+
+            var pagedReports = reports
+                .Skip((request.Page - 1) * request.Size)
+                .Take(request.Size)
+                .ToList();
+
+            var reportDtos = pagedReports.Select(r => new ReportDetailResponse
+            {
+                Id = r.Id,
+                JobId = r.JobId,
+                ReporterId = r.ReporterId,
+                VerifiedById = r.VerifiedId,
+                Subject = r.Subject.ToString(),
+                Reason = r.Reason,
+                Note = r.Note,
+                Status = r.Status.ToString(),
+                CreatedAt = r.CreatedAt
+            }).ToList();
+
+            return new PagedResult<ReportDetailResponse>
+            {
+                Items = reportDtos,
+                pageInfo = new PageInfo(reports.Count, request.Page, request.Size, request.SortBy ?? "", request.IsDescending)
+            };
         }
     }
 }
