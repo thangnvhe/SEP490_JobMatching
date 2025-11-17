@@ -24,7 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Migrations\" />
     <Folder Include="Mappings\" />
     <Folder Include="wwwroot\images\LicenseFile\" />
     <Folder Include="wwwroot\images\Logo\" />
