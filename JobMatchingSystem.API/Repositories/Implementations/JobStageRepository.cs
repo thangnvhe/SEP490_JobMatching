@@ -45,5 +45,10 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             _context.JobStages.Remove(stage);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<int> GetNumberStageById(int id)
+        {
+            return await _context.JobStages.Where(x=>x.JobId == id).CountAsync();
+        }
     }
 }

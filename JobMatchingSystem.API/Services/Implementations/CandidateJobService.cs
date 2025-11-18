@@ -44,7 +44,16 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (candidatejob == null) { 
             throw new AppException(ErrorCode.NotFoundCandidateJob());
             }
-            candidatejob.Status=Enums.CandidateJobStatus.Processing;
+            var countNumber=await _unitOfWork.JobStageRepository.GetNumberStageById(candidatejob.JobId);
+            if (countNumber == 0)
+            {
+                candidatejob.Status = Enums.CandidateJobStatus.Pass;
+            }
+            else
+            {
+                candidatejob.Status = Enums.CandidateJobStatus.Processing;
+            }
+            
             await _unitOfWork.CandidateJobRepository.Update(candidatejob);
             await _unitOfWork.SaveAsync();
         }

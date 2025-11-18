@@ -39,7 +39,8 @@ namespace JobMatchingSystem.API.Data.SeedData
                     FullName = $"Test Recruiter {i}",
                     EmailConfirmed = true,
                     IsActive = true,
-                    AccessFailedCount = 0
+                    AccessFailedCount = 0,
+                    CompanyId = i,
                 };
 
                 var createResult = await userManager.CreateAsync(recruiterUser, testPassword);
