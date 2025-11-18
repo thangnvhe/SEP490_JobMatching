@@ -11,10 +11,14 @@ namespace JobMatchingSystem.API.Repositories.Implementations
         public ICandidateJobRepository CandidateJobRepository { get; private set; }
         public IJobRepository JobRepository { get; private set; }
         public ICvUploadRepository CvUploadRepository {  get; private set; }
+        public ICandidateStageRepository CandidateStageRepository { get; private set; }
+        public IJobStageRepository JobStageRepository { get; private set; }
 
         public UnitOfWork(ApplicationDbContext context,IAuthRepository authRepository,ICompanyRepository companyRepository, ICandidateJobRepository candidateJobRepository,
         IJobRepository jobRepository,
-        ICvUploadRepository cvUploadRepository) 
+        ICvUploadRepository cvUploadRepository,
+        ICandidateStageRepository candidateStageRepository,
+        IJobStageRepository jobStageRepository) 
         {
             _context = context;
             AuthRepository = authRepository;
@@ -22,6 +26,8 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             CandidateJobRepository = candidateJobRepository;
             JobRepository = jobRepository;
             CvUploadRepository = cvUploadRepository;
+            CandidateStageRepository = candidateStageRepository;
+            JobStageRepository = jobStageRepository;
         }
         public async Task SaveAsync()
         {
