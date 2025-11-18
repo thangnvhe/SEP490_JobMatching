@@ -1,6 +1,8 @@
 import type { User } from '@/models/user';
 import { BaseServices } from './base.service';
 import axiosInstance from "@/interceptor/axiosInterceptor.old";
+import axios from "axios";
+import { API_BASE_URL } from "../../env.ts";
 import type { BaseResponse } from "@/models/base";
 import type { PaginationParamsInput } from "@/models/base";
 
@@ -31,6 +33,12 @@ export const UserServices = {
   },
   getUserProfile: async (): Promise<BaseResponse<User>> => {
     const response = await axiosInstance.get('/User/me');
+    return response.data;
+  },
+  verifyEmail: async (token: string): Promise<BaseResponse<unknown>> => {
+    const response = await axios.get(`${API_BASE_URL}Auth/verify-email`, {
+      params: { TokenLink: token },
+    });
     return response.data;
   }
 };

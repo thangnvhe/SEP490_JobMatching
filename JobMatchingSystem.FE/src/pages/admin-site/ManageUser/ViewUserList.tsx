@@ -39,7 +39,6 @@ export default function ViewUserList() {
     const pageSizeOptions = [5, 10, 20, 50];
     const debouncedKeyword = useDebounce(keyword, 700);
 
-    // Viết các hàm xử lý logic
     const getAllWithPagination = useCallback(async (params: PaginationParamsInput) => {
         try {
             setLoading(true);
@@ -55,7 +54,6 @@ export default function ViewUserList() {
         }
     }, []);
 
-
     useEffect(() => {
         const params = {
             ...paginationInput,
@@ -66,7 +64,6 @@ export default function ViewUserList() {
 
     // Handler functions
     const handleAddNew = () => {
-        // TODO: Implement add new user
         console.log("Add new user");
     };
 
@@ -244,6 +241,10 @@ export default function ViewUserList() {
     // Viết html xử lý kết hợp các hàm logic trên
     return (
         <div className="p-6 space-y-6">
+            <div className="space-y-1">
+                <h1 className="text-2xl font-bold tracking-tight">Quản lý người dùng</h1>
+                <p className="text-muted-foreground">Theo dõi, tìm kiếm và cập nhật danh sách người dùng trong hệ thống</p>
+            </div>
             {/* Search and Actions */}
             <Card>
                 <CardHeader>

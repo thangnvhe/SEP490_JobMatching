@@ -48,7 +48,7 @@ export function LoginDialog({
   onOpenForgotPassword
 }: LoginDialogProps) {
   const dispatch = useAppDispatch();
-  const { isLoading } = useSelector((state: RootState) => state.auth);
+  const { loading: isLoading } = useSelector((state: RootState) => state.authState);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),

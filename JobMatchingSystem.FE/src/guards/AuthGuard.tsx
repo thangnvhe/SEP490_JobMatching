@@ -15,7 +15,7 @@
 //   redirectTo = '/login' 
 // }) => {
 //   const location = useLocation();
-//   const { isAuthenticated, user } = useAppSelector(state => state.auth);
+//   const { isAuthenticated, user } = useAppSelector(state => state.authState);
   
 //   // Check if user is authenticated
 //   if (!isAuthenticated && !TokenStorage.isAuthenticated()) {
@@ -50,7 +50,7 @@
 //   children: React.ReactNode; 
 //   redirectTo?: string 
 // }> = ({ children, redirectTo = '/' }) => {
-//   const { isAuthenticated, user } = useAppSelector(state => state.auth);
+//   const { isAuthenticated, user } = useAppSelector(state => state.authState);
   
 //   if (isAuthenticated || TokenStorage.isAuthenticated()) {
 //     // Redirect based on user role

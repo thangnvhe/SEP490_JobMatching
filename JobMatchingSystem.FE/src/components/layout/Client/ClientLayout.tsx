@@ -9,7 +9,7 @@ import { AdminSidebar } from "@/components/ui/admin/AdminSidebar";
 
 export function ClientLayout() {
   const location = useLocation();
-  const authState = useSelector((state: RootState) => state.auth);
+  const authState = useSelector((state: RootState) => state.authState);
   
   // Get user role from Redux store
   const userRole = authState.role?.toLowerCase() || 'guest';

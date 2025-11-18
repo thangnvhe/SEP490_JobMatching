@@ -22,7 +22,7 @@ interface ForgotPasswordDialogProps {
 
 export function ForgotPasswordDialog({ isOpen, onOpenChange, onOpenLogin }: ForgotPasswordDialogProps) {
   const dispatch = useAppDispatch();
-  const { isLoading, error } = useSelector((state: RootState) => state.auth);
+  const { isLoading, error } = useSelector((state: RootState) => state.authState);
   
   const [email, setEmail] = React.useState("");
   const [localError, setLocalError] = React.useState("");
