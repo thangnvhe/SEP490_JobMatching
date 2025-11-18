@@ -308,16 +308,8 @@ function CandidateNav() {
 export function DynamicSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
-  const authState = useSelector((state: RootState) => state.auth);
-  
-  // Debug logging
-  console.log('DynamicSidebar - Full auth state:', authState);
-  console.log('DynamicSidebar - Role from state:', authState.role);
-  console.log('DynamicSidebar - Is authenticated:', authState.isAuthenticated);
-  
-  // Get user role from Redux store auth state
+  const authState = useSelector((state: RootState) => state.authState);
   const userRole = authState.role?.toLowerCase() || 'guest';
-  console.log('DynamicSidebar - Final userRole:', userRole);
   
   // Determine navigation component based on role
   const getNavigationComponent = () => {
@@ -356,7 +348,7 @@ export function DynamicSidebar({
     if (authState.isAuthenticated && authState.name) {
       return {
         name: authState.name,
-        email: authState.email || 'user@example.com', // fallback if email not in token
+        email: authState.name || 'user@example.com', // fallback if email not in token
         avatar: `https://i.pravatar.cc/150?u=${authState.name}`,
       };
     }

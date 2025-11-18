@@ -99,15 +99,6 @@ export function ManageCompanyPage() {
         // Xử lý response từ backend - API trả về pageInfo chứ không phải pager
         const items = pagedData.items || [];
         const pageInfo = pagedData.pageInfo || {};
-        
-        console.log('API Debug:', { 
-          totalItem: pageInfo.totalItem, 
-          totalPage: pageInfo.totalPage, 
-          currentPage: pageInfo.currentPage, 
-          pageSize: pageInfo.pageSize,
-          itemsLength: items.length 
-        });
-        
         setCompanies(items);
         setTotalItems(pageInfo.totalItem || 0);
       } else {
@@ -272,15 +263,6 @@ export function ManageCompanyPage() {
   
   // Đảm bảo currentPage không vượt quá totalPages
   const safePage = Math.min(currentPage, totalPages);
-
-  console.log('Pagination Debug:', { 
-    totalItems, 
-    pageSize, 
-    totalPages, 
-    currentPage, 
-    safePage,
-    filteredCompaniesLength: filteredCompanies.length 
-  });
 
   // Define columns
   const columns = useMemo<ColumnDef<Company>[]>(() => [

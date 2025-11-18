@@ -25,7 +25,7 @@ interface RegisterDialogProps {
 
 export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDialogProps) {
   const dispatch = useAppDispatch();
-  const { loading: isLoading, error } = useSelector((state: RootState) => state.auth);
+  const { loading: isLoading, error } = useSelector((state: RootState) => state.authState);
 
   // Zod schema chỉ giữ các trường cần thiết
   const registerSchema = z.object({
@@ -90,11 +90,13 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
         password: data.password,
         confirmPassword: data.confirmPassword,
       })).unwrap();
-      toast.success("Đăng ký thành công!");
+      toast.success("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.", {
+        duration: 5000,
+      });
       // Delay một chút để user có thể thấy toast trước khi dialog đóng
       setTimeout(() => {
         onOpenChange(false);
-      }, 1000);
+      }, 1500);
     } catch (_) {
       toast.error("Đăng ký thất bại!");
     }

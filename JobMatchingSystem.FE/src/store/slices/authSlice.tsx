@@ -4,8 +4,20 @@ import axiosInstance from "@/interceptor/axiosInterceptor.old";
 import type { BaseResponse } from "@/models/base";
 import Cookies from "js-cookie";
 
+// Define AuthState interface
+interface AuthState {
+  accessToken: string;
+  exp: number;
+  name: string;
+  nameid: string;
+  role: string;
+  isAuthenticated: boolean;
+  loading: boolean;
+  error: string;
+  rememberMe: boolean;
+}
 
-const initialState: any = {
+const initialState: AuthState = {
   accessToken: '',
   exp: 0,
   name: '',
@@ -96,7 +108,7 @@ const authSlice = createSlice({
       return initialState;
     },
     clearError: (state) => {
-      state.error = undefined;
+      state.error = '';
     },
     restoreAuth: (state) => {
       const token = localStorage.getItem('accessToken') || Cookies.get('accessToken');
@@ -109,7 +121,11 @@ const authSlice = createSlice({
           state.nameid = decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
           state.role = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
           state.isAuthenticated = true;
-          state.rememberMe = localStorage.getItem('accessToken') ? true : false;
+          state.rememberMe = !!localStorage.getItem('accessToken');
+        } else {
+          // Token expired - clear it
+          localStorage.removeItem('accessToken');
+          Cookies.remove('accessToken');
         }
       }
     },
@@ -120,7 +136,7 @@ const authSlice = createSlice({
       // Login pending
       .addCase(loginAsync.pending, (state) => {
         state.loading = true;
-        state.error = undefined;
+        state.error = '';
       })
       // Login fulfilled
       .addCase(loginAsync.fulfilled, (state, action) => {
@@ -132,7 +148,7 @@ const authSlice = createSlice({
         state.role = action.payload.role;
         state.rememberMe = action.payload.rememberMe;
         state.isAuthenticated = true;
-        state.error = undefined;
+        state.error = '';
       })
       // Login rejected
       .addCase(loginAsync.rejected, (state, action) => {
@@ -143,13 +159,13 @@ const authSlice = createSlice({
       // Register pending
       .addCase(registerAsync.pending, (state) => {
         state.loading = true;
-        state.error = undefined;
+        state.error = '';
       })
       // Register fulfilled
       .addCase(registerAsync.fulfilled, (state) => {
         state.loading = false;
         // Không tự động đăng nhập sau khi đăng ký; chỉ đánh dấu không lỗi
-        state.error = undefined;
+        state.error = '';
       })
       // Register rejected
       .addCase(registerAsync.rejected, (state, action) => {
@@ -159,7 +175,7 @@ const authSlice = createSlice({
       // Logout pending
       .addCase(logoutAsync.pending, (state) => {
         state.loading = true;
-        state.error = undefined;
+        state.error = '';
       })
       // Logout fulfilled
       .addCase(logoutAsync.fulfilled, (state) => {
@@ -171,7 +187,7 @@ const authSlice = createSlice({
         state.role = '';
         state.isAuthenticated = false;
         state.rememberMe = false;
-        state.error = undefined;
+        state.error = '';
       })
       // Logout rejected
       .addCase(logoutAsync.rejected, (state, action) => {
@@ -189,12 +205,12 @@ const authSlice = createSlice({
       // Forgot password pending
       .addCase(forgotPassword.pending, (state) => {
         state.loading = true;
-        state.error = undefined;
+        state.error = '';
       })
       // Forgot password fulfilled
       .addCase(forgotPassword.fulfilled, (state) => {
         state.loading = false;
-        state.error = undefined;
+        state.error = '';
       })
       // Forgot password rejected
       .addCase(forgotPassword.rejected, (state, action) => {

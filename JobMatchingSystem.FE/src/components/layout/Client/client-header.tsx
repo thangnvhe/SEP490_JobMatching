@@ -30,7 +30,7 @@ import {
 
 export function ClientHeader() {
   const dispatch = useAppDispatch();
-  const { isAuthenticated, user, isLoading } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, name, nameid, role, loading: isLoading } = useSelector((state: RootState) => state.authState);
   
   const [loginOpen, setLoginOpen] = React.useState(false);
   const [registerOpen, setRegisterOpen] = React.useState(false);
@@ -149,7 +149,7 @@ export function ClientHeader() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center space-x-2">
                     <User className="h-4 w-4" />
-                    <span>{user?.fullName || user?.username || "User"}</span>
+                    <span>{name || "User"}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -210,7 +210,7 @@ export function ClientHeader() {
                 <>
                   <div className="flex items-center space-x-2 text-sm">
                     <User className="h-4 w-4" />
-                    <span>{user?.fullName || user?.username || "User"}</span>
+                    <span>{name || "User"}</span>
                   </div>
                   <Link to="/profile" className="text-sm font-medium transition-colors hover:text-primary">
                     Profile
