@@ -155,12 +155,21 @@ namespace JobMatchingSystem.API.Services.Implementations
                 var parts = tokenLink.Split(':');
                 if (parts.Length != 2)
                     return false;
+
                 var userId = parts[0];
-                var token = parts[1];
+                var encodedToken = parts[1]; // Tên biến được đổi để rõ ràng hơn
+
+                // *** KHẮC PHỤC LỖI: Giải mã URL token trước khi sử dụng ***
+                // Microsoft Identity yêu cầu token gốc, không phải token đã được mã hóa URL
+                var decodedToken = HttpUtility.UrlDecode(encodedToken);
+                // Lưu ý: Bạn có thể cần dùng WebUtility.UrlDecode() nếu HttpUtility không có sẵn.
+
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                     return false;
-                var result = await _userManager.ConfirmEmailAsync(user, token);
+
+                // Sử dụng token ĐÃ GIẢI MÃ
+                var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
 
                 if (result.Succeeded)
                 {
@@ -171,6 +180,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
             catch
             {
+                // Xử lý lỗi trong quá trình thực thi (ví dụ: lỗi kết nối database, lỗi HttpUtility...)
                 return false;
             }
         }

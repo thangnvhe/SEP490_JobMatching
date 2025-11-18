@@ -9,5 +9,6 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
         Task CreateAsync(JobStage stage);
         Task UpdateAsync(JobStage stage);
         Task DeleteAsync(JobStage stage);
+        Task<int> GetNumberStageById(int id);
     }
 }

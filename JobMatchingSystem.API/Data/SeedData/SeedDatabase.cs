@@ -7,11 +7,12 @@ namespace JobMatchingSystem.API.Data.SeedData
     {
         public static async Task SeedAllData(this WebApplication webApplication)
         {
+            await CompanySeeder.SeedCompaniesAsync(webApplication);
             await RecruiterSeeder.SeedRecruitersAsync(webApplication);
             await CandidateSeeder.SeedCandidatesAsync(webApplication);
-            await TaxonomySeeder.SeedTaxonomiesAsync(webApplication);
-            await CompanySeeder.SeedCompaniesAsync(webApplication);
+            await TaxonomySeeder.SeedTaxonomiesAsync(webApplication);          
             await JobSeeder.SeedJobAsync(webApplication);
+            await CVSeeder.SeedCVUploadsAsync(webApplication);
         }
     }
 }

@@ -7,6 +7,8 @@
         ICandidateJobRepository CandidateJobRepository { get; }
         IJobRepository JobRepository { get; }
         ICvUploadRepository CvUploadRepository { get; }
+        ICandidateStageRepository CandidateStageRepository { get; }
+        IJobStageRepository JobStageRepository { get; }
 
         Task SaveAsync();
     }
