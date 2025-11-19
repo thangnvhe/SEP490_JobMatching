@@ -64,10 +64,6 @@ const AppRouter: React.FC = () => {
         <Route path="manage-report" element={<ManageReportPage />} />
         <Route path="manage-user/create" element={<CreateEditUserPage />} />
         <Route path="manage-user/edit/:id" element={<CreateEditUserPage />} />
-        <Route path="manage-job/create" element={<CreateEditJobPage />} />
-        <Route path="manage-job/edit/:id" element={<CreateEditJobPage />} />
-        <Route path="manage-company/create" element={<CreateEditCompanyPage />} />
-        <Route path="manage-company/edit/:id" element={<CreateEditCompanyPage />} />
       </Route>
 
       {/* Recruiter routes - Protected */}

@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { 
   Eye,
-  Edit,
   Trash2,
-  Check,
-  X,
   Clock,
   CheckCircle,
   XCircle,
@@ -14,13 +11,19 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  ExternalLink
+  Building2,
+  Mail,
+  Phone,
+  MapPin,
+  FileText,
+  ExternalLink,
+  Check,
+  X
 } from "lucide-react";
 
 // Import các UI components
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,21 +37,33 @@ import { DataTable } from "@/components/ui/data-table";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
+import { Textarea } from "@/components/ui/textarea";
 // Import types và services
 import { CompanyServices } from "@/services/company.service";
 import { type Company } from "@/models/company";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
+import { API_BASE_URL } from "../../../../env";
 
 // Helper function để cắt ngắn text
 const truncateText = (text: string, maxLength: number = 100): string => {
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength) + '...';
+};
+
+// Helper function để tạo URL tuỷệt đối cho file
+const getFullImageUrl = (relativePath: string | null | undefined): string | null => {
+  if (!relativePath) return null;
+  // Nếu đã là URL đầy đủ thì trả về luôn
+  if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
+    return relativePath;
+  }
+  // Nếu là đường dẫn tương đối thì kết hợp với base URL
+  const baseUrl = API_BASE_URL.replace('/api', ''); // Loại bỏ /api khỏi cuối
+  return `${baseUrl}${relativePath.startsWith('/') ? '' : '/'}${relativePath}`;
 };
 
 export function ManageCompanyPage() {
@@ -60,8 +75,10 @@ export function ManageCompanyPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  
+  // Dialog states
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [rejectedCompanyId, setRejectedCompanyId] = useState<number | null>(null);
@@ -166,18 +183,35 @@ export function ManageCompanyPage() {
     setIsViewDialogOpen(true);
   };
 
-  const handleEdit = (company: Company) => {
-    // TODO: Navigate to edit page
-    console.log("Edit company:", company);
+  const handleDelete = async (company: Company) => {
+    try {
+      await CompanyServices.deleteCompany(String(company.id));
+      setCompanies(prev => prev.filter(c => c.id !== company.id));
+      setFilteredCompanies(prev => prev.filter(c => c.id !== company.id));
+    } catch (error) {
+      console.error("Error deleting company:", error);
+    }
+  };
+
+  const handleToggleActive = async (companyId: number | undefined) => {
+    if (!companyId) return;
+    try {
+      // Call API to toggle company status
+      // This might need to be implemented in CompanyServices
+      console.log("Toggle active status for company:", companyId);
+      // For now, just refresh the data
+      await getAllCompanies();
+    } catch (error) {
+      console.error("Error toggling company status:", error);
+    }
   };
 
   const handleApprove = async (companyId: number | undefined) => {
     if (!companyId) return;
     try {
       await CompanyServices.acceptCompany(String(companyId));
-      // Remove from list after approval
-      setCompanies(prev => prev.filter(c => c.id !== companyId));
-      setFilteredCompanies(prev => prev.filter(c => c.id !== companyId));
+      setIsViewDialogOpen(false);
+      await getAllCompanies();
     } catch (error) {
       console.error("Error approving company:", error);
     }
@@ -193,35 +227,24 @@ export function ManageCompanyPage() {
     if (!rejectedCompanyId) return;
     try {
       await CompanyServices.rejectCompany(String(rejectedCompanyId), rejectReason);
-      // Remove from list after rejection  
-      setCompanies(prev => prev.filter(c => c.id !== rejectedCompanyId));
-      setFilteredCompanies(prev => prev.filter(c => c.id !== rejectedCompanyId));
       setIsRejectDialogOpen(false);
       setRejectReason('');
       setRejectedCompanyId(null);
+      setIsViewDialogOpen(false);
+      await getAllCompanies();
     } catch (error) {
       console.error("Error rejecting company:", error);
-    }
-  };
-
-  const handleDelete = async (company: Company) => {
-    try {
-      await CompanyServices.deleteCompany(String(company.id));
-      setCompanies(prev => prev.filter(c => c.id !== company.id));
-      setFilteredCompanies(prev => prev.filter(c => c.id !== company.id));
-    } catch (error) {
-      console.error("Error deleting company:", error);
     }
   };
 
   // Helper functions
   const getStatusBadgeColor = (status: number) => {
     switch (status) {
-      case 1:
+      case 0:
         return 'bg-yellow-100 text-yellow-800';
-      case 2:
+      case 1:
         return 'bg-green-100 text-green-800';
-      case 3:
+      case 2:
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -230,11 +253,11 @@ export function ManageCompanyPage() {
 
   const getStatusIcon = (status: number) => {
     switch (status) {
-      case 1:
+      case 0:
         return <Clock className="h-3 w-3 mr-1" />;
-      case 2:
+      case 1:
         return <CheckCircle className="h-3 w-3 mr-1" />;
-      case 3:
+      case 2:
         return <XCircle className="h-3 w-3 mr-1" />;
       default:
         return null;
@@ -243,11 +266,11 @@ export function ManageCompanyPage() {
 
   const getStatusLabel = (status: number) => {
     switch (status) {
-      case 1:
+      case 0:
         return 'Chờ duyệt';
-      case 2:
+      case 1:
         return 'Đã duyệt';
-      case 3:
+      case 2:
         return 'Bị từ chối';
       default:
         return 'Không xác định';
@@ -318,6 +341,20 @@ export function ManageCompanyPage() {
       },
     },
     {
+      id: "address",
+      accessorKey: "address",
+      header: "Địa chỉ",
+      enableSorting: true,
+      cell: ({ row }) => {
+        const address = row.getValue("address") as string;
+        return (
+          <div title={address} className="max-w-[150px] truncate text-sm">
+            {address ? truncateText(address, 30) : 'Chưa có'}
+          </div>
+        );
+      },
+    },
+    {
       id: "status",
       accessorKey: "status",
       header: "Trạng thái",
@@ -347,40 +384,23 @@ export function ManageCompanyPage() {
             >
               <Eye className="h-4 w-4" />
             </Button>
+            
+            {/* Toggle Active/Inactive */}
             <Button
-              onClick={() => handleEdit(company)}
+              onClick={() => handleToggleActive(company.id)}
               variant="outline"
               size="sm"
-              title="Chỉnh sửa"
+              className={company.status === 1 ? "text-orange-600 hover:text-orange-700" : "text-green-600 hover:text-green-700"}
+              title={company.status === 1 ? "Vô hiệu hóa" : "Kích hoạt"}
             >
-              <Edit className="h-4 w-4" />
+              {company.status === 1 ? (
+                <XCircle className="h-4 w-4" />
+              ) : (
+                <CheckCircle className="h-4 w-4" />
+              )}
             </Button>
             
-            {/* Actions based on status */}
-            {company.status === 1 && (
-              <>
-                <Button
-                  onClick={() => handleApprove(company.id)}
-                  variant="outline"
-                  size="sm"
-                  className="text-green-600 hover:text-green-700"
-                  title="Duyệt"
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
-                <Button
-                  onClick={() => handleReject(company.id)}
-                  variant="outline"
-                  size="sm"
-                  className="text-red-600 hover:text-red-700"
-                  title="Từ chối"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </>
-            )}
-            
-            {(company.status === 3) && (
+            {(company.status === 2) && (
               <Button
                 onClick={() => handleDelete(company)}
                 variant="outline"
@@ -417,9 +437,9 @@ export function ManageCompanyPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                  <SelectItem value="1">Chờ duyệt</SelectItem>
-                  <SelectItem value="2">Đã duyệt</SelectItem>
-                  <SelectItem value="3">Bị từ chối</SelectItem>
+                  <SelectItem value="0">Chờ duyệt</SelectItem>
+                  <SelectItem value="1">Đã duyệt</SelectItem>
+                  <SelectItem value="2">Bị từ chối</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -538,186 +558,241 @@ export function ManageCompanyPage() {
         </CardContent>
       </Card>
 
-      {/* View Company Dialog */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Chi tiết công ty</DialogTitle>
-            <DialogDescription>
-              Thông tin chi tiết về công ty
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedCompany && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left Column - Company Information */}
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Tên công ty
-                    </label>
-                    <p className="text-sm mt-1 font-semibold">{selectedCompany.name}</p>
+      {/* View Company Dialog - Custom Full Screen */}
+      {isViewDialogOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div 
+            className="bg-white rounded-lg shadow-xl overflow-hidden w-full h-full max-w-7xl max-h-[85vh]"
+          >
+            {/* Header */}
+            <div className="px-6 py-4 border-b bg-gray-50 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">
+                Chi tiết công ty
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsViewDialogOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            
+            {/* Content */}
+            {selectedCompany && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full p-6" style={{ height: 'calc(100% - 73px)' }}>
+                {/* Left Column - Company Information */}
+                <div className="space-y-4 overflow-y-auto pr-3">
+                {/* Company Header */}
+                <div className="flex items-start space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+                  <div className="flex-shrink-0">
+                    <div className="w-16 h-16 bg-white rounded-lg overflow-hidden border-2 border-blue-200 shadow-sm">
+                      {getFullImageUrl(selectedCompany.logo) ? (
+                        <img
+                          src={getFullImageUrl(selectedCompany.logo)!}
+                          alt={`${selectedCompany.name} logo`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Building2 className="w-8 h-8 text-blue-500" />
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Email
-                    </label>
-                    <p className="text-sm mt-1">{selectedCompany.email}</p>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">
+                      {selectedCompany.name}
+                    </h3>
+                    <Badge className={`${getStatusBadgeColor(selectedCompany.status)} text-xs px-2 py-1`}>
+                      {getStatusIcon(selectedCompany.status)}
+                      {getStatusLabel(selectedCompany.status)}
+                    </Badge>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Mã số thuế
-                    </label>
-                    <p className="text-sm mt-1">{selectedCompany.taxCode || 'Chưa có'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Điện thoại
-                    </label>
-                    <p className="text-sm mt-1">{selectedCompany.phoneContact || 'Chưa có'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Website
-                    </label>
-                    <div className="mt-1">
-                      {selectedCompany.website ? (
+                </div>
+
+                {/* Company Details */}
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      <label className="text-xs font-semibold text-gray-700 block mb-1 uppercase tracking-wide">
+                        Email liên hệ
+                      </label>
+                      <div className="flex items-center text-gray-900">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                          <Mail className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <span className="text-sm font-medium">{selectedCompany.email}</span>
+                      </div>
+                    </div>
+
+                    {selectedCompany.phoneContact && (
+                      <div className="p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                        <label className="text-xs font-semibold text-gray-700 block mb-1 uppercase tracking-wide">
+                          Số điện thoại
+                        </label>
+                        <div className="flex items-center text-gray-900">
+                          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-2">
+                            <Phone className="w-4 h-4 text-green-600" />
+                          </div>
+                          <span className="text-sm font-medium">{selectedCompany.phoneContact}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      <label className="text-xs font-semibold text-gray-700 block mb-1 uppercase tracking-wide">
+                        Mã số thuế
+                      </label>
+                      <div className="flex items-center text-gray-900">
+                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-2">
+                          <FileText className="w-4 h-4 text-purple-600" />
+                        </div>
+                        <span className="text-sm font-medium">{selectedCompany.taxCode || 'Chưa có'}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      <label className="text-xs font-semibold text-gray-700 block mb-1 uppercase tracking-wide">
+                        Địa chỉ
+                      </label>
+                      <div className="flex items-start text-gray-900">
+                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-2 mt-0.5">
+                          <MapPin className="w-4 h-4 text-red-600" />
+                        </div>
+                        <span className="text-sm font-medium leading-relaxed">{selectedCompany.address || 'Chưa có'}</span>
+                      </div>
+                    </div>
+
+                    {selectedCompany.website && (
+                      <div className="p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                        <label className="text-xs font-semibold text-gray-700 block mb-1 uppercase tracking-wide">
+                          Website
+                        </label>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => window.open(selectedCompany.website, '_blank')}
-                          className="h-8"
+                          className="w-full justify-start text-blue-600 hover:text-blue-800 hover:bg-blue-50 border-blue-200 text-sm py-3"
                         >
-                          <ExternalLink className="mr-2 h-3 w-3" />
-                          Xem website công ty
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                            <ExternalLink className="w-4 h-4 text-blue-600" />
+                          </div>
+                          Truy cập website công ty
                         </Button>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">Chưa có</p>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Trạng thái
-                    </label>
-                    <div className="mt-1">
-                      <Badge className={getStatusBadgeColor(selectedCompany.status)}>
-                        {getStatusIcon(selectedCompany.status)}
-                        {getStatusLabel(selectedCompany.status)}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
+                      </div>
+                    )}
 
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Địa chỉ
-                  </label>
-                  <p className="text-sm mt-1">{selectedCompany.address || 'Chưa có'}</p>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Mô tả
-                  </label>
-                  <div className="text-sm mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap max-h-32 overflow-y-auto">
-                    {selectedCompany.description || 'Chưa có mô tả'}
+                    {selectedCompany.description && (
+                      <div className="p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                        <label className="text-xs font-semibold text-gray-700 block mb-2 uppercase tracking-wide">
+                          Mô tả công ty
+                        </label>
+                        <p className="text-sm text-gray-900 leading-relaxed bg-gray-50 p-3 rounded-lg">
+                          {selectedCompany.description}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </div>
 
-              {/* Right Column - Documents */}
-              <div className="space-y-6">
-                {selectedCompany.licenseFile && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground mb-3 block">
-                      Giấy phép kinh doanh
-                    </label>
-                    <div className="border rounded-lg p-4 bg-blue-50">
-                      <Button
-                        variant="outline"
+                  
+                  {/* Action Buttons for Pending Companies */}
+                  {selectedCompany.status === 0 && (
+                    <div className="flex space-x-3 pt-4 border-t border-gray-200">
+                      <Button 
+                        onClick={() => handleApprove(selectedCompany.id)}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-sm py-3"
                         size="sm"
-                        onClick={() => window.open(selectedCompany.licenseFile, '_blank')}
-                        className="w-full"
                       >
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        Xem giấy phép kinh doanh
+                        <Check className="w-4 h-4 mr-2" />
+                        Duyệt công ty
+                      </Button>
+                      <Button 
+                        onClick={() => handleReject(selectedCompany.id)}
+                        variant="destructive"
+                        className="flex-1 text-sm py-3"
+                        size="sm"
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Từ chối
                       </Button>
                     </div>
+                  )}
+                </div>
+              </div>              {/* Right Column - Business License */}
+              <div className="space-y-4 overflow-y-auto pl-3">
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-6 h-full border border-gray-200">
+                  <div className="flex items-center mb-4">
+                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                      <FileText className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <h4 className="text-lg font-bold text-gray-900">
+                      Giấy phép kinh doanh
+                    </h4>
                   </div>
-                )}
-              </div>
-            </div>
-          )}
-          
-          {/* Dialog Footer */}
-          {selectedCompany && (
-            <div className="flex justify-between pt-6 border-t">
-              <Button
-                variant="outline"
-                onClick={() => setIsViewDialogOpen(false)}
-              >
-                Đóng
-              </Button>
-              <div className="flex space-x-2">
-                {selectedCompany.status === 1 && (
-                  <>
-                    <Button
-                      onClick={() => {
-                        handleApprove(selectedCompany.id);
-                        setIsViewDialogOpen(false);
-                      }}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <Check className="mr-2 h-4 w-4" />
-                      Duyệt
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        handleReject(selectedCompany.id);
-                        setIsViewDialogOpen(false);
-                      }}
-                      variant="destructive"
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Từ chối
-                    </Button>
-                  </>
-                )}
-                <Button
-                  onClick={() => {
-                    handleEdit(selectedCompany);
-                    setIsViewDialogOpen(false);
-                  }}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Chỉnh sửa
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
-      {/* Reject Company Dialog */}
+                  {getFullImageUrl(selectedCompany.licenseFile) ? (
+                    <div className="bg-white rounded-lg p-6 border-2 border-dashed border-orange-300 shadow-sm text-center">
+                      <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                        <FileText className="w-8 h-8 text-white" />
+                      </div>
+                      <h5 className="text-lg font-bold text-gray-900 mb-2">
+                        Giấy phép kinh doanh
+                      </h5>
+                      <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                        Click để xem giấy phép kinh doanh của công ty
+                      </p>
+                      <Button
+                        variant="outline"
+                        onClick={() => window.open(getFullImageUrl(selectedCompany.licenseFile)!, '_blank')}
+                        className="inline-flex items-center text-sm py-2 px-4 border-orange-300 text-orange-700 hover:bg-orange-50"
+                        size="sm"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Xem giấy phép
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-lg p-8 border-2 border-dashed border-gray-400 text-center shadow-sm">
+                      <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <FileText className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <h5 className="text-lg font-bold text-gray-900 mb-2">
+                        Chưa có giấy phép kinh doanh
+                      </h5>
+                      <p className="text-sm text-gray-500">
+                        Công ty chưa tải lên giấy phép kinh doanh
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          </div>
+        </div>
+      )}
+
+      {/* Reject Confirmation Dialog */}
       <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Xác nhận từ chối công ty</DialogTitle>
-            <DialogDescription>
-              Vui lòng nhập lý do từ chối công ty này.
-            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Vui lòng nhập lý do từ chối công ty này.
+            </p>
             <div>
-              <label className="text-sm font-medium">Lý do từ chối *</label>
+              <label className="text-sm font-medium block mb-1">Lý do từ chối *</label>
               <Textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder="Nhập lý do từ chối..."
-                className="w-full mt-1"
+                className="w-full"
                 rows={4}
                 required
               />
