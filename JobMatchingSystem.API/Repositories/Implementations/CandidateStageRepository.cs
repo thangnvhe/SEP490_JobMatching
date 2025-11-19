@@ -39,7 +39,7 @@ namespace JobMatchingSystem.API.Repositories.Implementations
 
         public async Task<CandidateStage?> GetDetailById(int id)
         {
-            return await _context.CandidateStages.FindAsync(id);
+            return await _context.CandidateStages.Include(x=>x.JobStage).FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public Task Update(CandidateStage candidateStage)
