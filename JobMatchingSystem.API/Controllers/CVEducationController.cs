@@ -1,5 +1,6 @@
 ﻿using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -36,7 +37,7 @@ namespace JobMatchingSystem.API.Controllers
         {
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var educations = await _service.GetByCurrentUserAsync(userId);
-            return Ok(APIResponse<List<CVEducation>>.Builder()
+            return Ok(APIResponse<List<CVEducationDto>>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
                 .WithResult(educations)
