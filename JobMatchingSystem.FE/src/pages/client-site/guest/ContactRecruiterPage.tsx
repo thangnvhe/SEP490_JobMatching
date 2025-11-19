@@ -46,44 +46,48 @@ import {
 
 // --- validation/schema ---
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
-const ACCEPTED_MIME_TYPES = ["application/pdf"];
-const phoneRegex = /^(0|\+84)[0-9]{9,10}$/;
+const ACCEPTED_MIME_TYPES = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+const phoneRegex = /^(0|\+84)[0-9]{8,11}$/;
 
 const companyCreateSchema = z.object({
-  fullName: z.string().min(1, "Vui lòng nhập họ và tên người liên hệ."),
-  workEmail: z
+  fullName: z.string().min(1, "Full name is required").max(100, "Full name must not exceed 100 characters"),
+  email: z
     .string()
-    .min(1, "Vui lòng nhập email công ty.")
-    .email("Email không hợp lệ."),
-  phoneNumber: z
+    .min(1, "Work email is required")
+    .email("Invalid email format"),
+  phoneContact: z
     .string()
+    .min(1, "Phone number is required")
     .regex(
       phoneRegex,
-      "Số điện thoại không hợp lệ (ví dụ: 09... hoặc +849...)."
-    ),
-  companyName: z.string().min(1, "Vui lòng nhập tên công ty."),
-  websiteURL: z
+      "Invalid phone number format"
+    )
+    .min(8, "Phone number must be between 8–15 digits")
+    .max(15, "Phone number must be between 8–15 digits"),
+  name: z.string().min(1, "Company name is required").max(150, "Company name must not exceed 150 characters"),
+  website: z
     .string()
-    .min(1, "Vui lòng nhập website.")
-    .url("URL website không hợp lệ (ví dụ: https://company.com)."),
-  taxCode: z.string().min(1, "Vui lòng nhập mã số thuế."),
-  province: z.string().min(1, "Vui lòng chọn Tỉnh/Thành phố."),
-  ward: z.string().min(1, "Vui lòng chọn Phường/Xã."),
-  street: z.string().min(1, "Vui lòng nhập số nhà, tên đường."),
+    .min(1, "Website URL is required")
+    .url("Invalid website URL format"),
+  taxCode: z.string().min(1, "Tax code is required"),
+  province: z.string().min(1, "Address is required"),
+  ward: z.string().min(1, "Address is required"),
+  street: z.string().min(1, "Address is required"),
+  description: z.string().min(1, "Description is required").max(255, "Description must not exceed 255 characters"),
   licenseFile: z
     .custom<FileList>(
       (val) => val instanceof FileList,
-      "Vui lòng tải lên file."
+      "License file is required"
     )
-    .refine((files) => files.length > 0, "Vui lòng tải lên file.")
-    .refine((files) => files.length <= 1, "Chỉ được tải lên 1 file.")
+    .refine((files) => files.length > 0, "License file is required")
+    .refine((files) => files.length <= 1, "Only one file allowed")
     .refine(
       (files) => ACCEPTED_MIME_TYPES.includes(files[0]?.type),
-      "Chỉ chấp nhận file định dạng .pdf."
+      "Invalid file format. Only PDF, JPG, JPEG, PNG allowed"
     )
     .refine(
       (files) => files[0]?.size <= MAX_FILE_SIZE,
-      "Kích thước file tối đa là 5MB."
+      "File size must not exceed 5MB"
     ),
 });
 
@@ -110,14 +114,15 @@ const ContactRecruiterPage: React.FC = () => {
     resolver: zodResolver(companyCreateSchema),
     defaultValues: {
       fullName: "",
-      workEmail: "",
-      phoneNumber: "",
-      companyName: "",
-      websiteURL: "",
+      email: "",
+      phoneContact: "",
+      name: "",
+      website: "",
       taxCode: "",
       province: "",
       ward: "",
       street: "",
+      description: "",
       licenseFile: undefined,
     },
   });
@@ -166,25 +171,25 @@ const ContactRecruiterPage: React.FC = () => {
         provinces.find((p) => p.code.toString() === data.province)?.name || "";
       const fullAddress = `${data.street}, ${data.ward}, ${provinceName}`;
 
+      // Đúng theo CreateCompanyRequest.cs
       formData.append("FullName", data.fullName);
-      formData.append("WorkEmail", data.workEmail);
-      formData.append("PhoneNumber", data.phoneNumber);
-      formData.append("CompanyName", data.companyName);
-      formData.append("WebsiteUrl", data.websiteURL);
+      formData.append("Email", data.email);
+      formData.append("PhoneContact", data.phoneContact);
+      formData.append("Name", data.name);
+      formData.append("Website", data.website);
       formData.append("TaxCode", data.taxCode);
       formData.append("Address", fullAddress);
+      formData.append("Description", data.description);
       formData.append("LicenseFile", data.licenseFile[0]);
 
-      const resultMessage = await CompanyServices.createCompany(
-        formData as any
-      );
-      console.log("API Response Success:", resultMessage);
+      const response = await CompanyServices.createCompany(formData);
+      console.log("API Response Success:", response);
 
       setSubmitResult({
         success: true,
-        message: "Gửi thông tin thành công! Chúng tôi sẽ liên hệ với bạn sớm.",
+        message: "Đăng ký công ty thành công! Chúng tôi sẽ xem xét và liên hệ với bạn sớm.",
       });
-      setSubmittedCompanyName(data.companyName);
+      setSubmittedCompanyName(data.name);
       setShowSuccessModal(true);
       // Reset form and also clear wards
       form.reset();
@@ -345,7 +350,7 @@ const ContactRecruiterPage: React.FC = () => {
                       {/* Tên công ty */}
                       <FormField
                         control={form.control}
-                        name="companyName"
+                        name="name"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-sm font-semibold text-gray-700">
@@ -368,7 +373,7 @@ const ContactRecruiterPage: React.FC = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
-                          name="workEmail"
+                          name="email"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-sm font-semibold text-gray-700">
@@ -390,7 +395,7 @@ const ContactRecruiterPage: React.FC = () => {
 
                         <FormField
                           control={form.control}
-                          name="websiteURL"
+                          name="website"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-sm font-semibold text-gray-700">
@@ -435,7 +440,7 @@ const ContactRecruiterPage: React.FC = () => {
 
                         <FormField
                           control={form.control}
-                          name="phoneNumber"
+                          name="phoneContact"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-sm font-semibold text-gray-700">
@@ -470,6 +475,28 @@ const ContactRecruiterPage: React.FC = () => {
                                 {...field}
                                 placeholder="Mã số đăng ký kinh doanh"
                                 className="bg-white border-gray-200 focus:border-teal-500 focus:ring-teal-500"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Mô tả công ty */}
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-semibold text-gray-700">
+                              Mô tả công ty <span className="text-red-500">*</span>
+                            </FormLabel>
+                            <FormControl>
+                              <textarea
+                                {...field}
+                                rows={4}
+                                placeholder="Mô tả ngắn gọn về công ty của bạn"
+                                className="w-full px-3 py-2 border border-gray-200 rounded-md focus:border-teal-500 focus:ring-teal-500 bg-white resize-none"
                               />
                             </FormControl>
                             <FormMessage />
@@ -590,20 +617,23 @@ const ContactRecruiterPage: React.FC = () => {
                         }) => (
                           <FormItem>
                             <FormLabel className="text-sm font-semibold text-gray-700">
-                              Giấy phép kinh doanh (PDF){" "}
+                              Giấy phép kinh doanh{" "}
                               <span className="text-red-500">*</span>
                             </FormLabel>
                             <FormControl>
                               <Input
                                 {...fieldProps}
                                 type="file"
-                                accept="application/pdf"
+                                accept="application/pdf,image/jpeg,image/jpg,image/png"
                                 onChange={(e) =>
                                   onChange(e.target.files as FileList)
                                 }
                                 className="bg-white border-gray-200 file:text-teal-700 file:font-semibold file:bg-teal-50 file:border-0 hover:file:bg-teal-100 focus:border-teal-500 focus:ring-teal-500"
                               />
                             </FormControl>
+                            <div className="text-xs text-gray-500 mt-1">
+                              Chấp nhận file PDF, JPG, JPEG, PNG (tối đa 5MB)
+                            </div>
                             <FormMessage />
                           </FormItem>
                         )}
