@@ -21,7 +21,7 @@ namespace JobMatchingSystem.API.Services.Implementations
         }
         public async Task Add(CreateCandidateJobRequest request)
         {
-            var job = _unitOfWork.JobRepository.GetById(request.JobId);
+            var job = await _unitOfWork.JobRepository.GetById(request.JobId);
             if (job == null)
             {
                 throw new AppException(ErrorCode.NotFoundJob());
@@ -51,7 +51,12 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
             else
             {
+                CandidateStage candidateStage = new CandidateStage();
+                candidateStage.CandidateJobId = candidatejob.Id ;
+                candidateStage.JobStageId = 1;
+                candidateStage.Status=Enums.CandidateStageStatus.Schedule;
                 candidatejob.Status = Enums.CandidateJobStatus.Processing;
+                await _unitOfWork.CandidateStageRepository.Add(candidateStage);
             }
             
             await _unitOfWork.CandidateJobRepository.Update(candidatejob);
@@ -61,7 +66,7 @@ namespace JobMatchingSystem.API.Services.Implementations
         public async Task<PagedResult<CandidateJobDTO>> GetAllByJobId(int jobid,int page = 1, int size = 5, string status = "",  string sortBy = "", bool isDecending = false)
         {
             var listCandidateJob = await _unitOfWork.CandidateJobRepository.GetByJobIdAsync(jobid, status, sortBy, isDecending);
-            if (listCandidateJob == null || listCandidateJob.Any())
+            if (listCandidateJob == null || !listCandidateJob.Any())
             {
                 return new PagedResult<CandidateJobDTO>
                 {

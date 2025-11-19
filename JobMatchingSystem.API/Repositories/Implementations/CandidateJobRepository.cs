@@ -46,7 +46,9 @@ namespace JobMatchingSystem.API.Repositories.Implementations
 
         public async Task<CandidateJob?> GetDetail(int id)
         {
-            return await _context.CandidateJobs.FindAsync(id);
+            return await _context.CandidateJobs
+        .Include(c => c.Job)        
+        .FirstOrDefaultAsync(c => c.Id == id);
         }
 
         public Task Update(CandidateJob candidateJob)
