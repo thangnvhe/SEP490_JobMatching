@@ -1,4 +1,5 @@
 ﻿using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
@@ -27,16 +28,27 @@ namespace JobMatchingSystem.API.Services.Implementations
             return education;
         }
 
-        public async Task<List<CVEducation>> GetByCurrentUserAsync(int userId)
+        public async Task<List<CVEducationDto>> GetByCurrentUserAsync(int userId)
         {
             var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
             if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
             var educations = await _repository.GetByUserIdAsync(userId);
-            if (educations == null || !educations.Any())
+
+            if (!educations.Any())
                 throw new AppException(ErrorCode.NotFoundCVEducation());
-            return educations;
+
+            return educations.Select(e => new CVEducationDto
+            {
+                Id = e.Id,
+                SchoolName = e.SchoolName,
+                Degree = e.Degree,
+                Major = e.Major,
+                StartDate = e.StartDate,
+                EndDate = e.EndDate,
+                Description = e.Description
+            }).ToList();
         }
 
         public async Task<CVEducation> CreateAsync(CVEducationRequest request, int userId)

@@ -1,4 +1,5 @@
 ﻿using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
@@ -27,17 +28,25 @@ namespace JobMatchingSystem.API.Services.Implementations
             return project;
         }
 
-        public async Task<List<CVProject>> GetByCurrentUserAsync(int userId)
+        public async Task<List<CVProjectDto>> GetByCurrentUserAsync(int userId)
         {
             var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
             if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
             var projects = await _repository.GetByUserIdAsync(userId);
-            if (projects == null || !projects.Any())
+
+            if (!projects.Any())
                 throw new AppException(ErrorCode.NotFoundCVProject());
 
-            return projects;
+            return projects.Select(p => new CVProjectDto
+            {
+                Id = p.Id,
+                ProjectName = p.ProjectName,
+                Description = p.Description,
+                StartDate = p.StartDate,
+                EndDate = p.EndDate
+            }).ToList();
         }
 
         public async Task<CVProject> CreateAsync(CVProjectRequest request, int userId)

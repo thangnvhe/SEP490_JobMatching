@@ -1,5 +1,6 @@
 ﻿using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -40,7 +41,7 @@ namespace JobMatchingSystem.API.Controllers
 
             var achievements = await _service.GetByCurrentUserAsync(userId);
 
-            return Ok(APIResponse<List<CVAchievement>>.Builder()
+            return Ok(APIResponse<List<CVAchievementDto>>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
                 .WithResult(achievements)
