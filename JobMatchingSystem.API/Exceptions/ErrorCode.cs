@@ -26,6 +26,7 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error InvalidFile() => new("Invalid File", HttpStatusCode.BadRequest);
         public static Error NotFoundSkill() => new("Not Found Skill", HttpStatusCode.NotFound);
         public static Error CantDelete() => new("Can't Delete", HttpStatusCode.BadRequest);
+        public static Error CantCreate() => new("Can't Create", HttpStatusCode.BadRequest);
         public static Error NotConfirmEmail() => new("Email is Not Confirm",HttpStatusCode.BadRequest);
         public static Error AccountIsBand() => new("Account is Band",HttpStatusCode.BadRequest);
         public static Error CantUpdate() => new("Can't update", HttpStatusCode.BadRequest);
@@ -33,5 +34,6 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundCandidateJob() => new("NotFound CandidateJob",HttpStatusCode.NotFound);
         public static Error NotFoundCandidateStage() => new("NotFound CandidateStage", HttpStatusCode.NotFound);
         public static Error NotFoundReport() => new("Not Found Report", HttpStatusCode.NotFound);
+        public static Error NotFoundSaveJob() => new("Not Found Save Job", HttpStatusCode.NotFound);
     }
 }
