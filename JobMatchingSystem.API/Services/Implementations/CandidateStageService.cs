@@ -1,5 +1,6 @@
 ﻿using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.Exceptions;
+using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
 
@@ -20,16 +21,25 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 throw new AppException(ErrorCode.NotFoundCandidateStage());
             }
-            if (request.Equals("Pass"))
+            if (request.Result.Equals("Pass"))
             {
             candidateStage.Status=Enums.CandidateStageStatus.Passed;
-            int numberCount = await _unitOfWork.JobStageRepository.GetNumberStageById(candidateStage.JobStage.JobId);
-            int numberCurrent = candidateStage.JobStage.StageNumber;
+            int numberCount = await _unitOfWork.JobStageRepository.GetNumberStageById(candidateJob.JobId);
+                int numberCurrent = candidateStage.JobStageId;
+                
                 if (numberCurrent == numberCount)
                 {
                     candidateJob.Status=Enums.CandidateJobStatus.Pass;
                 }
-            }else if (request.Equals("Fail"))
+                else
+                {
+                    CandidateStage candidatestagenext=new CandidateStage();
+                    candidatestagenext.CandidateJobId=candidateStage.CandidateJobId;
+                    candidatestagenext.JobStageId = candidateStage.JobStageId + 1;
+                    candidatestagenext.Status=Enums.CandidateStageStatus.Draft;
+                    await _unitOfWork.CandidateStageRepository.Add(candidatestagenext);
+                }
+            }else if (request.Result.Equals("Fail"))
             {
                 candidateStage.Status = Enums.CandidateStageStatus.Failed;
                 candidateJob.Status=Enums.CandidateJobStatus.Fail;
