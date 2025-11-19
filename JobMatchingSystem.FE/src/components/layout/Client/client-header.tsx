@@ -1,14 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
 import { Menu, Mountain, User, LogOut } from "lucide-react";
 import React from "react";
 import { Link } from "react-router-dom";
@@ -30,7 +21,7 @@ import {
 
 export function ClientHeader() {
   const dispatch = useAppDispatch();
-  const { isAuthenticated, name, nameid, role, loading: isLoading } = useSelector((state: RootState) => state.authState);
+  const { isAuthenticated, loading: isLoading } = useSelector((state: RootState) => state.authState);
   
   const [loginOpen, setLoginOpen] = React.useState(false);
   const [registerOpen, setRegisterOpen] = React.useState(false);
@@ -53,91 +44,34 @@ export function ClientHeader() {
             <Mountain className="h-6 w-6" />
             <span className="hidden font-bold sm:inline-block">Superio</span>
           </Link>
-          <NavigationMenu>
-            <NavigationMenuList className="space-x-1">
-              <NavigationMenuItem>
-                <NavigationMenuTrigger>Home</NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                    <li className="row-span-3">
-                      <NavigationMenuLink asChild>
-                        <a
-                          className="flex h-full w-full select-none flex-col justify-end rounded-md bg-linear-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                          href="/about"
-                        >
-                          <Mountain className="h-6 w-6" />
-                          <div className="mb-2 mt-4 text-lg font-medium">
-                            Superio
-                          </div>
-                          <p className="text-sm leading-tight text-muted-foreground">
-                            Find the job that fits your life.
-                          </p>
-                        </a>
-                      </NavigationMenuLink>
-                    </li>
-                    <ListItem href="/about" title="Home Page 2">
-                      Alternative home page layout.
-                    </ListItem>
-                    <ListItem href="/about" title="Home Page 3">
-                      Another style for the main page.
-                    </ListItem>
-                  </ul>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuTrigger>Find Jobs</NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] lg:grid-cols-2">
-                    <ListItem href="/jobs" title="Job List">
-                      Browse all available jobs.
-                    </ListItem>
-                    <ListItem href="/about" title="Job Grid">
-                      View jobs in a grid layout.
-                    </ListItem>
-                    <ListItem href="/about" title="Job Detail">
-                      See the details of a specific job.
-                    </ListItem>
-                  </ul>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuTrigger>Employers</NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] lg:grid-cols-2">
-                    <ListItem href="/companies" title="All Companies">
-                      Browse all companies and employers.
-                    </ListItem>
-                    <ListItem href="/about" title="Employer Grid">
-                      View employers in a grid layout.
-                    </ListItem>
-                    <ListItem href="/contact-recruiter" title="For Recruiters">
-                      Join our platform to find the best talents.
-                    </ListItem>
-                  </ul>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuTrigger>Candidates</NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] lg:grid-cols-2">
-                    <ListItem href="/about" title="Candidate List">
-                      Browse through candidates.
-                    </ListItem>
-                  </ul>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuTrigger>Nhà tuyển dụng</NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] lg:grid-cols-2">
-                    <ListItem href="/contact-recruiter" title="Contact Recruiter">
-                      Get in touch with our recruitment team.
-                    </ListItem>
-                  </ul>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
+          <nav className="flex items-center space-x-6">
+            <Link 
+              to="/" 
+              className="text-sm font-medium transition-colors hover:text-primary focus:text-primary outline-none px-3 py-2 rounded-md hover:bg-accent"
+            >
+              Trang Chủ
+            </Link>
+            <Link 
+              to="/jobs" 
+              className="text-sm font-medium transition-colors hover:text-primary focus:text-primary outline-none px-3 py-2 rounded-md hover:bg-accent"
+            >
+              Tìm Kiếm Công Việc
+            </Link>
+            <Link 
+              to="/companies" 
+              className="text-sm font-medium transition-colors hover:text-primary focus:text-primary outline-none px-3 py-2 rounded-md hover:bg-accent"
+            >
+              Danh Sách Công Ty
+            </Link>
+            {!isAuthenticated && (
+              <Link 
+                to="/contact-recruiter" 
+                className="text-sm font-medium transition-colors hover:text-primary focus:text-primary outline-none px-3 py-2 rounded-md hover:bg-accent"
+              >
+                Nhà tuyển dụng
+              </Link>
+            )}
+          </nav>
         </div>
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
           <div className="w-full flex-1 md:w-auto md:flex-none">
@@ -147,9 +81,8 @@ export function ClientHeader() {
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2">
+                  <Button variant="ghost" className="flex items-center">
                     <User className="h-4 w-4" />
-                    <span>{name || "User"}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -175,7 +108,6 @@ export function ClientHeader() {
                 Login / Register
               </Button>
             )}
-            <Button className="text-sm">Job Post</Button>
           </nav>
         </div>
         <Sheet>
@@ -192,26 +124,21 @@ export function ClientHeader() {
             </Link>
             <div className="flex flex-col space-y-3">
               <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
-                Home
+                Trang Chủ
               </Link>
-              <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary">
-                Find Jobs
+              <Link to="/jobs" className="text-sm font-medium transition-colors hover:text-primary">
+                Tìm Kiếm Công Việc
               </Link>
               <Link to="/companies" className="text-sm font-medium transition-colors hover:text-primary">
-                Companies
+                Danh Sách Công Ty
               </Link>
-              <Link to="/contact-recruiter" className="text-sm font-medium transition-colors hover:text-primary">
-                For Recruiters
-              </Link>
-              <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary">
-                Candidates
-              </Link>
+              {!isAuthenticated && (
+                <Link to="/contact-recruiter" className="text-sm font-medium transition-colors hover:text-primary">
+                  Nhà tuyển dụng
+                </Link>
+              )}
               {isAuthenticated ? (
                 <>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <User className="h-4 w-4" />
-                    <span>{name || "User"}</span>
-                  </div>
                   <Link to="/profile" className="text-sm font-medium transition-colors hover:text-primary">
                     Profile
                   </Link>
@@ -233,7 +160,6 @@ export function ClientHeader() {
                   Login / Register
                 </Button>
               )}
-              <Button className="w-fit text-sm">Job Post</Button>
             </div>
           </SheetContent>
         </Sheet>
@@ -271,28 +197,4 @@ export function ClientHeader() {
   );
 }
 
-const ListItem = React.forwardRef<
-  React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a">
->(({ className, title, children, ...props }, ref) => {
-  return (
-    <li>
-      <NavigationMenuLink asChild>
-        <a
-          ref={ref}
-          className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-            className
-          )}
-          {...props}
-        >
-          <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-            {children}
-          </p>
-        </a>
-      </NavigationMenuLink>
-    </li>
-  );
-});
-ListItem.displayName = "ListItem";
+
