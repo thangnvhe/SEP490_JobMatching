@@ -122,12 +122,12 @@ function RecruiterNav() {
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
-            isActive={useIsActivePath("/recruiter/settings")}
-            tooltip="Settings"
+            isActive={useIsActivePath("/profile")}
+            tooltip="Profile"
           >
-            <Link to="/recruiter/settings">
-              <Settings />
-              <span>Cài đặt</span>
+            <Link to="/profile">
+              <User />
+              <span>Hồ sơ</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -157,12 +157,12 @@ function CandidateNav() {
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
-            isActive={useIsActivePath("/candidate/job-search")}
-            tooltip="Job Search"
+            isActive={useIsActivePath("/candidate/my-cv")}
+            tooltip="My CV"
           >
-            <Link to="/candidate/job-search">
-              <Search />
-              <span>Job Search</span>
+            <Link to="/candidate/my-cv">
+              <FileText />
+              <span>CV của tôi</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -170,12 +170,25 @@ function CandidateNav() {
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
-            isActive={useIsActivePath("/candidate/applications")}
-            tooltip="My Applications"
+            isActive={useIsActivePath("/candidate/it-profile")}
+            tooltip="IT Profile"
           >
-            <Link to="/candidate/applications">
-              <FileText />
-              <span>Applications</span>
+            <Link to="/candidate/it-profile">
+              <User />
+              <span>Hồ sơ IT</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            asChild
+            isActive={useIsActivePath("/candidate/my-jobs")}
+            tooltip="My Jobs"
+          >
+            <Link to="/candidate/my-jobs">
+              <Briefcase />
+              <span>Việc làm của tôi</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -188,7 +201,7 @@ function CandidateNav() {
           >
             <Link to="/candidate/saved-jobs">
               <Bookmark />
-              <span>Saved Jobs</span>
+              <span>Công việc đã lưu</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -196,80 +209,12 @@ function CandidateNav() {
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
-            isActive={useIsActivePath("/candidate/interviews")}
-            tooltip="Interviews"
+            isActive={useIsActivePath("/profile")}
+            tooltip="Profile"
           >
-            <Link to="/candidate/interviews">
-              <Calendar />
-              <span>Interviews</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/candidate/analytics")}
-            tooltip="Analytics"
-          >
-            <Link to="/candidate/analytics">
-              <BarChart3 />
-              <span>Analytics</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-
-      <SidebarGroupLabel className="mt-4">Profile & Communication</SidebarGroupLabel>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/candidate/profile")}
-            tooltip="My Profile"
-          >
-            <Link to="/candidate/profile">
-              <User />
-              <span>My Profile</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/candidate/messages")}
-            tooltip="Messages"
-          >
-            <Link to="/candidate/messages">
-              <MessageSquare />
-              <span>Messages</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/candidate/notifications")}
-            tooltip="Notifications"
-          >
-            <Link to="/candidate/notifications">
-              <Bell />
-              <span>Notifications</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/candidate/settings")}
-            tooltip="Settings"
-          >
-            <Link to="/candidate/settings">
+            <Link to="/profile">
               <Settings />
-              <span>Settings</span>
+              <span>Hồ sơ cá nhân</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
