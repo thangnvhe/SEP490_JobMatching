@@ -8,7 +8,8 @@ import {
   BarChart3,
   Folder,
   User,
-
+  Settings,
+  Package,
 } from "lucide-react";
 import {
   Sidebar,
@@ -50,67 +51,25 @@ function AdminNav() {
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
-            isActive={useIsActivePath("/admin/analytics")}
-            tooltip="Analytics"
+            isActive={useIsActivePath("/admin/manage-user")}
+            tooltip="Manage Users"
           >
-            <Link to="/admin/analytics">
-              <BarChart3 />
-              <span>Analytics</span>
+            <Link to="/admin/manage-user">
+              <Users />
+              <span>Quản lý người dùng</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/admin/projects")}
-            tooltip="Projects"
-          >
-            <Link to="/admin/projects">
-              <Folder />
-              <span>Projects</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/admin/team")}
-            tooltip="Team"
-          >
-            <Link to="/admin/team">
-              <User />
-              <span>Team</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-
-      <SidebarGroupLabel className="mt-4">Documents</SidebarGroupLabel>
-      <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
             isActive={useIsActivePath("/admin/manage-company")}
-            tooltip="Manage Company"
+            tooltip="Manage Companies"
           >
             <Link to="/admin/manage-company">
               <Building />
-              <span>Manage Company</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/admin/manage-user")}
-            tooltip="Manage User"
-          >
-            <Link to="/admin/manage-user">
-              <Users />
-              <span>Manage User</span>
+              <span>Quản lý công ty</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -119,11 +78,11 @@ function AdminNav() {
           <SidebarMenuButton
             asChild
             isActive={useIsActivePath("/admin/manage-job")}
-            tooltip="Manage Job"
+            tooltip="Manage Jobs"
           >
             <Link to="/admin/manage-job">
               <Briefcase />
-              <span>Manage Job</span>
+              <span>Quản lý công việc</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -132,11 +91,37 @@ function AdminNav() {
           <SidebarMenuButton
             asChild
             isActive={useIsActivePath("/admin/manage-report")}
-            tooltip="Manage Report"
+            tooltip="Manage Reports"
           >
             <Link to="/admin/manage-report">
               <Flag />
-              <span>Manage Report</span>
+              <span>Quản lý báo cáo</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            asChild
+            isActive={useIsActivePath("/admin/services")}
+            tooltip="Services"
+          >
+            <Link to="/admin/services">
+              <Package />
+              <span>Dịch vụ</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            asChild
+            isActive={useIsActivePath("/profile")}
+            tooltip="Personal Profile"
+          >
+            <Link to="/profile">
+              <Settings />
+              <span>Hồ sơ cá nhân</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
