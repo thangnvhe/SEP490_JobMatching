@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 
 // UI Components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +17,7 @@ import {
   Clock,
   Briefcase,
   Heart,
-  Share2,
+  AlertTriangle,
   Building,
   CheckCircle,
   Calendar,
@@ -27,10 +29,16 @@ import {
 // Services
 import { JobServices } from "@/services/job.service";
 import { CompanyServices } from "@/services/company.service";
+import { ReportService } from "@/services/report.service";
+
+// Components
+import { ReportJobDialog } from "@/components/dialogs/ReportJobDialog";
+import { LoginDialog } from "@/pages/client-site/auth/LoginDialog";
 
 // Types
 import type { JobDetailResponse } from "@/models/job";
 import type { Company } from "@/models/company";
+import type { CreateReportRequest } from "@/models/report";
 
 // ===================== UTILITY FUNCTIONS =====================
 
@@ -132,7 +140,7 @@ interface JobDetailHeaderProps {
   onBack: () => void;
   onApply: () => void;
   onSave?: () => void;
-  onShare?: () => void;
+  onReport?: () => void;
   isSaved?: boolean;
   className?: string;
 }
@@ -143,7 +151,7 @@ const JobDetailHeader: React.FC<JobDetailHeaderProps> = ({
   onBack,
   onApply,
   onSave,
-  onShare,
+  onReport,
   isSaved = false,
   className = "",
 }) => {
@@ -291,15 +299,15 @@ const JobDetailHeader: React.FC<JobDetailHeaderProps> = ({
                 </Button>
               )}
 
-              {onShare && (
+              {onReport && (
                 <Button
                   variant="outline"
-                  size="sm"
-                  onClick={onShare}
-                  className="flex-1 border-gray-300 text-gray-600 hover:text-gray-900"
+                  size="lg"
+                  onClick={onReport}
+                  className="flex-1 border-red-300 hover:border-red-400 text-red-600 hover:text-red-700"
                 >
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Chia sẻ
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Báo cáo
                 </Button>
               )}
             </div>
@@ -587,6 +595,9 @@ const SimilarJobs: React.FC<SimilarJobsProps> = ({
 const JobDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  
+  // Redux state
+  const authState = useSelector((state: RootState) => state.authState);
 
   // State management
   const [job, setJob] = useState<JobDetailResponse | null>(null);
@@ -596,6 +607,10 @@ const JobDetailPage: React.FC = () => {
   const [similarJobsLoading, setSimilarJobsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
+  
+  // Dialog states
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
 
   // Load job details and related data
   useEffect(() => {
@@ -691,29 +706,44 @@ const JobDetailPage: React.FC = () => {
     }
   };
 
-  // Handle share job
-  const handleShareJob = async () => {
+  // Handle report job
+  const handleReportJob = () => {
     if (!job) return;
 
+    // Check if user is authenticated
+    if (!authState.isAuthenticated) {
+      setShowLoginDialog(true);
+      return;
+    }
+
+    // Open report dialog
+    setShowReportDialog(true);
+  };
+
+  // Handle submit report
+  const handleSubmitReport = async (reportData: CreateReportRequest) => {
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: job.title,
-          text: `Xem cơ hội việc làm này: ${job.title}`,
-          url: window.location.href,
-        });
+      const response = await ReportService.createReport(reportData);
+      
+      if (response.isSuccess) {
+        toast.success("Báo cáo đã được gửi thành công!");
       } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast.success("Đã sao chép link việc làm!");
+        throw new Error("Report submission failed");
       }
     } catch (error) {
-      try {
-        await navigator.clipboard.writeText(window.location.href);
-        toast.success("Đã sao chép link việc làm!");
-      } catch (clipboardError) {
-        toast.error("Không thể chia sẻ việc làm");
-      }
+      console.error("Error submitting report:", error);
+      toast.error("Có lỗi xảy ra khi gửi báo cáo. Vui lòng thử lại!");
+      throw error; // Re-throw để ReportJobDialog có thể handle
     }
+  };
+
+  // Handle login dialog close
+  const handleLoginSuccess = () => {
+    setShowLoginDialog(false);
+    // After successful login, open report dialog
+    setTimeout(() => {
+      setShowReportDialog(true);
+    }, 100);
   };
 
   // Loading state
@@ -822,7 +852,7 @@ const JobDetailPage: React.FC = () => {
             onBack={handleBack}
             onApply={handleApply}
             onSave={handleSaveJob}
-            onShare={handleShareJob}
+            onReport={handleReportJob}
             isSaved={isSaved}
           />
 
@@ -848,6 +878,32 @@ const JobDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Report Job Dialog */}
+      {job && (
+        <ReportJobDialog
+          isOpen={showReportDialog}
+          onOpenChange={setShowReportDialog}
+          jobId={job.jobId}
+          jobTitle={job.title}
+          onSubmitReport={handleSubmitReport}
+        />
+      )}
+
+      {/* Login Dialog */}
+      <LoginDialog
+        isOpen={showLoginDialog}
+        onOpenChange={setShowLoginDialog}
+        onOpenRegister={() => {
+          setShowLoginDialog(false);
+          // Handle register dialog if needed
+        }}
+        onOpenForgotPassword={() => {
+          setShowLoginDialog(false);
+          // Handle forgot password dialog if needed
+        }}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   );
 };
