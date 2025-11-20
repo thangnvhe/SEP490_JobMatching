@@ -22,41 +22,31 @@ namespace JobMatchingSystem.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateTemplate([FromForm] CreateTemplateCvRequest request)
         {
-            await _service.CreateTemplateAsync(request);
-
-            return Ok(new
-            {
-                StatusCode = (int)HttpStatusCode.Created,
-                Success = true,
-                Message = "Template CV uploaded successfully"
-            });
+            var response = await _service.CreateTemplateAsync(request);
+            return StatusCode((int)response.StatusCode, response);
         }
+
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10, 
+            [FromQuery] string sortBy = "", [FromQuery] bool isDescending = false)
         {
-            var data = await _service.GetAllAsync();
-            return Ok(data);
+            var response = await _service.GetAllAsync(page, pageSize, sortBy, isDescending);
+            return StatusCode((int)response.StatusCode, response);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var item = await _service.GetByIdAsync(id);
-            return Ok(item);
+            var response = await _service.GetByIdAsync(id);
+            return StatusCode((int)response.StatusCode, response);
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
-            await _service.DeleteAsync(id);
-
-            return Ok(new
-            {
-                StatusCode = (int)HttpStatusCode.OK,
-                Success = true,
-                Message = "Deleted successfully"
-            });
+            var response = await _service.DeleteAsync(id);
+            return StatusCode((int)response.StatusCode, response);
         }
     }
 }
