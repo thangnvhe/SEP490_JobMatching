@@ -1,4 +1,5 @@
 ﻿using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
@@ -27,17 +28,26 @@ namespace JobMatchingSystem.API.Services.Implementations
             return experience;
         }
 
-        public async Task<List<CVExperience>> GetByCurrentUserAsync(int userId)
+        public async Task<List<CVExperienceDto>> GetByCurrentUserAsync(int userId)
         {
             var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
             if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
             var experiences = await _repository.GetByUserIdAsync(userId);
-            if (experiences == null || !experiences.Any())
+
+            if (!experiences.Any())
                 throw new AppException(ErrorCode.NotFoundCVExperience());
 
-            return experiences;
+            return experiences.Select(e => new CVExperienceDto
+            {
+                Id = e.Id,
+                CompanyName = e.CompanyName,
+                Position = e.Position,
+                StartDate = e.StartDate,
+                EndDate = e.EndDate,
+                Description = e.Description
+            }).ToList();
         }
 
         public async Task<CVExperience> CreateAsync(CVExperienceRequest request, int userId)
