@@ -1,4 +1,5 @@
 ﻿using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
@@ -27,16 +28,26 @@ namespace JobMatchingSystem.API.Services.Implementations
             return certificate;
         }
 
-        public async Task<List<CVCertificate>> GetByCurrentUserAsync(int userId)
+        public async Task<List<CVCertificateDto>> GetByCurrentUserAsync(int userId)
         {
             var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
             if (user == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
             var certificates = await _repository.GetByUserIdAsync(userId);
-            if (certificates == null || !certificates.Any())
+
+            if (!certificates.Any())
                 throw new AppException(ErrorCode.NotFoundCVCertificate());
-            return certificates;
+
+            return certificates.Select(c => new CVCertificateDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Organization = c.Organization,
+                Link = c.Link,
+                Description = c.Description,
+                CertificateAt = c.CertificateAt
+            }).ToList();
         }
 
         public async Task<CVCertificate> CreateAsync(CVCertificateRequest request, int userId)

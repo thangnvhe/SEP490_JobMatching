@@ -1,4 +1,5 @@
 ﻿using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
@@ -29,7 +30,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             return achievement;
         }
 
-        public async Task<List<CVAchievement>> GetByCurrentUserAsync(int userId)
+        public async Task<List<CVAchievementDto>> GetByCurrentUserAsync(int userId)
         {
             var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
             if (user == null)
@@ -37,11 +38,19 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             var achievements = await _repository.GetByUserIdAsync(userId);
 
-            if (achievements == null || !achievements.Any())
+            if (!achievements.Any())
                 throw new AppException(ErrorCode.NotFoundCVAchievement());
 
-            return achievements;
+            return achievements.Select(a => new CVAchievementDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Organization = a.Organization,
+                Description = a.Description,
+                AchievedAt = a.AchievedAt
+            }).ToList();
         }
+
         public async Task<CVAchievement> CreateAsync(CVAchievementRequest request, int userId)
         {
             if (userId == null || userId == 0)
