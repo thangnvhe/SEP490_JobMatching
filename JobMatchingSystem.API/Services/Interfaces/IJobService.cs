@@ -12,5 +12,6 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task<JobDetailResponse> GetJobByIdAsync(int jobId);
         Task<List<JobDetailResponse>> GetJobsAsync(GetJobRequest request);
         Task<PagedResult<JobDetailResponse>> GetJobsPagedAsync(GetJobPagedRequest request);
+        Task DeleteJobAsync(int jobId, int userId);
     }
 }

@@ -20,7 +20,7 @@
         public DateTime CreatedAt { get; set; }
         public DateTime? OpenedAt { get; set; }
         public DateTime? ExpiredAt { get; set; }
-
+        public bool? IsDeleted { get; set; }
         public List<TaxonomyResponse> Taxonomies { get; set; } = new();
     }
 }

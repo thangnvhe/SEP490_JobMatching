@@ -17,14 +17,17 @@ namespace JobMatchingSystem.API.Services.Implementations
         private readonly IJobRepository _jobRepository;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
         public JobService(IJobRepository jobRepository,
                           UserManager<ApplicationUser> userManager,
-                          ApplicationDbContext context)
+                          ApplicationDbContext context,
+                          IEmailService emailService)
         {
             _jobRepository = jobRepository;
             _userManager = userManager;
             _context = context;
+            _emailService = emailService;
         }
 
         public async Task CreateJobAsync(CreateJobRequest request, int userId)
@@ -102,7 +105,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (job.RecuiterId != userId)
                 throw new AppException(ErrorCode.NotFoundRecruiter());
 
-            if (job.CandidateJobs.Any())
+            if (job.CandidateJobs.Any() || job.IsDeleted == true)
                 throw new AppException(ErrorCode.CantUpdate());
 
             if (request.SalaryMin.HasValue && request.SalaryMax.HasValue &&
@@ -147,13 +150,38 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             var job = await _context.Jobs.FirstOrDefaultAsync(j => j.JobId == jobId);
 
-            if (job == null)
+            if (job == null || job.IsDeleted == true)
                 throw new AppException(ErrorCode.NotFoundJob());
 
             job.Status = request.Status;
             job.VerifiedBy = userId;
 
             await _context.SaveChangesAsync();
+
+            // Sau await _context.SaveChangesAsync(); hoặc trước cũng được
+            if (job.Recruiter != null)
+            {
+                string recruiterEmail = job.Recruiter.Email!;
+                string recruiterName = job.Recruiter.FullName!;
+                string companyName = job.Company?.Name ?? "your company";
+
+                if (job.Status == JobStatus.Moderated)
+                {
+                    await _emailService.SendEmailAsync(
+                        recruiterEmail,
+                        "Job Approved - JobMatching System",
+                        $"Chúc mừng {recruiterName}, công việc \"{job.Title}\" của công ty {companyName} đã được duyệt."
+                    );
+                }
+                else if (job.Status == JobStatus.Rejected)
+                {
+                    await _emailService.SendEmailAsync(
+                        recruiterEmail,
+                        "Job Rejected - JobMatching System",
+                        $"Xin lỗi {recruiterName}, công việc \"{job.Title}\" của công ty {companyName} đã bị từ chối."
+                    );
+                }
+            }
         }
 
         public async Task<JobDetailResponse> GetJobByIdAsync(int jobId)
@@ -188,6 +216,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 CreatedAt = job.CreatedAt,
                 OpenedAt = job.OpenedAt,
                 ExpiredAt = job.ExpiredAt,
+                IsDeleted = job.IsDeleted,
                 Taxonomies = job.JobTaxonomies.Select(t => new TaxonomyResponse
                 {
                     Id = t.TaxonomyId,
@@ -222,12 +251,29 @@ namespace JobMatchingSystem.API.Services.Implementations
                 CreatedAt = j.CreatedAt,
                 OpenedAt = j.OpenedAt,
                 ExpiredAt = j.ExpiredAt,
+                IsDeleted = j.IsDeleted,
                 Taxonomies = j.JobTaxonomies.Select(t => new TaxonomyResponse
                 {
                     Id = t.TaxonomyId,
                     Name = t.Taxonomy != null ? t.Taxonomy.Name : ""
                 }).ToList()
             }).ToList();
+        }
+
+        public async Task DeleteJobAsync(int jobId, int userId)
+        {
+            var job = await _context.Jobs
+                .FirstOrDefaultAsync(j => j.JobId == jobId);
+
+            if (job == null)
+                throw new AppException(ErrorCode.NotFoundJob());
+
+            if (job.RecuiterId != userId)
+                throw new AppException(ErrorCode.NotFoundRecruiter());
+
+            job.IsDeleted = true;
+
+            await _jobRepository.UpdateAsync(job);
         }
 
         public async Task<PagedResult<JobDetailResponse>> GetJobsPagedAsync(GetJobPagedRequest request)
@@ -268,6 +314,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 CreatedAt = j.CreatedAt,
                 OpenedAt = j.OpenedAt,
                 ExpiredAt = j.ExpiredAt,
+                IsDeleted = j.IsDeleted,
                 Taxonomies = j.JobTaxonomies.Select(t => new TaxonomyResponse
                 {
                     Id = t.TaxonomyId,
