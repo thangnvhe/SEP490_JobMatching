@@ -27,6 +27,7 @@ namespace JobMatchingSystem.API.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? OpenedAt { get; set; }
         public DateTime? ExpiredAt { get; set; }
+        public bool IsDeleted { get; set; } = false;
 
         // Navigation properties
         [ForeignKey("CompanyId")]
