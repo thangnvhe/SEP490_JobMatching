@@ -697,10 +697,17 @@ export function ManageCompanyPage() {
                     )}
                   </div>
 
-                  
                   {/* Action Buttons for Pending Companies */}
                   {selectedCompany.status === 0 && (
                     <div className="flex space-x-3 pt-4 border-t border-gray-200">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsViewDialogOpen(false)}
+                        className="flex-1 text-sm py-3"
+                        size="sm"
+                      >
+                        Đóng
+                      </Button>
                       <Button 
                         onClick={() => handleApprove(selectedCompany.id)}
                         className="flex-1 bg-green-600 hover:bg-green-700 text-sm py-3"
@@ -720,6 +727,20 @@ export function ManageCompanyPage() {
                       </Button>
                     </div>
                   )}
+                  
+                  {/* Close button for non-pending companies */}
+                  {selectedCompany.status !== 0 && (
+                    <div className="flex justify-center pt-4 border-t border-gray-200">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsViewDialogOpen(false)}
+                        className="px-8 text-sm py-3"
+                        size="sm"
+                      >
+                        Đóng
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>              {/* Right Column - Business License */}
               <div className="space-y-4 overflow-y-auto pl-3">
@@ -734,24 +755,33 @@ export function ManageCompanyPage() {
                   </div>
 
                   {getFullImageUrl(selectedCompany.licenseFile) ? (
-                    <div className="bg-white rounded-lg p-6 border-2 border-dashed border-orange-300 shadow-sm text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                        <FileText className="w-8 h-8 text-white" />
+                    <div className="bg-white rounded-lg p-4 border-2 border-dashed border-orange-300 shadow-sm">
+                      <div className="mb-4 text-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm">
+                          <FileText className="w-6 h-6 text-white" />
+                        </div>
+                        <h5 className="text-base font-bold text-gray-900 mb-1">
+                          Giấy phép kinh doanh
+                        </h5>
                       </div>
-                      <h5 className="text-lg font-bold text-gray-900 mb-2">
-                        Giấy phép kinh doanh
-                      </h5>
-                      <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                        Click để xem giấy phép kinh doanh của công ty
-                      </p>
+                      
+                      {/* Display the license image directly */}
+                      <div className="w-full h-96 border border-gray-300 rounded-lg overflow-hidden mb-4">
+                        <img
+                          src={getFullImageUrl(selectedCompany.licenseFile)!}
+                          alt="Giấy phép kinh doanh"
+                          className="w-full h-full object-contain bg-gray-50"
+                        />
+                      </div>
+                      
                       <Button
                         variant="outline"
                         onClick={() => window.open(getFullImageUrl(selectedCompany.licenseFile)!, '_blank')}
-                        className="inline-flex items-center text-sm py-2 px-4 border-orange-300 text-orange-700 hover:bg-orange-50"
+                        className="w-full text-sm py-2 border-orange-300 text-orange-700 hover:bg-orange-50"
                         size="sm"
                       >
                         <ExternalLink className="w-4 h-4 mr-2" />
-                        Xem giấy phép
+                        Mở trong tab mới
                       </Button>
                     </div>
                   ) : (

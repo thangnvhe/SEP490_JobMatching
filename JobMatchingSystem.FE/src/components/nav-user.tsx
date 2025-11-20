@@ -26,6 +26,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useNavigate } from "react-router-dom"
+import { useAppDispatch } from "@/store"
+import { logoutAsync } from "@/store/slices/authSlice"
+import { toast } from "sonner"
 
 export function NavUser({
   user,
@@ -37,6 +41,19 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutAsync()).unwrap();
+      toast.success("Đăng xuất thành công!");
+      // Chuyển về homepage sau khi logout thành công
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   return (
     <SidebarMenu>
@@ -96,7 +113,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <IconLogout />
               Log out
             </DropdownMenuItem>

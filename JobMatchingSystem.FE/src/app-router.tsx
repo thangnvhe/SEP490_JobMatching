@@ -13,9 +13,9 @@ import { ManageCompanyPage } from './pages/admin-site/ManageCompany/ViewCompanyL
 import ViewJobList from './pages/admin-site/ManageJob/ViewJobList';
 import { ManageReportPage } from './pages/admin-site/ManageReport/ViewReportList';
 import { CreateEditUserPage } from './pages/admin-site/ManageUser/CreateEditUser';
-import { CreateEditJobPage } from './pages/admin-site/ManageJob/CreateEditJob';
-import { CreateEditCompanyPage } from './pages/admin-site/ManageCompany/CreateEditCompany';
 import RecruiterDashboard from './pages/client-site/recruiter/Dashboard';
+import RecruiterViewJobList from './pages/client-site/recruiter/Jobs/ViewJobList';
+import CreateJobPage from './pages/client-site/recruiter/Jobs/CreateJobPage';
 import CandidateDashboard from './pages/client-site/candidate/Dashboard';
 import FavouriteJobsPage from './pages/client-site/candidate/FavouriteJobs';
 import ProfilePage from './pages/client-site/profile/profile';
@@ -74,6 +74,8 @@ const AppRouter: React.FC = () => {
         }
       >
         <Route index element={<RecruiterDashboard />} />
+        <Route path="jobs" element={<RecruiterViewJobList />} />
+        <Route path="jobs/create" element={<CreateJobPage />} />
       </Route>
 
       {/* Candidate routes - Protected */}

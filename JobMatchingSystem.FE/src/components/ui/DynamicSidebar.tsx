@@ -15,6 +15,8 @@ import {
   Settings,
   Bell,
   Building2,
+  Package,
+  UserPlus,
 } from "lucide-react";
 import {
   Sidebar,
@@ -60,7 +62,7 @@ function RecruiterNav() {
           >
             <Link to="/recruiter/jobs">
               <Briefcase />
-              <span>Job Postings</span>
+              <span>Tin tuyển dụng</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -68,67 +70,25 @@ function RecruiterNav() {
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
-            isActive={useIsActivePath("/recruiter/candidates")}
-            tooltip="Candidates"
+            isActive={useIsActivePath("/recruiter/saved-cvs")}
+            tooltip="Saved CVs"
           >
-            <Link to="/recruiter/candidates">
-              <Users />
-              <span>Candidates</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/recruiter/interviews")}
-            tooltip="Interviews"
-          >
-            <Link to="/recruiter/interviews">
-              <Calendar />
-              <span>Interviews</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/recruiter/analytics")}
-            tooltip="Analytics"
-          >
-            <Link to="/recruiter/analytics">
-              <BarChart3 />
-              <span>Analytics</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-
-      <SidebarGroupLabel className="mt-4">Communication</SidebarGroupLabel>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/recruiter/messages")}
-            tooltip="Messages"
-          >
-            <Link to="/recruiter/messages">
-              <MessageSquare />
-              <span>Messages</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/recruiter/reports")}
-            tooltip="Reports"
-          >
-            <Link to="/recruiter/reports">
+            <Link to="/recruiter/saved-cvs">
               <FileText />
-              <span>Reports</span>
+              <span>Danh sách CVs đã lưu</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            asChild
+            isActive={useIsActivePath("/recruiter/service-packages")}
+            tooltip="Service Packages"
+          >
+            <Link to="/recruiter/service-packages">
+              <Package />
+              <span>Gói dịch vụ</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -137,11 +97,24 @@ function RecruiterNav() {
           <SidebarMenuButton
             asChild
             isActive={useIsActivePath("/recruiter/company")}
-            tooltip="Company Profile"
+            tooltip="Company"
           >
             <Link to="/recruiter/company">
               <Building2 />
-              <span>Company</span>
+              <span>Công ty</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            asChild
+            isActive={useIsActivePath("/recruiter/company-members")}
+            tooltip="Company Members"
+          >
+            <Link to="/recruiter/company-members">
+              <UserPlus />
+              <span>Thành viên công ty</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -154,7 +127,7 @@ function RecruiterNav() {
           >
             <Link to="/recruiter/settings">
               <Settings />
-              <span>Settings</span>
+              <span>Cài đặt</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
