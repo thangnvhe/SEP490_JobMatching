@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Mountain, User, LogOut } from "lucide-react";
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { LoginDialog } from "@/pages/client-site/auth/LoginDialog";
 import { RegisterDialog } from "@/pages/client-site/auth/RegisterDialog";
 import { ForgotPasswordDialog } from "@/pages/client-site/auth/ForgotPasswordDialog";
@@ -21,6 +21,7 @@ import {
 
 export function ClientHeader() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { isAuthenticated, loading: isLoading } = useSelector((state: RootState) => state.authState);
   
   const [loginOpen, setLoginOpen] = React.useState(false);
@@ -31,6 +32,8 @@ export function ClientHeader() {
     try {
       await dispatch(logoutAsync()).unwrap();
       toast.success("Đăng xuất thành công!");
+      // Chuyển về homepage sau khi logout thành công
+      navigate("/");
     } catch (error) {
       console.error("Logout error:", error);
     }

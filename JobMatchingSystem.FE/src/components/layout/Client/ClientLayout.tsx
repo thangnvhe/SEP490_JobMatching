@@ -18,6 +18,8 @@ export function ClientLayout() {
   const SIDEBAR_ENABLED_PATHS = [
     "/profile",
     "/admin",
+    "/recruiter",
+    "/candidate",
   ];
   const showSidebar = SIDEBAR_ENABLED_PATHS.some((p) =>
     location.pathname.startsWith(p)
