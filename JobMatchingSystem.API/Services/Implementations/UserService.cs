@@ -7,6 +7,7 @@ using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using System.Data;
+using System.Security.Claims;
 
 namespace JobMatchingSystem.API.Services.Implementations
 {
@@ -62,6 +63,48 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
             var userDTO = _mapper.Map<UserResponseDTO>(user);
             return userDTO;
+        }
+
+        public async Task<CurrentUserResponseDTO> GetCurrentUser(string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new AppException(ErrorCode.NotFoundUser());
+            }
+
+            // Convert string userId to int since the repository expects int
+            if (!int.TryParse(userId, out int userIdInt))
+            {
+                throw new AppException(ErrorCode.NotFoundUser());
+            }
+
+            var user = await _unitOfWork.AuthRepository.GetUserById(userIdInt);
+            if (user == null)
+            {
+                throw new AppException(ErrorCode.NotFoundUser());
+            }
+
+            // Get user roles
+            var roles = await _unitOfWork.AuthRepository.GetRolesAsync(user);
+
+            var currentUserDTO = new CurrentUserResponseDTO
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email ?? string.Empty,
+                UserName = user.UserName ?? string.Empty,
+                PhoneNumber = user.PhoneNumber ?? string.Empty,
+                Address = user.Address,
+                AvatarUrl = user.AvatarUrl,
+                Gender = user.Gender,
+                Birthday = user.Birthday,
+                IsActive = user.IsActive,
+                Score = user.Score,
+                CompanyId = user.CompanyId,
+                Role = roles.FirstOrDefault() // Lấy role đầu tiên vì mỗi user chỉ có 1 role
+            };
+
+            return currentUserDTO;
         }
     }
 }
