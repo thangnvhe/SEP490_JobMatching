@@ -9,5 +9,6 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
         Task<List<Job>> GetJobsAsync(GetJobRequest request);
         Task<Job?> GetById(int id);
         Task<List<Job>> GetAllJobsPaged(GetJobPagedRequest request); // Thêm mới
+        Task UpdateAsync(Job job);
     }
 }

@@ -25,6 +25,7 @@ namespace JobMatchingSystem.API.DTOs.Request
         public JobStatus? Status { get; set; }
         public int? CompanyId { get; set; }
         public int? RecuiterId { get; set; }
+        public bool? IsDeleted { get; set; }
         public List<int>? TaxonomyIds { get; set; }
     }
 }
