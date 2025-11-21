@@ -1,4 +1,5 @@
 ﻿using JobMatchingSystem.API.DTOs;
+using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Services.Interfaces;
@@ -56,6 +57,31 @@ namespace JobMatchingSystem.API.Controllers
                 .WithResult(user)
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
+                .Build());
+        }
+
+        [HttpPut("me")]
+        [Authorize]
+        public async Task<IActionResult> UpdateCurrentUser([FromForm] UpdateCurrentUserRequest request)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized(APIResponse<string>.Builder()
+                    .WithStatusCode(HttpStatusCode.Unauthorized)
+                    .WithSuccess(false)
+                    .WithMessage("Không tìm thấy thông tin người dùng")
+                    .Build());
+            }
+
+            var updatedUser = await _userService.UpdateCurrentUser(userIdClaim, request);
+
+            return Ok(APIResponse<CurrentUserResponseDTO>.Builder()
+                .WithResult(updatedUser)
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithMessage("Cập nhật thông tin thành công")
                 .Build());
         }
 
