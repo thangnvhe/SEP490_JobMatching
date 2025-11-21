@@ -18,6 +18,7 @@ import RecruiterViewJobList from './pages/client-site/recruiter/Jobs/ViewJobList
 import CreateJobPage from './pages/client-site/recruiter/Jobs/CreateJobPage';
 import CandidateDashboard from './pages/client-site/candidate/Dashboard';
 import FavouriteJobsPage from './pages/client-site/candidate/FavouriteJobs';
+import CVManagement from './pages/client-site/candidate/CVManagement';
 import ProfilePage from './pages/client-site/profile/profile';
 import ProfileCvPage from './pages/profileCV/ProfileCVPage';
 import ViewUserList from './pages/admin-site/ManageUser/ViewUserList';
@@ -87,6 +88,7 @@ const AppRouter: React.FC = () => {
       >
         <Route index element={<CandidateDashboard />} />
         <Route path="saved-jobs" element={<FavouriteJobsPage />} />
+        <Route path="cv-management" element={<CVManagement />} />
       </Route>
 
       {/* NotFound route - catch all */}
