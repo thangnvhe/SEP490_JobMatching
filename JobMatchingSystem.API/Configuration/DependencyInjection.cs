@@ -58,6 +58,8 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IReportService, ReportService>();
             services.AddScoped<ISavedJobService, SavedJobService>();
             services.AddScoped<ISavedCVService, SavedCVService>();
+            services.AddHostedService<JobStatusScheduler>();
+
             return services;
         }
 

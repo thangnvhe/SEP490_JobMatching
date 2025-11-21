@@ -26,6 +26,12 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             return await _context.Jobs.FindAsync(id);
         }
 
+        public async Task UpdateAsync(Job job)
+        {
+            _context.Jobs.Update(job);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<List<Job>> GetJobsAsync(GetJobRequest request)
         {
             var query = _context.Jobs
@@ -100,6 +106,8 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                 query = query.Where(j => j.CompanyId == request.CompanyId.Value);
             if (request.RecuiterId.HasValue)
                 query = query.Where(j => j.RecuiterId == request.RecuiterId.Value);
+            if(request.IsDeleted.HasValue)
+                query = query.Where(j => j.IsDeleted == request.IsDeleted.Value);
 
             if (request.TaxonomyIds != null && request.TaxonomyIds.Any())
             {
@@ -197,6 +205,8 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                 query = query.Where(j => j.CompanyId == request.CompanyId.Value);
             if (request.RecuiterId.HasValue)
                 query = query.Where(j => j.RecuiterId == request.RecuiterId.Value);
+            if (request.IsDeleted.HasValue)
+                query = query.Where(j => j.IsDeleted == request.IsDeleted.Value);
 
             if (request.TaxonomyIds != null && request.TaxonomyIds.Any())
             {
