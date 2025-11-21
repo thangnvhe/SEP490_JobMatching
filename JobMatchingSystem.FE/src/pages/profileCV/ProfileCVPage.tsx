@@ -33,7 +33,6 @@ import {
     Briefcase,
     Calendar,
     Edit,
-    Globe,
     GraduationCap,
     Mail,
     MapPin,
@@ -45,6 +44,7 @@ import {
     CheckCircle2,
     Trash2,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { DialogCVAchievement } from "./EditInformation/DialogCVAchievement";
 import { DialogCVCertificate } from "./EditInformation/DialogCVCertificate";
@@ -56,6 +56,10 @@ import { CVCertificateServices } from "@/services/cv-certificate.service";
 import { CVEducationServices } from "@/services/cv-education.service";
 import { CVExperienceServices } from "@/services/cv-experience.service";
 import { CVProjectServices } from "@/services/cv-project.service";
+import { UserServices } from "@/services/user.service";
+import { DialogCVInformation } from "./EditInformation/DialogCVInformation";
+import type { User } from "@/models/user";
+
 import type { CVAchievement } from "@/models/cv-achievement";
 import type { CVCertificate } from "@/models/cv-certificate";
 import { type CVEducation, DegreeType } from "@/models/cv-education";
@@ -101,6 +105,10 @@ const ProfileCvPage = () => {
     const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
     const [projects, setProjects] = useState<CVProject[]>([]);
     const [selectedProject, setSelectedProject] = useState<CVProject | null>(null);
+    
+    const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
+    const [userProfile, setUserProfile] = useState<User | null>(null);
+
 
     // Alert Dialog state for delete confirmation
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -201,12 +209,22 @@ const ProfileCvPage = () => {
         }
     };
 
+    const fetchUserProfile = async () => {
+        try {
+            const response = await UserServices.getUserProfile();
+            setUserProfile(response.result);
+        } catch (error) {
+            console.error("Failed to fetch user profile", error);
+        }
+    };
+
     useEffect(() => {
         fetchAchievements();
         fetchCertificates();
         fetchEducations();
         fetchExperiences();
         fetchProjects();
+        fetchUserProfile();
     }, []);
 
     // Achievement handlers
@@ -528,12 +546,31 @@ const ProfileCvPage = () => {
     const completionDegree = (profileCompletion / 100) * 360;
 
     const contactDetails = [
-        { icon: Mail, value: "hieubeo2882001@gmail.com", label: "Email" },
-        { icon: Phone, value: "0987 654 321", label: "Phone" },
-        { icon: Calendar, value: "28/08/2001", label: "DOB" },
-        { icon: UserIcon, value: "Nam", label: "Gender" },
-        { icon: MapPin, value: "Hà Nội, Việt Nam", label: "Address" },
-        { icon: Globe, value: "linkedin.com/in/hieu", label: "Website" },
+        { 
+            icon: Mail, 
+            value: userProfile?.email || "Chưa cập nhật", 
+            label: "Email" 
+        },
+        { 
+            icon: Phone, 
+            value: userProfile?.phoneNumber || "Chưa cập nhật", 
+            label: "Phone" 
+        },
+        { 
+            icon: Calendar, 
+            value: userProfile?.birthday ? format(new Date(userProfile.birthday), "dd/MM/yyyy") : "Chưa cập nhật", 
+            label: "DOB" 
+        },
+        { 
+            icon: UserIcon, 
+            value: userProfile?.gender === true ? "Nam" : (userProfile?.gender === false ? "Nữ" : "Chưa cập nhật"), 
+            label: "Gender" 
+        },
+        { 
+            icon: MapPin, 
+            value: userProfile?.address || "Chưa cập nhật", 
+            label: "Address" 
+        },
     ];
 
     const profileSections: SectionCardConfig[] = [
@@ -876,19 +913,22 @@ const ProfileCvPage = () => {
                                 <Avatar className="h-24 w-24 rounded-full border-4 border-white shadow-lg ring-1 ring-gray-100">
                                     <AvatarImage src="" />
                                     <AvatarFallback className="bg-emerald-50 text-2xl font-bold text-emerald-600">
-                                        HN
+                                        {userProfile?.fullName ? userProfile.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : "VN"}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="mb-2 space-y-1">
                                     <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-                                        Hieu Nguyen
+                                        {userProfile?.fullName || "User Name"}
                                     </h1>
                                     <p className="text-base font-medium text-gray-500">
-                                        Software Engineer
+                                        {userProfile?.role || "Candidate"}
                                     </p>
                                 </div>
                             </div>
-                            <Button className="mb-2 gap-2 rounded-full bg-white text-gray-700 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 hover:text-emerald-600">
+                            <Button 
+                                className="mb-2 gap-2 rounded-full bg-white text-gray-700 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 hover:text-emerald-600"
+                                onClick={() => setIsInfoDialogOpen(true)}
+                            >
                                 <Edit className="h-4 w-4" />
                                 <span>Chỉnh sửa hồ sơ</span>
                             </Button>
@@ -990,11 +1030,10 @@ const ProfileCvPage = () => {
                                         {improvementSuggestions.slice(0, 5).map((suggestion, index) => (
                                             <li key={index} className="flex items-start gap-2">
                                                 <CheckCircle2
-                                                    className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${
-                                                        suggestion.completed
+                                                    className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${suggestion.completed
                                                             ? "text-emerald-500"
                                                             : "text-gray-300"
-                                                    }`}
+                                                        }`}
                                                 />
                                                 <span className={suggestion.completed ? "line-through text-gray-400" : ""}>
                                                     {suggestion.text}
@@ -1004,8 +1043,11 @@ const ProfileCvPage = () => {
                                     </ul>
                                 </div>
 
-                                <Button className="w-full rounded-full bg-emerald-500 font-semibold hover:bg-emerald-600 shadow-md shadow-emerald-200">
-                                    Xem trước & Tải CV
+                                <Button
+                                    asChild
+                                    className="w-full rounded-full bg-emerald-500 font-semibold hover:bg-emerald-600 shadow-md shadow-emerald-200"
+                                >
+                                    <Link to="/profile-cv/cv-templates">Xem trước & Tải CV</Link>
                                 </Button>
                             </CardContent>
                         </Card>
@@ -1070,6 +1112,12 @@ const ProfileCvPage = () => {
                 onOpenChange={handleProjectDialogClose}
                 onSuccess={handleProjectDialogSuccess}
                 projectToEdit={selectedProject}
+            />
+
+            <DialogCVInformation
+                open={isInfoDialogOpen}
+                onOpenChange={setIsInfoDialogOpen}
+                onSuccess={fetchUserProfile}
             />
 
             {/* Delete Confirmation Alert Dialog */}

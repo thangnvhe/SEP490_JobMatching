@@ -35,6 +35,10 @@ export const UserServices = {
     const response = await axiosInstance.get('/User/me');
     return response.data;
   },
+  editUserProfile: async (payload: Partial<User>): Promise<BaseResponse<User>> => {
+    const response = await axiosInstance.put('/User/me', payload);
+    return response.data;
+  },
   verifyEmail: async (token: string): Promise<BaseResponse<unknown>> => {
     const response = await axios.get(`${API_BASE_URL}Auth/verify-email`, {
       params: { TokenLink: token },
