@@ -39,13 +39,15 @@ interface LoginDialogProps {
   onOpenChange: (open: boolean) => void;
   onOpenRegister?: () => void;
   onOpenForgotPassword?: () => void;
+  onLoginSuccess?: () => void;
 }
 
 export function LoginDialog({
   isOpen,
   onOpenChange,
   onOpenRegister,
-  onOpenForgotPassword
+  onOpenForgotPassword,
+  onLoginSuccess
 }: LoginDialogProps) {
   const dispatch = useAppDispatch();
   const { loading: isLoading } = useSelector((state: RootState) => state.authState);
@@ -79,6 +81,7 @@ export function LoginDialog({
       })).unwrap();
       toast.success("Đăng nhập thành công!");
       onOpenChange(false);
+      onLoginSuccess?.(); // Call success callback if provided
     } catch (error) {
       toast.error("Đăng nhập thất bại!");
     }

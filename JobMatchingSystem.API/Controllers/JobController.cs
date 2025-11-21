@@ -91,6 +91,21 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Recruiter")]
+        public async Task<IActionResult> DeleteJob(int id)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+            await _jobService.DeleteJobAsync(id, userId);
+
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult("Job deleted successfully")
+                .Build());
+        }
+
         [HttpGet("paged")]
         public async Task<IActionResult> GetJobsPaged([FromQuery] GetJobPagedRequest request)
         {

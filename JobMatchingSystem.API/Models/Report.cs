@@ -15,7 +15,8 @@ namespace JobMatchingSystem.API.Models
         public string Reason { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public ReportStatus Status { get; set; } = ReportStatus.Pending;
-        public string? Note { get; set; }   
+        public string? Note { get; set; }
+        public DateTime? VerifiedAt { get; set; }
         // Navigation properties
         [ForeignKey("JobId")]
         public virtual Job Job { get; set; } = null!;
