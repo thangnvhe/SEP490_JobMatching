@@ -5,9 +5,6 @@ import {
   Users,
   Briefcase,
   Flag,
-  BarChart3,
-  Folder,
-  User,
   Settings,
   Package,
 } from "lucide-react";
@@ -19,7 +16,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { IconInnerShadowTop } from "@tabler/icons-react";

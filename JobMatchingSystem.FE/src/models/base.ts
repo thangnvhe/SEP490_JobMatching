@@ -21,7 +21,7 @@ export interface PaginationParamsInput {
     size: number;
     search?: string;
     sortBy?: string;
-    isDecending?: boolean;
+    isDescending?: boolean; // Fixed spelling
     [key: string]: any;
 }
 
@@ -33,5 +33,5 @@ export interface PageInfo {
     hasPreviousPage: boolean;
     hasNextPage: boolean;
     sortBy: string;
-    isDecending: boolean;
+    isDecending: boolean; // Keep consistent with backend
 }

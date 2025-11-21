@@ -1,9 +1,10 @@
 import { BaseServices } from "./base.service";
-import type { BaseResponse, PaginatedResponse } from "@/models/base";
-import type { CreateReportRequest, ReportItem, GetReportPagedRequest } from "@/models/report";
+import type { BaseResponse } from "@/models/base";
+import type { CreateReportRequest, ReportItem, GetReportPagedRequest, CensorReportRequest } from "@/models/report";
+import { getReportStatusEnum } from "@/models/report";
 
 export class ReportService {
-  private static API_URL = "/api/Report";
+  private static API_URL = "/Report";
 
   // User report creation (for guest users reporting jobs)
   static async createReport(reportData: CreateReportRequest): Promise<BaseResponse<any>> {
@@ -19,7 +20,7 @@ export class ReportService {
   // Admin report management (for admin users managing reports)
   static async getReportsWithPagination(
     params: GetReportPagedRequest
-  ): Promise<PaginatedResponse<ReportItem>> {
+  ): Promise<BaseResponse<any>> { // Changed return type to match API response structure
     try {
       const response = await BaseServices.getAllWithPagination<ReportItem>(
         {
@@ -49,14 +50,19 @@ export class ReportService {
     reportId: number,
     status: string,
     note?: string
-  ): Promise<any> {
+  ): Promise<BaseResponse<any>> {
     try {
-      const response = await BaseServices.create<any>(
-        {
-          status,
-          note: note || "",
-        },
-        `${this.API_URL}/${reportId}/status`
+      const requestData: CensorReportRequest = {
+        status: getReportStatusEnum(status),
+        note: note || "",
+      };
+      
+      console.log("Sending censor request:", { reportId, requestData });
+      
+      const response = await BaseServices.update<any>(
+        reportId.toString(),
+        requestData,
+        `${this.API_URL}/censor`
       );
       return response;
     } catch (error) {
@@ -66,4 +72,4 @@ export class ReportService {
   }
 }
 
-export type { CreateReportRequest, ReportItem, GetReportPagedRequest };
+export type { CreateReportRequest, ReportItem, GetReportPagedRequest, CensorReportRequest };
