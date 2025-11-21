@@ -142,6 +142,7 @@ interface JobDetailHeaderProps {
   onSave?: () => void;
   onReport?: () => void;
   isSaved?: boolean;
+  authState: any; // Add authState prop
   className?: string;
 }
 
@@ -153,6 +154,7 @@ const JobDetailHeader: React.FC<JobDetailHeaderProps> = ({
   onSave,
   onReport,
   isSaved = false,
+  authState,
   className = "",
 }) => {
   return (
@@ -281,7 +283,7 @@ const JobDetailHeader: React.FC<JobDetailHeaderProps> = ({
             </Button>
 
             <div className="flex space-x-2">
-              {onSave && (
+              {(authState?.isAuthenticated && authState?.role?.toLowerCase() === 'candidate') && onSave && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -697,6 +699,18 @@ const JobDetailPage: React.FC = () => {
   const handleSaveJob = () => {
     if (!job) return;
     
+    // Check if user is authenticated
+    if (!authState.isAuthenticated) {
+      setShowLoginDialog(true);
+      return;
+    }
+
+    // Check if user is candidate
+    if (authState.role?.toLowerCase() !== 'candidate') {
+      toast.error('Chỉ ứng viên mới có thể lưu việc làm');
+      return;
+    }
+    
     if (isSaved) {
       setIsSaved(false);
       toast.success("Đã bỏ lưu việc làm");
@@ -854,6 +868,7 @@ const JobDetailPage: React.FC = () => {
             onSave={handleSaveJob}
             onReport={handleReportJob}
             isSaved={isSaved}
+            authState={authState}
           />
 
           {/* Main Content */}

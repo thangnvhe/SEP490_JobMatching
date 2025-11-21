@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 
 // Components
 import JobSearchHeader from "@/components/ui/jobs/JobSearchHeader";
@@ -71,6 +73,9 @@ const getExperienceRange = (experienceLevel: string): [number, number] => {
 const JobsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Redux state
+  const authState = useSelector((state: RootState) => state.authState);
   
   // State management
   const [jobs, setJobs] = useState<JobDetailResponse[]>([]);
@@ -258,6 +263,21 @@ const JobsPage: React.FC = () => {
 
   const handleSaveJob = async (jobId: number) => {
     try {
+      // Check if user is authenticated
+      if (!authState.isAuthenticated) {
+        toast.error('Vui lòng đăng nhập để lưu việc làm');
+        return;
+      }
+
+      // Check if user is candidate
+      if (authState.role?.toLowerCase() !== 'candidate') {
+        toast.error('Chỉ ứng viên mới có thể lưu việc làm');
+        return;
+      }
+
+      // TODO: Implement actual save job API call here
+      // await SaveJobService.saveJob(jobId);
+      
       toast.success(`Đã lưu công việc ${jobId}`);
     } catch (error) {
       toast.error("Có lỗi khi lưu công việc");

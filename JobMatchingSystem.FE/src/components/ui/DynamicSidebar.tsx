@@ -3,17 +3,11 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import {
   LayoutDashboard,
-  Users,
   Briefcase,
-  BarChart3,
   User,
-  Search,
   FileText,
   Bookmark,
-  MessageSquare,
-  Calendar,
   Settings,
-  Bell,
   Building2,
   Package,
   UserPlus,
@@ -25,7 +19,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { NavUser } from "@/components/nav-user";

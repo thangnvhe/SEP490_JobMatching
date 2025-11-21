@@ -1,5 +1,6 @@
 ﻿using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -49,6 +50,7 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Candidate")]
         public async Task<IActionResult> Create(int jobId)
         {
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -63,6 +65,7 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Candidate")]
         public async Task<IActionResult> Delete(int id)
         {
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");

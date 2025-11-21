@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { 
   Eye,
-  Trash2,
   Check,
   X,
   Clock,
@@ -31,15 +30,11 @@ import { DataTable } from "@/components/ui/data-table";
 
 // Import types và services
 import { ReportService } from "@/services/report.service";
+import { JobServices } from "@/services/job.service";
+import { UserServices } from "@/services/user.service";
 import { type ReportItem } from "@/models/report";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
-
-// Helper function để cắt ngắn text
-const truncateText = (text: string, maxLength: number = 100): string => {
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + '...';
-};
 
 export default function ViewReportList() {
   // Khai báo local state
@@ -63,6 +58,40 @@ export default function ViewReportList() {
   
   const debouncedKeyword = useDebounce(keyword, 700);
   const pageSizeOptions = [5, 10, 20, 50];
+
+  // Function to enrich reports with job and user data
+  const enrichReportsData = async (reports: ReportItem[]): Promise<ReportItem[]> => {
+    const enrichedReports = await Promise.all(
+      reports.map(async (report) => {
+        const enrichedReport = { ...report };
+        
+        // Fetch job title
+        try {
+          const jobResponse = await JobServices.getJobById(report.jobId.toString());
+          if (jobResponse.isSuccess && jobResponse.result) {
+            enrichedReport.jobTitle = jobResponse.result.title;
+          }
+        } catch (error) {
+          console.error(`Error fetching job ${report.jobId}:`, error);
+          enrichedReport.jobTitle = `Job #${report.jobId}`;
+        }
+        
+        // Fetch reporter name
+        try {
+          const userResponse = await UserServices.getById(report.reporterId.toString());
+          if (userResponse.isSuccess && userResponse.result) {
+            enrichedReport.reporterName = userResponse.result.fullName || userResponse.result.userName || `User #${report.reporterId}`;
+          }
+        } catch (error) {
+          console.error(`Error fetching user ${report.reporterId}:`, error);
+          enrichedReport.reporterName = `User #${report.reporterId}`;
+        }
+        
+        return enrichedReport;
+      })
+    );
+    return enrichedReports;
+  };
 
   // Fetch reports with server-side pagination and filtering
   const getAllReports = useCallback(async () => {
@@ -98,25 +127,31 @@ export default function ViewReportList() {
       console.log('API Response:', response);
       
       if (response.isSuccess && response.result) {
+        let reportsData: ReportItem[] = [];
+        
         // Kiểm tra nếu response có structure paginated với items và pageInfo
         if (response.result.items && response.result.pageInfo) {
           console.log('Using paginated structure:', response.result);
-          setReports(response.result.items || []);
+          reportsData = response.result.items || [];
           setTotalItems(response.result.pageInfo.totalItem || 0);
         } 
         // Nếu response.result là array trực tiếp (không phân trang)
         else if (Array.isArray(response.result)) {
           console.log('Using direct array:', response.result.length, 'items');
-          setReports(response.result);
+          reportsData = response.result;
           setTotalItems(response.result.length);
         } 
         else {
           console.log('Single object or unknown structure:', response.result);
-          setReports([response.result]);
+          reportsData = [response.result];
           setTotalItems(1);
         }
+        
+        // Enrich reports data with job and user information
+        const enrichedReports = await enrichReportsData(reportsData);
+        setReports(enrichedReports);
       } else {
-        setError("Không thể tải danh sách báo cáo");
+        setError(response.errorMessages?.[0] || "Không thể tải danh sách báo cáo");
         setReports([]);
         setTotalItems(0);
       }
@@ -181,8 +216,12 @@ export default function ViewReportList() {
 
   const handleApprove = async (reportId: number) => {
     try {
-      await ReportService.updateReportStatus(reportId, "Approved", "Báo cáo được chấp nhận");
-      getAllReports(); // Refresh data
+      const response = await ReportService.updateReportStatus(reportId, "Approved", "Báo cáo được chấp nhận");
+      if (response.isSuccess) {
+        getAllReports(); // Refresh data
+      } else {
+        console.error("Failed to approve report:", response.errorMessages);
+      }
     } catch (error) {
       console.error("Error approving report:", error);
     }
@@ -190,8 +229,12 @@ export default function ViewReportList() {
 
   const handleReject = async (reportId: number) => {
     try {
-      await ReportService.updateReportStatus(reportId, "Rejected", "Báo cáo bị từ chối");
-      getAllReports(); // Refresh data
+      const response = await ReportService.updateReportStatus(reportId, "Rejected", "Báo cáo bị từ chối");
+      if (response.isSuccess) {
+        getAllReports(); // Refresh data
+      } else {
+        console.error("Failed to reject report:", response.errorMessages);
+      }
     } catch (error) {
       console.error("Error rejecting report:", error);
     }
@@ -238,15 +281,26 @@ export default function ViewReportList() {
   };
 
   const getReportTypeLabel = (type: string) => {
-    switch (type) {
+    const normalizedType = type.toLowerCase();
+    switch (normalizedType) {
       case 'spam':
-        return 'Spam';
+        return 'Thư rác/Spam';
       case 'fake_job':
-        return 'Việc làm giả';
+      case 'fakejob':
+        return 'Việc làm giả mạo';
       case 'inappropriate':
+      case 'inappropriatecontent':
         return 'Nội dung không phù hợp';
       case 'discrimination':
         return 'Phân biệt đối xử';
+      case 'misleading':
+        return 'Thông tin sai lệch';
+      case 'scam':
+        return 'Lừa đảo';
+      case 'harassment':
+        return 'Quấy rối';
+      case 'other':
+        return 'Khác';
       default:
         return type;
     }
@@ -273,23 +327,20 @@ export default function ViewReportList() {
       enableSorting: false,
     },
     {
-      id: "id",
-      accessorKey: "id",
-      header: "ID",
-      enableSorting: true,
+      id: "jobTitle",
+      accessorKey: "jobTitle",
+      header: "Tên công việc",
+      enableSorting: false,
       cell: ({ row }) => {
-        const id = row.getValue("id") as number;
-        return <div className="text-sm font-mono">{id}</div>;
-      },
-    },
-    {
-      id: "jobId",
-      accessorKey: "jobId",
-      header: "Job ID",
-      enableSorting: true,
-      cell: ({ row }) => {
-        const jobId = row.getValue("jobId") as number;
-        return <div className="text-sm font-mono">{jobId}</div>;
+        const jobTitle = row.getValue("jobTitle") as string;
+        const jobId = row.original.jobId;
+        return (
+          <div className="text-sm max-w-[200px]">
+            <div className="font-medium truncate" title={jobTitle}>
+              {jobTitle || `Job #${jobId}`}
+            </div>
+          </div>
+        );
       },
     },
     {
@@ -307,27 +358,20 @@ export default function ViewReportList() {
       },
     },
     {
-      id: "reason",
-      accessorKey: "reason",
-      header: "Lý do",
+      id: "reporterName",
+      accessorKey: "reporterName",
+      header: "Người báo cáo",
       enableSorting: false,
       cell: ({ row }) => {
-        const reason = row.getValue("reason") as string;
+        const reporterName = row.getValue("reporterName") as string;
+        const reporterId = row.original.reporterId;
         return (
-          <div title={reason} className="max-w-[200px] truncate text-sm">
-            {truncateText(reason, 50)}
+          <div className="text-sm">
+            <div className="font-medium">
+              {reporterName || `User #${reporterId}`}
+            </div>
           </div>
         );
-      },
-    },
-    {
-      id: "reporterId",
-      accessorKey: "reporterId",
-      header: "Người báo cáo",
-      enableSorting: true,
-      cell: ({ row }) => {
-        const reporterId = row.getValue("reporterId") as string;
-        return <div className="text-sm font-mono">{reporterId}</div>;
       },
     },
     {
@@ -546,7 +590,7 @@ export default function ViewReportList() {
       {/* View Report Dialog */}
       {isViewDialogOpen && selectedReport && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-4xl max-h-[85vh]">
+          <div className="bg-white rounded-lg shadow-xl overflow-hidden min-w-[500px] max-w-4xl w-auto max-h-[90vh]">
             {/* Header */}
             <div className="px-6 py-4 border-b bg-gray-50">
               <div className="flex items-center justify-between">
@@ -570,9 +614,9 @@ export default function ViewReportList() {
             </div>
             
             {/* Content */}
-            <div className="p-6 overflow-y-auto" style={{ height: 'calc(85vh - 73px)' }}>
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">
                       ID báo cáo
@@ -581,15 +625,15 @@ export default function ViewReportList() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">
-                      Job ID
+                      Công việc được báo cáo
                     </label>
-                    <p className="text-sm mt-1 font-mono">{selectedReport.jobId}</p>
+                    <p className="text-sm mt-1">{selectedReport.jobTitle || `Job #${selectedReport.jobId}`}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">
                       Người báo cáo
                     </label>
-                    <p className="text-sm mt-1 font-mono">{selectedReport.reporterId}</p>
+                    <p className="text-sm mt-1">{selectedReport.reporterName || `User #${selectedReport.reporterId}`}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">
