@@ -20,6 +20,7 @@ import FavouriteJobsPage from './pages/client-site/candidate/FavouriteJobs';
 import CVManagement from './pages/client-site/candidate/CVManagement';
 import ProfilePage from './pages/client-site/profile/profile';
 import ProfileCvPage from './pages/profileCV/ProfileCVPage';
+import PreviewDownloadCV from './pages/profileCV/PreviewDownloadCV';
 import ViewUserList from './pages/admin-site/ManageUser/ViewUserList';
 import ResetPasswordPage from './pages/client-site/auth/ResetPasswordPage';
 import CompaniesPage from './pages/client-site/guest/CompaniesPage';
@@ -37,6 +38,8 @@ const AppRouter: React.FC = () => {
       {/* Confirm email route - Public */}
       <Route path="/confirm-email" element={<ConfirmEmailPage />} />
 
+      <Route path="profile-cv/cv-templates" element={<PreviewDownloadCV />} />
+
       {/* Client routes with ClientLayout */}
       <Route path="/" element={<App />}>
         <Route element={<ClientLayout />}>
@@ -48,7 +51,8 @@ const AppRouter: React.FC = () => {
           <Route path="companies/:id" element={<CompanyDetailPage />} />
           <Route path="contact-recruiter" element={<ContactRecruiterPage />} />
           <Route path="profile" element={<ProfilePage />} />
-          <Route path="profileCV" element={<ProfileCvPage />} />
+          <Route path="profile-cv" element={<ProfileCvPage />} />
+
         </Route>
       </Route>
 
