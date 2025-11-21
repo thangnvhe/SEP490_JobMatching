@@ -52,6 +52,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             report.VerifiedId = admin.Id;
             report.Status = request.Status;
             report.Note = request.Note;
+            report.VerifiedAt = DateTime.UtcNow;
 
             await _reportRepository.UpdateAsync(report);
         }
@@ -111,7 +112,8 @@ namespace JobMatchingSystem.API.Services.Implementations
                 Reason = r.Reason,
                 Note = r.Note,
                 Status = r.Status.ToString(),
-                CreatedAt = r.CreatedAt
+                CreatedAt = r.CreatedAt,
+                VerifiedAt = r.VerifiedAt
             }).ToList();
 
             return new PagedResult<ReportDetailResponse>
