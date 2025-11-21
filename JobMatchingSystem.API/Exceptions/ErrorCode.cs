@@ -18,6 +18,8 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error EmailNotExist() => new("Email Not Exist", HttpStatusCode.NotFound);
         public static Error NotFoundTemplateCV() => new("Not Found TemplateCV", HttpStatusCode.NotFound);
         public static Error NotFoundCV() => new("Not Found CV", HttpStatusCode.NotFound);
+        public static Error NotFoundCanTaxonomy() => new("Not Found CanTaxonomy", HttpStatusCode.NotFound);
+        public static Error NotFoundTaxonomy() => new("Not Found Taxonomy", HttpStatusCode.NotFound);
         public static Error NotFoundCVCertificate() => new("Not Found CVCertificate", HttpStatusCode.NotFound);
         public static Error NotFoundCVAchievement() => new("Not Found CVAchievement", HttpStatusCode.NotFound);
         public static Error NotFoundCVEducation() => new("Not Found CVEducation", HttpStatusCode.NotFound);
