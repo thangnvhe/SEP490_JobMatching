@@ -36,5 +36,7 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundReport() => new("Not Found Report", HttpStatusCode.NotFound);
         public static Error NotFoundSaveJob() => new("Not Found Save Job", HttpStatusCode.NotFound);
         public static Error NotFoundSaveCV() => new("Not Found Save CV", HttpStatusCode.NotFound);
+        public static Error InvalidFileType() => new("Invalid file type. Only JPG, JPEG, PNG, GIF are allowed.", HttpStatusCode.BadRequest);
+        public static Error FileSizeExceeded() => new("File size exceeded. Maximum file size is 5MB.", HttpStatusCode.BadRequest);
     }
 }
