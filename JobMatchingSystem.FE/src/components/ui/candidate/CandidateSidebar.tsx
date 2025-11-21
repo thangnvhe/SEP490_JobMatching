@@ -8,7 +8,6 @@ import {
   MessageSquare,
   Calendar,
   Settings,
-  BarChart3,
   Bell,
 } from "lucide-react";
 import {
@@ -103,12 +102,12 @@ function CandidateNav() {
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
-            isActive={useIsActivePath("/candidate/analytics")}
-            tooltip="Analytics"
+            isActive={useIsActivePath("/candidate/cv-management")}
+            tooltip="Quản lý CV"
           >
-            <Link to="/candidate/analytics">
-              <BarChart3 />
-              <span>Analytics</span>
+            <Link to="/candidate/cv-management">
+              <FileText />
+              <span>Quản lý CV</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
