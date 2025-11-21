@@ -4,14 +4,16 @@ export interface User {
     email: string;
     fullName: string;
     avatarUrl: string | null;
-    gender: string | null;
+    gender: boolean | null;
     birthday: string | null;
     score: number;
     isActive: boolean;
-    createdAt: string;
-    updatedAt: string | null;
-    emailConfirmed: boolean;
+    createdAt?: string;
+    updatedAt?: string | null;
+    emailConfirmed?: boolean;
     phoneNumber: string;
+    address: string;
+    companyId: number | null;
     role?: UserRole;
 }
 
