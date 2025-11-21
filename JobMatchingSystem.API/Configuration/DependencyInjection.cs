@@ -30,6 +30,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IReportRepository, ReportRepository>();
             services.AddScoped<ISavedJobRepository, SavedJobRepository>();
             services.AddScoped<ISavedCVRepository, SavedCVRepository>();
+            services.AddScoped<ICandidateTaxonomyRepository, CandidateTaxonomyRepository>();
             return services;
         }
 
@@ -59,6 +60,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<ISavedJobService, SavedJobService>();
             services.AddScoped<ISavedCVService, SavedCVService>();
             services.AddHostedService<JobStatusScheduler>();
+            services.AddScoped<ICandidateTaxonomyService, CandidateTaxonomyService>();
 
             return services;
         }
