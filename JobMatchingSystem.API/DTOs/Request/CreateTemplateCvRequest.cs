@@ -10,5 +10,7 @@ namespace JobMatchingSystem.API.DTOs.Request
 
         [Required]
         public IFormFile File { get; set; } // upload từ form (multipart/form-data)
+        
+        public IFormFile? ImageFile { get; set; } // preview image (optional)
     }
 }

@@ -70,11 +70,41 @@ namespace JobMatchingSystem.API.Services.Implementations
                     await file.CopyToAsync(stream);
                 }
 
+                // Handle image upload if provided
+                string? imageUrl = null;
+                if (request.ImageFile != null && request.ImageFile.Length > 0)
+                {
+                    var imageExtension = Path.GetExtension(request.ImageFile.FileName).ToLowerInvariant();
+                    var allowedImageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+                    
+                    if (allowedImageExtensions.Contains(imageExtension))
+                    {
+                        // Validate image file size (max 5MB)
+                        if (request.ImageFile.Length <= 5 * 1024 * 1024)
+                        {
+                            var imageFolder = Path.Combine(_env.WebRootPath ?? "wwwroot", "template_cv", "images");
+                            if (!Directory.Exists(imageFolder))
+                                Directory.CreateDirectory(imageFolder);
+
+                            var imageFileName = $"{originalName}_preview_{Guid.NewGuid()}{imageExtension}";
+                            var imageFullPath = Path.Combine(imageFolder, imageFileName);
+
+                            using (var imageStream = new FileStream(imageFullPath, FileMode.Create))
+                            {
+                                await request.ImageFile.CopyToAsync(imageStream);
+                            }
+
+                            imageUrl = $"/template_cv/images/{imageFileName}";
+                        }
+                    }
+                }
+
                 // create DB record
                 var template = new TemplateCV
                 {
                     Name = request.Name,
-                    PathUrl = $"/template_cv/{fileName}" // relative url to serve
+                    PathUrl = $"/template_cv/{fileName}", // relative url to serve
+                    ImageUrl = imageUrl
                 };
 
                 await _repository.CreateAsync(template);
@@ -212,6 +242,14 @@ namespace JobMatchingSystem.API.Services.Implementations
 
                 if (File.Exists(fullPath))
                     File.Delete(fullPath);
+
+                // Delete image file if exists
+                if (!string.IsNullOrEmpty(template.ImageUrl))
+                {
+                    var imageFullPath = Path.Combine(_env.WebRootPath ?? "wwwroot", template.ImageUrl.TrimStart('/'));
+                    if (File.Exists(imageFullPath))
+                        File.Delete(imageFullPath);
+                }
 
                 await _repository.DeleteAsync(template);
 
