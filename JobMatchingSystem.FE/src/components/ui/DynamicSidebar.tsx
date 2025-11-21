@@ -157,10 +157,10 @@ function CandidateNav() {
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
-            isActive={useIsActivePath("/candidate/my-cv")}
+            isActive={useIsActivePath("/candidate/cv-management")}
             tooltip="My CV"
           >
-            <Link to="/candidate/my-cv">
+            <Link to="/candidate/cv-management">
               <FileText />
               <span>CV của tôi</span>
             </Link>

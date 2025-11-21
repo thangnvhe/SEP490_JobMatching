@@ -1,7 +1,11 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import type { RootState } from '@/store';
+import { UserServices } from '@/services/user.service';
+import type { User } from '@/models/user';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileText, Upload, Download, Star, Trash2, Eye, File, Calendar, CheckCircle } from "lucide-react";
@@ -32,37 +36,91 @@ export default function CVManagement() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [cvName, setCvName] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
-  // Mock user ID - trong thực tế sẽ lấy từ authentication context
-  const userId = 10;
+  // Get authentication state from Redux
+  const authState = useSelector((state: RootState) => state.authState);
+  
+  // Get user ID from auth state or user profile
+  const userId = userProfile?.id || authState.nameid;
 
-  const fetchCVs = async () => {
+  const fetchUserProfile = async () => {
+    try {
+      setIsLoadingProfile(true);
+      const response = await UserServices.getUserProfile();
+      
+      if (response.isSuccess) {
+        setUserProfile(response.result);
+      } else {
+        console.error('Failed to fetch user profile:', response.errorMessages);
+        alert(`Lỗi khi tải thông tin người dùng: ${response.errorMessages?.join(', ') || 'Không xác định'}`);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      alert("Không thể tải thông tin người dùng");
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
+  const fetchCVs = React.useCallback(async () => {
+    if (!userId) {
+      console.warn('User ID not available, cannot fetch CVs');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       const response = await fetch(`https://localhost:7044/api/CV/user/${userId}`);
       
       if (!response.ok) {
+        // Check if it's 404 (no CVs found) - this is normal for new users
+        if (response.status === 404) {
+          setCvs([]);
+          return;
+        }
         throw new Error('Failed to fetch CVs');
       }
       
       const data: ApiResponse = await response.json();
       
       if (data.isSuccess) {
-        setCvs(data.result);
+        setCvs(data.result || []); // Ensure we set empty array if result is null
       } else {
-        alert(`Lỗi: ${data.errorMessages.join(', ')}`);
+        // Only show error if it's not an empty result scenario
+        if (data.errorMessages?.some(msg => !msg.toLowerCase().includes('not found') && !msg.toLowerCase().includes('no cv'))) {
+          console.error('Error fetching CVs:', data.errorMessages);
+          alert(`Lỗi: ${data.errorMessages.join(', ')}`);
+        } else {
+          setCvs([]); // Set empty array for "not found" scenarios
+        }
       }
     } catch (error) {
       console.error('Error fetching CVs:', error);
-      alert("Không thể tải danh sách CV");
+      // Only show alert for actual network errors, not for empty results
+      if (error instanceof Error && !error.message.includes('404')) {
+        alert("Không thể tải danh sách CV");
+      } else {
+        setCvs([]);
+      }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
-    fetchCVs();
+    // Fetch user profile first
+    fetchUserProfile();
   }, []);
+
+  useEffect(() => {
+    // Fetch CVs when user profile is loaded and userId is available
+    if (!isLoadingProfile && userId) {
+      fetchCVs();
+    }
+  }, [isLoadingProfile, userId, fetchCVs]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -87,6 +145,11 @@ export default function CVManagement() {
   const handleUpload = async () => {
     if (!selectedFile || !cvName.trim()) {
       alert("Lỗi: Vui lòng chọn file và nhập tên CV");
+      return;
+    }
+
+    if (!userId) {
+      alert("Lỗi: Không thể xác định người dùng. Vui lòng đăng nhập lại.");
       return;
     }
 
@@ -144,22 +207,43 @@ export default function CVManagement() {
   };
 
   const handleDelete = async (cvId: number) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa CV này?')) {
-      try {
-        const response = await fetch(`https://localhost:7044/api/CV/${cvId}`, {
-          method: 'DELETE',
-        });
+    if (!window.confirm('Bạn có chắc chắn muốn xóa CV này?')) {
+      return;
+    }
 
-        if (response.ok) {
-          alert("Thành công: CV đã được xóa");
-          fetchCVs();
-        } else {
-          throw new Error('Failed to delete');
-        }
-      } catch (error) {
-        console.error('Error deleting CV:', error);
-        alert("Lỗi: Không thể xóa CV");
+    try {
+      // Get token from localStorage or cookies
+      const token = localStorage.getItem('accessToken') || document.cookie
+        .split('; ')
+        .find(row => row.startsWith('accessToken='))
+        ?.split('=')[1];
+
+      if (!token) {
+        alert("Lỗi: Bạn cần đăng nhập để thực hiện thao tác này");
+        return;
       }
+
+      const response = await fetch(`https://localhost:7044/api/CV/${cvId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.isSuccess) {
+        alert("Thành công: CV đã được xóa");
+        fetchCVs(); // Refresh the CV list
+      } else {
+        // Handle API error response
+        const errorMessage = data.errorMessages?.join(', ') || 'Không thể xóa CV';
+        alert(`Lỗi: ${errorMessage}`);
+      }
+    } catch (error) {
+      console.error('Error deleting CV:', error);
+      alert("Lỗi: Không thể kết nối đến server. Vui lòng thử lại.");
     }
   };
 
@@ -177,7 +261,7 @@ export default function CVManagement() {
     window.open(`https://localhost:7044/${cv.fileUrl}`, '_blank');
   };
 
-  if (isLoading) {
+  if (isLoadingProfile || isLoading) {
     return (
       <div className="flex flex-1 flex-col">
         <div className="flex flex-1 items-center justify-center">
@@ -187,8 +271,31 @@ export default function CVManagement() {
               <FileText className="h-8 w-8 text-blue-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Đang tải danh sách CV</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {isLoadingProfile ? "Đang tải thông tin người dùng" : "Đang tải danh sách CV"}
+              </h3>
               <p className="text-gray-600 dark:text-gray-400">Vui lòng đợi trong giây lát...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if user is not authenticated or no user ID
+  if (!authState.isAuthenticated || !userId) {
+    return (
+      <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="rounded-full bg-red-100 dark:bg-red-900/20 p-6 mx-auto w-fit">
+              <FileText className="h-12 w-12 text-red-600 dark:text-red-400" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Không thể truy cập</h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Vui lòng đăng nhập để xem danh sách CV của bạn.
+              </p>
             </div>
           </div>
         </div>
