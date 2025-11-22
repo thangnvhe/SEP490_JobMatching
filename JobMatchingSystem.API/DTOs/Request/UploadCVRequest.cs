@@ -1,4 +1,6 @@
-﻿namespace JobMatchingSystem.API.DTOs.Request
+﻿using Microsoft.AspNetCore.Http;
+
+namespace JobMatchingSystem.API.DTOs.Request
 {
     public class UploadCVRequest
     {

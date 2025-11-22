@@ -36,6 +36,13 @@ export default function CVManagement() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [cvName, setCvName] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState<{
+    is_cv: boolean;
+    confidence: number;
+    reason: string;
+    file_info?: any;
+  } | null>(null);
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
@@ -122,6 +129,38 @@ export default function CVManagement() {
     }
   }, [isLoadingProfile, userId, fetchCVs]);
 
+  const validateCV = async (file: File) => {
+    try {
+      setIsValidating(true);
+      setValidationResult(null);
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('https://localhost:7044/api/CV/validate', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.isSuccess) {
+          setValidationResult(data.result);
+        } else {
+          console.error('Validation failed:', data.errorMessages);
+          alert(`Lỗi validate CV: ${data.errorMessages?.join(', ')}`);
+        }
+      } else {
+        throw new Error('Validation request failed');
+      }
+    } catch (error) {
+      console.error('Error validating CV:', error);
+      alert('Không thể kết nối tới dịch vụ kiểm tra CV. Bạn vẫn có thể upload file.');
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -139,6 +178,9 @@ export default function CVManagement() {
       if (!cvName) {
         setCvName(file.name.replace('.pdf', ''));
       }
+
+      // Validate CV with AI
+      validateCV(file);
     }
   };
 
@@ -161,24 +203,50 @@ export default function CVManagement() {
       formData.append('name', cvName.trim());
       formData.append('userId', userId.toString());
 
-      // Mock upload API call - thay thế bằng API thực tế
-      const response = await fetch('https://localhost:7044/api/CV/upload', {
+      // Lấy token từ localStorage hoặc cookie (nếu backend yêu cầu Authorization)
+      const token = localStorage.getItem('accessToken') || document.cookie
+        .split('; ')
+        .find(row => row.startsWith('accessToken='))
+        ?.split('=')[1];
+
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      // Gọi API upload chính thức (API trả về JSON theo dạng bạn gửi mẫu)
+      const response = await fetch('https://localhost:7044/api/CV', {
         method: 'POST',
+        headers,
         body: formData,
       });
 
-      if (response.ok) {
-        alert("Thành công: CV đã được upload thành công");
-        
+      // Cố gắng parse JSON trả về (API của bạn trả về { statusCode, isSuccess, errorMessages, result })
+      let data: unknown = null;
+      try {
+        data = await response.json();
+      } catch (e) {
+        // Nếu không phải JSON, xử lý lỗi chung
+        console.error('Non-JSON response from upload endpoint', e);
+      }
+
+      const apiResponse = data as { statusCode?: number; isSuccess?: boolean; errorMessages?: string[]; result?: string };
+
+      if (response.ok && apiResponse && apiResponse.isSuccess) {
+        const msg = typeof apiResponse.result === 'string' ? apiResponse.result : 'CV đã được upload thành công';
+        alert(`Thành công: ${msg}`);
+
         // Reset form
         setSelectedFile(null);
         setCvName('');
+        setValidationResult(null);
         setIsUploadDialogOpen(false);
-        
+
         // Refresh CV list
         fetchCVs();
       } else {
-        throw new Error('Upload failed');
+        // Hiển thị lỗi chi tiết nếu có
+        const serverMsg = apiResponse?.errorMessages?.length ? apiResponse.errorMessages.join(', ') : apiResponse?.result || 'Không thể upload CV';
+        console.error('Upload error', { status: response.status, data: apiResponse });
+        alert(`Lỗi: ${serverMsg}`);
       }
     } catch (error) {
       console.error('Error uploading CV:', error);
@@ -190,19 +258,47 @@ export default function CVManagement() {
 
   const handleSetPrimary = async (cvId: number) => {
     try {
+      // Lấy token từ localStorage hoặc cookie (nếu backend yêu cầu Authorization)
+      const token = localStorage.getItem('accessToken') || document.cookie
+        .split('; ')
+        .find(row => row.startsWith('accessToken='))
+        ?.split('=')[1];
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const response = await fetch(`https://localhost:7044/api/CV/${cvId}/set-primary`, {
         method: 'PUT',
+        headers,
       });
 
-      if (response.ok) {
-        alert("Thành công: Đã đặt làm CV chính");
+      // Parse JSON response
+      let data: unknown = null;
+      try {
+        data = await response.json();
+      } catch (e) {
+        console.error('Non-JSON response from set-primary endpoint', e);
+      }
+
+      const apiResponse = data as { statusCode?: number; isSuccess?: boolean; errorMessages?: string[]; result?: string };
+
+      if (response.ok && apiResponse?.isSuccess) {
+        const msg = typeof apiResponse.result === 'string' ? apiResponse.result : 'Đã đặt làm CV chính';
+        alert(`Thành công: ${msg}`);
         fetchCVs();
       } else {
-        throw new Error('Failed to set primary');
+        // Hiển thị lỗi chi tiết nếu có
+        const serverMsg = apiResponse?.errorMessages?.length 
+          ? apiResponse.errorMessages.join(', ') 
+          : apiResponse?.result || 'Không thể đặt làm CV chính';
+        console.error('Set primary error', { status: response.status, data: apiResponse });
+        alert(`Lỗi: ${serverMsg}`);
       }
     } catch (error) {
       console.error('Error setting primary CV:', error);
-      alert("Lỗi: Không thể đặt làm CV chính");
+      alert("Lỗi: Không thể đặt làm CV chính. Vui lòng thử lại.");
     }
   };
 
@@ -375,6 +471,46 @@ export default function CVManagement() {
                         </div>
                         <p className="text-sm text-green-700 mt-1">
                           {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                        </p>
+                      </div>
+                    )}
+
+                    {/* CV Validation Result */}
+                    {isValidating && (
+                      <div className="rounded-lg border bg-blue-50 p-3">
+                        <div className="flex items-center gap-2 text-sm text-blue-800">
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent" />
+                          <span className="font-medium">Đang kiểm tra CV bằng AI...</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {validationResult && (
+                      <div className={`rounded-lg border p-3 ${
+                        validationResult.is_cv 
+                          ? 'bg-green-50 border-green-200' 
+                          : 'bg-red-50 border-red-200'
+                      }`}>
+                        <div className="flex items-center gap-2 text-sm">
+                          {validationResult.is_cv ? (
+                            <>
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                              <span className="font-medium text-green-800">✅ Đây là CV hợp lệ</span>
+                            </>
+                          ) : (
+                            <>
+                              <div className="h-4 w-4 rounded-full bg-red-600 flex items-center justify-center">
+                                <span className="text-white text-xs">!</span>
+                              </div>
+                              <span className="font-medium text-red-800">⚠️ File này có thể không phải CV</span>
+                            </>
+                          )}
+                          <span className="text-xs text-gray-600 ml-auto">
+                            Độ tin cậy: {(validationResult.confidence * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-700 mt-1">
+                          {validationResult.reason}
                         </p>
                       </div>
                     )}

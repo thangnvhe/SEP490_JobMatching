@@ -1,5 +1,7 @@
 ﻿using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace JobMatchingSystem.API.Services.Interfaces
 {
@@ -9,5 +11,7 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task<CVUpload> GetCVByIdAsync(int id);
         Task<List<CVUpload>> GetCVsByUserIdAsync(int userId);
         Task DeleteCVAsync(int cvId, int userId);
+        Task SetPrimaryCVAsync(int cvId, int userId);
+        Task<CVValidationResponse> ValidateCVAsync(IFormFile file);
     }
 }

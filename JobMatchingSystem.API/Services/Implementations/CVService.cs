@@ -1,4 +1,5 @@
 ﻿using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
@@ -7,22 +8,40 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace JobMatchingSystem.API.Services.Implementations
 {
-    public class CVService : ICVService
+    public class CVService : ICVService, IDisposable
     {
         private readonly ICVRepository _cvRepository;
         private readonly IWebHostEnvironment _env;
+        private readonly HttpClient _httpClient;
+        private readonly string _aiServiceUrl;
 
         public CVService(ICVRepository cvRepository, IWebHostEnvironment env)
         {
             _cvRepository = cvRepository;
             _env = env;
+            _httpClient = new HttpClient();
+            _aiServiceUrl = "http://localhost:8000"; // AI Service URL
         }
 
         public async Task UploadCVAsync(UploadCVRequest request, int userId)
         {
+            // Validate CV using AI service first (optional)
+            try
+            {
+                var validationResult = await ValidateCVAsync(request.File);
+                // You can add logic here to check if CV is valid before uploading
+                // For now, we'll continue with upload regardless of validation result
+            }
+            catch (Exception ex)
+            {
+                // Log the validation error but continue with upload
+                Console.WriteLine($"CV validation warning: {ex.Message}");
+            }
+
             // Lấy danh sách CV cũ của user
             var existingCVs = await _cvRepository.GetCVsByUserIdAsync(userId);
 
@@ -109,6 +128,135 @@ namespace JobMatchingSystem.API.Services.Implementations
             var filePath = Path.Combine(_env.WebRootPath, cv.FileUrl);
             if (System.IO.File.Exists(filePath))
                 System.IO.File.Delete(filePath);
+        }
+
+        public async Task SetPrimaryCVAsync(int cvId, int userId)
+        {
+            var cv = await _cvRepository.GetByIdAsync(cvId);
+            if (cv == null || cv.UserId != userId)
+                throw new AppException(ErrorCode.NotFoundCV());
+
+            // Set tất cả CV khác của user thành không phải primary
+            var userCVs = await _cvRepository.GetCVsByUserIdAsync(userId);
+            foreach (var userCV in userCVs)
+            {
+                userCV.IsPrimary = false;
+                await _cvRepository.UpdateAsync(userCV);
+            }
+
+            // Set CV được chọn thành primary
+            cv.IsPrimary = true;
+            await _cvRepository.UpdateAsync(cv);
+        }
+
+        public async Task<CVValidationResponse> ValidateCVAsync(IFormFile file)
+        {
+            try
+            {
+                // Validate file
+                if (file == null || file.Length == 0)
+                    throw new AppException(ErrorCode.InvalidFile());
+
+                if (!file.FileName.ToLower().EndsWith(".pdf"))
+                    throw new AppException(ErrorCode.InvalidFile("Only PDF files are allowed"));
+
+                if (file.Length > 5 * 1024 * 1024) // 5MB limit
+                    throw new AppException(ErrorCode.InvalidFile("File size must be less than 5MB"));
+
+                // Prepare request to AI service
+                using var form = new MultipartFormDataContent();
+                using var stream = file.OpenReadStream();
+                using var content = new StreamContent(stream);
+                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+                form.Add(content, "file", file.FileName);
+
+                // Call AI service
+                var response = await _httpClient.PostAsync($"{_aiServiceUrl}/validate_cv", form);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    };
+                    var validationResult = JsonSerializer.Deserialize<CVValidationResponse>(jsonResponse, options);
+                    return validationResult ?? new CVValidationResponse
+                    {
+                        IsCV = false,
+                        Confidence = 0.0,
+                        Reason = "Invalid response from AI service",
+                        FileInfo = null
+                    };
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    return new CVValidationResponse
+                    {
+                        IsCV = false,
+                        Confidence = 0.0,
+                        Reason = $"AI validation failed: {errorContent}",
+                        FileInfo = new CVFileInfo
+                        {
+                            FileName = file.FileName,
+                            FileSizeMB = file.Length / (1024.0 * 1024.0),
+                            Error = "AI service error"
+                        }
+                    };
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                return new CVValidationResponse
+                {
+                    IsCV = false,
+                    Confidence = 0.0,
+                    Reason = $"AI service unavailable: {ex.Message}",
+                    FileInfo = new CVFileInfo
+                    {
+                        FileName = file.FileName,
+                        FileSizeMB = file.Length / (1024.0 * 1024.0),
+                        Error = "Service connection failed"
+                    }
+                };
+            }
+            catch (TaskCanceledException ex)
+            {
+                return new CVValidationResponse
+                {
+                    IsCV = false,
+                    Confidence = 0.0,
+                    Reason = "AI service timeout",
+                    FileInfo = new CVFileInfo
+                    {
+                        FileName = file.FileName,
+                        FileSizeMB = file.Length / (1024.0 * 1024.0),
+                        Error = "Request timeout"
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new CVValidationResponse
+                {
+                    IsCV = false,
+                    Confidence = 0.0,
+                    Reason = $"Validation error: {ex.Message}",
+                    FileInfo = new CVFileInfo
+                    {
+                        FileName = file.FileName,
+                        FileSizeMB = file.Length / (1024.0 * 1024.0),
+                        Error = "Processing failed"
+                    }
+                };
+            }
+        }
+
+        // Dispose HttpClient when service is disposed
+        public void Dispose()
+        {
+            _httpClient?.Dispose();
         }
     }
 }
