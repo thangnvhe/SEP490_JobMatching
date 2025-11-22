@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Validation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .container { margin: 20px 0; }
+        .result { padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        input[type="file"] { margin: 10px 0; padding: 5px; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; border: none; border-radius: 5px; }
+        .btn-secondary { background-color: #6c757d; color: white; border: none; border-radius: 5px; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 CV Validation Test</h1>
+    
+    <div class="container">
+        <h3>Test AI Service (Direct)</h3>
+        <input type="file" id="fileInput1" accept=".pdf" />
+        <button class="btn-primary" onclick="testAIService()">Test AI Service</button>
+        <div id="aiResult"></div>
+    </div>
+    
+    <div class="container">
+        <h3>Test .NET API (Integrated)</h3>
+        <input type="file" id="fileInput2" accept=".pdf" />
+        <button class="btn-primary" onclick="testNetAPI()">Test .NET API</button>
+        <div id="netResult"></div>
+    </div>
+    
+    <div class="container">
+        <h3>Service Status</h3>
+        <button class="btn-secondary" onclick="checkAIHealth()">Check AI Service Health</button>
+        <button class="btn-secondary" onclick="checkNetHealth()">Check .NET API Health</button>
+        <div id="healthResult"></div>
+    </div>
+
+    <script>
+        async function testAIService() {
+            const fileInput = document.getElementById('fileInput1');
+            const resultDiv = document.getElementById('aiResult');
+            
+            if (!fileInput.files[0]) {
+                showResult(resultDiv, 'Please select a PDF file', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            try {
+                showResult(resultDiv, 'Testing AI Service...', 'info');
+                const response = await fetch('http://localhost:8000/validate_cv', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                showResult(resultDiv, JSON.stringify(result, null, 2), response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResult(resultDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testNetAPI() {
+            const fileInput = document.getElementById('fileInput2');
+            const resultDiv = document.getElementById('netResult');
+            
+            if (!fileInput.files[0]) {
+                showResult(resultDiv, 'Please select a PDF file', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            try {
+                showResult(resultDiv, 'Testing .NET API...', 'info');
+                const response = await fetch('https://localhost:7044/api/CV/validate', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                showResult(resultDiv, JSON.stringify(result, null, 2), response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResult(resultDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function checkAIHealth() {
+            const resultDiv = document.getElementById('healthResult');
+            
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                const result = await response.json();
+                showResult(resultDiv, `AI Service: ${JSON.stringify(result, null, 2)}`, 'success');
+            } catch (error) {
+                showResult(resultDiv, `AI Service: ${error.message}`, 'error');
+            }
+        }
+        
+        async function checkNetHealth() {
+            const resultDiv = document.getElementById('healthResult');
+            
+            try {
+                const response = await fetch('https://localhost:7044/api/CV');
+                showResult(resultDiv, `.NET API: ${response.ok ? 'Running' : 'Error'}`, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResult(resultDiv, `.NET API: ${error.message}`, 'error');
+            }
+        }
+        
+        function showResult(element, message, type) {
+            element.innerHTML = `<div class="result ${type}"><pre>${message}</pre></div>`;
+        }
+    </script>
+</body>
+</html>

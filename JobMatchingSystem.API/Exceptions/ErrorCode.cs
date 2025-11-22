@@ -27,6 +27,8 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundCVExperience() => new("Not Found CVExperience", HttpStatusCode.NotFound);
         public static Error NotFoundCVProject() => new("Not Found CVProject", HttpStatusCode.NotFound);
         public static Error InvalidFile() => new("Invalid File", HttpStatusCode.BadRequest);
+        public static Error InvalidFile(string message) => new(message, HttpStatusCode.BadRequest);
+        public static Error ExternalServiceError(string message) => new($"External service error: {message}", HttpStatusCode.ServiceUnavailable);
         public static Error NotFoundSkill() => new("Not Found Skill", HttpStatusCode.NotFound);
         public static Error CantDelete() => new("Can't Delete", HttpStatusCode.BadRequest);
         public static Error CantCreate() => new("Can't Create", HttpStatusCode.BadRequest);

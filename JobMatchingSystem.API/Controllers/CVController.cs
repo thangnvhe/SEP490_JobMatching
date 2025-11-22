@@ -1,5 +1,6 @@
 ﻿using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -22,6 +23,9 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpPost]
+        [RequestSizeLimit(5 * 1024 * 1024)] // 5MB limit
+        [ProducesResponseType(typeof(APIResponse<string>), 201)]
+        [ProducesResponseType(typeof(APIResponse<string>), 400)]
         public async Task<IActionResult> UploadCV([FromForm] UploadCVRequest request)
         {
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -69,6 +73,58 @@ namespace JobMatchingSystem.API.Controllers
                 .WithSuccess(true)
                 .WithResult("CV deleted successfully")
                 .Build());
+        }
+
+        [HttpPut("{id}/set-primary")]
+        public async Task<IActionResult> SetPrimaryCV(int id)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            await _cvService.SetPrimaryCVAsync(id, userId);
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult("CV set as primary successfully")
+                .Build());
+        }
+
+        /// <summary>
+        /// Validate if uploaded file is a valid CV using AI
+        /// </summary>
+        /// <param name="file">PDF file to validate</param>
+        /// <returns>CV validation result with confidence score</returns>
+        [HttpPost("validate")]
+        [RequestSizeLimit(5 * 1024 * 1024)] // 5MB limit
+        [ProducesResponseType(typeof(APIResponse<CVValidationResponse>), 200)]
+        [ProducesResponseType(typeof(APIResponse<string>), 400)]
+        [ProducesResponseType(typeof(APIResponse<string>), 500)]
+        public async Task<ActionResult<APIResponse<CVValidationResponse>>> ValidateCV(IFormFile file)
+        {
+            try
+            {
+                if (file == null)
+                {
+                    return BadRequest(APIResponse<string>.Builder()
+                        .WithStatusCode(HttpStatusCode.BadRequest)
+                        .WithSuccess(false)
+                        .WithResult("File is required")
+                        .Build());
+                }
+
+                var result = await _cvService.ValidateCVAsync(file);
+                return Ok(APIResponse<CVValidationResponse>.Builder()
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithSuccess(true)
+                    .WithResult(result)
+                    .Build());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, APIResponse<string>.Builder()
+                    .WithStatusCode(HttpStatusCode.InternalServerError)
+                    .WithSuccess(false)
+                    .WithResult($"Validation failed: {ex.Message}")
+                    .Build());
+            }
         }
     }
 }
