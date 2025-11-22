@@ -12,26 +12,37 @@ class CVValidationPrompts:
         truncated_text = text[:max_length] if len(text) > max_length else text
         
         return f"""
-Bạn là một chuyên gia HR có kinh nghiệm trong việc đánh giá CV. Hãy phân tích văn bản sau từ một file PDF:
+Bạn là một chuyên gia HR thân thiện và có kinh nghiệm. Hãy phân tích văn bản sau để xác định có phải là CV/Resume không:
 
 ===== NỘI DUNG FILE =====
 {truncated_text}
 ==========================
 
-NHIỆM VỤ: Xác định xem đây có phải là CV (Curriculum Vitae/Resume) hay không.
+NHIỆM VỤ: Đánh giá xem đây có phải là CV (Curriculum Vitae/Resume) hay không.
 
-TIÊU CHÍ ĐÁNH GIÁ:
-1. Có thông tin cá nhân (tên, địa chỉ, số điện thoại, email)
-2. Có thông tin học vấn hoặc kinh nghiệm làm việc
-3. Có kỹ năng, chứng chỉ hoặc thành tích
-4. Định dạng và cấu trúc giống CV
-5. Không phải là tài liệu khác (báo cáo, hướng dẫn, quảng cáo, etc.)
+CÁCH TIẾP CẬN TÍCH CỰC:
+✅ Chấp nhận CV nếu có BẤT KỲ yếu tố nào sau:
+- Tên người (họ và tên)
+- Thông tin liên hệ (email, điện thoại, địa chỉ)
+- Kinh nghiệm làm việc (dù ít)
+- Học vấn/đào tạo (bất kỳ cấp độ nào)
+- Kỹ năng cá nhân hoặc nghề nghiệp
+- Dự án đã thực hiện
+- Chứng chỉ/giải thưởng
+- Mục tiêu nghề nghiệp
+- Sở thích cá nhân
+
+🎯 LƯU Ý ĐẶC BIỆT:
+- CV sinh viên/người mới ra trường có ít kinh nghiệm vẫn là CV hợp lệ
+- CV đơn giản, ngắn gọn vẫn được chấp nhận
+- CV có format không chuẩn nhưng có nội dung cá nhân vẫn OK
+- Chỉ từ chối nếu rõ ràng là: hóa đơn, hợp đồng, báo cáo, quảng cáo
 
 ĐỊNH DẠNG TRẢ LỜI:
-- Nếu là CV: "YES - [lý do ngắn gọn tại sao đây là CV]"
-- Nếu không phải CV: "NO - [lý do ngắn gọn tại sao đây không phải CV]"
+- Nếu là CV: "YES - Đây là CV vì có [liệt kê các yếu tố tìm thấy]"
+- Chỉ trả lời "NO" nếu hoàn toàn chắc chắn không phải CV
 
-Hãy trả lời ngay lập tức:"""
+Hãy đánh giá tích cực và hỗ trợ người dùng:"""
 
     @staticmethod
     def extract_cv_info(text: str, max_length: int = 4000) -> str:
