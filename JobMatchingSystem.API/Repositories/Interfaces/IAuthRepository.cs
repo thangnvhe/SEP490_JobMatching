@@ -1,4 +1,6 @@
-﻿using JobMatchingSystem.API.Models;
+﻿using JobMatchingSystem.API.DTOs.Response;
+using JobMatchingSystem.API.Helpers;
+using JobMatchingSystem.API.Models;
 
 namespace JobMatchingSystem.API.Repositories.Interfaces
 {
@@ -13,5 +15,8 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
         Task<List<ApplicationUser>> GetAllAsync(string search, string sortBy, bool IsDecending);
         Task ChangeStatus(ApplicationUser user);
         Task<ApplicationUser?> FindUserByCompanyId(int companyId);
+        Task<List<UserWithRole>> GetAllWithRolesAsync(string search, string sortBy, bool isDescending);
+        Task<UserWithRole?> GetUserWithRoleByIdAsync(int userId);
+        Task<List<UserResponseDTO>> GetListHmByCompanyId(int companyId);
     }
 }

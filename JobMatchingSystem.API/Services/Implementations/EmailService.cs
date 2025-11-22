@@ -124,5 +124,24 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             await SendEmailAsync(toEmail, subject, body);
         }
+        public async Task SendHmPasswordEmailAsync(string toEmail, string fullName, string password)
+        {
+            string subject = "Tài khoản Hiring Manager - JobMatching System";
+
+            string body = $@"
+    <h2>Chào {WebUtility.HtmlEncode(fullName)}</h2>
+    <p>Tài khoản Hiring Manager của bạn đã được tạo thành công.</p>
+    <p>Thông tin đăng nhập:</p>
+    <ul>
+        <li>Email: {WebUtility.HtmlEncode(toEmail)}</li>
+        <li>Mật khẩu: <strong>{WebUtility.HtmlEncode(password)}</strong></li>
+    </ul>
+    <p>Vui lòng đăng nhập và thay đổi mật khẩu ngay sau lần đầu đăng nhập.</p>
+    <hr>
+    <p>JobMatching System Team</p>
+    ";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
     }
 }
