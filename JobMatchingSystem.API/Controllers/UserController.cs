@@ -1,10 +1,12 @@
 ﻿using JobMatchingSystem.API.DTOs;
+using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Security.Claims;
 
 namespace JobMatchingSystem.API.Controllers
 {
@@ -51,6 +53,29 @@ namespace JobMatchingSystem.API.Controllers
 
             return Ok(APIResponse<string>.Builder()
                 .WithResult("User status updated successfully")
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .Build());
+        }
+        [HttpPost("hm")]
+        public async Task<IActionResult> CreateHm([FromBody] CreateHmRequest request)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            await _userService.CreateHm(request, userId);
+            return Ok(APIResponse<string>.Builder()
+                .WithResult("Hiring Manager created successfully. Please check email for password.")
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .Build());
+        }
+
+        [HttpGet("hm/company")]
+        public async Task<IActionResult> GetHmByCompanyId()
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var list = await _userService.GetListHmByCompanyId(userId);
+            return Ok(APIResponse<List<UserResponseDTO>>.Builder()
+                .WithResult(list)
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
                 .Build());

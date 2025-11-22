@@ -9,5 +9,6 @@
         public DateTime? Birthday { get; set; }
         public bool? IsActive { get; set; }
         public int? Score { get; set; }
+        public string? Role { get; set; }
     }
 }
