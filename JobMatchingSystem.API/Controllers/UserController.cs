@@ -16,21 +16,25 @@ namespace JobMatchingSystem.API.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly ILogger<UserController> _logger;
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService, ILogger<UserController> logger)
         {
             _userService = userService;
+            _logger = logger;
         }
         [HttpGet]
-        public async Task<ActionResult<PagedResult<UserResponseDTO>>> GetAll(
+        public async Task<ActionResult<PagedResult<UserDetailResponseDTO>>> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int size = 5,
         [FromQuery] string search = "",
         [FromQuery] string sortBy = "",
-        [FromQuery] bool isDecending = false)
+        [FromQuery] bool isDecending = false,
+        [FromQuery] int? companyId = null,
+        [FromQuery] string? role = null)
         {
-            var result = await _userService.GetAllUser(page, size, search, sortBy, isDecending);
-         return Ok(APIResponse<PagedResult<UserResponseDTO>>.Builder()
+            var result = await _userService.GetAllUser(page, size, search, sortBy, isDecending, companyId, role);
+         return Ok(APIResponse<PagedResult<UserDetailResponseDTO>>.Builder()
         .WithResult(result)
         .WithStatusCode(HttpStatusCode.OK)
         .WithSuccess(true)
@@ -53,7 +57,7 @@ namespace JobMatchingSystem.API.Controllers
 
             var user = await _userService.GetCurrentUser(userIdClaim);
 
-            return Ok(APIResponse<CurrentUserResponseDTO>.Builder()
+            return Ok(APIResponse<UserDetailResponseDTO>.Builder()
                 .WithResult(user)
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
@@ -77,7 +81,7 @@ namespace JobMatchingSystem.API.Controllers
 
             var updatedUser = await _userService.UpdateCurrentUser(userIdClaim, request);
 
-            return Ok(APIResponse<CurrentUserResponseDTO>.Builder()
+            return Ok(APIResponse<UserDetailResponseDTO>.Builder()
                 .WithResult(updatedUser)
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
@@ -90,7 +94,7 @@ namespace JobMatchingSystem.API.Controllers
         {
             var user = await _userService.GetUserById(id);
 
-            return Ok(APIResponse<UserResponseDTO>.Builder()
+            return Ok(APIResponse<UserDetailResponseDTO>.Builder()
                 .WithResult(user)
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
@@ -108,5 +112,28 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
+        [HttpPost("hiring-manager")]
+        public async Task<IActionResult> CreateHiringManager([FromBody] CreateHiringManagerRequest request)
+        {
+            try
+            {
+                _logger.LogInformation("Creating hiring manager for email: {Email}, CompanyId: {CompanyId}", request.Email, request.CompanyId);
+                
+                var newUser = await _userService.CreateHiringManager(request);
+
+                _logger.LogInformation("Successfully created hiring manager with ID: {UserId}", newUser.Id);
+
+                return Ok(APIResponse<string>.Builder()
+                    .WithResult("Tạo Hiring Manager thành công")
+                    .WithStatusCode(HttpStatusCode.Created)
+                    .WithSuccess(true)
+                    .Build());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating hiring manager for email: {Email}", request?.Email);
+                throw; // Re-throw to let global exception handler deal with it
+            }
+        }        
     }
 }

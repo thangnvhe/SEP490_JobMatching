@@ -7,6 +7,7 @@ namespace JobMatchingSystem.API.Data.SeedData
     {
         public static async Task SeedAllData(this WebApplication webApplication)
         {
+            // Roles are already seeded in ConfigurationService.SeedAdminUserAsync()
             await CompanySeeder.SeedCompaniesAsync(webApplication);
             await RecruiterSeeder.SeedRecruitersAsync(webApplication);
             await CandidateSeeder.SeedCandidatesAsync(webApplication);
