@@ -17,8 +17,7 @@ import { Label } from "@/components/ui/label";
 import { UserPlus, Save, Loader2 } from "lucide-react";
 
 // Types
-import type { CreateHiringManagerRequest, HiringManager } from "@/models/hiring-manager";
-import type { CreateHiringManagerRequest as UserCreateHiringManagerRequest } from "@/models/user";
+import type { CreateHiringManagerRequest } from "@/models/user";
 import { UserServices } from "@/services/user.service";
 
 // ===================== TYPES =====================
@@ -120,7 +119,7 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
       setLoading(true);
 
       // Tạo payload cho API
-      const apiPayload: UserCreateHiringManagerRequest = {
+      const apiPayload: CreateHiringManagerRequest = {
         fullName: formData.fullName.trim(),
         email: formData.email.trim(),
         phone: formData.phoneNumber.trim(),
@@ -134,13 +133,13 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
       
       if (!response.isSuccess) {
         // Nếu API trả về message lỗi cụ thể
-        const errorMessage = response.result || response.message || "Có lỗi xảy ra khi tạo thành viên";
+        const errorMessage = response.errorMessages?.[0] || "Có lỗi xảy ra khi tạo thành viên";
         throw new Error(errorMessage);
       }
 
       // Gọi callback success (parent sẽ reload data từ API)
       onCreateSuccess();
-      toast.success(response.result || "Tạo thành viên thành công!");
+      toast.success("Tạo thành viên thành công!");
       
       // Reset form
       setFormData({

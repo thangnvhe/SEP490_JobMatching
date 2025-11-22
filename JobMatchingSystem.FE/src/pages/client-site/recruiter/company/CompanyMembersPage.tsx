@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { toast } from "sonner";
@@ -36,7 +36,6 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  AlertTriangle,
   Users,
   CheckCircle,
   XCircle,
@@ -54,6 +53,7 @@ import { CreateMemberDialog } from "@/components/dialogs/CreateMemberDialog";
 // Import types và services
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import type { HiringManager } from "@/models/hiring-manager";
+import type { User } from "@/models/user";
 import { UserServices } from "@/services/user.service";
 
 // Helper function để format date
@@ -176,7 +176,7 @@ export function CompanyMembersPage() {
           return;
         }
 
-        const userData = userResponse.result;
+        const userData = userResponse.result as User;
 
         if (!userData.companyId) {
           setError("Tài khoản chưa được liên kết với công ty nào");

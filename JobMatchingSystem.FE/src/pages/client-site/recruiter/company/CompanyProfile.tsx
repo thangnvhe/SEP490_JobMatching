@@ -32,6 +32,7 @@ import { CompanyServices } from "@/services/company.service";
 
 // Types
 import type { Company } from "@/models/company";
+import type { User } from "@/models/user";
 
 // Components
 import { EditCompanyDialog } from "@/components/dialogs/EditCompanyDialog";
@@ -372,7 +373,7 @@ const CompanyProfile: React.FC = () => {
           return;
         }
 
-        const userData = userResponse.result;
+        const userData = userResponse.result as User;
 
         // Check if user has companyId
         if (!userData.companyId) {
