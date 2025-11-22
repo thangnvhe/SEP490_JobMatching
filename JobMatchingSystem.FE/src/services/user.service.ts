@@ -1,9 +1,9 @@
-import type { User } from '@/models/user';
+import type { User, CreateHiringManagerRequest } from '@/models/user';
 import type { BaseResponse, PaginationParamsInput } from "@/models/base";
 import { BaseApiServices } from "./base-api.service";
 
 export const UserServices = {
-  getAll: (params?: Record<string, any>) => BaseApiServices.getAll<User>('/User', params),
+  getAll: (params?: Record<string, any>) => BaseApiServices.getAll<User[]>('/User', params),
   getAllWithPagination: (params: PaginationParamsInput) => BaseApiServices.getAllWithPagination<User>('/User', params),
   getById: (id: string) => BaseApiServices.getById<User>('/User', id),
   create: (user: Omit<User, 'id'>): Promise<BaseResponse<User>> => BaseApiServices.create<User>('/User', user),
@@ -15,5 +15,6 @@ export const UserServices = {
     BaseApiServices.custom("post", "/Auth/reset-password", { email, token, newPassword, confirmPassword }),
   getUserProfile: () => BaseApiServices.custom("get", "/User/me"),
   editUserProfile: (payload: Partial<User>) => BaseApiServices.custom("put", "/User/me", payload),
-  verifyEmail: (token: string) => BaseApiServices.custom("get", "/Auth/verify-email", { TokenLink: token })
+  verifyEmail: (token: string) => BaseApiServices.custom("get", "/Auth/verify-email", { TokenLink: token }),
+  createHiringManager: (payload: CreateHiringManagerRequest) => BaseApiServices.create<User>('/User/hiring-manager', payload)
 };

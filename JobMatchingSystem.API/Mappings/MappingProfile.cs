@@ -8,8 +8,6 @@ namespace JobMatchingSystem.API.Mappings
     public class MappingProfile :Profile
     {
         public MappingProfile() {
-            //User
-            CreateMap<ApplicationUser, UserResponseDTO>();
             //Company
             CreateMap<CreateCompanyRequest, Company>()
             .ForMember(dest => dest.LicenseFile, opt => opt.Ignore());

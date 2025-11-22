@@ -58,7 +58,7 @@ export default function CVManagement() {
       const response = await UserServices.getUserProfile();
       
       if (response.isSuccess) {
-        setUserProfile(response.result);
+        setUserProfile(response.result as User);
       } else {
         console.error('Failed to fetch user profile:', response.errorMessages);
         alert(`Lỗi khi tải thông tin người dùng: ${response.errorMessages?.join(', ') || 'Không xác định'}`);

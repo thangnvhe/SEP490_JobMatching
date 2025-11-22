@@ -43,5 +43,8 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundSaveCV() => new("Not Found Save CV", HttpStatusCode.NotFound);
         public static Error InvalidFileType() => new("Invalid file type. Only JPG, JPEG, PNG, GIF are allowed.", HttpStatusCode.BadRequest);
         public static Error FileSizeExceeded() => new("File size exceeded. Maximum file size is 5MB.", HttpStatusCode.BadRequest);
+        public static Error EmailAlreadyExists() => new("Email already exists.", HttpStatusCode.BadRequest);
+        public static Error CreateUserFailed(string errors) => new($"Failed to create user: {errors}", HttpStatusCode.BadRequest);
+        public static Error AssignRoleFailed() => new("Failed to assign role to user.", HttpStatusCode.InternalServerError);
     }
 }

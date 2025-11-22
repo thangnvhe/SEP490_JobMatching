@@ -1,6 +1,6 @@
 namespace JobMatchingSystem.API.DTOs.Response
 {
-    public class CurrentUserResponseDTO
+    public class UserDetailResponseDTO
     {
         public int Id { get; set; }
         public string FullName { get; set; } = string.Empty;
@@ -14,6 +14,7 @@ namespace JobMatchingSystem.API.DTOs.Response
         public bool IsActive { get; set; }
         public int? Score { get; set; }
         public int? CompanyId { get; set; }
+        public DateTime CreatedAt { get; set; }
         public string? Role { get; set; }
     }
 }
