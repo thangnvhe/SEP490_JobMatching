@@ -6,8 +6,13 @@ export const CompanyServices = {
   getCompanyById: (id: string) => BaseServices.getById<Company>(id, "/company"),
   createCompany: (companyFormData: FormData) =>
     BaseServices.create<string>(companyFormData, "/company"),
-  updateCompany: (id: string, company: Company) =>
-    BaseServices.update<Company>(id, company, "/company"),
+  updateCompany: (id: string, companyData: Company | FormData) => {
+    // Handle FormData for file uploads or regular Company object
+    if (companyData instanceof FormData) {
+      return BaseServices.create<Company>(companyData, `/company/${id}`);
+    }
+    return BaseServices.update<Company>(id, companyData, "/company");
+  },
   deleteCompany: (id: string) => BaseServices.delete(id, "/company"),
   // Accept company - POST /api/company/{id}/accept
   acceptCompany: (id: string) =>

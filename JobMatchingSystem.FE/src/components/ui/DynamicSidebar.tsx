@@ -102,10 +102,10 @@ function RecruiterNav() {
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
-            isActive={useIsActivePath("/recruiter/company-members")}
+            isActive={useIsActivePath("/recruiter/company/members")}
             tooltip="Company Members"
           >
-            <Link to="/recruiter/company-members">
+            <Link to="/recruiter/company/members">
               <UserPlus />
               <span>Thành viên công ty</span>
             </Link>
