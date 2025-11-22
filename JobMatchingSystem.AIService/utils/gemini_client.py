@@ -77,12 +77,31 @@ class GeminiClient:
         """Generate mock response for testing when all models are down"""
         prompt_lower = prompt.lower()
         
-        # CV Validation mock responses
+        # CV Validation mock responses - More generous approach
         if "có phải cv" in prompt_lower or "curriculum vitae" in prompt_lower or "validate" in prompt_lower:
-            if any(keyword in prompt_lower for keyword in ["john smith", "software engineer", "experience", "education", "skills"]):
-                return "YES - This document contains personal information, work experience, education details, and skills section which are typical components of a CV/Resume."
+            # Look for any CV-like indicators
+            cv_indicators = [
+                "tên", "name", "email", "phone", "điện thoại", "địa chỉ", "address",
+                "kinh nghiệm", "experience", "học vấn", "education", "kỹ năng", "skills",
+                "dự án", "project", "chứng chỉ", "certificate", "công việc", "work",
+                "university", "college", "đại học", "sinh viên", "student", "developer",
+                "engineer", "manager", "analyst", "designer", "teacher", "giáo viên"
+            ]
+            
+            # Count indicators found
+            found_indicators = [indicator for indicator in cv_indicators if indicator in prompt_lower]
+            
+            if len(found_indicators) >= 2 or any(strong in prompt_lower for strong in ["cv", "resume", "curriculum"]):
+                return f"YES - Đây là CV vì có các yếu tố: {', '.join(found_indicators[:3])}. Document chứa thông tin cá nhân và nghề nghiệp điển hình của CV."
+            elif len(found_indicators) >= 1:
+                return f"YES - Đây có thể là CV vì có yếu tố: {found_indicators[0]}. Dù đơn giản nhưng vẫn là thông tin cá nhân."
             else:
-                return "NO - This document does not appear to contain the standard components of a CV such as personal information, work experience, or education history."
+                # Only reject if clearly not a CV
+                non_cv_indicators = ["invoice", "hóa đơn", "contract", "hợp đồng", "report", "báo cáo", "manual", "hướng dẫn"]
+                if any(indicator in prompt_lower for indicator in non_cv_indicators):
+                    return "NO - Đây không phải CV vì là tài liệu khác (hóa đơn/hợp đồng/báo cáo)."
+                else:
+                    return "YES - Đây có khả năng là CV. Chấp nhận để hỗ trợ người dùng."
         
         # CV Information extraction mock
         elif "trích xuất thông tin" in prompt_lower or "extract" in prompt_lower and "json" in prompt_lower:

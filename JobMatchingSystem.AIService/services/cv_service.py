@@ -115,25 +115,54 @@ class CVService:
             )
     
     def _calculate_confidence(self, ai_response: str, is_cv: bool) -> float:
-        """Calculate confidence score based on AI response"""
+        """Calculate confidence score based on AI response with improved scoring"""
         response_lower = ai_response.lower()
         
+        # Positive indicators for CV detection
+        cv_positive_words = [
+            "tên", "họ và tên", "email", "điện thoại", "address", "phone", 
+            "kinh nghiệm", "experience", "học vấn", "education", "kỹ năng", "skills",
+            "dự án", "project", "chứng chỉ", "certificate", "thành tích", "achievement",
+            "mục tiêu", "objective", "summary", "cv", "resume", "curriculum vitae"
+        ]
+        
         # High confidence indicators
-        high_confidence_words = ["clearly", "definitely", "obviously", "certainly", "undoubtedly"]
-        medium_confidence_words = ["likely", "appears", "seems", "probably"]
-        low_confidence_words = ["unclear", "ambiguous", "difficult", "uncertain"]
+        high_confidence_words = ["clearly", "definitely", "obviously", "certainly", "undoubtedly", "rõ ràng", "chắc chắn"]
+        medium_confidence_words = ["likely", "appears", "seems", "probably", "có thể", "dường như"]
+        low_confidence_words = ["unclear", "ambiguous", "difficult", "uncertain", "không chắc", "khó xác định"]
         
-        confidence = 0.5  # Default confidence
+        # Count CV-related elements mentioned
+        cv_elements_found = sum(1 for word in cv_positive_words if word in response_lower)
         
+        # Base confidence calculation
+        if is_cv:
+            # For positive CV detection, start with higher confidence
+            confidence = 0.75  # More generous base confidence
+            
+            # Boost confidence based on CV elements mentioned
+            if cv_elements_found >= 3:
+                confidence = min(confidence + 0.15, 0.95)
+            elif cv_elements_found >= 1:
+                confidence = min(confidence + 0.10, 0.90)
+            
+        else:
+            # For negative detection, be more conservative
+            confidence = 0.60
+        
+        # Adjust based on certainty words
         if any(word in response_lower for word in high_confidence_words):
-            confidence = 0.9
+            confidence = min(confidence + 0.10, 0.95)
         elif any(word in response_lower for word in medium_confidence_words):
-            confidence = 0.7
+            confidence = min(confidence + 0.05, 0.85)
         elif any(word in response_lower for word in low_confidence_words):
-            confidence = 0.3
+            confidence = max(confidence - 0.15, 0.30)
         
         # If response starts clearly with YES/NO, increase confidence
         if ai_response.strip().lower().startswith(('yes -', 'no -')):
-            confidence = min(confidence + 0.1, 1.0)
+            confidence = min(confidence + 0.05, 0.95)
+        
+        # Ensure minimum confidence for valid CVs
+        if is_cv and confidence < 0.70:
+            confidence = 0.70
         
         return confidence

@@ -195,6 +195,20 @@ export default function CVManagement() {
       return;
     }
 
+    // Kiểm tra validation result - chỉ cho upload nếu AI xác nhận đây là CV
+    if (validationResult?.is_cv === false) {
+      alert("Lỗi: File này không được AI xác nhận là CV hợp lệ. Vui lòng chọn file CV khác.");
+      return;
+    }
+
+    // Cảnh báo nếu chưa có validation result
+    if (!validationResult) {
+      const confirmUpload = confirm("Chưa thể xác thực file này bằng AI. Bạn có chắc chắn muốn upload không?");
+      if (!confirmUpload) {
+        return;
+      }
+    }
+
     setIsUploading(true);
     
     try {
@@ -502,7 +516,7 @@ export default function CVManagement() {
                               <div className="h-4 w-4 rounded-full bg-red-600 flex items-center justify-center">
                                 <span className="text-white text-xs">!</span>
                               </div>
-                              <span className="font-medium text-red-800">⚠️ File này có thể không phải CV</span>
+                              <span className="font-medium text-red-800">⚠️ File này không phải CV hợp lệ</span>
                             </>
                           )}
                           <span className="text-xs text-gray-600 ml-auto">
@@ -512,6 +526,13 @@ export default function CVManagement() {
                         <p className="text-xs text-gray-700 mt-1">
                           {validationResult.reason}
                         </p>
+                        {!validationResult.is_cv && (
+                          <div className="mt-2 p-2 bg-red-100 rounded border-l-4 border-red-500">
+                            <p className="text-xs text-red-800 font-medium">
+                              📋 Hướng dẫn: Vui lòng chọn file CV chứa thông tin cá nhân (tên, email, kinh nghiệm, học vấn...) để tiếp tục upload.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -521,13 +542,32 @@ export default function CVManagement() {
                     </Button>
                     <Button 
                       onClick={handleUpload}
-                      disabled={!selectedFile || !cvName.trim() || isUploading}
-                      className="bg-blue-600 hover:bg-blue-700"
+                      disabled={
+                        !selectedFile || 
+                        !cvName.trim() || 
+                        isUploading || 
+                        isValidating ||
+                        (validationResult?.is_cv === false)
+                      }
+                      className={`${
+                        (validationResult?.is_cv === false) 
+                          ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' 
+                          : 'bg-blue-600 hover:bg-blue-700'
+                      }`}
                     >
                       {isUploading ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
                           Đang upload...
+                        </>
+                      ) : isValidating ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                          Đang kiểm tra...
+                        </>
+                      ) : (validationResult?.is_cv === false) ? (
+                        <>
+                          <span className="text-xs">❌ File không hợp lệ</span>
                         </>
                       ) : (
                         <>
