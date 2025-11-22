@@ -3,7 +3,7 @@ import type { BaseResponse, PaginationParamsInput } from "@/models/base";
 import { BaseApiServices } from "./base-api.service";
 
 export const UserServices = {
-  getAll: (params?: Record<string, any>) => BaseApiServices.getAll<User>('/User', params),
+  getAll: (params?: Record<string, any>) => BaseApiServices.getAll<User[]>('/User', params),
   getAllWithPagination: (params: PaginationParamsInput) => BaseApiServices.getAllWithPagination<User>('/User', params),
   getById: (id: string) => BaseApiServices.getById<User>('/User', id),
   create: (user: Omit<User, 'id'>): Promise<BaseResponse<User>> => BaseApiServices.create<User>('/User', user),

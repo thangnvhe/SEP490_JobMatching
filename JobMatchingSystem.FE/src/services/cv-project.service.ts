@@ -1,30 +1,13 @@
 import type { CVProject } from '@/models/cv-project';
-import { BaseServices } from './base.service';
-import axiosInstance from "@/interceptor/axiosInterceptor.old";
+import { BaseApiServices } from './base-api.service';
 import type { BaseResponse, PaginationParamsInput } from "@/models/base";
 
 export const CVProjectServices = {
-  // Lấy tất cả projects
-  getAll: (params?: any) => BaseServices.getAll<CVProject[]>(params, '/CVProject'),
-
-  // Lấy projects có phân trang
-  getAllWithPagination: (params: PaginationParamsInput) => BaseServices.getAllWithPagination<CVProject>(params, '/CVProject'),
-
-  // Lấy project theo ID
-  getById: (id: string) => BaseServices.getById<CVProject>(id, '/CVProject'),
-
-  // Lấy projects của user hiện tại
-  getMyProjects: async (): Promise<BaseResponse<CVProject[]>> => {
-    const response = await axiosInstance.get('/CVProject/me');
-    return response.data;
-  },
-
-  // Tạo mới project
-  create: (project: Omit<CVProject, 'id'>) => BaseServices.create<CVProject>(project, '/CVProject'),
-
-  // Cập nhật project
-  update: (id: string, data: Partial<CVProject>) => BaseServices.update<CVProject>(id, data, '/CVProject'),
-
-  // Xóa project
-  delete: (id: string) => BaseServices.delete(id, '/CVProject'),
+  getAll: (params?: Record<string, any>) => BaseApiServices.getAll<CVProject[]>('/CVProject', params),
+  getAllWithPagination: (params: PaginationParamsInput) => BaseApiServices.getAllWithPagination<CVProject>('/CVProject', params),
+  getById: (id: string) => BaseApiServices.getById<CVProject>('/CVProject', id),
+  getMyProjects: () => BaseApiServices.custom("get", "/CVProject/me"),
+  create: (project: Omit<CVProject, 'id'>): Promise<BaseResponse<CVProject>> => BaseApiServices.create<CVProject>('/CVProject', project),
+  update: (id: string, data: Partial<CVProject>) => BaseApiServices.update<CVProject>('/CVProject', id, data),
+  delete: (id: string) => BaseApiServices.delete<CVProject>('/CVProject', id),
 };
