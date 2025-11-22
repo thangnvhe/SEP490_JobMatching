@@ -1,4 +1,5 @@
 ﻿using JobMatchingSystem.API.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace JobMatchingSystem.API.Repositories.Interfaces
 {
