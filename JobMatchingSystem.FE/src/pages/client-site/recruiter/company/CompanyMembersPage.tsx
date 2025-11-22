@@ -54,14 +54,7 @@ import { CreateMemberDialog } from "@/components/dialogs/CreateMemberDialog";
 // Import types và services
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import type { HiringManager } from "@/models/hiring-manager";
-import { sampleHiringManagers } from "@/models/hiring-manager";
 import { UserServices } from "@/services/user.service";
-
-// Helper function để cắt ngắn text
-const truncateText = (text: string, maxLength: number = 100): string => {
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + '...';
-};
 
 // Helper function để format date
 const formatDate = (dateString: string) => {
@@ -113,6 +106,54 @@ export function CompanyMembersPage() {
   
   const pageSizeOptions = [5, 10, 20, 50];
 
+  // Load members from API
+  const loadMembers = async (companyId: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Gọi API lấy danh sách user theo companyId và role HiringManager với pagination
+      const response = await UserServices.getAllWithPagination({
+        page: 1,
+        size: 100, // Lấy nhiều để hiển thị tất cả
+        companyId: companyId,
+        role: 'HiringManager'
+      });
+      
+      if (response.isSuccess && response.result) {
+        // response.result có structure: { items: User[], pageInfo: PageInfo }
+        const userData = response.result.items || [];
+        
+        // Map dữ liệu từ API thành HiringManager format
+        const hiringManagers: HiringManager[] = userData.map((user: any) => ({
+          id: user.id,
+          firstName: user.fullName ? user.fullName.split(' ')[0] : '',
+          lastName: user.fullName ? user.fullName.split(' ').slice(1).join(' ') : '',
+          email: user.email,
+          phoneNumber: user.phoneNumber || user.phone || '',
+          position: 'Hiring Manager', // Default position
+          department: 'Nhân sự', // Default department  
+          isActive: user.isActive,
+          createdAt: user.createdAt,
+          lastLoginAt: undefined, // API chưa có thông tin này
+          companyId: user.companyId,
+          avatar: user.avatarUrl || user.avatar || undefined
+        }));
+        
+        setMembers(hiringManagers);
+      } else {
+        setMembers([]);
+        setError('Không thể tải danh sách thành viên');
+      }
+    } catch (error: any) {
+      console.error('Error loading members:', error);
+      setError(error?.message || 'Có lỗi xảy ra khi tải danh sách thành viên');
+      setMembers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Load company profile data để lấy companyId
   useEffect(() => {
     const loadCompanyInfo = async () => {
@@ -145,12 +186,8 @@ export function CompanyMembersPage() {
 
         setCompanyId(userData.companyId);
         
-        // Load sample data (replace with API call later)
-        setTimeout(() => {
-          const companyMembers = sampleHiringManagers.filter(m => m.companyId === userData.companyId);
-          setMembers(companyMembers);
-          setLoading(false);
-        }, 1000);
+        // Load members from API
+        await loadMembers(userData.companyId);
 
       } catch (error) {
         console.error("Error loading company info:", error);
@@ -191,12 +228,7 @@ export function CompanyMembersPage() {
   // Handler functions
   const handleRefresh = () => {
     if (companyId) {
-      setLoading(true);
-      setTimeout(() => {
-        const companyMembers = sampleHiringManagers.filter(m => m.companyId === companyId);
-        setMembers(companyMembers);
-        setLoading(false);
-      }, 1000);
+      loadMembers(companyId);
     }
   };
 
@@ -227,6 +259,8 @@ export function CompanyMembersPage() {
 
   const handleEdit = (member: HiringManager) => {
     // TODO: Implement edit functionality
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    console.log('Edit member:', member);
     toast.info("Tính năng chỉnh sửa sẽ được cập nhật sớm");
   };
 
@@ -262,9 +296,15 @@ export function CompanyMembersPage() {
     }
   };
 
-  const handleCreateSuccess = (newMember: HiringManager) => {
-    setMembers(prev => [newMember, ...prev]);
+  const handleCreateSuccess = () => {
+    // Đóng dialog
     setIsCreateDialogOpen(false);
+    
+    // Reload danh sách ngay lập tức để có dữ liệu chính xác từ server
+    if (companyId) {
+      toast.success("Tạo thành viên thành công!");
+      loadMembers(companyId);
+    }
   };
 
   // Helper functions
