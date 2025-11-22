@@ -12,19 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 // Icons
 import { UserPlus, Save, Loader2 } from "lucide-react";
 
 // Types
 import type { CreateHiringManagerRequest, HiringManager } from "@/models/hiring-manager";
+import type { CreateHiringManagerRequest as UserCreateHiringManagerRequest } from "@/models/user";
+import { UserServices } from "@/services/user.service";
 
 // ===================== TYPES =====================
 
@@ -32,16 +27,13 @@ interface CreateMemberDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   companyId: number;
-  onCreateSuccess: (newMember: HiringManager) => void;
+  onCreateSuccess: () => void;
 }
 
 interface FormData {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   phoneNumber: string;
-  position: string;
-  department: string;
   password: string;
   confirmPassword: string;
 }
@@ -51,38 +43,34 @@ interface FormData {
 const validateForm = (formData: FormData): string[] => {
   const errors: string[] = [];
 
-  if (!formData.firstName.trim()) {
-    errors.push("Họ không được để trống");
-  }
-
-  if (!formData.lastName.trim()) {
-    errors.push("Tên không được để trống");
+  if (!formData.fullName.trim()) {
+    errors.push("Họ và tên không được để trống");
+  } else if (formData.fullName.length > 100) {
+    errors.push("Họ và tên không được vượt quá 100 ký tự");
   }
 
   if (!formData.email.trim()) {
     errors.push("Email không được để trống");
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
     errors.push("Email không hợp lệ");
+  } else if (formData.email.length > 100) {
+    errors.push("Email không được vượt quá 100 ký tự");
   }
 
   if (!formData.phoneNumber.trim()) {
     errors.push("Số điện thoại không được để trống");
   } else if (!/^[0-9+\-\s()]+$/.test(formData.phoneNumber)) {
     errors.push("Số điện thoại không hợp lệ");
-  }
-
-  if (!formData.position.trim()) {
-    errors.push("Chức vụ không được để trống");
-  }
-
-  if (!formData.department.trim()) {
-    errors.push("Phòng ban không được để trống");
+  } else if (formData.phoneNumber.length > 15) {
+    errors.push("Số điện thoại không được vượt quá 15 ký tự");
   }
 
   if (!formData.password.trim()) {
     errors.push("Mật khẩu không được để trống");
   } else if (formData.password.length < 6) {
     errors.push("Mật khẩu phải có ít nhất 6 ký tự");
+  } else if (formData.password.length > 100) {
+    errors.push("Mật khẩu không được vượt quá 100 ký tự");
   }
 
   if (formData.password !== formData.confirmPassword) {
@@ -91,24 +79,6 @@ const validateForm = (formData: FormData): string[] => {
 
   return errors;
 };
-
-const positions = [
-  "Senior HR Manager",
-  "HR Manager", 
-  "Recruitment Specialist",
-  "HR Business Partner",
-  "Talent Acquisition Manager",
-  "Junior HR Specialist",
-  "HR Coordinator",
-  "Recruiter"
-];
-
-const departments = [
-  "Nhân sự",
-  "Tuyển dụng",
-  "Phát triển nhân tài",
-  "Quan hệ lao động"
-];
 
 // ===================== MAIN COMPONENT =====================
 
@@ -123,12 +93,9 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
   
   // Form data
   const [formData, setFormData] = useState<FormData>({
-    firstName: "",
-    lastName: "",
+    fullName: "",
     email: "",
     phoneNumber: "",
-    position: "",
-    department: "",
     password: "",
     confirmPassword: "",
   });
@@ -152,41 +119,41 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
     try {
       setLoading(true);
 
-      // Simulate API call (replace with actual API call later)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Create mock member data
-      const newMember: HiringManager = {
-        id: Date.now(), // Mock ID
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
+      // Tạo payload cho API
+      const apiPayload: UserCreateHiringManagerRequest = {
+        fullName: formData.fullName.trim(),
         email: formData.email.trim(),
-        phoneNumber: formData.phoneNumber.trim(),
-        position: formData.position,
-        department: formData.department,
-        isActive: true,
-        createdAt: new Date().toISOString(),
+        phone: formData.phoneNumber.trim(),
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
         companyId: companyId,
       };
 
-      onCreateSuccess(newMember);
-      toast.success("Tạo thành viên thành công!");
+      // Gọi API tạo hiring manager
+      const response = await UserServices.createHiringManager(apiPayload);
+      
+      if (!response.isSuccess) {
+        // Nếu API trả về message lỗi cụ thể
+        const errorMessage = response.result || response.message || "Có lỗi xảy ra khi tạo thành viên";
+        throw new Error(errorMessage);
+      }
+
+      // Gọi callback success (parent sẽ reload data từ API)
+      onCreateSuccess();
+      toast.success(response.result || "Tạo thành viên thành công!");
       
       // Reset form
       setFormData({
-        firstName: "",
-        lastName: "",
+        fullName: "",
         email: "",
         phoneNumber: "",
-        position: "",
-        department: "",
         password: "",
         confirmPassword: "",
       });
 
     } catch (error: any) {
       console.error("Error creating member:", error);
-      toast.error("Có lỗi xảy ra khi tạo thành viên");
+      toast.error(error.message || "Có lỗi xảy ra khi tạo thành viên");
     } finally {
       setLoading(false);
     }
@@ -196,12 +163,9 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setFormData({
-        firstName: "",
-        lastName: "",
+        fullName: "",
         email: "",
         phoneNumber: "",
-        position: "",
-        department: "",
         password: "",
         confirmPassword: "",
       });
@@ -229,36 +193,20 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
               Thông tin cá nhân
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="firstName" className="text-sm font-medium text-gray-900">
-                  Họ và tên đệm <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="firstName"
-                  type="text"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  placeholder="Nhập họ và tên đệm"
-                  className="mt-1"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="lastName" className="text-sm font-medium text-gray-900">
-                  Tên <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="lastName"
-                  type="text"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  placeholder="Nhập tên"
-                  className="mt-1"
-                  required
-                />
-              </div>
+            <div>
+              <Label htmlFor="fullName" className="text-sm font-medium text-gray-900">
+                Họ và tên <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="fullName"
+                type="text"
+                value={formData.fullName}
+                onChange={(e) => handleInputChange('fullName', e.target.value)}
+                placeholder="Nhập họ và tên đầy đủ"
+                className="mt-1"
+                maxLength={100}
+                required
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -273,6 +221,7 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   placeholder="example@company.com"
                   className="mt-1"
+                  maxLength={100}
                   required
                 />
               </div>
@@ -288,59 +237,9 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
                   onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
                   placeholder="0901234567"
                   className="mt-1"
+                  maxLength={15}
                   required
                 />
-              </div>
-            </div>
-          </div>
-
-          {/* Work Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-              Thông tin công việc
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="position" className="text-sm font-medium text-gray-900">
-                  Chức vụ <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={formData.position}
-                  onValueChange={(value) => handleInputChange('position', value)}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Chọn chức vụ" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {positions.map((position) => (
-                      <SelectItem key={position} value={position}>
-                        {position}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="department" className="text-sm font-medium text-gray-900">
-                  Phòng ban <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={formData.department}
-                  onValueChange={(value) => handleInputChange('department', value)}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Chọn phòng ban" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map((department) => (
-                      <SelectItem key={department} value={department}>
-                        {department}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
           </div>
@@ -363,6 +262,7 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
                   onChange={(e) => handleInputChange('password', e.target.value)}
                   placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
                   className="mt-1"
+                  maxLength={100}
                   required
                 />
               </div>

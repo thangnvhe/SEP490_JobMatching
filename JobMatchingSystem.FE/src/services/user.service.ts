@@ -1,4 +1,4 @@
-import type { User } from '@/models/user';
+import type { User, CreateHiringManagerRequest } from '@/models/user';
 import { BaseServices } from './base.service';
 import axiosInstance from "@/interceptor/axiosInterceptor.old";
 import axios from "axios";
@@ -7,7 +7,7 @@ import type { BaseResponse } from "@/models/base";
 import type { PaginationParamsInput } from "@/models/base";
 
 export const UserServices = {
-  getAll: (params?: any) => BaseServices.getAll<User[]>('/User', params),
+  getAll: (params?: any) => BaseServices.getAll<User[]>(params, '/User'),
   getAllWithPagination: (params: PaginationParamsInput) => BaseServices.getAllWithPagination<User>(params, '/User'),
   getById: (id: string) => BaseServices.getById<User>(id, '/User'),
   create: (user: Partial<User>) => BaseServices.create<User>(user, '/User'),
@@ -44,5 +44,6 @@ export const UserServices = {
       params: { TokenLink: token },
     });
     return response.data;
-  }
+  },
+  createHiringManager: (payload: CreateHiringManagerRequest) => BaseServices.create<string>(payload, '/User/hiring-manager')
 };

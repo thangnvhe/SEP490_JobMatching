@@ -29,3 +29,12 @@ export type UserRole =
   | "candidate"
   | "staff"
   | "SuperRecruiter";
+
+export interface CreateHiringManagerRequest {
+  fullName: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+  companyId: number;
+}
