@@ -1,4 +1,6 @@
 ﻿using JobMatchingSystem.API.Data;
+using JobMatchingSystem.API.DTOs.Response;
+using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using Microsoft.AspNetCore.Identity;
