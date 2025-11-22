@@ -1,48 +1,19 @@
 import type { User } from '@/models/user';
-import { BaseServices } from './base.service';
-import axiosInstance from "@/interceptor/axiosInterceptor.old";
-import axios from "axios";
-import { API_BASE_URL } from "../../env.ts";
-import type { BaseResponse } from "@/models/base";
-import type { PaginationParamsInput } from "@/models/base";
+import type { BaseResponse, PaginationParamsInput } from "@/models/base";
+import { BaseApiServices } from "./base-api.service";
 
 export const UserServices = {
-  getAll: (params?: any) => BaseServices.getAll<User[]>('/User', params),
-  getAllWithPagination: (params: PaginationParamsInput) => BaseServices.getAllWithPagination<User>(params, '/User'),
-  getById: (id: string) => BaseServices.getById<User>(id, '/User'),
-  create: (user: Partial<User>) => BaseServices.create<User>(user, '/User'),
-  update: (id: string, data: Partial<User>) => BaseServices.update<User>(id, data, '/User'),
-  delete: (id: string) => BaseServices.delete(id, '/User'),
-  changeStatus: (id: string, isActive: boolean) => BaseServices.update<User>(id, { isActive }, '/User'),
-  forgotPassword: async (email: string): Promise<BaseResponse<unknown>> => {
-    const response = await axiosInstance.post(`/Auth/forgot-password`, { email });
-    return response.data;
-  },
-  resetPassword: async (email: string, token: string, newPassword: string, confirmPassword: string): Promise<BaseResponse<unknown>> => {
-    const response = await axiosInstance.post(`/Auth/reset-password`, {
-      email,
-      token,
-      newPassword,
-      confirmPassword
-    });
-    return response.data;
-  },
-  updateUser: async (payload: Partial<User> & { id: string | number }): Promise<BaseResponse<User>> => {
-    const { id, ...data } = payload;
-    return BaseServices.update<User>(String(id), data, '/User');
-  },
-  getUserProfile: async (): Promise<BaseResponse<User>> => {
-    const response = await axiosInstance.get('/User/me');
-    return response.data;
-  },
-  editUserProfile: async (payload: Partial<User>): Promise<BaseResponse<User>> => {
-    const response = await axiosInstance.put('/User/me', payload);
-    return response.data;
-  },
-  verifyEmail: async (token: string): Promise<BaseResponse<unknown>> => {
-    const response = await axios.get(`${API_BASE_URL}Auth/verify-email`, {
-      params: { TokenLink: token },
-    });
-    return response.data;
-  }
+  getAll: (params?: Record<string, any>) => BaseApiServices.getAll<User>('/User', params),
+  getAllWithPagination: (params: PaginationParamsInput) => BaseApiServices.getAllWithPagination<User>('/User', params),
+  getById: (id: string) => BaseApiServices.getById<User>('/User', id),
+  create: (user: Omit<User, 'id'>): Promise<BaseResponse<User>> => BaseApiServices.create<User>('/User', user),
+  update: (id: string, data: Partial<User>) => BaseApiServices.update<User>('/User', id, data),
+  delete: (id: string) => BaseApiServices.delete<User>('/User', id),
+  changeStatus: (id: string, isActive: boolean) => BaseApiServices.update<User>('/User', id, { isActive }),
+  forgotPassword: (email: string) => BaseApiServices.custom("post", "/Auth/forgot-password", { email }),
+  resetPassword: (email: string, token: string, newPassword: string, confirmPassword: string) =>
+    BaseApiServices.custom("post", "/Auth/reset-password", { email, token, newPassword, confirmPassword }),
+  getUserProfile: () => BaseApiServices.custom("get", "/User/me"),
+  editUserProfile: (payload: Partial<User>) => BaseApiServices.custom("put", "/User/me", payload),
+  verifyEmail: (token: string) => BaseApiServices.custom("get", "/Auth/verify-email", { TokenLink: token })
 };

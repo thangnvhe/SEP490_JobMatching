@@ -17,12 +17,6 @@ export interface User {
     role?: UserRole;
 }
 
-export interface UserLogin {
-    email: string;
-    password: string;
-    rememberMe?: boolean;
-}
-
 export type UserRole =
   | "admin"
   | "recruiter"
