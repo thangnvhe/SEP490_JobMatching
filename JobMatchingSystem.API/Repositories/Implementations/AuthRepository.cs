@@ -1,4 +1,6 @@
 ﻿using JobMatchingSystem.API.Data;
+using JobMatchingSystem.API.DTOs.Response;
+using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -77,6 +79,65 @@ namespace JobMatchingSystem.API.Repositories.Implementations
         public async Task<ApplicationUser?> FindUserByCompanyId(int companyId)
         {
             return await _context.Users.FirstOrDefaultAsync(x=>x.CompanyId == companyId);
+        }
+
+        public async Task<List<ApplicationUser>> GetAllWithCompanyAsync(string search, string sortBy, bool IsDescending)
+        {
+            IQueryable<ApplicationUser> query = _context.Users
+                .Include(u => u.CompanyRecruiter); // Include company information
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(u => 
+                    (u.UserName != null && u.UserName.Contains(search)) ||
+                    (u.FullName != null && u.FullName.Contains(search)) ||
+                    (u.Email != null && u.Email.Contains(search)) ||
+                    (u.PhoneNumber != null && u.PhoneNumber.Contains(search))
+                );
+            }
+
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                switch (sortBy.ToLower())
+                {
+                    case "fullname":
+                        query = IsDescending 
+                            ? query.OrderByDescending(x => x.FullName) 
+                            : query.OrderBy(x => x.FullName);
+                        break;
+                    case "email":
+                        query = IsDescending 
+                            ? query.OrderByDescending(x => x.Email) 
+                            : query.OrderBy(x => x.Email);
+                        break;
+                    case "createdat":
+                        query = IsDescending 
+                            ? query.OrderByDescending(x => x.CreatedAt) 
+                            : query.OrderBy(x => x.CreatedAt);
+                        break;
+                    case "isactive":
+                        query = IsDescending 
+                            ? query.OrderByDescending(x => x.IsActive) 
+                            : query.OrderBy(x => x.IsActive);
+                        break;
+                    default:
+                        query = query.OrderBy(x => x.FullName);
+                        break;
+                }
+            }
+            else
+            {
+                query = query.OrderBy(x => x.FullName);
+            }
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<ApplicationUser?> GetUserByIdWithCompanyAsync(int id)
+        {
+            return await _context.ApplicationUsers
+                .Include(u => u.CompanyRecruiter)
+                .FirstOrDefaultAsync(u => u.Id == id);
         }
     }
 }

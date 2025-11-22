@@ -9,6 +9,10 @@ namespace JobMatchingSystem.API.Helpers
 {
     public static class Untity
     {
+        private static readonly string Upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        private static readonly string Lower = "abcdefghijklmnopqrstuvwxyz";
+        private static readonly string Digits = "0123456789";
+        private static readonly string Special = "!@#$%^&*()_+-=[]{}|;:,.<>?";
         public static string GenerateAccessToken(ApplicationUser user, IEnumerable<string> roles, IConfiguration _configuration)
         {
             var claims = new List<Claim>
@@ -41,6 +45,23 @@ namespace JobMatchingSystem.API.Helpers
                 rng.GetBytes(randomBytes);
                 return Convert.ToBase64String(randomBytes);
             }
+        }
+        public static string Generate(int length = 12)
+        {
+            var random = new Random();
+            var chars = new List<char>();
+
+
+            chars.Add(Upper[random.Next(Upper.Length)]);
+            chars.Add(Lower[random.Next(Lower.Length)]);
+            chars.Add(Digits[random.Next(Digits.Length)]);
+            chars.Add(Special[random.Next(Special.Length)]);
+            string all = Upper + Lower + Digits + Special;
+            for (int i = chars.Count; i < length; i++)
+            {
+                chars.Add(all[random.Next(all.Length)]);
+            }
+            return new string(chars.OrderBy(_ => random.Next()).ToArray());
         }
     }
 }

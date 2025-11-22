@@ -27,6 +27,8 @@ namespace JobMatchingSystem.API.Models
 
         public DateTime? RefreshTokenExpiryTime { get; set; }
 
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
 
         // Navigation properties
         [ForeignKey("CompanyId")]

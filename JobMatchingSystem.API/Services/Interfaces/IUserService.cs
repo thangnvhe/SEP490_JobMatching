@@ -6,10 +6,11 @@ namespace JobMatchingSystem.API.Services.Interfaces
 {
     public interface IUserService
     {
-        Task<PagedResult<UserResponseDTO>> GetAllUser(int page = 1, int size = 5, string search = "", string sortBy = "", bool isDecending = false);
-        Task<UserResponseDTO> GetUserById(int userId);
+        Task<PagedResult<UserDetailResponseDTO>> GetAllUser(int page = 1, int size = 5, string search = "", string sortBy = "", bool isDecending = false, int? companyId = null, string? role = null);
+        Task<UserDetailResponseDTO> GetUserById(int userId);
         Task ChangeStatus(int userId);
-        Task<CurrentUserResponseDTO> GetCurrentUser(string userId);
-        Task<CurrentUserResponseDTO> UpdateCurrentUser(string userId, UpdateCurrentUserRequest request);
+        Task<UserDetailResponseDTO> GetCurrentUser(string userId);
+        Task<UserDetailResponseDTO> UpdateCurrentUser(string userId, UpdateCurrentUserRequest request);
+        Task<UserDetailResponseDTO> CreateHiringManager(CreateHiringManagerRequest request);
     }
 }
