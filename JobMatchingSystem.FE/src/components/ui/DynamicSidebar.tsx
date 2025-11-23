@@ -16,13 +16,15 @@ import {
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { NavUser } from "@/components/nav-user";
 import React from "react";
 
 function useIsActivePath(path: string) {
@@ -34,111 +36,167 @@ function useIsActivePath(path: string) {
 function RecruiterNav() {
   return (
     <>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/recruiter")}
-            tooltip="Dashboard"
-          >
-            <Link to="/recruiter">
-              <LayoutDashboard />
-              <span>Dashboard</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+      <SidebarGroup>
+        <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60">
+          Tổng quan
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu className="">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/recruiter")}
+                tooltip="Dashboard"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/recruiter">
+                  <LayoutDashboard className="size-4" />
+                  <span className="font-medium text-sm">Dashboard</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/recruiter/jobs")}
-            tooltip="Manage Jobs"
-          >
-            <Link to="/recruiter/jobs">
-              <Briefcase />
-              <span>Danh sách tin tuyển dụng</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+      <SidebarSeparator className="my-2" />
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/recruiter/recruitment-process")}
-            tooltip="Recruitment Process"
-          >
-            <Link to="/recruiter/recruitment-process">
-              <GitBranch />
-              <span>Tin tuyển dụng</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+      <SidebarGroup>
+        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
+          Quản lý tuyển dụng
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu className="">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/recruiter/jobs")}
+                tooltip="Manage Jobs"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/recruiter/jobs">
+                  <Briefcase className="size-4" />
+                  <span className="font-medium text-sm">Danh sách tin tuyển dụng</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/recruiter/saved-cvs")}
-            tooltip="Saved CVs"
-          >
-            <Link to="/recruiter/saved-cvs">
-              <FileText />
-              <span>Danh sách CVs đã lưu</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/recruiter/recruitment-process")}
+                tooltip="Recruitment Process"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/recruiter/recruitment-process">
+                  <GitBranch className="size-4" />
+                  <span className="font-medium text-sm">Tin tuyển dụng</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/recruiter/service-packages")}
-            tooltip="Service Packages"
-          >
-            <Link to="/recruiter/service-packages">
-              <Package />
-              <span>Gói dịch vụ</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/recruiter/saved-cvs")}
+                tooltip="Saved CVs"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/recruiter/saved-cvs">
+                  <FileText className="size-4" />
+                  <span className="font-medium text-sm">Danh sách CVs đã lưu</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/recruiter/company")}
-            tooltip="Company"
-          >
-            <Link to="/recruiter/company">
-              <Building2 />
-              <span>Công ty</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+      <SidebarSeparator className="my-2" />
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/recruiter/company/members")}
-            tooltip="Company Members"
-          >
-            <Link to="/recruiter/company/members">
-              <UserPlus />
-              <span>Thành viên công ty</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+      <SidebarGroup>
+        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
+          Công ty & Dịch vụ
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu className="">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/recruiter/company")}
+                tooltip="Company"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/recruiter/company">
+                  <Building2 className="size-4" />
+                  <span className="font-medium text-sm">Công ty</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/profile")}
-            tooltip="Profile"
-          >
-            <Link to="/profile">
-              <User />
-              <span>Hồ sơ</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/recruiter/company/members")}
+                tooltip="Company Members"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/recruiter/company/members">
+                  <UserPlus className="size-4" />
+                  <span className="font-medium text-sm">Thành viên công ty</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/recruiter/service-packages")}
+                tooltip="Service Packages"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/recruiter/service-packages">
+                  <Package className="size-4" />
+                  <span className="font-medium text-sm">Gói dịch vụ</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarSeparator className="my-2" />
+
+      <SidebarGroup>
+        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
+          Cá nhân
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu className="">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/profile")}
+                tooltip="Profile"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/profile">
+                  <User className="size-4" />
+                  <span className="font-medium text-sm">Hồ sơ</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
     </>
   );
 }
@@ -147,85 +205,137 @@ function RecruiterNav() {
 function CandidateNav() {
   return (
     <>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/candidate")}
-            tooltip="Dashboard"
-          >
-            <Link to="/candidate">
-              <LayoutDashboard />
-              <span>Dashboard</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+      <SidebarGroup>
+        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
+          Tổng quan
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu className="">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/candidate")}
+                tooltip="Dashboard"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/candidate">
+                  <LayoutDashboard className="size-4" />
+                  <span className="font-medium text-sm">Dashboard</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/candidate/cv-management")}
-            tooltip="My CV"
-          >
-            <Link to="/candidate/cv-management">
-              <FileText />
-              <span>CV của tôi</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+      <SidebarSeparator className="my-2" />
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/candidate/it-profile")}
-            tooltip="IT Profile"
-          >
-            <Link to="/candidate/it-profile">
-              <User />
-              <span>Hồ sơ IT</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+      <SidebarGroup>
+        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
+          Hồ sơ & CV
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu className="">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/candidate/cv-management")}
+                tooltip="My CV"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/candidate/cv-management">
+                  <FileText className="size-4" />
+                  <span className="font-medium text-sm">CV của tôi</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/candidate/my-jobs")}
-            tooltip="My Jobs"
-          >
-            <Link to="/candidate/my-jobs">
-              <Briefcase />
-              <span>Việc làm của tôi</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/candidate/it-profile")}
+                tooltip="IT Profile"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/candidate/it-profile">
+                  <User className="size-4" />
+                  <span className="font-medium text-sm">Hồ sơ IT</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/candidate/saved-jobs")}
-            tooltip="Saved Jobs"
-          >
-            <Link to="/candidate/saved-jobs">
-              <Bookmark />
-              <span>Công việc đã lưu</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+      <SidebarSeparator className="my-2" />
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/profile")}
-            tooltip="Profile"
-          >
-            <Link to="/profile-cv">
-              <Settings />
-              <span>Hồ sơ cá nhân</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
+      <SidebarGroup>
+        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
+          Việc làm
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu className="">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/candidate/my-jobs")}
+                tooltip="My Jobs"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/candidate/my-jobs">
+                  <Briefcase className="size-4" />
+                  <span className="font-medium text-sm">Việc làm của tôi</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/candidate/saved-jobs")}
+                tooltip="Saved Jobs"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/candidate/saved-jobs">
+                  <Bookmark className="size-4" />
+                  <span className="font-medium text-sm">Công việc đã lưu</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarSeparator className="my-2" />
+
+      <SidebarGroup>
+        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
+          Cá nhân
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu className="">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/profile")}
+                tooltip="Profile"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/profile-cv">
+                  <Settings className="size-4" />
+                  <span className="font-medium text-sm">Hồ sơ cá nhân</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
     </>
   );
 }
@@ -234,59 +344,96 @@ function CandidateNav() {
 function HiringManagerNav() {
   return (
     <>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/recruiter/dashboard")}
-            tooltip="Dashboard"
-          >
-            <Link to="/recruiter/dashboard">
-              <LayoutDashboard />
-              <span>Dashboard</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+      <SidebarGroup>
+        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
+          Tổng quan
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu className="">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/recruiter/dashboard")}
+                tooltip="Dashboard"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/recruiter/dashboard">
+                  <LayoutDashboard className="size-4" />
+                  <span className="font-medium text-sm">Dashboard</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/recruiter/process-management")}
-            tooltip="Process Management"
-          >
-            <Link to="/recruiter/process-management">
-              <GitBranch />
-              <span>Quản lý quy trình</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+      <SidebarSeparator className="my-2" />
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/recruiter/company")}
-            tooltip="Company"
-          >
-            <Link to="/recruiter/company">
-              <Building2 />
-              <span>Công ty</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+      <SidebarGroup>
+        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
+          Quản lý
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu className="">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/recruiter/process-management")}
+                tooltip="Process Management"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/recruiter/process-management">
+                  <GitBranch className="size-4" />
+                  <span className="font-medium text-sm">Quản lý quy trình</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
 
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={useIsActivePath("/profile")}
-            tooltip="Profile"
-          >
-            <Link to="/profile">
-              <User />
-              <span>Hồ sơ cá nhân</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/recruiter/company")}
+                tooltip="Company"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/recruiter/company">
+                  <Building2 className="size-4" />
+                  <span className="font-medium text-sm">Công ty</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarSeparator className="my-2" />
+
+      <SidebarGroup>
+        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
+          Cá nhân
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu className="">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/profile")}
+                tooltip="Profile"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/profile">
+                  <User className="size-4" />
+                  <span className="font-medium text-sm">Hồ sơ cá nhân</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
     </>
   );
 }
@@ -331,37 +478,42 @@ export function DynamicSidebar({
   //   }
   // };
 
-  // Get user info for NavUser component
-  const getUserInfo = () => {
-    if (authState.isAuthenticated && authState.name) {
-      return {
-        name: authState.name,
-        email: authState.name || 'user@example.com', // fallback if email not in token
-        avatar: `https://i.pravatar.cc/150?u=${authState.name}`,
-      };
+  // Get role display name
+  const getRoleDisplayName = () => {
+    switch (userRole) {
+      case 'recruiter':
+        return 'Nhà tuyển dụng';
+      case 'candidate':
+        return 'Ứng viên';
+      case 'hiringmanager':
+        return 'Quản lý tuyển dụng';
+      default:
+        return 'Dashboard';
     }
-    
-    // Fallback user info
-    return {
-      name: 'User',
-      email: 'user@example.com',
-      avatar: 'https://i.pravatar.cc/150?u=default',
-    };
   };
 
   return (
-    <Sidebar {...props}>
+    <Sidebar {...props} className="border-r">
+      <SidebarHeader className="border-b px-3 py-3">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+            <Briefcase className="size-4 text-primary" />
+          </div>
+          <div className="flex flex-col">
+            <h2 className="text-sm font-semibold text-sidebar-foreground leading-tight">
+              {getRoleDisplayName()}
+            </h2>
+            <p className="text-[10px] text-sidebar-foreground/60 leading-tight">
+              Hệ thống tuyển dụng
+            </p>
+          </div>
+        </div>
+      </SidebarHeader>
 
+      <SidebarContent className="px-2 py-2 flex-1 overflow-hidden">
+        {getNavigationComponent()}
+      </SidebarContent>
 
-      <ScrollArea className="flex-1">
-        <SidebarContent className="p-0">
-          {getNavigationComponent()}
-        </SidebarContent>
-      </ScrollArea>
-
-      <SidebarFooter>
-        <NavUser user={getUserInfo()} />
-      </SidebarFooter>
     </Sidebar>
   );
 }
