@@ -42,6 +42,7 @@ namespace JobMatchingSystem.API.Models
         public virtual ICollection<Report> VerifiedReports { get; set; } = new List<Report>();
         public virtual ICollection<CVProject> CVProjects { get; set; } = new List<CVProject>();
         public virtual ICollection<CVEducation> CVEducations { get; set; } = new List<CVEducation>();
+        public virtual CVProfile? CVProfile { get; set; }
         public virtual ICollection<CVCertificate> CVCertificates { get; set; } = new List<CVCertificate>();
         public virtual ICollection<CVAchievement> CVAchievements { get; set; } = new List<CVAchievement>();
         public virtual ICollection<CVExperience> CVExperiences { get; set; } = new List<CVExperience>();
