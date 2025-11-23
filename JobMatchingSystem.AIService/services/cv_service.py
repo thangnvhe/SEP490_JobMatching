@@ -115,54 +115,68 @@ class CVService:
             )
     
     def _calculate_confidence(self, ai_response: str, is_cv: bool) -> float:
-        """Calculate confidence score based on AI response with improved scoring"""
+        """Calculate confidence score based on AI response and CV elements detected"""
         response_lower = ai_response.lower()
         
-        # Positive indicators for CV detection
-        cv_positive_words = [
-            "tên", "họ và tên", "email", "điện thoại", "address", "phone", 
-            "kinh nghiệm", "experience", "học vấn", "education", "kỹ năng", "skills",
-            "dự án", "project", "chứng chỉ", "certificate", "thành tích", "achievement",
-            "mục tiêu", "objective", "summary", "cv", "resume", "curriculum vitae"
+        # Parse elements found from AI response
+        elements_count = 0
+        required_elements = 0
+        
+        # Check for required elements (name + contact)
+        if any(word in response_lower for word in ["tên", "họ", "name", "email", "điện thoại", "phone"]):
+            required_elements += 1
+        
+        # Check for professional elements (need at least 3)
+        professional_elements = [
+            ["kinh nghiệm", "experience", "làm việc", "công việc", "vị trí"],  # Experience
+            ["kỹ năng", "skills", "công nghệ", "technology", "lập trình"],      # Skills  
+            ["dự án", "project", "thực hiện", "phát triển"],                   # Projects
+            ["học vấn", "education", "trường", "đại học", "bằng cấp"],        # Education
+            ["chứng chỉ", "certificate", "thành tích", "giải thưởng"]          # Achievements
         ]
         
-        # High confidence indicators
-        high_confidence_words = ["clearly", "definitely", "obviously", "certainly", "undoubtedly", "rõ ràng", "chắc chắn"]
-        medium_confidence_words = ["likely", "appears", "seems", "probably", "có thể", "dường như"]
-        low_confidence_words = ["unclear", "ambiguous", "difficult", "uncertain", "không chắc", "khó xác định"]
+        for element_group in professional_elements:
+            if any(word in response_lower for word in element_group):
+                elements_count += 1
         
-        # Count CV-related elements mentioned
-        cv_elements_found = sum(1 for word in cv_positive_words if word in response_lower)
-        
-        # Base confidence calculation
+        # Calculate confidence based on CV validation criteria
         if is_cv:
-            # For positive CV detection, start with higher confidence
-            confidence = 0.75  # More generous base confidence
+            # Base confidence if identified as CV
+            confidence = 0.60
             
-            # Boost confidence based on CV elements mentioned
-            if cv_elements_found >= 3:
-                confidence = min(confidence + 0.15, 0.95)
-            elif cv_elements_found >= 1:
-                confidence = min(confidence + 0.10, 0.90)
+            # Check if meets minimum requirements (name/contact + 3 professional elements)
+            if required_elements > 0 and elements_count >= 3:
+                confidence = 0.85  # High confidence - meets all criteria
+            elif required_elements > 0 and elements_count >= 2:
+                confidence = 0.75  # Good confidence - close to criteria
+            elif required_elements > 0 and elements_count >= 1:
+                confidence = 0.65  # Moderate confidence - has basics
+            
+            # Bonus for more elements
+            if elements_count >= 4:
+                confidence = min(confidence + 0.05, 0.95)
+            if elements_count == 5:
+                confidence = min(confidence + 0.05, 0.95)
             
         else:
-            # For negative detection, be more conservative
-            confidence = 0.60
-        
-        # Adjust based on certainty words
-        if any(word in response_lower for word in high_confidence_words):
-            confidence = min(confidence + 0.10, 0.95)
-        elif any(word in response_lower for word in medium_confidence_words):
-            confidence = min(confidence + 0.05, 0.85)
-        elif any(word in response_lower for word in low_confidence_words):
-            confidence = max(confidence - 0.15, 0.30)
-        
-        # If response starts clearly with YES/NO, increase confidence
-        if ai_response.strip().lower().startswith(('yes -', 'no -')):
-            confidence = min(confidence + 0.05, 0.95)
-        
-        # Ensure minimum confidence for valid CVs
-        if is_cv and confidence < 0.70:
+            # For negative detection, lower confidence
             confidence = 0.70
+            
+            # If clearly states missing requirements, higher confidence
+            if any(word in response_lower for word in ["thiếu", "missing", "không có", "lack"]):
+                confidence = 0.85
+        
+        # Adjust based on response clarity
+        high_confidence_words = ["rõ ràng", "chắc chắn", "clearly", "definitely"]
+        medium_confidence_words = ["có thể", "dường như", "appears", "seems"] 
+        
+        if any(word in response_lower for word in high_confidence_words):
+            confidence = min(confidence + 0.05, 0.95)
+        elif any(word in response_lower for word in medium_confidence_words):
+            confidence = min(confidence + 0.02, 0.90)
+        
+        # Clear YES/NO response bonus
+        if ai_response.strip().lower().startswith(('yes -', 'no -')):
+            confidence = min(confidence + 0.03, 0.95)
         
         return confidence
