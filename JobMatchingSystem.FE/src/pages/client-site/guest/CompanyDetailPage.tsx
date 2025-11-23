@@ -1,9 +1,23 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { JobCard } from "@/components/ui/jobs/JobCard";
 import {
   MapPin,
@@ -12,10 +26,9 @@ import {
   Mail,
   Phone,
   ArrowLeft,
-  Loader2,
-  AlertCircle,
-  ExternalLink,
-  Briefcase
+  Briefcase,
+  CheckCircle2,
+  Share2,
 } from "lucide-react";
 
 // Services
@@ -23,504 +36,473 @@ import { CompanyServices } from "@/services/company.service";
 import { JobServices } from "@/services/job.service";
 
 // Types
-import type { Company } from "@/models/company";
-import type { JobDetailResponse } from "@/models/job";
-import type { JobSearchParams } from "@/models/job";
-import { getStatusString } from "@/models/company";
+import { Company } from "@/models/company";
+import { Job } from "@/models/job";
 
 // Utils
 import { API_BASE_URL } from "../../../../env.ts";
+import { PageInfo, PaginationParamsInput } from "@/models/base.ts";
 
-// -----------------------------------------------------------------
-// COMPONENT: CompanyDetailHeader
-// -----------------------------------------------------------------
-
-interface CompanyDetailHeaderProps {
-  company: Company;
-}
-
-const CompanyDetailHeader: React.FC<CompanyDetailHeaderProps> = ({ company }) => {
+export default function CompanyDetailPage() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Helper function to get logo URL
+  // ================================================================
+  // STATE: Company Detail
+  // ================================================================
+  const [company, setCompany] = useState<Company | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // ================================================================
+  // STATE: Company Jobs
+  // ================================================================
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
+    currentPage: 1,
+    pageSize: 10,
+    totalItem: 0,
+    totalPage: 0,
+    hasPreviousPage: false,
+    hasNextPage: false,
+    sortBy: '',
+    isDecending: false,
+  });
+  const [paginationInput, setPaginationInput] = useState<PaginationParamsInput>({
+    page: 1,
+    size: 6,
+    status: 3, 
+    companyId: id ? parseInt(id) : undefined,
+    sortBy: '',
+    isDescending: true,
+  });
+
+  // ================================================================
+  // HELPERS
+  // ================================================================
+
   const getLogoUrl = (logoPath?: string): string | undefined => {
     if (!logoPath) return undefined;
-    
     if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
       return logoPath;
     }
-    
     const baseUrl = API_BASE_URL.replace('/api', '');
     return `${baseUrl}${logoPath.startsWith('/') ? '' : '/'}${logoPath}`;
   };
 
-  const handleVisitWebsite = () => {
-    if (company.website) {
-      window.open(company.website, "_blank");
+  const getStatusBadge = (status: number) => {
+    switch (status) {
+      case 0: // Pending
+        return { variant: "secondary" as const, text: "Đang chờ duyệt", className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200" };
+      case 1: // Approved
+        return { variant: "default" as const, text: "Đã xác thực", className: "bg-green-100 text-green-800 hover:bg-green-200 border-green-200" };
+      case 2: // Rejected
+        return { variant: "destructive" as const, text: "Bị từ chối", className: "" };
+      default:
+        return { variant: "outline" as const, text: "Không xác định", className: "" };
     }
   };
 
-  const statusBadgeColor = company.status === 1 ? "default" : "secondary";
-  const statusText = company.status === 1 ? "Đã được duyệt" : getStatusString(company.status);
+  // ================================================================
+  // API CALLS
+  // ================================================================
 
-  return (
-    <Card className="bg-white border-0 shadow-sm">
-      <CardContent className="p-8">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Company Logo */}
-          <div className="flex-shrink-0">
-            <div className="w-24 h-24 lg:w-32 lg:h-32 bg-gray-100 rounded-2xl overflow-hidden border-2 border-gray-200">
-              {company.logo ? (
-                <img
-                  src={getLogoUrl(company.logo)}
-                  alt={`${company.name} logo`}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    target.nextElementSibling?.classList.remove('hidden');
-                  }}
-                />
-              ) : null}
-              <div className={`w-full h-full flex items-center justify-center ${company.logo ? 'hidden' : ''}`}>
-                <Building2 className="w-8 h-8 lg:w-12 lg:h-12 text-gray-400" />
-              </div>
-            </div>
-          </div>
-
-          {/* Company Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                {/* Company Name & Status */}
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 truncate">
-                    {company.name}
-                  </h1>
-                  <Badge variant={statusBadgeColor} className="flex-shrink-0">
-                    {statusText}
-                  </Badge>
-                </div>
-
-                {/* Location */}
-                {company.address && (
-                  <div className="flex items-center gap-2 text-gray-600 mb-3">
-                    <MapPin className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm lg:text-base truncate">
-                      {company.address}
-                    </span>
-                  </div>
-                )}
-
-                {/* Description */}
-                <p className="text-gray-600 text-sm lg:text-base line-clamp-3 mb-4">
-                  {company.description}
-                </p>
-
-                {/* Contact Info */}
-                <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-                  {company.website && (
-                    <div className="flex items-center gap-1">
-                      <Globe className="w-4 h-4" />
-                      <span>{new URL(company.website).hostname}</span>
-                    </div>
-                  )}
-                  {company.email && (
-                    <div className="flex items-center gap-1">
-                      <Mail className="w-4 h-4" />
-                      <span>{company.email}</span>
-                    </div>
-                  )}
-                  {company.phoneContact && (
-                    <div className="flex items-center gap-1">
-                      <Phone className="w-4 h-4" />
-                      <span>{company.phoneContact}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex lg:flex-col gap-2 lg:w-40">
-                <Button
-                  onClick={() => navigate('/companies')}
-                  variant="outline"
-                  className="flex-1 lg:w-full"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Quay lại
-                </Button>
-
-                {company.website && (
-                  <Button
-                    onClick={handleVisitWebsite}
-                    variant="default"
-                    className="flex-1 lg:w-full"
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Website
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-// -----------------------------------------------------------------
-// COMPONENT: CompanyAbout
-// -----------------------------------------------------------------
-
-interface CompanyAboutProps {
-  company: Company;
-}
-
-const CompanyAbout: React.FC<CompanyAboutProps> = ({ company }) => {
-  return (
-    <div className="space-y-6">
-      {/* Company Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-blue-600" />
-            Tổng quan công ty
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-gray-600 leading-relaxed">{company.description}</p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-orange-600" />
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Địa điểm</div>
-                <div className="font-semibold text-gray-900">
-                  {company.address || "Chưa cập nhật"}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
-                <Globe className="w-5 h-5 text-teal-600" />
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Website</div>
-                <div className="font-semibold text-gray-900 truncate">
-                  {company.website
-                    ? new URL(company.website).hostname
-                    : "Chưa cập nhật"}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                <Phone className="w-5 h-5 text-red-600" />
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Liên hệ</div>
-                <div className="font-semibold text-gray-900">
-                  {company.phoneContact || "Chưa cập nhật"}
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-// -----------------------------------------------------------------
-// COMPONENT: CompanyJobs
-// -----------------------------------------------------------------
-
-interface CompanyJobsProps {
-  companyId: number;
-}
-
-const CompanyJobs: React.FC<CompanyJobsProps> = ({ companyId }) => {
-  const navigate = useNavigate();
-  const [jobs, setJobs] = useState<JobDetailResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const pageSize = 6;
-
-  const fetchCompanyJobs = async () => {
+  const getCompanyDetail = useCallback(async (companyId: string) => {
+    setIsLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      
-      const apiParams: JobSearchParams = {
-        Page: currentPage,
-        Size: pageSize,
-        Status: 3, // Only opened jobs
-        CompanyId: companyId
-      };
+      const response = await CompanyServices.getCompanyById(companyId);
+      if (response.isSuccess && response.result) {
+        setCompany(response.result);
+        setPaginationInput(prev => ({ ...prev, companyId: response.result.id }));
+      } else {
+        setError("Không tìm thấy thông tin công ty");
+      }
+    } catch (err) {
+      setError("Đã xảy ra lỗi khi tải thông tin công ty");
+      console.error("Error fetching company details:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-      const response = await JobServices.getJobsWithPagination(apiParams);
-      
+  const getAllJobsWithPagination = useCallback(async (params: PaginationParamsInput) => {
+    if (!params.companyId) return;
+
+    setJobsLoading(true);
+    try {
+      const response = await JobServices.getAllWithPagination(params);
       if (response.isSuccess && response.result) {
         setJobs(response.result.items);
-        setTotalItems(response.result.pageInfo.totalItem);
-        setTotalPages(response.result.pageInfo.totalPage);
-      } else {
-        setJobs([]);
-        setTotalItems(0);
-        setTotalPages(1);
+        setPaginationInfo(response.result.pageInfo);
       }
-    } catch (error) {
-      console.error("Error fetching company jobs:", error);
-      setJobs([]);
-      setTotalItems(0);
-      setTotalPages(1);
+    } catch (err) {
+      console.error("Error fetching jobs:", err);
     } finally {
-      setLoading(false);
+      setJobsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchCompanyJobs();
-  }, [companyId, currentPage]);
+    if (id) {
+      getCompanyDetail(id);
+    }
+  }, [id, getCompanyDetail]);
+
+  useEffect(() => {
+    if (company?.id) {
+        if (paginationInput.companyId !== company.id) {
+            setPaginationInput(prev => ({ ...prev, companyId: company.id }));
+        } else {
+            getAllJobsWithPagination(paginationInput);
+        }
+    }
+  }, [company, paginationInput, getAllJobsWithPagination]);
+
+  const handlePageChange = (newPage: number) => {
+    setPaginationInput(prev => ({ ...prev, page: newPage }));
+    // Scroll to jobs section
+    const jobsSection = document.getElementById('jobs-section');
+    if (jobsSection) {
+      jobsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const handleJobDetails = (jobId: number) => {
     navigate(`/jobs/${jobId}`);
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Briefcase className="w-5 h-5 text-emerald-600" />
-            Tin tuyển dụng
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[...Array(3)].map((_, index) => (
-              <div key={index} className="bg-white rounded-xl p-6 border border-gray-100 animate-pulse">
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <div className="h-4 bg-gray-200 rounded w-24"></div>
-                    <div className="h-6 bg-gray-200 rounded w-6"></div>
-                  </div>
-                  <div className="flex space-x-4">
-                    <div className="h-10 w-10 bg-gray-200 rounded-lg"></div>
-                    <div className="space-y-2 flex-1">
-                      <div className="h-5 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Briefcase className="w-5 h-5 text-emerald-600" />
-          Tin tuyển dụng ({totalItems})
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {jobs.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-              <Briefcase className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Chưa có tin tuyển dụng
-            </h3>
-            <p className="text-gray-600">
-              Công ty hiện chưa đăng tin tuyển dụng nào.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-              {jobs.map((job) => (
-                <JobCard
-                  key={job.jobId}
-                  job={job}
-                  onJobDetails={handleJobDetails}
-                  className="shadow-sm hover:shadow-md transition-shadow duration-200"
-                />
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4">
-                <Button
-                  variant="outline"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  size="sm"
-                >
-                  Trước
-                </Button>
-                
-                <span className="text-sm text-gray-600">
-                  Trang {currentPage} / {totalPages}
-                </span>
-                
-                <Button
-                  variant="outline"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  size="sm"
-                >
-                  Sau
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-// -----------------------------------------------------------------
-// MAIN COMPONENT: CompanyDetailPage
-// -----------------------------------------------------------------
-
-const CompanyDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [company, setCompany] = useState<Company | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchCompanyDetail = async () => {
-      if (!id) {
-        setError("ID công ty không hợp lệ");
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const response = await CompanyServices.getCompanyById(id);
-        
-        if (response?.isSuccess && response?.result) {
-          setCompany(response.result);
-        } else {
-          setError("Không thể tải thông tin công ty");
-        }
-      } catch (err) {
-        setError("Không thể tải thông tin công ty");
-        console.error("Error fetching company details:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCompanyDetail();
-  }, [id]);
-
-  // Loading state
+  // ================================================================
+  // RENDER
+  // ================================================================
+  
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Đang tải thông tin công ty...
-              </h2>
-              <p className="text-gray-500">Vui lòng đợi trong giây lát</p>
-            </div>
+      <div className="min-h-screen bg-white">
+        <div className="h-64 bg-gray-100 animate-pulse" />
+        <div className="container mx-auto px-4 -mt-20 relative">
+          <div className="flex flex-col gap-6">
+             <div className="w-40 h-40 rounded-xl bg-gray-200 border-4 border-white animate-pulse" />
+             <div className="space-y-2">
+               <div className="h-8 w-64 bg-gray-200 rounded animate-pulse" />
+               <div className="h-4 w-96 bg-gray-100 rounded animate-pulse" />
+             </div>
           </div>
         </div>
       </div>
     );
   }
 
-  // Error state
   if (error || !company) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                {error || "Không tìm thấy thông tin công ty"}
-              </h2>
-              <p className="text-gray-500 mb-6">
-                Có lỗi xảy ra khi tải thông tin công ty hoặc công ty không tồn tại.
-              </p>
-              <div className="flex gap-4 justify-center">
-                <Button onClick={() => navigate('/companies')} variant="outline">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Quay lại danh sách
-                </Button>
-                <Button onClick={() => window.location.reload()}>
-                  Thử lại
-                </Button>
-              </div>
-            </div>
+      <div className="min-h-[80vh] flex flex-col items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-sm text-center max-w-md w-full border">
+          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+             <Building2 className="w-10 h-10 text-red-500" />
           </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy công ty</h2>
+          <p className="text-gray-500 mb-8">{error || "Công ty này không tồn tại hoặc đã bị xóa."}</p>
+          <Button onClick={() => navigate('/companies')} className="w-full">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Quay lại danh sách
+          </Button>
         </div>
       </div>
     );
   }
 
-  // Main content
+  const statusInfo = getStatusBadge(company.status);
+  const logoUrl = getLogoUrl(company.logo);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* Company Header */}
-        <CompanyDetailHeader company={company} />
+    <div className="min-h-screen bg-gray-50/30 pb-20 font-sans">
+      {/* Banner Section - Green Nature Theme */}
+      <div className="h-48 md:h-64 w-full bg-gradient-to-r from-emerald-900 via-green-800 to-emerald-900 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1501854140884-074bf64cad1c?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-20 mix-blend-overlay" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+        
+        <div className="container mx-auto px-4 h-full relative z-10">
+           <Button
+                onClick={() => navigate('/companies')}
+                variant="ghost"
+                className="mt-6 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+            >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Quay lại danh sách
+            </Button>
+        </div>
+      </div>
 
-        {/* Company Details Tabs */}
-        <div className="mt-8">
-          <Tabs defaultValue="about" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-2 lg:flex lg:h-auto lg:bg-transparent lg:p-0 lg:space-x-2">
-              <TabsTrigger value="about" className="lg:bg-white lg:border lg:border-gray-200 lg:shadow-sm lg:data-[state=active]:bg-blue-50 lg:data-[state=active]:text-blue-700 lg:data-[state=active]:border-blue-200">
-                Về công ty
-              </TabsTrigger>
-              <TabsTrigger value="jobs" className="lg:bg-white lg:border lg:border-gray-200 lg:shadow-sm lg:data-[state=active]:bg-blue-50 lg:data-[state=active]:text-blue-700 lg:data-[state=active]:border-blue-200">
-                Tin tuyển dụng
-              </TabsTrigger>
-            </TabsList>
+      <div className="container mx-auto px-4 max-w-7xl">
+        {/* Header Info - Overlapping Banner */}
+        <div className="relative -mt-20 mb-8 flex flex-col md:flex-row gap-6 items-start">
+            {/* Logo Box */}
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl border-4 border-white bg-white shadow-lg shrink-0 overflow-hidden flex items-center justify-center group relative z-10">
+                <Avatar className="w-full h-full rounded-none">
+                    <AvatarImage 
+                        src={logoUrl} 
+                        alt={company.name} 
+                        className="object-contain p-2 w-full h-full"
+                    />
+                    <AvatarFallback className="rounded-none bg-white">
+                        <Building2 className="w-16 h-16 text-gray-300" />
+                    </AvatarFallback>
+                </Avatar>
+            </div>
 
-            <TabsContent value="about" className="space-y-6">
-              <CompanyAbout company={company} />
-            </TabsContent>
-            
-            <TabsContent value="jobs" className="space-y-6">
-              <CompanyJobs companyId={company.id} />
-            </TabsContent>
-          </Tabs>
+            {/* Main Info */}
+            <div className="flex-1 pt-2 md:pt-24 min-w-0 space-y-3">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight truncate leading-tight">
+                            {company.name}
+                        </h1>
+                        <div className="flex flex-wrap items-center gap-3 mt-3 text-gray-600">
+                            <Badge variant={statusInfo.variant} className={`${statusInfo.className} px-3 py-1 rounded-full font-medium`}>
+                                {statusInfo.variant === 'default' && <CheckCircle2 className="w-3 h-3 mr-1.5" />}
+                                {statusInfo.text}
+                            </Badge>
+                         
+                        </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-3 mt-2 md:mt-0">
+                        {company.website && (
+                            <Button 
+                                variant="outline" 
+                                onClick={() => window.open(company.website, "_blank")} 
+                                className="shadow-sm border-gray-200 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-all duration-200"
+                            >
+                                <Globe className="w-4 h-4 mr-2" />
+                                Website
+                            </Button>
+                        )}
+                         {company.email && (
+                            <Button onClick={() => window.location.href = `mailto:${company.email}`} className="bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-200 transition-all duration-200">
+                                <Mail className="w-4 h-4 mr-2" />
+                                Liên hệ
+                            </Button>
+                         )}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Content */}
+            <div className="lg:col-span-2 space-y-8">
+                <Tabs defaultValue="about" className="w-full">
+                    <TabsList className="w-full h-auto p-1 bg-emerald-50/50 border border-emerald-100 rounded-xl gap-2 mb-6">
+                        <TabsTrigger 
+                            value="about" 
+                            className="flex-1 rounded-lg py-2.5 text-sm font-medium text-gray-600 data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm transition-all duration-200"
+                        >
+                            <Building2 className="w-4 h-4 mr-2" />
+                            Về công ty
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="jobs" 
+                            className="flex-1 rounded-lg py-2.5 text-sm font-medium text-gray-600 data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm transition-all duration-200 group"
+                        >
+                            <Briefcase className="w-4 h-4 mr-2" />
+                            Tuyển dụng
+                            <Badge variant="secondary" className="ml-2 bg-emerald-100 text-emerald-700 group-data-[state=active]:bg-emerald-50">
+                                {paginationInfo.totalItem}
+                            </Badge>
+                        </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="about" className="space-y-6 animate-in fade-in-50 duration-300">
+                        <Card className="border-none shadow-sm bg-white overflow-hidden">
+                            <CardHeader className="border-b bg-gray-50/50 px-6 py-4">
+                                <CardTitle className="text-lg font-semibold flex items-center gap-2 text-gray-800">
+                                    <Building2 className="w-5 h-5 text-emerald-600" />
+                                    Giới thiệu chung
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                <div className="prose prose-stone max-w-none text-gray-600 leading-relaxed whitespace-pre-wrap">
+                                    {company.description ? (
+                                        company.description
+                                    ) : (
+                                        <div className="text-center py-8 text-gray-400 italic">
+                                            Chưa có mô tả về công ty này.
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="jobs" id="jobs-section" className="space-y-6 animate-in fade-in-50 duration-300">
+                         <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-semibold text-gray-900">Vị trí đang tuyển</h3>
+                        </div>
+
+                        {jobsLoading ? (
+                            <div className="grid grid-cols-1 gap-4">
+                                {[1, 2, 3].map((i) => (
+                                    <Card key={i} className="p-6 border border-gray-100 shadow-sm">
+                                        <div className="flex gap-4">
+                                            <Skeleton className="w-16 h-16 rounded-lg" />
+                                            <div className="space-y-2 flex-1">
+                                                <Skeleton className="h-5 w-1/3" />
+                                                <Skeleton className="h-4 w-1/4" />
+                                                <Skeleton className="h-10 w-full mt-4" />
+                                            </div>
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        ) : jobs.length === 0 ? (
+                            <Card className="border-dashed border-2 bg-gray-50/50">
+                                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                                    <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-4">
+                                        <Briefcase className="w-8 h-8 text-emerald-400" />
+                                    </div>
+                                    <h3 className="text-lg font-medium text-gray-900">Chưa có tin tuyển dụng</h3>
+                                    <p className="text-gray-500 mt-1 max-w-xs">Hiện tại công ty chưa đăng tải vị trí tuyển dụng nào. Vui lòng quay lại sau.</p>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {jobs.map((job) => (
+                                    <JobCard
+                                        key={job.jobId}
+                                        job={job}
+                                        onJobDetails={handleJobDetails}
+                                        className="border-gray-200 hover:border-emerald-300 hover:shadow-md transition-all duration-300"
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Pagination */}
+                        {!jobsLoading && jobs.length > 0 && paginationInfo.totalPage > 1 && (
+                            <div className="flex items-center justify-center gap-2 pt-8">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => handlePageChange(paginationInfo.currentPage - 1)}
+                                    disabled={!paginationInfo.hasPreviousPage}
+                                    size="sm"
+                                    className="w-24 hover:text-emerald-600 hover:border-emerald-200"
+                                >
+                                    Trước
+                                </Button>
+                                <span className="text-sm font-medium text-gray-600 px-4">
+                                    Trang {paginationInfo.currentPage} / {paginationInfo.totalPage}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => handlePageChange(paginationInfo.currentPage + 1)}
+                                    disabled={!paginationInfo.hasNextPage}
+                                    size="sm"
+                                    className="w-24 hover:text-emerald-600 hover:border-emerald-200"
+                                >
+                                    Sau
+                                </Button>
+                            </div>
+                        )}
+                    </TabsContent>
+                </Tabs>
+            </div>
+
+            {/* Right Column - Sidebar */}
+            <div className="space-y-6">
+                {/* Contact Info Card */}
+                <Card className="border-none shadow-sm bg-white sticky top-24">
+                    <CardHeader className="border-b bg-gray-50/50 px-6 py-4">
+                        <CardTitle className="text-base font-semibold text-gray-800">Thông tin liên hệ</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-5">
+                         {/* Address */}
+                        <div className="flex gap-3 group">
+                            <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0 group-hover:bg-emerald-100 transition-colors">
+                                <MapPin className="w-5 h-5 text-emerald-600" />
+                            </div>
+                            <div className="overflow-hidden">
+                                <p className="text-sm font-medium text-gray-900 mb-0.5">Địa chỉ</p>
+                                <p className="text-sm text-gray-500 leading-relaxed line-clamp-3" title={company.address}>
+                                    {company.address || "Chưa cập nhật"}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <Separator />
+
+                        {/* Website */}
+                        <div className="flex gap-3 group">
+                            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
+                                <Globe className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div className="overflow-hidden">
+                                <p className="text-sm font-medium text-gray-900 mb-0.5">Website</p>
+                                <p className="text-sm text-gray-500 truncate">
+                                    {company.website ? (
+                                        <a href={company.website} target="_blank" rel="noreferrer" className="hover:text-emerald-600 hover:underline transition-colors">
+                                            {new URL(company.website).hostname}
+                                        </a>
+                                    ) : "Chưa cập nhật"}
+                                </p>
+                            </div>
+                        </div>
+
+                        <Separator />
+
+                        {/* Email */}
+                        <div className="flex gap-3 group">
+                            <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center shrink-0 group-hover:bg-orange-100 transition-colors">
+                                <Mail className="w-5 h-5 text-orange-600" />
+                            </div>
+                            <div className="overflow-hidden">
+                                <p className="text-sm font-medium text-gray-900 mb-0.5">Email</p>
+                                <p className="text-sm text-gray-500 truncate">
+                                    {company.email ? (
+                                        <a href={`mailto:${company.email}`} className="hover:text-emerald-600 hover:underline transition-colors">
+                                            {company.email}
+                                        </a>
+                                    ) : "Chưa cập nhật"}
+                                </p>
+                            </div>
+                        </div>
+
+                         <Separator />
+
+                        {/* Phone */}
+                        <div className="flex gap-3 group">
+                            <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center shrink-0 group-hover:bg-purple-100 transition-colors">
+                                <Phone className="w-5 h-5 text-purple-600" />
+                            </div>
+                            <div className="overflow-hidden">
+                                <p className="text-sm font-medium text-gray-900 mb-0.5">Điện thoại</p>
+                                <p className="text-sm text-gray-500">
+                                    {company.phoneContact ? (
+                                        <a href={`tel:${company.phoneContact}`} className="hover:text-emerald-600 hover:underline transition-colors">
+                                            {company.phoneContact}
+                                        </a>
+                                    ) : "Chưa cập nhật"}
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                    
+                    {/* Share Button Section - Optional */}
+                    <CardFooter className="bg-gray-50/30 p-4 border-t">
+                         <Button variant="outline" className="w-full gap-2 text-gray-600 hover:text-emerald-600 hover:border-emerald-200" onClick={() => {
+                             navigator.clipboard.writeText(window.location.href);
+                             // Use a toast here if available
+                         }}>
+                            <Share2 className="w-4 h-4" />
+                            Chia sẻ công ty
+                         </Button>
+                    </CardFooter>
+                </Card>
+            </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default CompanyDetailPage;
+}

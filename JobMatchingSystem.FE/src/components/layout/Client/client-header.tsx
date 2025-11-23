@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Mountain, User, LogOut, LayoutDashboard } from "lucide-react";
+import { Menu, Mountain, User, LogOut, LayoutDashboard, FileText } from "lucide-react";
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LoginDialog } from "@/pages/client-site/auth/LoginDialog";
@@ -23,7 +23,7 @@ export function ClientHeader() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { isAuthenticated, loading: isLoading, role } = useSelector((state: RootState) => state.authState);
-  
+
   const [loginOpen, setLoginOpen] = React.useState(false);
   const [registerOpen, setRegisterOpen] = React.useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = React.useState(false);
@@ -68,28 +68,28 @@ export function ClientHeader() {
             <span className="hidden font-bold sm:inline-block">Superio</span>
           </Link>
           <nav className="flex items-center space-x-6">
-            <Link 
-              to="/" 
-              className="text-sm font-medium transition-colors hover:text-primary focus:text-primary outline-none px-3 py-2 rounded-md hover:bg-accent"
+            <Link
+              to="/"
+              className="text-sm font-medium transition-colors hover:text-green-600 outline-none focus:outline-none focus-visible:outline-none"
             >
               Trang Chủ
             </Link>
-            <Link 
-              to="/jobs" 
-              className="text-sm font-medium transition-colors hover:text-primary focus:text-primary outline-none px-3 py-2 rounded-md hover:bg-accent"
+            <Link
+              to="/jobs"
+              className="text-sm font-medium transition-colors hover:text-green-600 outline-none focus:outline-none focus-visible:outline-none"
             >
               Tìm Kiếm Công Việc
             </Link>
-            <Link 
-              to="/companies" 
-              className="text-sm font-medium transition-colors hover:text-primary focus:text-primary outline-none px-3 py-2 rounded-md hover:bg-accent"
+            <Link
+              to="/companies"
+              className="text-sm font-medium transition-colors hover:text-green-600 outline-none focus:outline-none focus-visible:outline-none"
             >
               Danh Sách Công Ty
             </Link>
             {!isAuthenticated && (
-              <Link 
-                to="/contact-recruiter" 
-                className="text-sm font-medium transition-colors hover:text-primary focus:text-primary outline-none px-3 py-2 rounded-md hover:bg-accent"
+              <Link
+                to="/contact-recruiter"
+                className="text-sm font-medium transition-colors hover:text-green-600 outline-none focus:outline-none focus-visible:outline-none"
               >
                 Nhà tuyển dụng
               </Link>
@@ -109,21 +109,31 @@ export function ClientHeader() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
+
                   <DropdownMenuItem onClick={handleDashboardNavigation}>
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </DropdownMenuItem>
+
+                  <Link to="/profile-cv">
+                    <DropdownMenuItem className="hover:bg-green-500 hover:text-white">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Hồ sơ cá nhân
+                    </DropdownMenuItem>
+                  </Link>
+
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} disabled={isLoading}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>{isLoading ? "Đang đăng xuất..." : "Logout"}</span>
                   </DropdownMenuItem>
+
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <Button
                 variant="ghost"
-                className="text-sm"
+                className="text-sm transition-colors hover:bg-green-600 hover:text-white"
                 onClick={() => setLoginOpen(true)}
               >
                 Login / Register
@@ -180,7 +190,7 @@ export function ClientHeader() {
               ) : (
                 <Button
                   variant="ghost"
-                  className="w-fit text-sm"
+                  className="w-fit text-sm transition-colors hover:bg-green-600 hover:text-white"
                   onClick={() => setLoginOpen(true)}
                 >
                   Login / Register
