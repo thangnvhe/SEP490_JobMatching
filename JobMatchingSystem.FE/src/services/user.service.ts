@@ -13,7 +13,7 @@ export const UserServices = {
   forgotPassword: (email: string) => BaseApiServices.custom("post", "/Auth/forgot-password", { email }),
   resetPassword: (email: string, token: string, newPassword: string, confirmPassword: string) =>
     BaseApiServices.custom("post", "/Auth/reset-password", { email, token, newPassword, confirmPassword }),
-  getUserProfile: () => BaseApiServices.custom("get", "/User/me"),
+  getUserProfile: () => BaseApiServices.custom<User>("get", "/User/me"),
   editUserProfile: (payload: Partial<User>) => BaseApiServices.custom("put", "/User/me", payload),
   verifyEmail: (token: string) => BaseApiServices.custom("get", "/Auth/verify-email", { TokenLink: token }),
   createHiringManager: (payload: CreateHiringManagerRequest) => BaseApiServices.create<User>('/User/hiring-manager', payload)

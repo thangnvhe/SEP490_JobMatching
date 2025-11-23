@@ -205,7 +205,7 @@ function CandidateNav() {
             isActive={useIsActivePath("/profile")}
             tooltip="Profile"
           >
-            <Link to="/profile">
+            <Link to="/profile-cv">
               <Settings />
               <span>Hồ sơ cá nhân</span>
             </Link>
