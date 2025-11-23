@@ -12,37 +12,64 @@ class CVValidationPrompts:
         truncated_text = text[:max_length] if len(text) > max_length else text
         
         return f"""
-Bạn là một chuyên gia HR thân thiện và có kinh nghiệm. Hãy phân tích văn bản sau để xác định có phải là CV/Resume không:
+Bạn là chuyên gia HR kinh nghiệm. Hãy đánh giá xem văn bản sau có phải là CV/Resume hợp lệ không:
 
 ===== NỘI DUNG FILE =====
 {truncated_text}
 ==========================
 
-NHIỆM VỤ: Đánh giá xem đây có phải là CV (Curriculum Vitae/Resume) hay không.
+TIÊU CHÍ ĐÁNH GIÁ CV HỢP LỆ:
 
-CÁCH TIẾP CẬN TÍCH CỰC:
-✅ Chấp nhận CV nếu có BẤT KỲ yếu tố nào sau:
-- Tên người (họ và tên)
-- Thông tin liên hệ (email, điện thoại, địa chỉ)
-- Kinh nghiệm làm việc (dù ít)
-- Học vấn/đào tạo (bất kỳ cấp độ nào)
-- Kỹ năng cá nhân hoặc nghề nghiệp
-- Dự án đã thực hiện
-- Chứng chỉ/giải thưởng
-- Mục tiêu nghề nghiệp
-- Sở thích cá nhân
+📋 YÊU CẦU BẮT BUỘC (PHẢI CÓ ĐỦ):
+1. ✅ HỌ TÊN của người nộp đơn (tên đầy đủ hoặc tên gọi)
+2. ✅ THÔNG TIN LIÊN LẠC (ít nhất 1 trong các mục sau):
+   - Email
+   - Số điện thoại  
+   - Địa chỉ
+   - LinkedIn/mạng xã hội nghề nghiệp
 
-🎯 LƯU Ý ĐẶC BIỆT:
-- CV sinh viên/người mới ra trường có ít kinh nghiệm vẫn là CV hợp lệ
-- CV đơn giản, ngắn gọn vẫn được chấp nhận
-- CV có format không chuẩn nhưng có nội dung cá nhân vẫn OK
-- Chỉ từ chối nếu rõ ràng là: hóa đơn, hợp đồng, báo cáo, quảng cáo
+🎯 YÊU CẦU CHUYÊN MÔN (PHẢI CÓ ÍT NHẤT 3 TRONG CÁC MỤC SAU):
+1. 💼 KINH NGHIỆM LÀM VIỆC:
+   - Vị trí công việc đã làm
+   - Tên công ty/tổ chức
+   - Thời gian làm việc
+   - Mô tả công việc/trách nhiệm
+
+2. 🛠️ KỸ NĂNG CHUYÊN MÔN:
+   - Kỹ năng lập trình/công nghệ
+   - Kỹ năng nghề nghiệp
+   - Công cụ/phần mềm sử dụng
+   - Ngôn ngữ lập trình
+
+3. 📚 DỰ ÁN ĐÃ THỰC HIỆN:
+   - Tên dự án
+   - Mô tả dự án
+   - Công nghệ sử dụng
+   - Vai trò trong dự án
+
+4. 🎓 HỌC VẤN/ĐÀO TẠO:
+   - Trường học/đại học
+   - Chuyên ngành
+   - Bằng cấp/chứng chỉ
+   - Năm tốt nghiệp
+
+5. 🏆 THÀNH TỰU/CHỨNG CHỈ:
+   - Giải thưởng
+   - Chứng nhận nghề nghiệp
+   - Khóa học đã hoàn thành
+
+❌ KHÔNG PHẢI CV:
+- Hóa đơn, phiếu thu
+- Hợp đồng, văn bản pháp lý
+- Quảng cáo, thông báo
+- Báo cáo, tài liệu kỹ thuật
+- Sách, truyện, bài viết
 
 ĐỊNH DẠNG TRẢ LỜI:
-- Nếu là CV: "YES - Đây là CV vì có [liệt kê các yếu tố tìm thấy]"
-- Chỉ trả lời "NO" nếu hoàn toàn chắc chắn không phải CV
+- Nếu đủ tiêu chí: "YES - CV hợp lệ. Có [họ tên + thông tin liên lạc + X/5 yếu tố chuyên môn: liệt kê]"
+- Nếu thiếu: "NO - Thiếu [liệt kê yếu tố còn thiếu]"
 
-Hãy đánh giá tích cực và hỗ trợ người dùng:"""
+Hãy phân tích cẩn thận:"""
 
     @staticmethod
     def extract_cv_info(text: str, max_length: int = 4000) -> str:

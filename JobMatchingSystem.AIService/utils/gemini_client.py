@@ -77,31 +77,69 @@ class GeminiClient:
         """Generate mock response for testing when all models are down"""
         prompt_lower = prompt.lower()
         
-        # CV Validation mock responses - More generous approach
-        if "có phải cv" in prompt_lower or "curriculum vitae" in prompt_lower or "validate" in prompt_lower:
-            # Look for any CV-like indicators
-            cv_indicators = [
-                "tên", "name", "email", "phone", "điện thoại", "địa chỉ", "address",
-                "kinh nghiệm", "experience", "học vấn", "education", "kỹ năng", "skills",
-                "dự án", "project", "chứng chỉ", "certificate", "công việc", "work",
-                "university", "college", "đại học", "sinh viên", "student", "developer",
-                "engineer", "manager", "analyst", "designer", "teacher", "giáo viên"
-            ]
+        # CV Validation mock responses - Based on new criteria
+        if any(keyword in prompt_lower for keyword in [
+            "có phải cv", "có phải là cv", "curriculum vitae", "validate", 
+            "đánh giá xem", "cv/resume", "resume"
+        ]):
+            # Extract only the CV content between markers
+            content_start = prompt.find("===== NỘI DUNG FILE =====")
+            content_end = prompt.find("==========================")
             
-            # Count indicators found
-            found_indicators = [indicator for indicator in cv_indicators if indicator in prompt_lower]
-            
-            if len(found_indicators) >= 2 or any(strong in prompt_lower for strong in ["cv", "resume", "curriculum"]):
-                return f"YES - Đây là CV vì có các yếu tố: {', '.join(found_indicators[:3])}. Document chứa thông tin cá nhân và nghề nghiệp điển hình của CV."
-            elif len(found_indicators) >= 1:
-                return f"YES - Đây có thể là CV vì có yếu tố: {found_indicators[0]}. Dù đơn giản nhưng vẫn là thông tin cá nhân."
+            if content_start != -1 and content_end != -1:
+                # Extract only CV content
+                cv_content = prompt[content_start + len("===== NỘI DUNG FILE ====="):content_end].strip()
+                content_lower = cv_content.lower()
             else:
-                # Only reject if clearly not a CV
-                non_cv_indicators = ["invoice", "hóa đơn", "contract", "hợp đồng", "report", "báo cáo", "manual", "hướng dẫn"]
-                if any(indicator in prompt_lower for indicator in non_cv_indicators):
-                    return "NO - Đây không phải CV vì là tài liệu khác (hóa đơn/hợp đồng/báo cáo)."
+                # Fallback to full prompt if markers not found
+                content_lower = prompt_lower
+            
+            # Look for required elements: name + contact info
+            has_name = any(word in content_lower for word in ["tên", "name", "nguyễn", "trần", "lê", "phạm", "hoàng", "văn", "thị"])
+            has_contact = any(word in content_lower for word in ["email", "phone", "điện thoại", "@", "gmail", "yahoo", "hotmail"])
+            
+            # Look for professional elements (need 3 of 5) - More precise detection
+            professional_count = 0
+            
+            # 1. Experience - check for real work experience
+            if any(word in content_lower for word in ["kinh nghiệm", "experience", "làm việc", "intern", "developer", "engineer", "tại công ty", "năm developer", "năm làm"]):
+                professional_count += 1
+                
+            # 2. Skills - check for technical skills  
+            if any(word in content_lower for word in ["kỹ năng", "skills", "java", "python", "javascript", "react", "html", "css", "spring", "node.js", "sql"]):
+                professional_count += 1
+                
+            # 3. Projects - check for actual projects
+            if any(word in content_lower for word in ["dự án", "project", "phát triển", "xây dựng", "website", "app", "hệ thống"]):
+                professional_count += 1
+                
+            # 4. Education - check for formal education (not just "trường" alone)
+            if any(phrase in content_lower for phrase in ["học vấn", "education", "đại học", "university", "cử nhân", "thạc sĩ", "bằng cấp", "tốt nghiệp đại học"]):
+                professional_count += 1
+                
+            # 5. Achievements/Certificates
+            if any(word in content_lower for word in ["chứng chỉ", "certificate", "giải thưởng", "thành tích", "certify", "certified"]):
+                professional_count += 1
+            
+            # Apply new validation criteria
+            if has_name and has_contact and professional_count >= 3:
+                elements = []
+                if has_name: elements.append("họ tên")
+                if has_contact: elements.append("thông tin liên lạc")
+                elements.append(f"{professional_count}/5 yếu tố chuyên môn")
+                return f"YES - CV hợp lệ. Có {' + '.join(elements)}"
+            elif has_name and has_contact and professional_count >= 1:
+                return f"NO - Thiếu yếu tố chuyên môn (chỉ có {professional_count}/3 yêu cầu)"
+            elif (has_name or has_contact) and professional_count >= 2:
+                missing = "thông tin liên lạc" if not has_contact else "họ tên"
+                return f"NO - Thiếu {missing}"
+            else:
+                # Check if clearly not a CV
+                non_cv_indicators = ["invoice", "hóa đơn", "contract", "hợp đồng", "report", "báo cáo"]
+                if any(indicator in content_lower for indicator in non_cv_indicators):
+                    return "NO - Đây không phải CV vì là tài liệu khác"
                 else:
-                    return "YES - Đây có khả năng là CV. Chấp nhận để hỗ trợ người dùng."
+                    return "NO - Thiếu các yếu tố cơ bản của CV (họ tên, thông tin liên lạc, ít nhất 3 yếu tố chuyên môn)"
         
         # CV Information extraction mock
         elif "trích xuất thông tin" in prompt_lower or "extract" in prompt_lower and "json" in prompt_lower:
