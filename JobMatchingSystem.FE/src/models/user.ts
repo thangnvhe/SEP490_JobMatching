@@ -21,8 +21,7 @@ export type UserRole =
   | "admin"
   | "recruiter"
   | "candidate"
-  | "staff"
-  | "SuperRecruiter";
+  | "hiringmanager";
 
 export interface CreateHiringManagerRequest {
   fullName: string;

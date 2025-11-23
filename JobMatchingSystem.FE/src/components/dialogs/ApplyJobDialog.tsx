@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, Upload, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { UserServices } from '@/services/user.service';
+import { User } from '@/models/user';
 
 // Types
 interface CV {
@@ -33,13 +34,6 @@ interface ApiResponse {
   isSuccess: boolean;
   errorMessages: string[];
   result: CV[];
-}
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
 }
 
 interface ApplyJobDialogProps {
@@ -76,7 +70,7 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({
       const response = await UserServices.getUserProfile();
       
       if (response.isSuccess) {
-        setUserProfile(response.result as User);
+        setUserProfile(response.result);
       } else {
         console.error('Failed to fetch user profile:', response.errorMessages);
         toast.error(`Lỗi khi tải thông tin người dùng: ${response.errorMessages?.join(', ') || 'Không xác định'}`);
