@@ -84,7 +84,7 @@ const HomePage = () => {
     <div className="min-h-screen bg-slate-50/50">
       {/* Hero Section */}
       <section className="relative pt-14 pb-14 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50/50 to-white -z-10" />
+        <div className="absolute inset-0 bg-linear-to-br from-emerald-50 via-teal-50/50 to-white -z-10" />
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="max-w-2xl">
@@ -92,23 +92,30 @@ const HomePage = () => {
                 <span className="mr-2">🚀</span> #1 Job Board for Hiring
               </Badge>
               <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 mb-6 leading-tight tracking-tight">
-                Find Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">Dream Job</span> <br />
+                Find Your <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-teal-600">Dream Job</span> <br />
                 Today!
               </h1>
               <p className="text-xl text-slate-600 mb-10 leading-relaxed max-w-lg">
                 Connect with thousands of employers and find the perfect opportunity that matches your skills and aspirations.
               </p>
 
-              <div className="bg-white p-2 rounded-2xl shadow-xl shadow-emerald-900/5 border border-slate-100 max-w-xl mb-8">
-                <div className="flex flex-col md:flex-row gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <div className="pt-8 relative max-w-4xl mx-auto mb-8">
+                <div className="absolute bg-linear-to-r from-emerald-400 to-teal-400 rounded-2xl blur opacity-30"></div>
+                <div className="relative bg-white rounded-2xl p-2 shadow-xl flex flex-col md:flex-row gap-2 items-center">
+                  {/* Keyword Search */}
+                  <div className="flex-2 relative w-full md:w-auto flex items-center border-b md:border-b-0 md:border-r border-gray-100 px-2">
+                    <Search className="h-5 w-5 text-gray-400 shrink-0 ml-2" />
                     <Input
+                      type="text"
                       placeholder="Job title, keywords..."
-                      className="pl-12 h-14 border-transparent bg-slate-50 focus-visible:ring-0 focus-visible:bg-white transition-colors text-base rounded-xl"
+                      className="border-0 shadow-none focus-visible:ring-0 text-base h-12 bg-transparent placeholder:text-gray-400 flex-1"
                     />
                   </div>
-                  <Button size="lg" className="h-14 px-8 rounded-xl text-base font-semibold bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 transition-all hover:scale-[1.02]">
+
+                  {/* Search Button */}
+                  <Button
+                    className="w-full md:w-auto rounded-xl px-8 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base shadow-md hover:shadow-lg transition-all"
+                  >
                     Search Jobs
                   </Button>
                 </div>
@@ -127,7 +134,7 @@ const HomePage = () => {
             </div>
 
             <div className="hidden lg:block relative">
-              <div className="absolute -inset-4 bg-gradient-to-r from-emerald-100 to-teal-100 rounded-full blur-3xl opacity-30 animate-pulse" />
+              <div className="absolute -inset-4 bg-linear-to-r from-emerald-100 to-teal-100 rounded-full blur-3xl opacity-30 animate-pulse" />
               <img
                 src="/banner-img-1.png"
                 alt="Job search illustration"
@@ -207,7 +214,7 @@ const HomePage = () => {
       </section>
 
       {/* Featured Jobs Section */}
-      <section className="py-24 bg-gradient-to-b from-slate-50 to-white relative overflow-hidden">
+      <section className="py-24 bg-linear-to-b from-slate-50 to-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAzNGMwIDIuMjA5LTEuNzkxIDQtNCA0cy00LTEuNzkxLTQtNCAxLjc5MS00IDQtNCA0IDEuNzkxIDQgNHoiIGZpbGw9IiMxMGI5ODEiIG9wYWNpdHk9Ii4wNSIvPjwvZz48L3N2Zz4=')] opacity-30" />
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
@@ -232,14 +239,14 @@ const HomePage = () => {
                 className="group hover:shadow-xl hover:shadow-emerald-900/10 hover:-translate-y-1 transition-all duration-300 border-slate-200 overflow-hidden bg-white relative h-full flex flex-col"
               >
                 {/* Decorative accent bar */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500" />
+                <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-emerald-500 via-teal-500 to-emerald-500" />
                 
                 <CardContent className="p-6 flex flex-col flex-1">
                   <div className="flex gap-5 flex-1">
                     <div className="relative shrink-0">
                       <Avatar className="h-20 w-20 rounded-2xl border-2 border-emerald-100 shadow-md group-hover:border-emerald-200 transition-colors">
                         <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${job.title}`} />
-                        <AvatarFallback className="rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-bold text-2xl">
+                        <AvatarFallback className="rounded-2xl bg-linear-to-br from-emerald-500 to-teal-600 text-white font-bold text-2xl">
                           {job.title.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
@@ -288,7 +295,7 @@ const HomePage = () => {
                         {job.salaryMin && job.salaryMax ? (
                           <Badge 
                             variant="secondary" 
-                            className="bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 hover:from-emerald-100 hover:to-teal-100 border-0 font-semibold px-3 py-1"
+                            className="bg-linear-to-r from-emerald-50 to-teal-50 text-emerald-700 hover:from-emerald-100 hover:to-teal-100 border-0 font-semibold px-3 py-1"
                           >
                             <DollarSign className="h-3.5 w-3.5 mr-1.5" />
                             ${job.salaryMin.toLocaleString()} - ${job.salaryMax.toLocaleString()}
@@ -388,7 +395,7 @@ const HomePage = () => {
                 key={company.id}
                 className="group hover:-translate-y-2 transition-all duration-300 border-slate-200 overflow-hidden bg-white hover:shadow-xl hover:shadow-emerald-900/5"
               >
-                <div className="h-24 bg-gradient-to-br from-emerald-50 to-teal-50 transition-colors" />
+                <div className="h-24 bg-linear-to-br from-emerald-50 to-teal-50 transition-colors" />
                 <CardContent className="p-6 pt-0 flex flex-col items-center text-center -mt-12">
                   <Avatar className="h-24 w-24 rounded-2xl  border-white shadow-md mb-4 bg-white">
                     <AvatarImage src={company.logo} alt={company.name} className="object-contain p-2" />

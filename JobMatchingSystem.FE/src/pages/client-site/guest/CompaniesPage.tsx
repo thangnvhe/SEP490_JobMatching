@@ -123,11 +123,11 @@ export default function CompaniesPage() {
   return (
     <div className="min-h-screen bg-gray-50/50">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-950 pt-20 pb-32 overflow-hidden">
+      <div className="relative bg-linear-to-br  from-emerald-900 via-emerald-800 to-emerald-950 pt-20 pb-32 overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
         <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-teal-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px] opacity-10"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)] bg-size-[20px_20px] opacity-10"></div>
 
         <div className="container relative z-10 mx-auto px-4 text-center">
           <div className="max-w-3xl mx-auto space-y-6">
@@ -139,20 +139,25 @@ export default function CompaniesPage() {
             </p>
 
             {/* Search Box */}
-            <div className="pt-8 relative max-w-2xl mx-auto">
-              <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full blur opacity-30"></div>
-              <div className="relative flex items-center bg-white rounded-full p-2 shadow-xl">
-                <Search className="ml-4 h-5 w-5 text-gray-400 shrink-0" />
-                <Input
-                  type="text"
-                  placeholder="Nhập tên công ty bạn muốn tìm..."
-                  value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                  className="border-0 shadow-none focus-visible:ring-0 text-base h-12 bg-transparent placeholder:text-gray-400 flex-1"
-                />
+            <div className="pt-8 relative max-w-4xl mx-auto">
+              <div className="absolute -inset-1 bg-linear-to-r from-emerald-400 to-teal-400 rounded-2xl blur opacity-30"></div>
+              <div className="relative bg-white rounded-2xl p-2 shadow-xl flex flex-col md:flex-row gap-2 items-center">
+                {/* Keyword Search */}
+                <div className="flex-2 relative w-full md:w-auto flex items-center border-b md:border-b-0 md:border-r border-gray-100 px-2">
+                  <Search className="h-5 w-5 text-gray-400 shrink-0 ml-2" />
+                  <Input
+                    type="text"
+                    placeholder="Nhập tên công ty bạn muốn tìm..."
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    className="border-0 shadow-none focus-visible:ring-0 text-base h-12 bg-transparent placeholder:text-gray-400 flex-1"
+                  />
+                </div>
+
+                {/* Search Button */}
                 <Button
-                  className="rounded-full px-8 h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-all shadow-md hover:shadow-lg"
                   onClick={() => getAllCompanies({ ...paginationInput, search: keyword })}
+                  className="w-full md:w-auto rounded-xl px-8 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base shadow-md hover:shadow-lg transition-all"
                 >
                   Tìm kiếm
                 </Button>
