@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { JobDetailResponse } from "@/models/job";
-import type { Company } from "@/models/company";
 import { CompanyServices } from "@/services/company.service";
 import { API_BASE_URL } from "../../../../env.ts";
+import { Job } from "@/models/job";
+import { Company } from "@/models/company.ts";
 interface JobCardProps {
-  job: JobDetailResponse;
+  job: Job;
   onJobDetails: (jobId: number) => void;
   onSaveJob?: (jobId: number) => void;
   className?: string;
@@ -243,13 +243,13 @@ export const JobCard: React.FC<JobCardProps> = ({
         {/* Skills/Taxonomies */}
         {job.taxonomies && job.taxonomies.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {job.taxonomies.slice(0, 3).map((taxonomy, index) => (
+            {job.taxonomies.slice(0, 3).map((taxonomy: any, index: number) => (
               <Badge
                 key={taxonomy.id || index}
                 variant="secondary"
-                className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700"
+                className="text-xs px-2 py-0.5 bg-gray-100 text-red-700"
               >
-                {taxonomy.name}
+                {taxonomy.name} 
               </Badge>
             ))}
             {job.taxonomies.length > 3 && (
@@ -257,7 +257,7 @@ export const JobCard: React.FC<JobCardProps> = ({
                 variant="secondary"
                 className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700"
               >
-                +{job.taxonomies.length - 3}
+                +{job.taxonomies.length - 3} 
               </Badge>
             )}
           </div>

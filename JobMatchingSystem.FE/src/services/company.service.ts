@@ -3,18 +3,16 @@ import type { BaseResponse, PaginationParamsInput } from "@/models/base";
 import { BaseApiServices } from "./base-api.service";
 
 export const CompanyServices = {
-  getAllCompanies: (params: PaginationParamsInput) => 
-    BaseApiServices.getAllWithPagination<Company>('/company', params),
-  getCompanyById: (id: string) => BaseApiServices.getById<Company>('/company', id),
+  getAllCompanies: (params: PaginationParamsInput) => BaseApiServices.getAllWithPagination<Company>('/Company', params),
+  getCompanyById: (id: string) => BaseApiServices.getById<Company>('/Company', id),
   createCompany: (companyData: Omit<Company, 'id'> | FormData): Promise<BaseResponse<Company>> =>
-    BaseApiServices.create<Company>('/company', companyData),
+    BaseApiServices.create<Company>('/Company', companyData),
   updateCompany: (id: string, companyData: Company | FormData): Promise<BaseResponse<Company>> =>
-    BaseApiServices.update<Company>('/company', id, companyData),
-  deleteCompany: (id: string) => BaseApiServices.delete<Company>('/company', id),
+    BaseApiServices.update<Company>('/Company', id, companyData),
+  deleteCompany: (id: string) => BaseApiServices.delete<Company>('/Company', id),
   // Accept company - POST /api/company/{id}/accept
-  acceptCompany: (id: string) =>
-    BaseApiServices.custom<Company>("post", `/company/${id}/accept`),
+  acceptCompany: (id: string) => BaseApiServices.custom<Company>("post", `/Company/${id}/accept`),
   // Reject company - POST /api/company/{id}/reject?rejectReason=reason
-  rejectCompany: (id: string, rejectReason: string = "Không đạt yêu cầu") =>
-    BaseApiServices.custom<Company>("post", `/company/${id}/reject`, undefined, { rejectReason }),
+  rejectCompany: (id: string, rejectReason: string = "Không đạt yêu cầu") => 
+    BaseApiServices.custom<Company>("post", `/Company/${id}/reject`, undefined, { rejectReason }),
 };

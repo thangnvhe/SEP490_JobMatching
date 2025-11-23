@@ -1,32 +1,11 @@
-// Taxonomy interface for jobs
-export interface JobTaxonomy {
-  id: number;
-  name: string;
-}
+import { Taxonomy } from './taxonomy';
 
-// Interfaces cho API request/response theo backend
-export interface JobSearchParams {
-  Search?: string;   // Added Search parameter
-  Title?: string;
-  Description?: string;
-  Requirements?: string;
-  Benefits?: string;
-  Location?: string;
-  SalaryMin?: number;
-  SalaryMax?: number;
-  JobType?: string; // Changed from number to string
-  Status?: number;
-  CompanyId?: number;
-  RecuiterId?: number;
-  TaxonomyIds?: number[];
-  ExperienceYearMin?: number; // Changed to Min/Max range
-  ExperienceYearMax?: number; // Added Max range
-  Page?: number;   // Changed from page to Page
-  Size?: number;   // Changed from size to Size
-  sortBy?: string;
-}
+// Định nghĩa các loại công việc
+export type JobType = 'FullTime' | 'PartTime' | 'Remote' | 'Other';
+export type JobStatus = 'Draft' | 'Rejected' | 'Moderated' | 'Opened' | 'Closed';
 
-export interface JobDetailResponse {
+
+export interface Job {
   jobId: number;
   title: string;
   description: string;
@@ -35,9 +14,9 @@ export interface JobDetailResponse {
   salaryMin?: number;
   salaryMax?: number;
   location: string;
-  experienceYear?: number;  // Added experience field
-  jobType: string;
-  status: string;
+  experienceYear?: number;
+  jobType: JobType;
+  status: JobStatus;
   viewsCount: number;
   companyId: number;
   recuiterId: number;
@@ -45,22 +24,9 @@ export interface JobDetailResponse {
   createdAt: string;
   openedAt?: string;
   expiredAt?: string;
-  taxonomies: JobTaxonomy[];  // Updated to use object array
+  isDeleted: boolean;
+  taxonomies: Taxonomy[];
 }
 
-export interface JobSearchFilters {
-  jobType?: string;
-  experienceLevel?: string;
-  salaryRange?: string;
-}
 
-export interface SearchState {
-  keyword: string;
-  location: string;
-  filters: JobSearchFilters;
-  pagination: {
-    page: number;
-    size: number;
-    sortBy: string;
-  };
-}
+
