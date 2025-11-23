@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Mountain, User, LogOut } from "lucide-react";
+import { Menu, Mountain, User, LogOut, LayoutDashboard } from "lucide-react";
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LoginDialog } from "@/pages/client-site/auth/LoginDialog";
@@ -22,7 +22,7 @@ import {
 export function ClientHeader() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { isAuthenticated, loading: isLoading } = useSelector((state: RootState) => state.authState);
+  const { isAuthenticated, loading: isLoading, role } = useSelector((state: RootState) => state.authState);
   
   const [loginOpen, setLoginOpen] = React.useState(false);
   const [registerOpen, setRegisterOpen] = React.useState(false);
@@ -36,6 +36,26 @@ export function ClientHeader() {
       navigate("/");
     } catch (error) {
       console.error("Logout error:", error);
+    }
+  };
+
+  const handleDashboardNavigation = () => {
+    switch (role?.toLowerCase()) {
+      case 'candidate':
+        navigate('/candidate');
+        break;
+      case 'recruiter':
+        navigate('/recruiter');
+        break;
+      case 'admin':
+        navigate('/admin');
+        break;
+      case 'hiringmanager':
+        navigate('/recruiter'); // HiringManager uses same dashboard as Recruiter
+        break;
+      default:
+        navigate('/'); // Fallback to profile if role is unknown
+        break;
     }
   };
 
@@ -89,11 +109,9 @@ export function ClientHeader() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile" className="flex items-center w-full">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </Link>
+                  <DropdownMenuItem onClick={handleDashboardNavigation}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} disabled={isLoading}>
@@ -142,9 +160,14 @@ export function ClientHeader() {
               )}
               {isAuthenticated ? (
                 <>
-                  <Link to="/profile" className="text-sm font-medium transition-colors hover:text-primary">
-                    Profile
-                  </Link>
+                  <Button
+                    variant="ghost"
+                    className="w-fit text-sm justify-start"
+                    onClick={handleDashboardNavigation}
+                  >
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </Button>
                   <Button
                     variant="ghost"
                     className="w-fit text-sm"
