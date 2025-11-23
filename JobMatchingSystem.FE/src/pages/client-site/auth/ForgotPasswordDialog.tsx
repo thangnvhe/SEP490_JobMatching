@@ -22,7 +22,7 @@ interface ForgotPasswordDialogProps {
 
 export function ForgotPasswordDialog({ isOpen, onOpenChange, onOpenLogin }: ForgotPasswordDialogProps) {
   const dispatch = useAppDispatch();
-  const { isLoading, error } = useSelector((state: RootState) => state.authState);
+  const { loading, error } = useSelector((state: RootState) => state.authState);
   
   const [email, setEmail] = React.useState("");
   const [localError, setLocalError] = React.useState("");
@@ -185,10 +185,10 @@ export function ForgotPasswordDialog({ isOpen, onOpenChange, onOpenLogin }: Forg
 
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={loading}
                 className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50"
               >
-                {isLoading ? "Sending..." : "Send Reset Link"}
+                {loading ? "Sending..." : "Send Reset Link"}
               </Button>
             </form>
           </div>
