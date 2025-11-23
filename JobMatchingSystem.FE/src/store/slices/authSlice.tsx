@@ -3,6 +3,7 @@ import { JWTUtils } from "@/utils/jwtUtils";
 import axiosInstance from "@/interceptor/axiosInterceptor.old";
 import type { BaseResponse } from "@/models/base";
 import Cookies from "js-cookie";
+import { UserServices } from "@/services/user.service";
 
 // Define AuthState interface
 interface AuthState {
@@ -90,8 +91,8 @@ export const forgotPassword = createAsyncThunk(
   'Auth/forgotPassword',
   async (email: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post<BaseResponse<any>>('/Auth/forgot-password', { email });
-      return response.data;
+      const response = await UserServices.forgotPassword(email);
+      return response;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.errorMessages?.[0] || 'Gửi email quên mật khẩu thất bại');
     }
