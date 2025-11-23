@@ -123,8 +123,10 @@ namespace JobMatchingSystem.API.Controllers
 
                 _logger.LogInformation("Successfully created hiring manager with ID: {UserId}", newUser.Id);
 
+                var responseMessage = $"Tạo Hiring Manager thành công! Thông tin đăng nhập đã được gửi qua email: {request.Email}";
+
                 return Ok(APIResponse<string>.Builder()
-                    .WithResult("Tạo Hiring Manager thành công")
+                    .WithResult(responseMessage)
                     .WithStatusCode(HttpStatusCode.Created)
                     .WithSuccess(true)
                     .Build());

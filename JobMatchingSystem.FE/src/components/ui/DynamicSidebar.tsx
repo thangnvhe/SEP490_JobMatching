@@ -11,6 +11,7 @@ import {
   Building2,
   Package,
   UserPlus,
+  GitBranch,
 } from "lucide-react";
 import {
   Sidebar,
@@ -216,6 +217,67 @@ function CandidateNav() {
   );
 }
 
+// HiringManager Navigation
+function HiringManagerNav() {
+  return (
+    <>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            asChild
+            isActive={useIsActivePath("/recruiter/dashboard")}
+            tooltip="Dashboard"
+          >
+            <Link to="/recruiter/dashboard">
+              <LayoutDashboard />
+              <span>Dashboard</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            asChild
+            isActive={useIsActivePath("/recruiter/process-management")}
+            tooltip="Process Management"
+          >
+            <Link to="/recruiter/process-management">
+              <GitBranch />
+              <span>Quản lý quy trình</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            asChild
+            isActive={useIsActivePath("/recruiter/company")}
+            tooltip="Company"
+          >
+            <Link to="/recruiter/company">
+              <Building2 />
+              <span>Công ty</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            asChild
+            isActive={useIsActivePath("/profile")}
+            tooltip="Profile"
+          >
+            <Link to="/profile">
+              <User />
+              <span>Hồ sơ cá nhân</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </>
+  );
+}
+
 export function DynamicSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
@@ -229,6 +291,8 @@ export function DynamicSidebar({
         return <RecruiterNav />;
       case 'candidate':
         return <CandidateNav />;
+      case 'hiringmanager':
+        return <HiringManagerNav />;
       default:
         // Fallback to 404 page for unknown roles
         return (
