@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -11,7 +13,7 @@ import {
   Check, 
   Plus,
   Trash2,
-  User,
+  User as UserIcon,
   CheckCircle
 } from "lucide-react";
 
@@ -28,12 +30,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 
 // Import services
 import { JobServices } from "@/services/job.service";
-import { TaxonomyService, TaxonomyDto } from "@/services/taxonomy.service";
+import { UserServices } from "@/services/user.service";
+import type { User } from "@/models/user";
 
 // Types
 interface HiringManager {
@@ -52,35 +54,32 @@ interface JobStage {
 // Step 1: Job Information Schema
 const step1Schema = z.object({
   title: z.string().min(1, "Tiêu đề công việc là bắt buộc").max(200, "Tiêu đề không được quá 200 ký tự"),
-  description: z.string().min(1, "Mô tả công việc là bắt buộc"),
+  description: z.string().min(50, "Mô tả công việc phải có ít nhất 50 ký tự"),
   requirements: z.string().min(1, "Yêu cầu công việc là bắt buộc"),
-  benefits: z.string().optional(),
+  benefits: z.string(),
   location: z.string().min(1, "Địa điểm làm việc là bắt buộc"),
   salaryMin: z.number().min(0, "Lương tối thiểu phải lớn hơn 0").optional().nullable(),
   salaryMax: z.number().min(0, "Lương tối đa phải lớn hơn 0").optional().nullable(),
   experienceYear: z.number().min(0, "Số năm kinh nghiệm không được âm").max(50, "Số năm kinh nghiệm không được quá 50"),
   jobType: z.string().min(1, "Loại công việc là bắt buộc"),
+  openedAt: z.string().min(1, "Ngày mở đăng tuyển là bắt buộc"),
   expiredAt: z.string().min(1, "Ngày hết hạn là bắt buộc"),
 });
 
 type Step1FormData = z.infer<typeof step1Schema>;
-
-// Sample hiring managers data (sẽ được thay thế bằng API call thực)
-const sampleHiringManagers: HiringManager[] = [
-  { id: 1, name: "Nguyễn Văn A", email: "a.nguyen@company.com", position: "Senior Developer" },
-  { id: 2, name: "Trần Thị B", email: "b.tran@company.com", position: "Team Lead" },
-  { id: 3, name: "Lê Văn C", email: "c.le@company.com", position: "Project Manager" },
-  { id: 4, name: "Phạm Thị D", email: "d.pham@company.com", position: "HR Manager" },
-];
 
 export default function CreateJobPage() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   
+  // Redux state
+  const authState = useSelector((state: RootState) => state.authState);
+  
   // Data states
-  const [taxonomies, setTaxonomies] = useState<TaxonomyDto[]>([]);
-  const [loadingTaxonomies, setLoadingTaxonomies] = useState(true);
+  const [hiringManagers, setHiringManagers] = useState<HiringManager[]>([]);
+  const [loadingHiringManagers, setLoadingHiringManagers] = useState(true);
+  const [isNegotiableSalary, setIsNegotiableSalary] = useState(false);
   
   // Step 1: Job Information
   const [jobData, setJobData] = useState<Step1FormData>({
@@ -93,11 +92,11 @@ export default function CreateJobPage() {
     salaryMax: null,
     experienceYear: 0,
     jobType: "0",
+    openedAt: "",
     expiredAt: "",
   });
 
-  // Step 2: Job Stages and Taxonomies
-  const [selectedTaxonomies, setSelectedTaxonomies] = useState<number[]>([]);
+  // Step 2: Job Stages only
   const [jobStages, setJobStages] = useState<JobStage[]>([
     { stageNumber: 1, name: "Sàng lọc hồ sơ", hiringManagerId: undefined },
     { stageNumber: 2, name: "Phỏng vấn kỹ thuật", hiringManagerId: undefined },
@@ -111,76 +110,121 @@ export default function CreateJobPage() {
     watch: watchStep1,
   } = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
-    defaultValues: jobData,
+    defaultValues: {
+      ...jobData,
+      benefits: jobData.benefits || "" // Ensure benefits is always a string
+    },
     mode: "onChange",
   });
 
-  // Load taxonomies on component mount
+  // Load hiring managers on component mount
   useEffect(() => {
-    const fetchTaxonomies = async () => {
+    const fetchHiringManagers = async () => {
       try {
-        setLoadingTaxonomies(true);
-        const response = await TaxonomyService.getAllTaxonomies();
-        if (response.isSuccess && response.result) {
-          setTaxonomies(response.result);
+        setLoadingHiringManagers(true);
+        
+        // Get current user info to get companyId
+        const userResponse = await UserServices.getUserProfile();
+        if (!userResponse.isSuccess || !userResponse.result) {
+          console.warn("Could not get user profile, hiring managers will be empty");
+          setHiringManagers([]);
+          return;
+        }
+        
+        const userData = userResponse.result as User;
+        if (!userData.companyId) {
+          console.warn("User has no company, hiring managers will be empty");
+          setHiringManagers([]);
+          return;
+        }
+        
+        // Get hiring managers in the company
+        const response = await UserServices.getAllWithPagination({
+          page: 1,
+          size: 100,
+          companyId: userData.companyId,
+          role: 'HiringManager'
+        });
+        
+        if (response.isSuccess && response.result?.items) {
+          const managers: HiringManager[] = response.result.items.map((user: any) => ({
+            id: user.id,
+            name: user.fullName || user.email,
+            email: user.email,
+            position: 'Hiring Manager'
+          }));
+          setHiringManagers(managers);
+        } else {
+          console.warn("Could not load hiring managers");
+          setHiringManagers([]);
         }
       } catch (error) {
-        console.error("Error loading taxonomies:", error);
-        // Fallback to empty array if API fails
-        setTaxonomies([]);
+        console.warn("Error loading hiring managers:", error);
+        setHiringManagers([]);
       } finally {
-        setLoadingTaxonomies(false);
+        setLoadingHiringManagers(false);
       }
     };
 
-    fetchTaxonomies();
-  }, []);
+    // Only fetch if user is authenticated, otherwise just set loading to false
+    if (authState.isAuthenticated) {
+      fetchHiringManagers();
+    } else {
+      setLoadingHiringManagers(false);
+      setHiringManagers([]);
+    }
+  }, [authState.isAuthenticated]);
 
   // Steps configuration
   const steps = [
     { number: 1, title: "Thông tin công việc", description: "Điền thông tin cơ bản của công việc" },
-    { number: 2, title: "Quy trình & Kỹ năng", description: "Thiết lập quy trình tuyển dụng và chọn kỹ năng" },
+    { number: 2, title: "Quy trình tuyển dụng", description: "Thiết lập quy trình tuyển dụng" },
     { number: 3, title: "Xác nhận", description: "Kiểm tra và xác nhận thông tin" },
   ];
 
   // Handle Step 1 form submission
   const onStep1Submit = async (data: Step1FormData) => {
+    console.log("Step 1 form submitted with data:", data);
+    
     // Validate salary range
-    if (data.salaryMin && data.salaryMax && data.salaryMin >= data.salaryMax) {
+    if (!isNegotiableSalary && data.salaryMin && data.salaryMax && data.salaryMin >= data.salaryMax) {
       alert("Lương tối thiểu phải nhỏ hơn lương tối đa");
       return;
     }
 
-    // Validate expiration date
+    // Validate dates
+    const openedDate = new Date(data.openedAt);
     const expiredDate = new Date(data.expiredAt);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    if (expiredDate < today) {
-      alert("Ngày hết hạn phải lớn hơn ngày hiện tại");
+    if (openedDate < today) {
+      alert("Ngày mở đăng tuyển phải lớn hơn hoặc bằng ngày hiện tại");
       return;
     }
 
+    if (expiredDate <= openedDate) {
+      alert("Ngày hết hạn phải lớn hơn ngày mở đăng tuyển");
+      return;
+    }
+
+    console.log("All validations passed, moving to step 2");
     setJobData(data);
     setCurrentStep(2);
   };
 
   // Handle navigation between steps
   const goToNextStep = () => {
+    console.log("goToNextStep called, current step:", currentStep);
+    
     if (currentStep < 3) {
       if (currentStep === 1) {
+        console.log("Triggering step 1 form validation");
         // Validate step 1 form
         handleSubmitStep1(onStep1Submit)();
       } else if (currentStep === 2) {
-        // Validate step 2
-        if (jobStages.some(stage => !stage.hiringManagerId)) {
-          alert("Vui lòng chọn hiring manager cho tất cả các giai đoạn");
-          return;
-        }
-        if (selectedTaxonomies.length === 0) {
-          alert("Vui lòng chọn ít nhất một kỹ năng");
-          return;
-        }
+        console.log("Moving from step 2 to step 3");
+        // No validation required for step 2 since hiring manager is optional
         setCurrentStep(3);
       }
     }
@@ -216,13 +260,15 @@ export default function CreateJobPage() {
     ));
   };
 
-  // Handle taxonomies selection
-  const toggleTaxonomy = (taxonomyId: number) => {
-    setSelectedTaxonomies(prev => 
-      prev.includes(taxonomyId)
-        ? prev.filter(id => id !== taxonomyId)
-        : [...prev, taxonomyId]
-    );
+  // Handle negotiable salary toggle
+  const handleNegotiableSalaryChange = (checked: boolean) => {
+    console.log("Negotiable salary changed:", checked);
+    setIsNegotiableSalary(checked);
+    if (checked) {
+      // Clear salary values when negotiable is selected
+      setValueStep1("salaryMin", null);
+      setValueStep1("salaryMax", null);
+    }
   };
 
   // Final job creation
@@ -236,17 +282,17 @@ export default function CreateJobPage() {
         requirements: jobData.requirements,
         benefits: jobData.benefits || "",
         location: jobData.location,
-        salaryMin: jobData.salaryMin || undefined,
-        salaryMax: jobData.salaryMax || undefined,
+        salaryMin: isNegotiableSalary ? undefined : (jobData.salaryMin || undefined),
+        salaryMax: isNegotiableSalary ? undefined : (jobData.salaryMax || undefined),
         experienceYear: jobData.experienceYear,
         jobType: jobData.jobType,
+        openedAt: new Date(jobData.openedAt).toISOString(),
         expiredAt: new Date(jobData.expiredAt).toISOString(),
         jobStages: jobStages.map(stage => ({
           stageNumber: stage.stageNumber,
           name: stage.name,
-          hiringManagerId: stage.hiringManagerId
+          hiringManagerId: stage.hiringManagerId || undefined
         })),
-        taxonomyIds: selectedTaxonomies,
       };
 
       console.log("Creating job with data:", createRequest);
@@ -293,24 +339,24 @@ export default function CreateJobPage() {
     switch (currentStep) {
       case 1:
         return (
-          <form onSubmit={handleSubmitStep1(onStep1Submit)} className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <form onSubmit={handleSubmitStep1(onStep1Submit)} className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Left Column */}
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {/* Thông tin cơ bản */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Thông tin cơ bản</CardTitle>
+                <Card className="border-green-200 shadow-lg">
+                  <CardHeader className="bg-green-50 border-b border-green-200">
+                    <CardTitle className="text-green-800 text-lg">Thông tin cơ bản</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-6 p-6">
                     {/* Title */}
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Tiêu đề công việc *</Label>
+                    <div className="space-y-3">
+                      <Label htmlFor="title" className="text-base font-medium text-gray-700">Tiêu đề công việc *</Label>
                       <Input
                         id="title"
                         {...registerStep1("title")}
                         placeholder="Nhập tiêu đề công việc..."
-                        className={errorsStep1.title ? "border-red-500" : ""}
+                        className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.title ? "border-red-500" : "border-gray-300"}`}
                       />
                       {errorsStep1.title && (
                         <p className="text-sm text-red-500">{errorsStep1.title.message}</p>
@@ -318,13 +364,13 @@ export default function CreateJobPage() {
                     </div>
 
                     {/* Location */}
-                    <div className="space-y-2">
-                      <Label htmlFor="location">Địa điểm làm việc *</Label>
+                    <div className="space-y-3">
+                      <Label htmlFor="location" className="text-base font-medium text-gray-700">Địa điểm làm việc *</Label>
                       <Input
                         id="location"
                         {...registerStep1("location")}
                         placeholder="Nhập địa điểm làm việc..."
-                        className={errorsStep1.location ? "border-red-500" : ""}
+                        className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.location ? "border-red-500" : "border-gray-300"}`}
                       />
                       {errorsStep1.location && (
                         <p className="text-sm text-red-500">{errorsStep1.location.message}</p>
@@ -332,13 +378,13 @@ export default function CreateJobPage() {
                     </div>
 
                     {/* Job Type */}
-                    <div className="space-y-2">
-                      <Label htmlFor="jobType">Loại công việc *</Label>
+                    <div className="space-y-3">
+                      <Label htmlFor="jobType" className="text-base font-medium text-gray-700">Loại công việc *</Label>
                       <Select
                         value={watchStep1("jobType")}
                         onValueChange={(value) => setValueStep1("jobType", value)}
                       >
-                        <SelectTrigger className={errorsStep1.jobType ? "border-red-500" : ""}>
+                        <SelectTrigger className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.jobType ? "border-red-500" : "border-gray-300"}`}>
                           <SelectValue placeholder="Chọn loại công việc" />
                         </SelectTrigger>
                         <SelectContent>
@@ -353,8 +399,8 @@ export default function CreateJobPage() {
                     </div>
 
                     {/* Experience Year */}
-                    <div className="space-y-2">
-                      <Label htmlFor="experienceYear">Số năm kinh nghiệm yêu cầu</Label>
+                    <div className="space-y-3">
+                      <Label htmlFor="experienceYear" className="text-base font-medium text-gray-700">Số năm kinh nghiệm yêu cầu</Label>
                       <Input
                         id="experienceYear"
                         type="number"
@@ -362,21 +408,35 @@ export default function CreateJobPage() {
                         max="50"
                         {...registerStep1("experienceYear", { valueAsNumber: true })}
                         placeholder="Nhập số năm kinh nghiệm..."
-                        className={errorsStep1.experienceYear ? "border-red-500" : ""}
+                        className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.experienceYear ? "border-red-500" : "border-gray-300"}`}
                       />
                       {errorsStep1.experienceYear && (
                         <p className="text-sm text-red-500">{errorsStep1.experienceYear.message}</p>
                       )}
                     </div>
 
+                    {/* Opened Date */}
+                    <div className="space-y-3">
+                      <Label htmlFor="openedAt" className="text-base font-medium text-gray-700">Ngày mở đăng tuyển *</Label>
+                      <Input
+                        id="openedAt"
+                        type="date"
+                        {...registerStep1("openedAt")}
+                        className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.openedAt ? "border-red-500" : "border-gray-300"}`}
+                      />
+                      {errorsStep1.openedAt && (
+                        <p className="text-sm text-red-500">{errorsStep1.openedAt.message}</p>
+                      )}
+                    </div>
+
                     {/* Expired Date */}
-                    <div className="space-y-2">
-                      <Label htmlFor="expiredAt">Ngày hết hạn ứng tuyển *</Label>
+                    <div className="space-y-3">
+                      <Label htmlFor="expiredAt" className="text-base font-medium text-gray-700">Ngày hết hạn ứng tuyển *</Label>
                       <Input
                         id="expiredAt"
                         type="date"
                         {...registerStep1("expiredAt")}
-                        className={errorsStep1.expiredAt ? "border-red-500" : ""}
+                        className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.expiredAt ? "border-red-500" : "border-gray-300"}`}
                       />
                       {errorsStep1.expiredAt && (
                         <p className="text-sm text-red-500">{errorsStep1.expiredAt.message}</p>
@@ -387,22 +447,22 @@ export default function CreateJobPage() {
               </div>
 
               {/* Right Column */}
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {/* Mô tả chi tiết */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Mô tả chi tiết</CardTitle>
+                <Card className="border-green-200 shadow-lg">
+                  <CardHeader className="bg-green-50 border-b border-green-200">
+                    <CardTitle className="text-green-800 text-lg">Mô tả chi tiết</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-6 p-6">
                     {/* Description */}
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Mô tả công việc *</Label>
+                    <div className="space-y-3">
+                      <Label htmlFor="description" className="text-base font-medium text-gray-700">Mô tả công việc *</Label>
                       <Textarea
                         id="description"
-                        rows={4}
+                        rows={5}
                         {...registerStep1("description")}
                         placeholder="Mô tả chi tiết về công việc..."
-                        className={errorsStep1.description ? "border-red-500" : ""}
+                        className={`text-base border-2 focus:border-green-400 resize-none ${errorsStep1.description ? "border-red-500" : "border-gray-300"}`}
                       />
                       {errorsStep1.description && (
                         <p className="text-sm text-red-500">{errorsStep1.description.message}</p>
@@ -410,14 +470,14 @@ export default function CreateJobPage() {
                     </div>
 
                     {/* Requirements */}
-                    <div className="space-y-2">
-                      <Label htmlFor="requirements">Yêu cầu công việc *</Label>
+                    <div className="space-y-3">
+                      <Label htmlFor="requirements" className="text-base font-medium text-gray-700">Yêu cầu công việc *</Label>
                       <Textarea
                         id="requirements"
-                        rows={4}
+                        rows={5}
                         {...registerStep1("requirements")}
                         placeholder="Các yêu cầu về kỹ năng, kinh nghiệm..."
-                        className={errorsStep1.requirements ? "border-red-500" : ""}
+                        className={`text-base border-2 focus:border-green-400 resize-none ${errorsStep1.requirements ? "border-red-500" : "border-gray-300"}`}
                       />
                       {errorsStep1.requirements && (
                         <p className="text-sm text-red-500">{errorsStep1.requirements.message}</p>
@@ -425,57 +485,82 @@ export default function CreateJobPage() {
                     </div>
 
                     {/* Benefits */}
-                    <div className="space-y-2">
-                      <Label htmlFor="benefits">Quyền lợi</Label>
+                    <div className="space-y-3">
+                      <Label htmlFor="benefits" className="text-base font-medium text-gray-700">Quyền lợi</Label>
                       <Textarea
                         id="benefits"
-                        rows={3}
+                        rows={4}
                         {...registerStep1("benefits")}
                         placeholder="Các quyền lợi và phúc lợi..."
-                        className={errorsStep1.benefits ? "border-red-500" : ""}
+                        className={`text-base border-2 focus:border-green-400 resize-none ${errorsStep1.benefits ? "border-red-500" : "border-gray-300"}`}
                       />
+                      {errorsStep1.benefits && (
+                        <p className="text-sm text-red-500">{errorsStep1.benefits.message}</p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
 
                 {/* Mức lương */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Mức lương</CardTitle>
+                <Card className="border-green-200 shadow-lg">
+                  <CardHeader className="bg-green-50 border-b border-green-200">
+                    <CardTitle className="text-green-800 text-lg">Mức lương</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="salaryMin">Lương tối thiểu (VND)</Label>
-                      <Input
-                        id="salaryMin"
-                        type="number"
-                        min="0"
-                        {...registerStep1("salaryMin", { valueAsNumber: true })}
-                        placeholder="Nhập lương tối thiểu..."
-                        className={errorsStep1.salaryMin ? "border-red-500" : ""}
+                  <CardContent className="space-y-6 p-6">
+                    {/* Lương thỏa thuận checkbox */}
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="negotiableSalary"
+                        checked={isNegotiableSalary}
+                        onCheckedChange={handleNegotiableSalaryChange}
+                        className="h-5 w-5 text-green-600"
                       />
-                      {errorsStep1.salaryMin && (
-                        <p className="text-sm text-red-500">{errorsStep1.salaryMin.message}</p>
-                      )}
+                      <Label htmlFor="negotiableSalary" className="text-base font-medium text-gray-700 cursor-pointer">
+                        Lương thỏa thuận
+                      </Label>
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="salaryMax">Lương tối đa (VND)</Label>
-                      <Input
-                        id="salaryMax"
-                        type="number"
-                        min="0"
-                        {...registerStep1("salaryMax", { valueAsNumber: true })}
-                        placeholder="Nhập lương tối đa..."
-                        className={errorsStep1.salaryMax ? "border-red-500" : ""}
-                      />
-                      {errorsStep1.salaryMax && (
-                        <p className="text-sm text-red-500">{errorsStep1.salaryMax.message}</p>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-500">
-                      Để trống nếu lương thỏa thuận
-                    </p>
+                    {!isNegotiableSalary && (
+                      <>
+                        <div className="space-y-3">
+                          <Label htmlFor="salaryMin" className="text-base font-medium text-gray-700">Lương tối thiểu (VND)</Label>
+                          <Input
+                            id="salaryMin"
+                            type="number"
+                            min="0"
+                            {...registerStep1("salaryMin", { valueAsNumber: true })}
+                            placeholder="Nhập lương tối thiểu..."
+                            className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.salaryMin ? "border-red-500" : "border-gray-300"}`}
+                          />
+                          {errorsStep1.salaryMin && (
+                            <p className="text-sm text-red-500">{errorsStep1.salaryMin.message}</p>
+                          )}
+                        </div>
+                        
+                        <div className="space-y-3">
+                          <Label htmlFor="salaryMax" className="text-base font-medium text-gray-700">Lương tối đa (VND)</Label>
+                          <Input
+                            id="salaryMax"
+                            type="number"
+                            min="0"
+                            {...registerStep1("salaryMax", { valueAsNumber: true })}
+                            placeholder="Nhập lương tối đa..."
+                            className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.salaryMax ? "border-red-500" : "border-gray-300"}`}
+                          />
+                          {errorsStep1.salaryMax && (
+                            <p className="text-sm text-red-500">{errorsStep1.salaryMax.message}</p>
+                          )}
+                        </div>
+                      </>
+                    )}
+                    
+                    {isNegotiableSalary && (
+                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <p className="text-sm text-green-800 font-medium">
+                          💼 Mức lương sẽ được thỏa thuận trong quá trình phỏng vấn
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -485,245 +570,178 @@ export default function CreateJobPage() {
 
       case 2:
         return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left Column - Job Stages */}
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Quy trình tuyển dụng</CardTitle>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={addJobStage}
-                      className="flex items-center space-x-2"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span>Thêm giai đoạn</span>
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {jobStages.map((stage) => (
-                      <div key={stage.stageNumber} className="border rounded-lg p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium">Giai đoạn {stage.stageNumber}</h4>
-                          {jobStages.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeJobStage(stage.stageNumber)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Tên giai đoạn *</Label>
-                          <Input
-                            value={stage.name}
-                            onChange={(e) => updateJobStage(stage.stageNumber, 'name', e.target.value)}
-                            placeholder="Nhập tên giai đoạn..."
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Hiring Manager *</Label>
-                          <Select
-                            value={stage.hiringManagerId?.toString() || ""}
-                            onValueChange={(value) => updateJobStage(stage.stageNumber, 'hiringManagerId', parseInt(value))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Chọn hiring manager" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {sampleHiringManagers.map(manager => (
-                                <SelectItem key={manager.id} value={manager.id.toString()}>
-                                  <div className="flex items-center space-x-2">
-                                    <User className="h-4 w-4" />
-                                    <div>
-                                      <div className="font-medium">{manager.name}</div>
-                                      <div className="text-sm text-gray-500">{manager.position}</div>
-                                    </div>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Right Column - Taxonomies */}
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Kỹ năng yêu cầu</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Chọn các kỹ năng cần thiết cho vị trí này
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-3">
-                      {loadingTaxonomies ? (
-                        <div className="col-span-2 text-center py-4">
-                          <p className="text-sm text-gray-500">Đang tải kỹ năng...</p>
-                        </div>
-                      ) : taxonomies.length === 0 ? (
-                        <div className="col-span-2 text-center py-4">
-                          <p className="text-sm text-gray-500">Không có kỹ năng nào</p>
-                        </div>
-                      ) : (
-                        taxonomies.map((taxonomy: TaxonomyDto) => (
-                        <div key={taxonomy.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`taxonomy-${taxonomy.id}`}
-                            checked={selectedTaxonomies.includes(taxonomy.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                toggleTaxonomy(taxonomy.id);
-                              } else {
-                                toggleTaxonomy(taxonomy.id);
-                              }
-                            }}
-                          />
-                          <Label
-                            htmlFor={`taxonomy-${taxonomy.id}`}
-                            className="text-sm cursor-pointer"
-                          >
-                            {taxonomy.name}
-                          </Label>
-                        </div>
-                        ))
+          <div className="space-y-8">
+            <Card className="border-green-200 shadow-lg">
+              <CardHeader className="bg-green-50 border-b border-green-200 flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-green-800 text-lg">Quy trình tuyển dụng</CardTitle>
+                  <p className="text-sm text-gray-600 mt-2">Thiết lập các giai đoạn tuyển dụng cho vị trí này</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addJobStage}
+                  className="flex items-center space-x-2 border-2 border-green-300 hover:bg-green-50 hover:border-green-400 text-green-700"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Thêm giai đoạn</span>
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-6 p-6">
+                {jobStages.map((stage) => (
+                  <div key={stage.stageNumber} className="border-2 border-green-100 rounded-lg p-5 space-y-4 bg-green-50">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-green-800 text-lg">Giai đoạn {stage.stageNumber}</h4>
+                      {jobStages.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeJobStage(stage.stageNumber)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
 
-                    {selectedTaxonomies.length > 0 && (
-                      <div className="mt-4">
-                        <Label className="text-sm font-medium">Kỹ năng đã chọn:</Label>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {selectedTaxonomies.map(id => {
-                            const taxonomy = taxonomies.find((t: TaxonomyDto) => t.id === id);
-                            return taxonomy ? (
-                              <Badge key={id} variant="secondary" className="text-sm">
-                                {taxonomy.name}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="ml-1 h-auto p-0"
-                                  onClick={() => toggleTaxonomy(id)}
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </Badge>
-                            ) : null;
-                          })}
-                        </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {/* Tên giai đoạn */}
+                      <div className="space-y-3">
+                        <Label className="text-base font-medium text-gray-700">Tên giai đoạn *</Label>
+                        <Input
+                          value={stage.name}
+                          onChange={(e) => updateJobStage(stage.stageNumber, 'name', e.target.value)}
+                          placeholder="Nhập tên giai đoạn..."
+                          className="h-12 text-base border-2 focus:border-green-400"
+                        />
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+
+                      {/* Hiring Manager */}
+                      <div className="space-y-3">
+                        <Label className="text-base font-medium text-gray-700">Hiring Manager (Tùy chọn)</Label>
+                        <Select
+                          value={stage.hiringManagerId?.toString() || "none"}
+                          onValueChange={(value) => updateJobStage(stage.stageNumber, 'hiringManagerId', value === "none" ? undefined : parseInt(value))}
+                        >
+                          <SelectTrigger className="h-12 text-base border-2 focus:border-green-400">
+                            <SelectValue placeholder="Chọn hiring manager" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Không chọn</SelectItem>
+                            {loadingHiringManagers ? (
+                              <SelectItem value="loading" disabled>Đang tải...</SelectItem>
+                            ) : hiringManagers.length === 0 ? (
+                              <SelectItem value="empty" disabled>Không có hiring manager</SelectItem>
+                            ) : (
+                              hiringManagers.map(manager => (
+                                <SelectItem key={manager.id} value={manager.id.toString()}>
+                                  <div className="flex items-center space-x-2">
+                                    <UserIcon className="h-4 w-4" />
+                                    <div>
+                                      <div className="font-medium">{manager.name}</div>
+                                      <div className="text-sm text-gray-500">{manager.email}</div>
+                                    </div>
+                                  </div>
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-gray-500">
+                          💡 Có thể để trống nếu chưa xác định được người phụ trách
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
           </div>
         );
 
       case 3:
         return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Job Information Review */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
+              <Card className="border-green-200 shadow-lg">
+                <CardHeader className="bg-green-50 border-b border-green-200">
+                  <CardTitle className="flex items-center space-x-2 text-green-800 text-lg">
+                    <CheckCircle className="h-6 w-6 text-green-600" />
                     <span>Thông tin công việc</span>
                   </CardTitle>
+                  <p className="text-sm text-gray-600 mt-2">Xem lại thông tin cơ bản của công việc</p>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-500">Tiêu đề:</Label>
-                    <p className="text-sm">{jobData.title}</p>
+                <CardContent className="space-y-4 p-6">
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium text-gray-700">Tiêu đề:</Label>
+                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">{jobData.title}</p>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-500">Địa điểm:</Label>
-                    <p className="text-sm">{jobData.location}</p>
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium text-gray-700">Địa điểm:</Label>
+                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">{jobData.location}</p>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-500">Loại công việc:</Label>
-                    <p className="text-sm">{getJobTypeLabel(jobData.jobType)}</p>
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium text-gray-700">Loại công việc:</Label>
+                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">{getJobTypeLabel(jobData.jobType)}</p>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-500">Kinh nghiệm:</Label>
-                    <p className="text-sm">{jobData.experienceYear} năm</p>
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium text-gray-700">Kinh nghiệm:</Label>
+                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">{jobData.experienceYear} năm</p>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-500">Mức lương:</Label>
-                    <p className="text-sm">
-                      {jobData.salaryMin && jobData.salaryMax 
-                        ? `${jobData.salaryMin.toLocaleString()} - ${jobData.salaryMax.toLocaleString()} VND`
-                        : "Thỏa thuận"}
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium text-gray-700">Mức lương:</Label>
+                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">
+                      {isNegotiableSalary 
+                        ? "Thỏa thuận" 
+                        : (jobData.salaryMin && jobData.salaryMax 
+                          ? `${jobData.salaryMin.toLocaleString()} - ${jobData.salaryMax.toLocaleString()} VND`
+                          : "Thỏa thuận"
+                        )
+                      }
                     </p>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-500">Hết hạn:</Label>
-                    <p className="text-sm">{new Date(jobData.expiredAt).toLocaleDateString('vi-VN')}</p>
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium text-gray-700">Ngày mở:</Label>
+                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">{new Date(jobData.openedAt).toLocaleDateString('vi-VN')}</p>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-500">Mô tả:</Label>
-                    <p className="text-sm text-gray-700 line-clamp-3">{jobData.description}</p>
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium text-gray-700">Hết hạn:</Label>
+                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">{new Date(jobData.expiredAt).toLocaleDateString('vi-VN')}</p>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium text-gray-700">Mô tả:</Label>
+                    <div className="text-base text-gray-800 bg-gray-50 p-4 rounded max-h-32 overflow-y-auto">
+                      {jobData.description}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Process & Skills Review */}
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
+              {/* Process Review */}
+              <div className="space-y-8">
+                <Card className="border-green-200 shadow-lg">
+                  <CardHeader className="bg-green-50 border-b border-green-200">
+                    <CardTitle className="flex items-center space-x-2 text-green-800 text-lg">
+                      <CheckCircle className="h-6 w-6 text-green-600" />
                       <span>Quy trình tuyển dụng</span>
                     </CardTitle>
+                    <p className="text-sm text-gray-600 mt-2">Xem lại các giai đoạn tuyển dụng</p>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-4 p-6">
                     {jobStages.map(stage => {
-                      const manager = sampleHiringManagers.find(m => m.id === stage.hiringManagerId);
+                      const manager = hiringManagers.find(m => m.id === stage.hiringManagerId);
                       return (
-                        <div key={stage.stageNumber} className="border rounded p-3">
-                          <p className="font-medium text-sm">Giai đoạn {stage.stageNumber}: {stage.name}</p>
-                          <p className="text-sm text-gray-500">
-                            Phụ trách: {manager ? manager.name : 'Chưa chọn'}
+                        <div key={stage.stageNumber} className="border-2 border-green-100 rounded-lg p-4 bg-green-50">
+                          <p className="font-medium text-base text-green-800">Giai đoạn {stage.stageNumber}: {stage.name}</p>
+                          <p className="text-sm text-gray-600 mt-2">
+                            Phụ trách: {manager ? manager.name : 'Chưa xác định'}
                           </p>
                         </div>
                       );
                     })}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                      <span>Kỹ năng yêu cầu</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedTaxonomies.map(id => {
-                        const taxonomy = taxonomies.find((t: TaxonomyDto) => t.id === id);
-                        return taxonomy ? (
-                          <Badge key={id} variant="secondary">
-                            {taxonomy.name}
-                          </Badge>
-                        ) : null;
-                      })}
-                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -737,73 +755,80 @@ export default function CreateJobPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-8 space-y-8 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="flex items-center space-x-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate("/recruiter/jobs")}
-          className="flex items-center space-x-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Quay lại</span>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tạo tin tuyển dụng mới</h1>
-          <p className="text-muted-foreground">
-            Hoàn thành 3 bước để tạo tin tuyển dụng
-          </p>
+      <div className="bg-white rounded-lg shadow-sm p-6 border border-green-200">
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/recruiter/jobs")}
+            className="flex items-center space-x-2 border-2 border-green-300 hover:bg-green-50 hover:border-green-400 text-green-700"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Quay lại</span>
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-green-800">Tạo tin tuyển dụng mới</h1>
+            <p className="text-gray-600 text-lg mt-2">
+              Hoàn thành 3 bước để tạo tin tuyển dụng
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Steps Navigation */}
-      <div className="flex items-center justify-center space-x-4 py-4">
+      <div className="bg-white rounded-lg shadow-sm p-6 border border-green-200">
+        <div className="flex items-center justify-center space-x-8 py-4">
         {steps.map((step, index) => (
           <div key={step.number} className="flex items-center">
             <div className="flex flex-col items-center space-y-2">
               <div className={`
-                w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-medium
+                w-12 h-12 rounded-full border-2 flex items-center justify-center text-base font-medium transition-all
                 ${currentStep === step.number 
-                  ? 'bg-blue-600 border-blue-600 text-white' 
+                  ? 'bg-green-600 border-green-600 text-white shadow-lg' 
                   : currentStep > step.number
-                    ? 'bg-green-600 border-green-600 text-white'
-                    : 'border-gray-300 text-gray-500'
+                    ? 'bg-green-500 border-green-500 text-white'
+                    : 'border-gray-300 text-gray-500 bg-white'
                 }
               `}>
                 {currentStep > step.number ? (
-                  <Check className="h-5 w-5" />
+                  <Check className="h-6 w-6" />
                 ) : (
                   step.number
                 )}
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium">{step.title}</p>
+                <p className={`text-sm font-medium ${currentStep >= step.number ? 'text-green-800' : 'text-gray-500'}`}>
+                  {step.title}
+                </p>
                 <p className="text-xs text-gray-500">{step.description}</p>
               </div>
             </div>
             {index < steps.length - 1 && (
               <div className={`
-                w-16 h-0.5 mx-4 mt-5
-                ${currentStep > step.number ? 'bg-green-600' : 'bg-gray-300'}
+                w-20 h-1 mx-6 mt-5 rounded transition-all
+                ${currentStep > step.number ? 'bg-green-500' : 'bg-gray-300'}
               `} />
             )}
           </div>
         ))}
+        </div>
       </div>
 
       {/* Step Content */}
-      <div className="min-h-[500px]">
+      <div className="bg-white rounded-lg shadow-sm border border-green-200 min-h-[600px] p-6">
         {renderStepContent()}
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex items-center justify-between pt-6 border-t">
+      <div className="bg-white rounded-lg shadow-sm p-6 border border-green-200">
+        <div className="flex items-center justify-between">
         <Button
           type="button"
           variant="outline"
           onClick={currentStep === 1 ? handleCancel : goToPrevStep}
-          className="flex items-center space-x-2"
+          className="flex items-center space-x-2 border-2 border-gray-300 hover:border-gray-400"
         >
           {currentStep === 1 ? (
             <>
@@ -820,22 +845,30 @@ export default function CreateJobPage() {
 
         <Button
           type="button"
-          onClick={currentStep === 3 ? createJob : goToNextStep}
+          onClick={() => {
+            console.log("Next button clicked, current step:", currentStep);
+            if (currentStep === 3) {
+              createJob();
+            } else {
+              goToNextStep();
+            }
+          }}
           disabled={isLoading}
-          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700"
+          className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-base font-medium"
         >
           {currentStep === 3 ? (
             <>
-              <Save className="h-4 w-4" />
+              <Save className="h-5 w-5" />
               <span>{isLoading ? "Đang tạo..." : "Tạo tin tuyển dụng"}</span>
             </>
           ) : (
             <>
               <span>Tiếp theo</span>
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-5 w-5" />
             </>
           )}
         </Button>
+        </div>
       </div>
     </div>
   );
