@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
+﻿using JobMatchingSystem.API.Models;
 using Microsoft.AspNetCore.Identity;
-using JobMatchingSystem.API.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace JobMatchingSystem.API.Data
 {
@@ -25,6 +26,7 @@ namespace JobMatchingSystem.API.Data
         public DbSet<CVProject> CVProjects { get; set; }
         public DbSet<CVCertificate> CVCertificates { get; set; }
         public DbSet<CVAchievement> CVAchievements { get; set; }
+        public DbSet<CVProfile> CVProfile { get; set; }
         public DbSet<Taxonomy> Taxonomies { get; set; }
         public DbSet<Report> Reports { get; set; }
         public DbSet<TemplateCV> TemplateCVs { get; set; }
@@ -270,6 +272,15 @@ namespace JobMatchingSystem.API.Data
                 entity.HasOne(e => e.User)
                       .WithMany(e=>e.CVAchievements)
                       .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            builder.Entity<CVProfile>(entity =>
+            {
+                // Quan hệ 1-1 với ApplicationUser
+                entity.HasOne(e => e.User)
+                      .WithOne(u => u.CVProfile)
+                      .HasForeignKey<CVProfile>(e => e.UserId)
                       .OnDelete(DeleteBehavior.NoAction);
             });
         }
