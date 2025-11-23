@@ -34,6 +34,7 @@ import { ReportService } from "@/services/report.service";
 // Components
 import { ReportJobDialog } from "@/components/dialogs/ReportJobDialog";
 import { LoginDialog } from "@/pages/client-site/auth/LoginDialog";
+import ApplyJobDialog from "@/components/dialogs/ApplyJobDialog";
 
 // Types
 import type { JobDetailResponse } from "@/models/job";
@@ -613,6 +614,8 @@ const JobDetailPage: React.FC = () => {
   // Dialog states
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showApplyDialog, setShowApplyDialog] = useState(false);
+  const [loginPurpose, setLoginPurpose] = useState<'apply' | 'report'>('apply');
 
   // Load job details and related data
   useEffect(() => {
@@ -692,7 +695,22 @@ const JobDetailPage: React.FC = () => {
   // Handle job application
   const handleApply = () => {
     if (!job) return;
-    toast.info("Tính năng ứng tuyển sẽ được cập nhật sớm!");
+    
+    // Check if user is authenticated
+    if (!authState.isAuthenticated) {
+      setLoginPurpose('apply');
+      setShowLoginDialog(true);
+      return;
+    }
+
+    // Check if user is candidate
+    if (authState.role?.toLowerCase() !== 'candidate') {
+      toast.error('Chức năng này không phù hợp với tài khoản hiện tại. Chỉ ứng viên mới có thể ứng tuyển.');
+      return;
+    }
+    
+    // Open apply dialog
+    setShowApplyDialog(true);
   };
 
   // Handle save/unsave job
@@ -726,6 +744,7 @@ const JobDetailPage: React.FC = () => {
 
     // Check if user is authenticated
     if (!authState.isAuthenticated) {
+      setLoginPurpose('report');
       setShowLoginDialog(true);
       return;
     }
@@ -754,10 +773,24 @@ const JobDetailPage: React.FC = () => {
   // Handle login dialog close
   const handleLoginSuccess = () => {
     setShowLoginDialog(false);
-    // After successful login, open report dialog
+    // After successful login, open appropriate dialog based on purpose
     setTimeout(() => {
-      setShowReportDialog(true);
+      if (loginPurpose === 'apply') {
+        // Check role again after login
+        if (authState.role?.toLowerCase() === 'candidate') {
+          setShowApplyDialog(true);
+        } else {
+          toast.error('Chức năng này không phù hợp với tài khoản hiện tại. Chỉ ứng viên mới có thể ứng tuyển.');
+        }
+      } else if (loginPurpose === 'report') {
+        setShowReportDialog(true);
+      }
     }, 100);
+  };
+
+  // Handle upload CV (navigate to CV management)
+  const handleUploadCV = () => {
+    navigate('/candidate/cv-management');
   };
 
   // Loading state
@@ -893,6 +926,17 @@ const JobDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Apply Job Dialog */}
+      {job && (
+        <ApplyJobDialog
+          isOpen={showApplyDialog}
+          onOpenChange={setShowApplyDialog}
+          jobId={job.jobId}
+          jobTitle={job.title}
+          onUploadCV={handleUploadCV}
+        />
+      )}
 
       {/* Report Job Dialog */}
       {job && (

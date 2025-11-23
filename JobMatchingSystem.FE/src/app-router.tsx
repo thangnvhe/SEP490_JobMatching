@@ -15,6 +15,7 @@ import { CreateEditUserPage } from './pages/admin-site/ManageUser/CreateEditUser
 import RecruiterDashboard from './pages/client-site/recruiter/Dashboard';
 import RecruiterViewJobList from './pages/client-site/recruiter/Jobs/ViewJobList';
 import CreateJobPage from './pages/client-site/recruiter/Jobs/CreateJobPage';
+import RecruitmentProcessManagement from './pages/client-site/recruiter/RecruitmentProcess/RecruitmentProcessManagement';
 import CompanyProfile from './pages/client-site/recruiter/company/CompanyProfile';
 import { CompanyMembersPage } from './pages/client-site/recruiter/company/CompanyMembersPage';
 import CandidateDashboard from './pages/client-site/candidate/Dashboard';
@@ -81,6 +82,7 @@ const AppRouter: React.FC = () => {
         <Route index element={<RecruiterDashboard />} />
         <Route path="jobs" element={<RecruiterViewJobList />} />
         <Route path="jobs/create" element={<CreateJobPage />} />
+        <Route path="recruitment-process" element={<RecruitmentProcessManagement />} />
         <Route path="company" element={<CompanyProfile />} />
         <Route path="company/members" element={<CompanyMembersPage />} />
       </Route>

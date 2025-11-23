@@ -56,6 +56,19 @@ function RecruiterNav() {
           >
             <Link to="/recruiter/jobs">
               <Briefcase />
+              <span>Danh sách tin tuyển dụng</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            asChild
+            isActive={useIsActivePath("/recruiter/recruitment-process")}
+            tooltip="Recruitment Process"
+          >
+            <Link to="/recruiter/recruitment-process">
+              <GitBranch />
               <span>Tin tuyển dụng</span>
             </Link>
           </SidebarMenuButton>

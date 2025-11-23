@@ -301,9 +301,17 @@ export default function ViewJobList() {
       enableSorting: true,
       cell: ({ row }) => {
         const title = row.getValue("title") as string;
+        const job = row.original;
         return (
           <div title={title} className="max-w-[200px] truncate text-sm">
-            {truncateText(title, 30)}
+            <button
+              onClick={() => {
+                navigate(`/recruiter/recruitment-process?jobId=${job.jobId}`);
+              }}
+              className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left"
+            >
+              {truncateText(title, 30)}
+            </button>
           </div>
         );
       },
