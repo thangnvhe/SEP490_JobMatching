@@ -20,14 +20,16 @@ namespace JobMatchingSystem.API.Services.Implementations
         protected readonly IWebHostEnvironment _webHostEnvironment;
         protected readonly UserManager<ApplicationUser> _userManager;
         protected readonly RoleManager<IdentityRole<int>> _roleManager;
+        protected readonly IEmailService _emailService;
 
-        public UserService(IUnitOfWork unitOfWork, IMapper mapper, IWebHostEnvironment webHostEnvironment, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<int>> roleManager)
+        public UserService(IUnitOfWork unitOfWork, IMapper mapper, IWebHostEnvironment webHostEnvironment, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<int>> roleManager, IEmailService emailService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _webHostEnvironment = webHostEnvironment;
             _userManager = userManager;
             _roleManager = roleManager;
+            _emailService = emailService;
         }
         public async Task ChangeStatus(int userId)
         {
@@ -343,6 +345,9 @@ namespace JobMatchingSystem.API.Services.Implementations
                     }
                 }
 
+                // Generate temporary password using utility
+                var temporaryPassword = Untity.Generate(12); // Generate 12-character secure password
+
                 // Create new user
                 var newUser = new ApplicationUser
                 {
@@ -357,8 +362,8 @@ namespace JobMatchingSystem.API.Services.Implementations
                     CreatedAt = DateTime.UtcNow
                 };
 
-                // Create user with password
-                var result = await _userManager.CreateAsync(newUser, request.Password);
+                // Create user with temporary password
+                var result = await _userManager.CreateAsync(newUser, temporaryPassword);
                 if (!result.Succeeded)
                 {
                     var errors = string.Join(", ", result.Errors.Select(e => e.Description));
@@ -373,6 +378,19 @@ namespace JobMatchingSystem.API.Services.Implementations
                     await _userManager.DeleteAsync(newUser);
                     var roleErrors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
                     throw new AppException(ErrorCode.AssignRoleFailed());
+                }
+
+                // Send email with temporary password
+                try
+                {
+                    await _emailService.SendHmPasswordEmailAsync(newUser.Email, newUser.FullName, temporaryPassword);
+                }
+                catch (Exception emailEx)
+                {
+                    // Log email error but don't fail the entire operation
+                    // User is already created, just email failed
+                    // TODO: Add proper logging here
+                    Console.WriteLine($"Failed to send email to {newUser.Email}: {emailEx.Message}");
                 }
 
                 // Get user roles for response
@@ -408,5 +426,6 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.CreateUserFailed($"Unexpected error: {ex.Message}"));
             }
         }
+
     }
 }

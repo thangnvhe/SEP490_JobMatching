@@ -33,8 +33,6 @@ interface FormData {
   fullName: string;
   email: string;
   phoneNumber: string;
-  password: string;
-  confirmPassword: string;
 }
 
 // ===================== UTILITY FUNCTIONS =====================
@@ -64,18 +62,6 @@ const validateForm = (formData: FormData): string[] => {
     errors.push("Số điện thoại không được vượt quá 15 ký tự");
   }
 
-  if (!formData.password.trim()) {
-    errors.push("Mật khẩu không được để trống");
-  } else if (formData.password.length < 6) {
-    errors.push("Mật khẩu phải có ít nhất 6 ký tự");
-  } else if (formData.password.length > 100) {
-    errors.push("Mật khẩu không được vượt quá 100 ký tự");
-  }
-
-  if (formData.password !== formData.confirmPassword) {
-    errors.push("Xác nhận mật khẩu không khớp");
-  }
-
   return errors;
 };
 
@@ -95,8 +81,6 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
     fullName: "",
     email: "",
     phoneNumber: "",
-    password: "",
-    confirmPassword: "",
   });
 
   // Handle input changes
@@ -123,8 +107,6 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
         fullName: formData.fullName.trim(),
         email: formData.email.trim(),
         phone: formData.phoneNumber.trim(),
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
         companyId: companyId,
       };
 
@@ -139,15 +121,17 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
 
       // Gọi callback success (parent sẽ reload data từ API)
       onCreateSuccess();
-      toast.success("Tạo thành viên thành công!");
+      
+      // Show success message with temporary password info
+      toast.success("Tạo thành viên thành công! Mật khẩu tạm thời đã được gửi qua email.", {
+        duration: 5000,
+      });
       
       // Reset form
       setFormData({
         fullName: "",
         email: "",
         phoneNumber: "",
-        password: "",
-        confirmPassword: "",
       });
 
     } catch (error: any) {
@@ -165,8 +149,6 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
         fullName: "",
         email: "",
         phoneNumber: "",
-        password: "",
-        confirmPassword: "",
       });
     }
     onOpenChange(open);
@@ -182,6 +164,7 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
           </DialogTitle>
           <DialogDescription>
             Thêm thành viên mới vào công ty với quyền Hiring Manager.
+            Hệ thống sẽ tự động tạo mật khẩu tạm thời và gửi qua email.
           </DialogDescription>
         </DialogHeader>
 
@@ -243,42 +226,24 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
             </div>
           </div>
 
-          {/* Account Information */}
+          {/* Security Note */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-              Thông tin tài khoản
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="password" className="text-sm font-medium text-gray-900">
-                  Mật khẩu <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
-                  className="mt-1"
-                  maxLength={100}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-900">
-                  Xác nhận mật khẩu <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                  placeholder="Nhập lại mật khẩu"
-                  className="mt-1"
-                  required
-                />
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h4 className="text-sm font-medium text-blue-800">
+                    Thông tin bảo mật
+                  </h4>
+                  <div className="mt-1 text-sm text-blue-700">
+                    <p>Hệ thống sẽ tự động tạo mật khẩu tạm thời và gửi qua email cho thành viên mới.</p>
+                    <p className="mt-1">Thành viên sẽ được yêu cầu đổi mật khẩu khi đăng nhập lần đầu.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
