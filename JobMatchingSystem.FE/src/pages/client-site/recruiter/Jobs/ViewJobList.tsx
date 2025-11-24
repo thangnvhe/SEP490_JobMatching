@@ -34,7 +34,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 // Import types và services
 import { JobServices } from "@/services/job.service";
 import { CompanyServices } from "@/services/company.service";
-import { type JobDetailResponse } from "@/models/job";
+import { type Job } from "@/models/job";
 import { type Company } from "@/models/company";
 import { useAppSelector } from "@/store";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
@@ -57,11 +57,11 @@ export default function ViewJobList() {
   // Khai báo local state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [jobs, setJobs] = useState<JobDetailResponse[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedJob, setSelectedJob] = useState<JobDetailResponse | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedJobCompany, setSelectedJobCompany] = useState<Company | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -88,17 +88,17 @@ export default function ViewJobList() {
       
       // Chuẩn bị parameters cho API
       const params: any = {
-        Page: currentPage,
-        Size: pageSize,
-        Search: debouncedKeyword,
+        page: currentPage,
+        size: pageSize,
+        search: debouncedKeyword,
         sortBy: sortBy,
         isDescending: isDescending,
-        RecuiterId: parseInt(currentUserId) // Filter theo recruiter ID (chú ý: API dùng RecuiterId)
+        recuiterId: parseInt(currentUserId) // Filter theo recruiter ID
       };
       
       // Thêm status filter nếu có
       if (statusFilter !== 'all') {
-        params.Status = parseInt(statusFilter);
+        params.status = parseInt(statusFilter);
       }
       
       console.log('API Request params:', params);
@@ -108,7 +108,7 @@ export default function ViewJobList() {
         setTimeout(() => reject(new Error('Request timeout after 30 seconds')), 30000)
       );
       
-      const apiPromise = JobServices.getJobsWithPagination(params);
+      const apiPromise = JobServices.getAllWithPagination(params);
       
       const response = await Promise.race([apiPromise, timeoutPromise]) as any;
       
@@ -194,7 +194,7 @@ export default function ViewJobList() {
     setCurrentPage(1);
   };
 
-  const handleView = async (job: JobDetailResponse) => {
+  const handleView = async (job: Job) => {
     setSelectedJob(job);
     setIsViewDialogOpen(true);
     
@@ -211,7 +211,7 @@ export default function ViewJobList() {
     }
   };
 
-  const handleEdit = (job: JobDetailResponse) => {
+  const handleEdit = (job: Job) => {
     setSelectedJob(job);
     setIsEditDialogOpen(true);
   };
@@ -284,7 +284,7 @@ export default function ViewJobList() {
   const safePage = Math.min(currentPage, totalPages);
 
   // Define columns
-  const columns = useMemo<ColumnDef<JobDetailResponse>[]>(() => [
+  const columns = useMemo<ColumnDef<Job>[]>(() => [
     {
       id: "stt",
       header: "STT",

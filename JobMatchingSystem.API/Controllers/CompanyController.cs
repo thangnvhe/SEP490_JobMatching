@@ -71,10 +71,10 @@ namespace JobMatchingSystem.API.Controllers
             [FromQuery] int size = 5,
             [FromQuery] string search = "",
             [FromQuery] string sortBy = "",
-            [FromQuery] bool direction = false,
+            [FromQuery] bool isDecending = false,
             [FromQuery] string status = "")
         {
-            var companies = await _companyService.GetDetailCompanyList(page, size, search, sortBy, direction, status);
+            var companies = await _companyService.GetDetailCompanyList(page, size, search, sortBy, isDecending, status);
             return Ok(APIResponse<PagedResult<CompanyDTO>>.Builder()
                 .WithResult(companies)
                 .WithSuccess(true)
