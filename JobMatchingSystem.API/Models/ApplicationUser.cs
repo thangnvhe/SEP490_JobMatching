@@ -47,6 +47,7 @@ namespace JobMatchingSystem.API.Models
         public virtual ICollection<CVAchievement> CVAchievements { get; set; } = new List<CVAchievement>();
         public virtual ICollection<CVExperience> CVExperiences { get; set; } = new List<CVExperience>();
         public virtual ICollection<CandidateTaxonomy> CandidateTaxonomies { get; set; } = new List<CandidateTaxonomy>();
-
+        public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+        public virtual JobQuota? JobQuota { get; set; }
     }
 }

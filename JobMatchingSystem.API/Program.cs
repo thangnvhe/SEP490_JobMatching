@@ -11,6 +11,7 @@ builder.Services.AddExceptionHandler<GlobalResponseExceptionHandler>();      // 
 // Thêm dịch vụ hỗ trợ IExceptionHandler
 builder.Services.AddProblemDetails();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient();
 
 // Add services to the container.
 builder.Services.AddControllers();
