@@ -905,7 +905,7 @@ const ProfileCvPage = () => {
             {/* Container giới hạn width khoảng 70% màn hình lớn hoặc max-w-5xl để đẹp mắt */}
             <div className="mx-auto max-w-5xl space-y-8">
                 {/* Header Section */}
-                <Card className="overflow-hidden border-none shadow-md ring-1 ring-black/5">
+                <Card className="overflow-hidden p-0 border-none shadow-md ring-1 ring-black/5">
                     <div className="h-32 bg-linear-to-r from-emerald-500 to-teal-500 opacity-90"></div>
                     <CardContent className="relative px-8 pb-8">
                         <div className="-mt-12 mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -965,7 +965,7 @@ const ProfileCvPage = () => {
                     {/* Right Column: Sidebar (Progress & Tips) */}
                     <div className="space-y-6 lg:col-span-4">
                         {/* Progress Card */}
-                        <Card className="sticky top-6 overflow-hidden border-emerald-100 shadow-sm ring-1 ring-emerald-50">
+                        <Card className="sticky top-6 overflow-hidden p-0 border-emerald-100 shadow-sm ring-1 ring-emerald-50">
                             <CardHeader className="bg-emerald-50/50 pb-4 pt-4">
                                 <div className="flex items-center justify-between">
                                     <CardTitle className="text-lg font-bold text-gray-900">
@@ -1172,7 +1172,7 @@ const ProfileSectionCard = ({
     children,
 }: SectionCardConfig) => {
     return (
-        <Card className="group transition-all hover:shadow-md border-gray-100">
+        <Card className="group transition-all hover:shadow-md border-gray-100 p-0">
             <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-4">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gray-50 text-gray-500 transition-colors group-hover:bg-emerald-50 group-hover:text-emerald-500">

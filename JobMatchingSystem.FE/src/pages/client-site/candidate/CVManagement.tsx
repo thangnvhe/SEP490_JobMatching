@@ -5,29 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import type { RootState } from '@/store';
 import { UserServices } from '@/services/user.service';
-import type { User } from '@/models/user';
+import { CVServices } from '@/services/cv.service';
+import  { User } from '@/models/user';
+import  { CV, CVValidate } from '@/models/cv';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileText, Upload, Download, Star, Trash2, Eye, File, Calendar, CheckCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-interface CV {
-  id: number;
-  userId: number;
-  name: string;
-  isPrimary: boolean;
-  fileName: string;
-  fileUrl: string;
-  user: null;
-  savedCVs: [];
-  candidateJobs: [];
-}
-
-interface ApiResponse {
-  statusCode: number;
-  isSuccess: boolean;
-  errorMessages: string[];
-  result: CV[];
-}
+import { toast } from 'sonner';
 
 export default function CVManagement() {
   const [cvs, setCvs] = useState<CV[]>([]);
@@ -37,13 +22,8 @@ export default function CVManagement() {
   const [cvName, setCvName] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState<{
-    is_cv: boolean;
-    confidence: number;
-    reason: string;
-    file_info?: any;
-  } | null>(null);
-  const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [validationResult, setValidationResult] = useState<CVValidate | null>(null);
+  const [userProfile, setUserProfile] = useState<User>();
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
   // Get authentication state from Redux
@@ -58,60 +38,40 @@ export default function CVManagement() {
       const response = await UserServices.getUserProfile();
       
       if (response.isSuccess) {
-        setUserProfile(response.result as User);
+        setUserProfile(response.result);
       } else {
-        console.error('Failed to fetch user profile:', response.errorMessages);
-        alert(`Lỗi khi tải thông tin người dùng: ${response.errorMessages?.join(', ') || 'Không xác định'}`);
+        toast.error(`Lỗi khi tải thông tin người dùng: ${response.errorMessages?.join(', ') || 'Không xác định'}`);
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error);
-      alert("Không thể tải thông tin người dùng");
+      toast.error("Không thể tải thông tin người dùng");
     } finally {
       setIsLoadingProfile(false);
     }
   };
 
   const fetchCVs = React.useCallback(async () => {
-    if (!userId) {
-      console.warn('User ID not available, cannot fetch CVs');
-      setIsLoading(false);
-      return;
-    }
 
     try {
       setIsLoading(true);
-      const response = await fetch(`https://localhost:7044/api/CV/user/${userId}`);
+      const response = await CVServices.getByUserId(userId.toString());
       
-      if (!response.ok) {
-        // Check if it's 404 (no CVs found) - this is normal for new users
-        if (response.status === 404) {
-          setCvs([]);
-          return;
-        }
-        throw new Error('Failed to fetch CVs');
-      }
-      
-      const data: ApiResponse = await response.json();
-      
-      if (data.isSuccess) {
-        setCvs(data.result || []); // Ensure we set empty array if result is null
+      if (response.isSuccess) {
+        setCvs(response.result || []);
       } else {
-        // Only show error if it's not an empty result scenario
-        if (data.errorMessages?.some(msg => !msg.toLowerCase().includes('not found') && !msg.toLowerCase().includes('no cv'))) {
-          console.error('Error fetching CVs:', data.errorMessages);
-          alert(`Lỗi: ${data.errorMessages.join(', ')}`);
-        } else {
-          setCvs([]); // Set empty array for "not found" scenarios
+        // Only show error if it's not a "not found" scenario
+        const isNotFoundError = response.errorMessages?.some(msg => 
+          msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('no cv')
+        );
+        
+        if (!isNotFoundError && response.errorMessages?.length) {
+          console.error('Error fetching CVs:', response.errorMessages);
+          alert(`Lỗi: ${response.errorMessages.join(', ')}`);
         }
+        setCvs([]);
       }
     } catch (error) {
       console.error('Error fetching CVs:', error);
-      // Only show alert for actual network errors, not for empty results
-      if (error instanceof Error && !error.message.includes('404')) {
-        alert("Không thể tải danh sách CV");
-      } else {
-        setCvs([]);
-      }
+      setCvs([]);
     } finally {
       setIsLoading(false);
     }
@@ -137,21 +97,13 @@ export default function CVManagement() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('https://localhost:7044/api/CV/validate', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await CVServices.validate(formData);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.isSuccess) {
-          setValidationResult(data.result);
-        } else {
-          console.error('Validation failed:', data.errorMessages);
-          alert(`Lỗi validate CV: ${data.errorMessages?.join(', ')}`);
-        }
+      if (response.isSuccess) {
+        setValidationResult(response.result);
       } else {
-        throw new Error('Validation request failed');
+        console.error('Validation failed:', response.errorMessages);
+        alert(`Lỗi validate CV: ${response.errorMessages?.join(', ')}`);
       }
     } catch (error) {
       console.error('Error validating CV:', error);
@@ -217,35 +169,10 @@ export default function CVManagement() {
       formData.append('name', cvName.trim());
       formData.append('userId', userId.toString());
 
-      // Lấy token từ localStorage hoặc cookie (nếu backend yêu cầu Authorization)
-      const token = localStorage.getItem('accessToken') || document.cookie
-        .split('; ')
-        .find(row => row.startsWith('accessToken='))
-        ?.split('=')[1];
+      const response = await CVServices.create(formData as any);
 
-      const headers: Record<string, string> = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      // Gọi API upload chính thức (API trả về JSON theo dạng bạn gửi mẫu)
-      const response = await fetch('https://localhost:7044/api/CV', {
-        method: 'POST',
-        headers,
-        body: formData,
-      });
-
-      // Cố gắng parse JSON trả về (API của bạn trả về { statusCode, isSuccess, errorMessages, result })
-      let data: unknown = null;
-      try {
-        data = await response.json();
-      } catch (e) {
-        // Nếu không phải JSON, xử lý lỗi chung
-        console.error('Non-JSON response from upload endpoint', e);
-      }
-
-      const apiResponse = data as { statusCode?: number; isSuccess?: boolean; errorMessages?: string[]; result?: string };
-
-      if (response.ok && apiResponse && apiResponse.isSuccess) {
-        const msg = typeof apiResponse.result === 'string' ? apiResponse.result : 'CV đã được upload thành công';
+      if (response.isSuccess) {
+        const msg = typeof response.result === 'string' ? response.result : 'CV đã được upload thành công';
         alert(`Thành công: ${msg}`);
 
         // Reset form
@@ -257,10 +184,9 @@ export default function CVManagement() {
         // Refresh CV list
         fetchCVs();
       } else {
-        // Hiển thị lỗi chi tiết nếu có
-        const serverMsg = apiResponse?.errorMessages?.length ? apiResponse.errorMessages.join(', ') : apiResponse?.result || 'Không thể upload CV';
-        console.error('Upload error', { status: response.status, data: apiResponse });
-        alert(`Lỗi: ${serverMsg}`);
+        const errorMsg = response.errorMessages?.join(', ') || 'Không thể upload CV';
+        console.error('Upload error:', response.errorMessages);
+        alert(`Lỗi: ${errorMsg}`);
       }
     } catch (error) {
       console.error('Error uploading CV:', error);
@@ -272,43 +198,16 @@ export default function CVManagement() {
 
   const handleSetPrimary = async (cvId: number) => {
     try {
-      // Lấy token từ localStorage hoặc cookie (nếu backend yêu cầu Authorization)
-      const token = localStorage.getItem('accessToken') || document.cookie
-        .split('; ')
-        .find(row => row.startsWith('accessToken='))
-        ?.split('=')[1];
+      const response = await CVServices.setPrimary(cvId.toString());
 
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const response = await fetch(`https://localhost:7044/api/CV/${cvId}/set-primary`, {
-        method: 'PUT',
-        headers,
-      });
-
-      // Parse JSON response
-      let data: unknown = null;
-      try {
-        data = await response.json();
-      } catch (e) {
-        console.error('Non-JSON response from set-primary endpoint', e);
-      }
-
-      const apiResponse = data as { statusCode?: number; isSuccess?: boolean; errorMessages?: string[]; result?: string };
-
-      if (response.ok && apiResponse?.isSuccess) {
-        const msg = typeof apiResponse.result === 'string' ? apiResponse.result : 'Đã đặt làm CV chính';
+      if (response.isSuccess) {
+        const msg = typeof response.result === 'string' ? response.result : 'Đã đặt làm CV chính';
         alert(`Thành công: ${msg}`);
         fetchCVs();
       } else {
-        // Hiển thị lỗi chi tiết nếu có
-        const serverMsg = apiResponse?.errorMessages?.length 
-          ? apiResponse.errorMessages.join(', ') 
-          : apiResponse?.result || 'Không thể đặt làm CV chính';
-        console.error('Set primary error', { status: response.status, data: apiResponse });
-        alert(`Lỗi: ${serverMsg}`);
+        const errorMsg = response.errorMessages?.join(', ') || 'Không thể đặt làm CV chính';
+        console.error('Set primary error:', response.errorMessages);
+        alert(`Lỗi: ${errorMsg}`);
       }
     } catch (error) {
       console.error('Error setting primary CV:', error);
@@ -322,34 +221,14 @@ export default function CVManagement() {
     }
 
     try {
-      // Get token from localStorage or cookies
-      const token = localStorage.getItem('accessToken') || document.cookie
-        .split('; ')
-        .find(row => row.startsWith('accessToken='))
-        ?.split('=')[1];
+      const response = await CVServices.delete(cvId.toString());
 
-      if (!token) {
-        alert("Lỗi: Bạn cần đăng nhập để thực hiện thao tác này");
-        return;
-      }
-
-      const response = await fetch(`https://localhost:7044/api/CV/${cvId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.isSuccess) {
+      if (response.isSuccess) {
         alert("Thành công: CV đã được xóa");
-        fetchCVs(); // Refresh the CV list
+        fetchCVs();
       } else {
-        // Handle API error response
-        const errorMessage = data.errorMessages?.join(', ') || 'Không thể xóa CV';
-        alert(`Lỗi: ${errorMessage}`);
+        const errorMsg = response.errorMessages?.join(', ') || 'Không thể xóa CV';
+        alert(`Lỗi: ${errorMsg}`);
       }
     } catch (error) {
       console.error('Error deleting CV:', error);
