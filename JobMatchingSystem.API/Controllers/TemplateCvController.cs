@@ -1,4 +1,5 @@
-﻿using JobMatchingSystem.API.DTOs.Request;
+﻿using JobMatchingSystem.API.DTOs;
+using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -24,25 +25,37 @@ namespace JobMatchingSystem.API.Controllers
         {
             await _service.CreateTemplateAsync(request);
 
-            return Ok(new
-            {
-                StatusCode = (int)HttpStatusCode.Created,
-                Success = true,
-                Message = "Template CV uploaded successfully"
-            });
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.Created)
+                .WithSuccess(true)
+                .WithResult("Template CV uploaded successfully")
+                .Build());
         }
+
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
+            // Giả định GetAllAsync trả về một List<TemplateCvResponse> hoặc tương tự
             var data = await _service.GetAllAsync();
-            return Ok(data);
+
+            return Ok(APIResponse<object>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(data)
+                .Build());
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
+            // Giả định GetByIdAsync trả về một TemplateCvResponse hoặc tương tự
             var item = await _service.GetByIdAsync(id);
-            return Ok(item);
+
+            return Ok(APIResponse<object>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(item)
+                .Build());
         }
 
         [HttpDelete("{id}")]
@@ -51,12 +64,12 @@ namespace JobMatchingSystem.API.Controllers
         {
             await _service.DeleteAsync(id);
 
-            return Ok(new
-            {
-                StatusCode = (int)HttpStatusCode.OK,
-                Success = true,
-                Message = "Deleted successfully"
-            });
+            // Sửa đổi trả về: Dùng APIResponse<string> cho thông báo thành công
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult("Deleted successfully")
+                .Build());
         }
     }
 }

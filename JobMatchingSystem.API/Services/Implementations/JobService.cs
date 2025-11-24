@@ -46,6 +46,33 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.SalaryError());
             }
 
+            // 3. KIỂM TRA VÀ TRỪ QUOTA MỚI THÊM
+            var jobQuota = await _context.JobQuotas
+                                         .FirstOrDefaultAsync(q => q.RecruiterId == userId);
+
+            if (jobQuota == null)
+            {
+                throw new AppException(ErrorCode.NotFoundRecruiter()); 
+            }
+
+            bool quotaDeducted = false;
+
+            if (jobQuota.MonthlyQuota > 0)
+            {
+                jobQuota.MonthlyQuota -= 1;
+                quotaDeducted = true;
+            }
+            else if (jobQuota.ExtraQuota > 0)
+            {
+                jobQuota.ExtraQuota -= 1;
+                quotaDeducted = true;
+            }
+
+            if (!quotaDeducted)
+            {
+                throw new AppException(ErrorCode.NotEnoughJobQuota()); 
+            }
+
             var job = new Job
             {
                 Title = request.Title,
@@ -90,6 +117,8 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
 
             await _jobRepository.CreateAsync(job);
+            _context.JobQuotas.Update(jobQuota);
+            await _context.SaveChangesAsync(); // Lưu thay đổi của JobQuota vào DB
         }
 
         public async Task UpdateJobAsync(int jobId, UpdateJobRequest request, int userId)

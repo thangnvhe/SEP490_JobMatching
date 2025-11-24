@@ -25,7 +25,6 @@
 
   <ItemGroup>
     <Folder Include="Mappings\" />
-    <Folder Include="Migrations\" />
     <Folder Include="wwwroot\images\LicenseFile\" />
     <Folder Include="wwwroot\images\Logo\" />
     <Folder Include="wwwroot\cv\" />
