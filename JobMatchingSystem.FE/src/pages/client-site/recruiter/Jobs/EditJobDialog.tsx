@@ -20,7 +20,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Import services và types
 import { JobServices } from "@/services/job.service";
-import { type JobDetailResponse } from "@/models/job";
+import { TaxonomyService } from "@/services/taxonomy.service";
+import { type Job } from "@/models/job";
+import { type Taxonomy } from "@/models/taxonomy";
 
 // Form validation schema
 const jobFormSchema = z.object({
@@ -33,12 +35,13 @@ const jobFormSchema = z.object({
   salaryMax: z.number().min(0, "Lương tối đa phải lớn hơn 0").optional().nullable(),
   experienceYear: z.number().min(0, "Số năm kinh nghiệm không được âm").max(50, "Số năm kinh nghiệm không được quá 50"),
   jobType: z.string().min(1, "Loại công việc là bắt buộc"),
+  taxonomyIds: z.array(z.number()).min(1, "Phải chọn ít nhất 1 kỹ năng").max(5, "Chỉ được chọn tối đa 5 kỹ năng"),
 });
 
 type JobFormData = z.infer<typeof jobFormSchema>;
 
 interface EditJobDialogProps {
-  job: JobDetailResponse;
+  job: Job;
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
@@ -46,6 +49,8 @@ interface EditJobDialogProps {
 
 export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
+  const [loadingTaxonomies, setLoadingTaxonomies] = useState(true);
 
   const {
     register,
@@ -66,6 +71,7 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
       salaryMax: null,
       experienceYear: 0,
       jobType: "0",
+      taxonomyIds: [],
     }
   });
 
@@ -82,6 +88,7 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
         salaryMax: job.salaryMax || null,
         experienceYear: job.experienceYear || 0,
         jobType: job.jobType !== undefined ? job.jobType.toString() : "0",
+        taxonomyIds: job.taxonomies ? job.taxonomies.map(t => t.id) : [],
       };
       
       console.log("Resetting form with data:", formData);
@@ -91,8 +98,33 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
       
       // Force set jobType để đảm bảo Select hiện thị đúng
       setValue("jobType", formData.jobType);
+      setValue("taxonomyIds", formData.taxonomyIds);
     }
   }, [job, reset, setValue]);
+
+  // Load taxonomies
+  useEffect(() => {
+    const fetchTaxonomies = async () => {
+      try {
+        setLoadingTaxonomies(true);
+        const response = await TaxonomyService.getAllTaxonomies();
+        
+        if (response.isSuccess && response.result) {
+          setTaxonomies(response.result);
+        } else {
+          console.warn("Could not load taxonomies");
+          setTaxonomies([]);
+        }
+      } catch (error) {
+        console.warn("Error loading taxonomies:", error);
+        setTaxonomies([]);
+      } finally {
+        setLoadingTaxonomies(false);
+      }
+    };
+
+    fetchTaxonomies();
+  }, []);
 
   const onSubmit = async (data: JobFormData) => {
     try {
@@ -115,12 +147,13 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
         salaryMax: data.salaryMax || undefined,
         experienceYear: data.experienceYear,
         jobType: data.jobType,
+        taxonomyIds: data.taxonomyIds,
       };
 
       console.log("Updating job with data:", updateRequest);
 
       // Call API
-      const response = await JobServices.updateJob(job.jobId.toString(), updateRequest);
+      const response = await JobServices.update(job.jobId.toString(), updateRequest as any);
       
       if (response.isSuccess) {
         onSave(); // Refresh parent component data
@@ -251,6 +284,44 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
                     {errors.experienceYear && (
                       <p className="text-sm text-red-500">{errors.experienceYear.message}</p>
                     )}
+                  </div>
+
+                  {/* Taxonomies/Skills */}
+                  <div className="space-y-2">
+                    <Label>Kỹ năng yêu cầu (1-5 kỹ năng) *</Label>
+                    {loadingTaxonomies ? (
+                      <div className="text-sm text-gray-500">Đang tải danh sách kỹ năng...</div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto border-2 border-gray-300 rounded-lg p-3">
+                        {taxonomies.map((taxonomy) => (
+                          <label key={taxonomy.id} className="flex items-center space-x-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={(watch("taxonomyIds") || []).includes(taxonomy.id)}
+                              onChange={(e) => {
+                                const currentIds = watch("taxonomyIds") || [];
+                                if (e.target.checked) {
+                                  if (currentIds.length < 5) {
+                                    setValue("taxonomyIds", [...currentIds, taxonomy.id]);
+                                  }
+                                } else {
+                                  setValue("taxonomyIds", currentIds.filter(id => id !== taxonomy.id));
+                                }
+                              }}
+                              disabled={!(watch("taxonomyIds") || []).includes(taxonomy.id) && (watch("taxonomyIds") || []).length >= 5}
+                              className="rounded border-gray-300"
+                            />
+                            <span className="text-sm">{taxonomy.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {errors.taxonomyIds && (
+                      <p className="text-sm text-red-500">{errors.taxonomyIds.message}</p>
+                    )}
+                    <div className="text-sm text-gray-500">
+                      Đã chọn: {(watch("taxonomyIds") || []).length}/5 kỹ năng
+                    </div>
                   </div>
                 </CardContent>
               </Card>

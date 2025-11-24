@@ -50,7 +50,7 @@ import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { JobServices } from '@/services/job.service';
 import { UserServices } from '@/services/user.service';
 import type { User } from '@/models/user';
-import type { JobDetailResponse } from '@/models/job';
+import type { Job } from '@/models/job';
 
 interface CandidateJobResponse {
   candidateJobId: number;
@@ -97,7 +97,7 @@ const RecruitmentProcessManagement: React.FC = () => {
   const jobIdFromUrl = searchParams.get('jobId');
 
   // State management
-  const [jobs, setJobs] = useState<JobDetailResponse[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string>(jobIdFromUrl || '');
   const [candidates, setCandidates] = useState<CandidateData[]>([]);
   const [jobStages, setJobStages] = useState<any[]>([]);
@@ -125,25 +125,25 @@ const RecruitmentProcessManagement: React.FC = () => {
       setError(null);
       
       const params = {
-        Page: 1,
-        Size: 100, // Get all jobs for dropdown
-        RecuiterId: parseInt(currentUserId),
-        Status: 3, // Only get opened jobs (status = 3)
+        page: 1,
+        size: 100, // Get all jobs for dropdown
+        recuiterId: parseInt(currentUserId),
+        status: 'Opened', // Only get opened jobs
         sortBy: 'openedAt',
         isDescending: true // Sort by most recent opened jobs
       };
       
-      const response = await JobServices.getJobsWithPagination(params);
+      const response = await JobServices.getAllWithPagination(params);
       
       if (response.isSuccess && response.result) {
         if (response.result.items && Array.isArray(response.result.items)) {
-          setJobs(response.result.items as JobDetailResponse[]);
+          setJobs(response.result.items as Job[]);
         } else if (Array.isArray(response.result)) {
-          setJobs(response.result as JobDetailResponse[]);
+          setJobs(response.result as Job[]);
         } else {
           // If it's a single result, check if it has items property
           if (response.result && response.result.items) {
-            setJobs(response.result.items as JobDetailResponse[]);
+            setJobs(response.result.items as Job[]);
           } else {
             setJobs([]);
           }

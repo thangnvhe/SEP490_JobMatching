@@ -35,7 +35,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 // Import services
 import { JobServices } from "@/services/job.service";
 import { UserServices } from "@/services/user.service";
-import type { User } from "@/models/user";
+import { TaxonomyService } from "@/services/taxonomy.service";
+import { type Taxonomy } from "@/models/taxonomy";
+import { type User } from "@/models/user";
+import { type JobType } from "@/models/job";
 
 // Types
 interface HiringManager {
@@ -64,6 +67,7 @@ const step1Schema = z.object({
   jobType: z.string().min(1, "Loại công việc là bắt buộc"),
   openedAt: z.string().min(1, "Ngày mở đăng tuyển là bắt buộc"),
   expiredAt: z.string().min(1, "Ngày hết hạn là bắt buộc"),
+  taxonomyIds: z.array(z.number()).optional(), // Cho phép optional, sẽ validate bằng logic
 });
 
 type Step1FormData = z.infer<typeof step1Schema>;
@@ -80,6 +84,9 @@ export default function CreateJobPage() {
   const [hiringManagers, setHiringManagers] = useState<HiringManager[]>([]);
   const [loadingHiringManagers, setLoadingHiringManagers] = useState(true);
   const [isNegotiableSalary, setIsNegotiableSalary] = useState(false);
+  const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
+  const [loadingTaxonomies, setLoadingTaxonomies] = useState(true);
+  const [selectedTaxonomies, setSelectedTaxonomies] = useState<number[]>([]);
   
   // Step 1: Job Information
   const [jobData, setJobData] = useState<Step1FormData>({
@@ -91,9 +98,10 @@ export default function CreateJobPage() {
     salaryMin: null,
     salaryMax: null,
     experienceYear: 0,
-    jobType: "0",
+    jobType: "FullTime",
     openedAt: "",
     expiredAt: "",
+    taxonomyIds: [],
   });
 
   // Step 2: Job Stages only
@@ -112,7 +120,8 @@ export default function CreateJobPage() {
     resolver: zodResolver(step1Schema),
     defaultValues: {
       ...jobData,
-      benefits: jobData.benefits || "" // Ensure benefits is always a string
+      benefits: jobData.benefits || "", // Ensure benefits is always a string
+      taxonomyIds: [] // Initialize with empty array
     },
     mode: "onChange",
   });
@@ -166,14 +175,41 @@ export default function CreateJobPage() {
       }
     };
 
+    const fetchTaxonomies = async () => {
+      try {
+        setLoadingTaxonomies(true);
+        const response = await TaxonomyService.getAllTaxonomies();
+        
+        if (response.isSuccess && response.result) {
+          setTaxonomies(response.result);
+        } else {
+          console.warn("Could not load taxonomies");
+          setTaxonomies([]);
+        }
+      } catch (error) {
+        console.warn("Error loading taxonomies:", error);
+        setTaxonomies([]);
+      } finally {
+        setLoadingTaxonomies(false);
+      }
+    };
+
     // Only fetch if user is authenticated, otherwise just set loading to false
     if (authState.isAuthenticated) {
       fetchHiringManagers();
+      fetchTaxonomies();
     } else {
       setLoadingHiringManagers(false);
+      setLoadingTaxonomies(false);
       setHiringManagers([]);
+      setTaxonomies([]);
     }
   }, [authState.isAuthenticated]);
+
+  // Đồng bộ selectedTaxonomies với form taxonomyIds
+  useEffect(() => {
+    setValueStep1("taxonomyIds", selectedTaxonomies);
+  }, [selectedTaxonomies, setValueStep1]);
 
   // Steps configuration
   const steps = [
@@ -186,9 +222,23 @@ export default function CreateJobPage() {
   const onStep1Submit = async (data: Step1FormData) => {
     console.log("Step 1 form submitted with data:", data);
     
+    // Cập nhật taxonomyIds từ selectedTaxonomies trước khi validate
+    data.taxonomyIds = selectedTaxonomies;
+    
     // Validate salary range
     if (!isNegotiableSalary && data.salaryMin && data.salaryMax && data.salaryMin >= data.salaryMax) {
       alert("Lương tối thiểu phải nhỏ hơn lương tối đa");
+      return;
+    }
+
+    // Validate taxonomies - kiểm tra selectedTaxonomies
+    if (selectedTaxonomies.length === 0) {
+      alert("Phải chọn ít nhất 1 kỹ năng");
+      return;
+    }
+
+    if (selectedTaxonomies.length > 5) {
+      alert("Chỉ được chọn tối đa 5 kỹ năng");
       return;
     }
 
@@ -288,6 +338,7 @@ export default function CreateJobPage() {
         jobType: jobData.jobType,
         openedAt: new Date(jobData.openedAt).toISOString(),
         expiredAt: new Date(jobData.expiredAt).toISOString(),
+        taxonomyIds: jobData.taxonomyIds || selectedTaxonomies || [], // Fallback to selectedTaxonomies hoặc empty array
         jobStages: jobStages.map(stage => ({
           stageNumber: stage.stageNumber,
           name: stage.name,
@@ -297,7 +348,7 @@ export default function CreateJobPage() {
 
       console.log("Creating job with data:", createRequest);
 
-      const response = await JobServices.createJob(createRequest);
+      const response = await JobServices.create(createRequest as any);
       
       if (response.isSuccess) {
         alert("Tạo tin tuyển dụng thành công!");
@@ -327,9 +378,10 @@ export default function CreateJobPage() {
   // Get job type label
   const getJobTypeLabel = (value: string) => {
     switch (value) {
-      case "0": return "Toàn thời gian";
-      case "1": return "Bán thời gian";
-      case "2": return "Làm từ xa";
+      case "FullTime": return "Toàn thời gian";
+      case "PartTime": return "Bán thời gian";
+      case "Remote": return "Làm từ xa";
+      case "Other": return "Khác";
       default: return "Không xác định";
     }
   };
@@ -388,9 +440,10 @@ export default function CreateJobPage() {
                           <SelectValue placeholder="Chọn loại công việc" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="0">Toàn thời gian</SelectItem>
-                          <SelectItem value="1">Bán thời gian</SelectItem>
-                          <SelectItem value="2">Làm từ xa</SelectItem>
+                          <SelectItem value="FullTime">Toàn thời gian</SelectItem>
+                          <SelectItem value="PartTime">Bán thời gian</SelectItem>
+                          <SelectItem value="Remote">Làm từ xa</SelectItem>
+                          <SelectItem value="Other">Khác</SelectItem>
                         </SelectContent>
                       </Select>
                       {errorsStep1.jobType && (
@@ -413,6 +466,50 @@ export default function CreateJobPage() {
                       {errorsStep1.experienceYear && (
                         <p className="text-sm text-red-500">{errorsStep1.experienceYear.message}</p>
                       )}
+                    </div>
+
+                    {/* Taxonomies/Skills */}
+                    <div className="space-y-3">
+                      <Label className="text-base font-medium text-gray-700">Kỹ năng yêu cầu (1-5 kỹ năng) *</Label>
+                      {loadingTaxonomies ? (
+                        <div className="text-sm text-gray-500">Đang tải danh sách kỹ năng...</div>
+                      ) : (
+                        <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto border-2 border-gray-300 rounded-lg p-3">
+                          {taxonomies.map((taxonomy) => (
+                            <label key={taxonomy.id} className="flex items-center space-x-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={selectedTaxonomies.includes(taxonomy.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    if (selectedTaxonomies.length < 5) {
+                                      const newTaxonomies = [...selectedTaxonomies, taxonomy.id];
+                                      setSelectedTaxonomies(newTaxonomies);
+                                      setValueStep1("taxonomyIds", newTaxonomies);
+                                    }
+                                  } else {
+                                    const newTaxonomies = selectedTaxonomies.filter(id => id !== taxonomy.id);
+                                    setSelectedTaxonomies(newTaxonomies);
+                                    setValueStep1("taxonomyIds", newTaxonomies);
+                                  }
+                                }}
+                                disabled={!selectedTaxonomies.includes(taxonomy.id) && selectedTaxonomies.length >= 5}
+                                className="rounded border-gray-300"
+                              />
+                              <span className="text-sm">{taxonomy.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                      {selectedTaxonomies.length === 0 && (
+                        <p className="text-sm text-red-500">Phải chọn ít nhất 1 kỹ năng</p>
+                      )}
+                      {selectedTaxonomies.length >= 5 && (
+                        <p className="text-sm text-orange-500">Đã chọn tối đa 5 kỹ năng</p>
+                      )}
+                      <div className="text-sm text-gray-500">
+                        Đã chọn: {selectedTaxonomies.length}/5 kỹ năng
+                      </div>
                     </div>
 
                     {/* Opened Date */}
@@ -690,6 +787,24 @@ export default function CreateJobPage() {
                   <div className="space-y-3">
                     <Label className="text-base font-medium text-gray-700">Kinh nghiệm:</Label>
                     <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">{jobData.experienceYear} năm</p>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium text-gray-700">Kỹ năng yêu cầu:</Label>
+                    <div className="bg-gray-50 p-3 rounded">
+                      <div className="flex flex-wrap gap-2">
+                        {(selectedTaxonomies || []).map((taxonomyId) => {
+                          const taxonomy = taxonomies.find(t => t.id === taxonomyId);
+                          return (
+                            <span key={taxonomyId} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                              {taxonomy?.name || `ID: ${taxonomyId}`}
+                            </span>
+                          );
+                        })}
+                        {selectedTaxonomies.length === 0 && (
+                          <span className="text-gray-500 text-sm">Chưa chọn kỹ năng</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <div className="space-y-3">
                     <Label className="text-base font-medium text-gray-700">Mức lương:</Label>
