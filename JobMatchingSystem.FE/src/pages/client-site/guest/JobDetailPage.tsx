@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { toast } from "sonner";
-import { format, differenceInDays } from "date-fns";
+import { format } from "date-fns";
 import {
   MapPin,
   DollarSign,
@@ -21,10 +21,8 @@ import {
 // Components
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 
 // Services & Models
 import { JobServices } from "@/services/job.service";
@@ -49,15 +47,15 @@ export default function JobDetailPage() {
     return `${baseUrl}${path}`;
   };
 
-  const getDaysRemaining = (expiredAt?: string): number | null => {
-    if (!expiredAt) return null;
-    const expiredDate = new Date(expiredAt);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    expiredDate.setHours(0, 0, 0, 0);
-    const days = differenceInDays(expiredDate, today);
-    return days >= 0 ? days : null;
-  };
+  // const getDaysRemaining = (expiredAt?: string): number | null => {
+  //   if (!expiredAt) return null;
+  //   const expiredDate = new Date(expiredAt);
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0);
+  //   expiredDate.setHours(0, 0, 0, 0);
+  //   const days = differenceInDays(expiredDate, today);
+  //   return days >= 0 ? days : null;
+  // };
 
   useEffect(() => {
     const fetchJobData = async () => {

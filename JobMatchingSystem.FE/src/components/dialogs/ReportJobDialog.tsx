@@ -20,9 +20,7 @@ import {
 } from "@/components/ui/select";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-
-// Import types từ service để đảm bảo consistency
-import { ReportType, CreateReportRequest } from "@/models/report";
+import { ReportItem, ReportType } from "@/models/report";
 
 // Define available report types
 const reportTypes: ReportType[] = [
@@ -51,7 +49,7 @@ interface ReportJobDialogProps {
   onOpenChange: (open: boolean) => void;
   jobId: number;
   jobTitle: string;
-  onSubmitReport: (reportData: CreateReportRequest) => Promise<void>;
+  onSubmitReport: (reportData: Pick<ReportItem, 'jobId' | 'subject' | 'reason'>) => Promise<void>;
 }
 
 export function ReportJobDialog({
@@ -92,7 +90,7 @@ export function ReportJobDialog({
     try {
       setIsLoading(true);
 
-      const reportRequest: CreateReportRequest = {
+      const reportRequest: Pick<ReportItem, 'jobId' | 'subject' | 'reason'> = {
         jobId,
         subject: data.subject as ReportType,
         reason: data.reason.trim()

@@ -19,7 +19,7 @@ import {
 import { toast } from "sonner";
 import { CalendarIcon, X, BadgeCheck, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utilsCommon";
 import { useDisableBodyScroll } from "@/hooks/useDisableBodyScroll";
 
 // Zod schema definition

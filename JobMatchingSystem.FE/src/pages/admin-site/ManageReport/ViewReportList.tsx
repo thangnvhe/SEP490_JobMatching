@@ -32,7 +32,8 @@ import { DataTable } from "@/components/ui/data-table";
 import { ReportService } from "@/services/report.service";
 import { JobServices } from "@/services/job.service";
 import { UserServices } from "@/services/user.service";
-import { type ReportItem } from "@/models/report";
+import { ReportItem, ReportStatus } from "@/models/report";
+import { PageInfo, PaginationParamsInput } from "@/models/base";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 
@@ -43,21 +44,31 @@ export default function ViewReportList() {
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [keyword, setKeyword] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   
-  // Pagination state - server-side
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
+  // Pagination state
+  const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
+    currentPage: 1,
+    pageSize: 10,
+    totalItem: 0,
+    totalPage: 0,
+    hasPreviousPage: false,
+    hasNextPage: false,
+    sortBy: '',
+    isDecending: false,
+  });
+  const [paginationInput, setPaginationInput] = useState<PaginationParamsInput>({
+    page: 1,
+    size: 10,
+    search: '',
+    sortBy: '',
+    isDescending: false,
+  });
   
-  // Sort state
-  const [sortBy, setSortBy] = useState('');
-  const [isDescending, setIsDescending] = useState(false);
-  
-  const debouncedKeyword = useDebounce(keyword, 700);
   const pageSizeOptions = [5, 10, 20, 50];
+  const debouncedKeyword = useDebounce(keyword, 700);
 
   // Function to enrich reports with job and user data
   const enrichReportsData = async (reports: ReportItem[]): Promise<ReportItem[]> => {
@@ -67,7 +78,7 @@ export default function ViewReportList() {
         
         // Fetch job title
         try {
-          const jobResponse = await JobServices.getJobById(report.jobId.toString());
+          const jobResponse = await JobServices.getById(report.jobId.toString());
           if (jobResponse.isSuccess && jobResponse.result) {
             enrichedReport.jobTitle = jobResponse.result.title;
           }
@@ -94,119 +105,78 @@ export default function ViewReportList() {
   };
 
   // Fetch reports with server-side pagination and filtering
-  const getAllReports = useCallback(async () => {
+  const getAllWithPagination = useCallback(async (params: PaginationParamsInput) => {
     try {
       setLoading(true);
       setError(null);
       
-      // Chuẩn bị parameters cho API
-      const params: any = {
-        page: currentPage,
-        size: pageSize,
-        search: debouncedKeyword,
-        sortBy: sortBy,
-        isDescending: isDescending
-      };
-      
-      // Thêm status filter nếu có
-      if (statusFilter !== 'all') {
-        params.status = statusFilter;
+      // Thêm status filter vào params nếu có
+      const requestParams = { ...params };
+      if (statusFilter) {
+        requestParams.status = statusFilter;
       }
       
-      console.log('API Request params:', params);
+      const response = await ReportService.getAllWithPagination(requestParams);
       
-      // Add timeout để tránh hang
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout after 30 seconds')), 30000)
-      );
-      
-      const apiPromise = ReportService.getReportsWithPagination(params);
-      
-      const response = await Promise.race([apiPromise, timeoutPromise]) as any;
-      
-      console.log('API Response:', response);
-      
-      if (response.isSuccess && response.result) {
-        let reportsData: ReportItem[] = [];
-        
-        // Kiểm tra nếu response có structure paginated với items và pageInfo
-        if (response.result.items && response.result.pageInfo) {
-          console.log('Using paginated structure:', response.result);
-          reportsData = response.result.items || [];
-          setTotalItems(response.result.pageInfo.totalItem || 0);
-        } 
-        // Nếu response.result là array trực tiếp (không phân trang)
-        else if (Array.isArray(response.result)) {
-          console.log('Using direct array:', response.result.length, 'items');
-          reportsData = response.result;
-          setTotalItems(response.result.length);
-        } 
-        else {
-          console.log('Single object or unknown structure:', response.result);
-          reportsData = [response.result];
-          setTotalItems(1);
-        }
-        
-        // Enrich reports data with job and user information
-        const enrichedReports = await enrichReportsData(reportsData);
-        setReports(enrichedReports);
-      } else {
-        setError(response.errorMessages?.[0] || "Không thể tải danh sách báo cáo");
-        setReports([]);
-        setTotalItems(0);
-      }
+      // Enrich reports data with job and user information
+      const enrichedReports = await enrichReportsData(response.result.items);
+      setReports(enrichedReports);
+      setPaginationInfo(response.result.pageInfo);
     } catch (err: any) {
       console.error("Error fetching reports:", err);
-      if (err.message?.includes('timeout')) {
-        setError("Tải dữ liệu quá lâu - có thể do server đang xử lý nhiều dữ liệu. Vui lòng thử lại!");
-      } else {
-        setError(err.message || "Lỗi khi tải dữ liệu báo cáo");
-      }
+      setError(err.response?.data?.message || "Lỗi khi tải dữ liệu báo cáo");
       setReports([]);
-      setTotalItems(0);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, debouncedKeyword, statusFilter, sortBy, isDescending]);
+  }, [statusFilter]);
 
   // Load reports on component mount and when dependencies change
   useEffect(() => {
-    getAllReports();
-  }, [getAllReports]);
+    const params = {
+      ...paginationInput,
+      search: debouncedKeyword,
+    };
+    getAllWithPagination(params);
+  }, [getAllWithPagination, debouncedKeyword, paginationInput]);
 
   // Handler functions
   const handleRefresh = () => {
-    getAllReports();
+    getAllWithPagination(paginationInput);
   };
 
   const handleSortingChange = (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
     const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(sorting) : updaterOrValue;
     setSorting(newSorting);
-    
-    // Convert sorting to backend format
-    if (newSorting.length > 0) {
-      const sortConfig = newSorting[0];
-      setSortBy(sortConfig.id);
-      setIsDescending(sortConfig.desc);
-    } else {
-      setSortBy('');
-      setIsDescending(false);
-    }
-    setCurrentPage(1); // Reset to first page when sorting
+    setPaginationInput(prev => {
+      if (!newSorting.length) {
+        return {
+          ...prev,
+          sortBy: undefined,
+          isDescending: undefined,
+        };
+      }
+
+      const sort = newSorting[0];
+      return {
+        ...prev,
+        sortBy: sort.id,
+        isDescending: !!sort.desc,
+      };
+    });
   };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    setPaginationInput(prev => ({ ...prev, page }));
   };
 
   const handlePageSizeChange = (size: string) => {
-    setPageSize(parseInt(size));
-    setCurrentPage(1);
+    setPaginationInput(prev => ({ ...prev, size: parseInt(size), page: 1 }));
   };
 
   const handleStatusFilterChange = (status: string) => {
-    setStatusFilter(status);
-    setCurrentPage(1);
+    setStatusFilter(status === 'all' ? undefined : status);
+    setPaginationInput(prev => ({ ...prev, page: 1 }));
   };
 
   const handleView = (report: ReportItem) => {
@@ -216,9 +186,12 @@ export default function ViewReportList() {
 
   const handleApprove = async (reportId: number) => {
     try {
-      const response = await ReportService.updateReportStatus(reportId, "Approved", "Báo cáo được chấp nhận");
+      const response = await ReportService.updateReportCensor(reportId, {
+        status: ReportStatus.Approved,
+        note: "Báo cáo được chấp nhận"
+      });
       if (response.isSuccess) {
-        getAllReports(); // Refresh data
+        getAllWithPagination(paginationInput); // Refresh data
       } else {
         console.error("Failed to approve report:", response.errorMessages);
       }
@@ -229,9 +202,12 @@ export default function ViewReportList() {
 
   const handleReject = async (reportId: number) => {
     try {
-      const response = await ReportService.updateReportStatus(reportId, "Rejected", "Báo cáo bị từ chối");
+      const response = await ReportService.updateReportCensor(reportId, {
+        status: ReportStatus.Rejected,
+        note: "Báo cáo bị từ chối"
+      });
       if (response.isSuccess) {
-        getAllReports(); // Refresh data
+        getAllWithPagination(paginationInput); // Refresh data
       } else {
         console.error("Failed to reject report:", response.errorMessages);
       }
@@ -241,42 +217,42 @@ export default function ViewReportList() {
   };
 
   // Helper functions
-  const getStatusBadgeColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'pending':
+  const getStatusBadgeColor = (status: ReportStatus) => {
+    switch (status) {
+      case ReportStatus.Pending:
         return 'bg-yellow-100 text-yellow-800';
-      case 'approved':
+      case ReportStatus.Approved:
         return 'bg-green-100 text-green-800';
-      case 'rejected':
+      case ReportStatus.Rejected:
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'pending':
+  const getStatusIcon = (status: ReportStatus) => {
+    switch (status) {
+      case ReportStatus.Pending:
         return <Clock className="h-3 w-3 mr-1" />;
-      case 'approved':
+      case ReportStatus.Approved:
         return <CheckCircle className="h-3 w-3 mr-1" />;
-      case 'rejected':
+      case ReportStatus.Rejected:
         return <XCircle className="h-3 w-3 mr-1" />;
       default:
         return null;
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'pending':
+  const getStatusLabel = (status: ReportStatus) => {
+    switch (status) {
+      case ReportStatus.Pending:
         return 'Đang chờ xử lý';
-      case 'approved':
+      case ReportStatus.Approved:
         return 'Đã chấp nhận';
-      case 'rejected':
+      case ReportStatus.Rejected:
         return 'Đã từ chối';
       default:
-        return status;
+        return 'Không xác định';
     }
   };
 
@@ -306,14 +282,6 @@ export default function ViewReportList() {
     }
   };
 
-  // Calculate pagination (server-side)
-  const totalPages = totalItems > 0 ? Math.ceil(totalItems / pageSize) : 1;
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = Math.min(startIndex + reports.length, totalItems);
-  const displayedTotalItems = totalItems;
-  
-  // Đảm bảo currentPage không vượt quá totalPages
-  const safePage = Math.min(currentPage, totalPages);
 
   // Define columns
   const columns = useMemo<ColumnDef<ReportItem>[]>(() => [
@@ -322,7 +290,7 @@ export default function ViewReportList() {
       header: "STT",
       cell: ({ row }) => {
         const index = row.index;
-        return (currentPage - 1) * pageSize + index + 1;
+        return (paginationInfo.currentPage - 1) * paginationInfo.pageSize + index + 1;
       },
       enableSorting: false,
     },
@@ -389,7 +357,7 @@ export default function ViewReportList() {
       accessorKey: "status",
       header: "Trạng thái",
       cell: ({ row }) => {
-        const status = row.getValue("status") as string;
+        const status = row.getValue("status") as ReportStatus;
         return (
           <Badge className={getStatusBadgeColor(status)}>
             {getStatusIcon(status)}
@@ -404,7 +372,7 @@ export default function ViewReportList() {
       header: "Thao tác",
       cell: ({ row }) => {
         const report = row.original;
-        const isPending = report.status.toLowerCase() === 'pending';
+        const isPending = report.status === ReportStatus.Pending;
         
         return (
           <div className="flex items-center space-x-1">
@@ -445,10 +413,14 @@ export default function ViewReportList() {
       },
       enableSorting: false,
     },
-  ], [currentPage, pageSize]);
+  ], [paginationInfo]);
 
   return (
     <div className="p-6 space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight">Quản lý báo cáo</h1>
+        <p className="text-muted-foreground">Theo dõi, xử lý và quản lý các báo cáo từ người dùng về công việc</p>
+      </div>
       {/* Search and Actions */}
       <Card>
         <CardHeader>
@@ -460,15 +432,15 @@ export default function ViewReportList() {
                 onChange={(e) => setKeyword(e.target.value)}
                 className="w-80"
               />
-              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+              <Select value={statusFilter || 'all'} onValueChange={handleStatusFilterChange}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Lọc theo trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                  <SelectItem value="Pending">Đang chờ xử lý</SelectItem>
-                  <SelectItem value="Approved">Đã chấp nhận</SelectItem>
-                  <SelectItem value="Rejected">Đã từ chối</SelectItem>
+                  <SelectItem value={ReportStatus.Pending.toString()}>Đang chờ xử lý</SelectItem>
+                  <SelectItem value={ReportStatus.Approved.toString()}>Đã chấp nhận</SelectItem>
+                  <SelectItem value={ReportStatus.Rejected.toString()}>Đã từ chối</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -513,16 +485,16 @@ export default function ViewReportList() {
           )}
           
           {/* Pagination */}
-          {!error && totalItems > 0 && (
+          {!error && paginationInfo && paginationInfo.totalItem > 0 && (
             <div className="flex items-center justify-between mt-4 gap-6">
               <div className="text-sm text-muted-foreground">
-                Hiển thị {startIndex + 1} - {endIndex} của {displayedTotalItems} kết quả
+                Hiển thị {(paginationInfo.currentPage - 1) * paginationInfo.pageSize + 1} - {Math.min(paginationInfo.currentPage * paginationInfo.pageSize, paginationInfo.totalItem)} của {paginationInfo.totalItem} kết quả
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-3">
                   <p className="text-sm font-medium">Dòng trên trang</p>
                   <Select
-                    value={pageSize.toString()}
+                    value={paginationInfo.pageSize.toString()}
                     onValueChange={handlePageSizeChange}
                   >
                     <SelectTrigger className="h-8 w-[70px]">
@@ -540,14 +512,14 @@ export default function ViewReportList() {
 
                 <div className="flex items-center gap-3">
                   <div className="text-sm font-medium">
-                    Trang {safePage} trên {totalPages || 1}
+                    Trang {paginationInfo.currentPage} trên {paginationInfo.totalPage}
                   </div>
                   <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(1)}
-                      disabled={safePage === 1 || loading}
+                      disabled={paginationInfo.currentPage === 1 || loading}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronsLeft />
@@ -555,8 +527,8 @@ export default function ViewReportList() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handlePageChange(safePage - 1)}
-                      disabled={safePage === 1 || loading}
+                      onClick={() => handlePageChange(paginationInfo.currentPage - 1)}
+                      disabled={paginationInfo.currentPage === 1 || loading}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronLeft />
@@ -564,8 +536,8 @@ export default function ViewReportList() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handlePageChange(safePage + 1)}
-                      disabled={safePage >= totalPages || loading}
+                      onClick={() => handlePageChange(paginationInfo.currentPage + 1)}
+                      disabled={paginationInfo.currentPage >= paginationInfo.totalPage || loading}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronRight />
@@ -573,8 +545,8 @@ export default function ViewReportList() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handlePageChange(totalPages)}
-                      disabled={safePage >= totalPages || loading}
+                      onClick={() => handlePageChange(paginationInfo.totalPage)}
+                      disabled={paginationInfo.currentPage >= paginationInfo.totalPage || loading}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronsRight />
@@ -710,7 +682,7 @@ export default function ViewReportList() {
               </div>
               
               {/* Action buttons for pending reports */}
-              {selectedReport.status.toLowerCase() === 'pending' && (
+              {selectedReport.status === ReportStatus.Pending && (
                 <div className="flex justify-end space-x-2 mt-6 pt-4 border-t">
                   <Button
                     onClick={() => {

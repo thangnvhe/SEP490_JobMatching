@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { JWTUtils } from "@/utils/jwtUtils";
+import { JWTUtils } from "@/lib/utils/jwtUtils";
 import axiosInstance from "@/interceptor/axiosInterceptor.old";
 import type { BaseResponse } from "@/models/base";
 import Cookies from "js-cookie";
