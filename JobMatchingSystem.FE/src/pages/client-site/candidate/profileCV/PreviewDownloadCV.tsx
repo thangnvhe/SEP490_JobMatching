@@ -28,7 +28,7 @@ import { CVAchievementServices } from "@/services/cv-achievement.service";
 import { TemplateCv } from "@/models/template-cv";
 
 // Helper
-import { API_BASE_URL } from "../../../env";
+import { API_BASE_URL } from "../../../../../env";
 import { generateCVHtml, CVDataCollection } from "@/lib/utils/cv-template-helper";
 
 // Mock Colors data (Client-side UI only for now)
