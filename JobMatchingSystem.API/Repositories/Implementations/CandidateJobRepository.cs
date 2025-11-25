@@ -39,6 +39,36 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             return await query.ToListAsync();
         }
 
+        public async Task<List<CandidateJob>> GetByUserIdAsync(int userId, string status, string sortBy, bool isDescending)
+        {
+            IQueryable<CandidateJob> query = _context.CandidateJobs
+                .Include(c => c.Job)
+                .Include(c => c.CandidateCV)
+                .Where(c => c.CandidateCV != null && c.CandidateCV.UserId == userId);
+            
+            if (!string.IsNullOrEmpty(status))
+            {
+                if (Enum.TryParse<CandidateJobStatus>(status, true, out var statusEnum))
+                {
+                    query = query.Where(u => u.Status == statusEnum);
+                }
+            }
+            
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                query = isDescending
+                    ? query.OrderByDescending(x => EF.Property<object>(x, sortBy))
+                    : query.OrderBy(x => EF.Property<object>(x, sortBy));
+            }
+            else
+            {
+                // Default sort by AppliedAt descending (newest first)
+                query = query.OrderByDescending(x => x.AppliedAt);
+            }
+            
+            return await query.ToListAsync();
+        }
+
         public Task<List<CandidateJob>> GetByCandidateIdAsync(int candidateid)
         {
             throw new NotImplementedException();

@@ -86,6 +86,29 @@ namespace JobMatchingSystem.API.Services.Implementations
             };
         }
 
+        public async Task<PagedResult<CandidateJobDTO>> GetAllByUserId(int userId, int page = 1, int size = 10, string status = "", string sortBy = "", bool isDescending = false)
+        {
+            var listCandidateJob = await _unitOfWork.CandidateJobRepository.GetByUserIdAsync(userId, status, sortBy, isDescending);
+            if (listCandidateJob == null || !listCandidateJob.Any())
+            {
+                return new PagedResult<CandidateJobDTO>
+                {
+                    Items = new List<CandidateJobDTO>(),
+                    pageInfo = new PageInfo(0, page, size, sortBy, isDescending)
+                };
+            }
+            var data = listCandidateJob
+               .Skip((page - 1) * size)
+               .Take(size)
+               .ToList();
+            var candidateJobDto = _mapper.Map<List<CandidateJobDTO>>(data);
+            return new PagedResult<CandidateJobDTO>
+            {
+                Items = candidateJobDto,
+                pageInfo = new PageInfo(listCandidateJob.Count, page, size, sortBy, isDescending)
+            };
+        }
+
         public async Task<CandidateJobDTO> GetDetailById(int id)
         {
             var candidateJob = await _unitOfWork.CandidateJobRepository.GetDetail(id);
