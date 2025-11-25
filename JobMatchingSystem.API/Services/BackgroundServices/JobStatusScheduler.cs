@@ -58,7 +58,7 @@ namespace JobMatchingSystem.API.Services.BackgroundServices
                 }
 
                 // chạy lại sau mỗi 5 phút (hoặc tùy chỉnh)
-                await Task.Delay(TimeSpan.FromMinutes(360), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(60), stoppingToken);
             }
         }
     }

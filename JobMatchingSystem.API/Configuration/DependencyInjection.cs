@@ -67,6 +67,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddHostedService<JobStatusScheduler>();
             services.AddHostedService<SePaySyncService>();
             services.AddHostedService<MonthlyQuotaResetService>();
+            services.AddHostedService<OrderTimeoutService>();
             services.AddScoped<ICandidateTaxonomyService, CandidateTaxonomyService>();
             services.AddScoped<IJobTaxonomyService, JobTaxonomyService>();
             services.AddScoped<IServicePlanService, ServicePlanService>();
