@@ -89,14 +89,14 @@ const HomePage = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="max-w-2xl">
               <Badge variant="secondary" className="mb-6 px-4 py-2 text-emerald-700 bg-emerald-100 hover:bg-emerald-200 transition-colors">
-                <span className="mr-2">🚀</span> #1 Job Board for Hiring
+                <span className="mr-2">🚀</span> #1 Bảng Việc Làm Hàng Đầu
               </Badge>
               <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 mb-6 leading-tight tracking-tight">
-                Find Your <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-teal-600">Dream Job</span> <br />
-                Today!
+                Tìm <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-teal-600">Công Việc Mơ Ước</span> <br />
+                Của Bạn Ngay Hôm Nay!
               </h1>
               <p className="text-xl text-slate-600 mb-10 leading-relaxed max-w-lg">
-                Connect with thousands of employers and find the perfect opportunity that matches your skills and aspirations.
+                Kết nối với hàng nghìn nhà tuyển dụng và tìm cơ hội hoàn hảo phù hợp với kỹ năng và nguyện vọng của bạn.
               </p>
 
               <div className="pt-8 relative max-w-4xl mx-auto mb-8">
@@ -107,7 +107,7 @@ const HomePage = () => {
                     <Search className="h-5 w-5 text-gray-400 shrink-0 ml-2" />
                     <Input
                       type="text"
-                      placeholder="Job title, keywords..."
+                      placeholder="Tên công việc, từ khóa..."
                       className="border-0 shadow-none focus-visible:ring-0 text-base h-12 bg-transparent placeholder:text-gray-400 flex-1"
                     />
                   </div>
@@ -116,15 +116,15 @@ const HomePage = () => {
                   <Button
                     className="w-full md:w-auto rounded-xl px-8 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base shadow-md hover:shadow-lg transition-all"
                   >
-                    Search Jobs
+                    Tìm Kiếm Việc Làm
                   </Button>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 text-sm text-slate-500">
-                <span className="font-medium">Popular:</span>
+                <span className="font-medium">Phổ biến:</span>
                 <div className="flex flex-wrap gap-2">
-                  {['Designer', 'Developer', 'Manager'].map((tag) => (
+                  {['Thiết Kế', 'Lập Trình', 'Quản Lý'].map((tag) => (
                     <Badge key={tag} variant="outline" className="cursor-pointer hover:bg-white hover:border-emerald-200 transition-all">
                       {tag}
                     </Badge>
@@ -137,7 +137,7 @@ const HomePage = () => {
               <div className="absolute -inset-4 bg-linear-to-r from-emerald-100 to-teal-100 rounded-full blur-3xl opacity-30 animate-pulse" />
               <img
                 src="/banner-img-1.png"
-                alt="Job search illustration"
+                alt="Minh họa tìm kiếm việc làm"
                 className="relative w-full h-auto drop-shadow-2xl hover:scale-[1.01] transition-transform duration-500"
               />
             </div>
@@ -180,13 +180,13 @@ const HomePage = () => {
           <div className="flex justify-between items-end mb-12">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">
-                Explore by Category
+                Khám Phá Theo Danh Mục
               </h2>
               <p className="text-lg text-slate-600">
-                Find the perfect role based on your expertise
+                Tìm vị trí phù hợp dựa trên chuyên môn của bạn
               </p>
             </div>
-            <Button variant="outline" className="hidden md:flex hover:text-emerald-600 hover:border-emerald-200">View All Categories</Button>
+            <Button variant="outline" className="hidden md:flex hover:text-emerald-600 hover:border-emerald-200">Xem Tất Cả Danh Mục</Button>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
@@ -204,7 +204,7 @@ const HomePage = () => {
                     <h3 className="text-lg font-bold text-slate-800 group-hover:text-emerald-600 transition-colors">
                       {category.name}
                     </h3>
-                    <p className="text-sm text-slate-500 mt-1">100+ Jobs</p>
+                    <p className="text-sm text-slate-500 mt-1">100+ Việc Làm</p>
                   </CardContent>
                 </Card>
               );
@@ -221,14 +221,14 @@ const HomePage = () => {
             <div className="inline-flex items-center gap-2 mb-4">
               <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-0 px-4 py-1.5">
                 <Star className="h-3.5 w-3.5 mr-1.5 fill-emerald-600" />
-                Featured Jobs
+                Việc Làm Nổi Bật
               </Badge>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-              Latest Job Opportunities
+              Cơ Hội Việc Làm Mới Nhất
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Hand-picked jobs just for you. Find the one that matches your skills and passion.
+              Những công việc được chọn lọc dành riêng cho bạn. Tìm công việc phù hợp với kỹ năng và đam mê của bạn.
             </p>
           </div>
 
@@ -266,7 +266,7 @@ const HomePage = () => {
                           <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600 mb-3">
                             <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg">
                               <Building2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                              <span className="font-medium">Tech Company</span>
+                              <span className="font-medium">Công Ty Công Nghệ</span>
                             </span>
                             <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg max-w-full">
                               <MapPin className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
@@ -306,13 +306,13 @@ const HomePage = () => {
                             className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-0 font-semibold px-3 py-1"
                           >
                             <DollarSign className="h-3.5 w-3.5 mr-1.5" />
-                            Negotiable
+                            Thỏa Thuận
                           </Badge>
                         )}
                         {job.experienceYear ? (
                           <Badge variant="outline" className="border-emerald-200 text-slate-700 px-3 py-1">
                             <Award className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
-                            {job.experienceYear}+ Years
+                            {job.experienceYear}+ Năm
                           </Badge>
                         ) : (
                           <div className="w-0 h-0" />
@@ -334,7 +334,7 @@ const HomePage = () => {
                             ))}
                             {job.taxonomies.length > 3 && (
                               <Badge variant="outline" className="border-slate-200 text-slate-500 px-2.5 py-0.5">
-                                +{job.taxonomies.length - 3} more
+                                +{job.taxonomies.length - 3} thêm
                               </Badge>
                             )}
                           </>
@@ -347,13 +347,13 @@ const HomePage = () => {
                       <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-auto">
                         <div className="flex items-center gap-2 text-xs text-slate-500">
                           <Calendar className="h-3.5 w-3.5 shrink-0" />
-                          <span>Posted {new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          <span>Đăng vào {new Date(job.createdAt).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                         </div>
                         <Button 
                           size="sm" 
                           className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 h-8 text-sm font-semibold shadow-sm shadow-emerald-600/20 shrink-0"
                         >
-                          Apply Now
+                          Ứng Tuyển Ngay
                           <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
                         </Button>
                       </div>
@@ -371,7 +371,7 @@ const HomePage = () => {
               className="  hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-800 px-8 h-12 text-base font-semibold shadow-sm"
               onClick={() => navigate('/jobs')}
             >
-              View All Jobs
+              Xem Tất Cả Việc Làm
             </Button>
           </div>
         </div>
@@ -382,10 +382,10 @@ const HomePage = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-              Top Hiring Companies
+              Các Công Ty Tuyển Dụng Hàng Đầu
             </h2>
             <p className="text-lg text-slate-600">
-              Work with the best global companies
+              Làm việc với các công ty toàn cầu tốt nhất
             </p>
           </div>
 
@@ -409,22 +409,22 @@ const HomePage = () => {
                   </h3>
                   <div className="flex items-center gap-1 text-sm text-slate-500 mb-4">
                     <MapPin className="h-3.5 w-3.5" />
-                    <span className="truncate max-w-[180px]">{shortenAddress(company.address) || 'Headquarters'}</span>
+                    <span className="truncate max-w-[180px]">{shortenAddress(company.address) || 'Trụ Sở Chính'}</span>
                   </div>
 
                   <div className="w-full grid grid-cols-2 gap-2 mb-6 text-center">
                     <div className="bg-slate-50 p-2 rounded-lg">
-                      <div className="text-xs text-slate-500">Open Jobs</div>
+                      <div className="text-xs text-slate-500">Việc Làm Đang Mở</div>
                       <div className="font-semibold text-emerald-600">3</div>
                     </div>
                     <div className="bg-slate-50 p-2 rounded-lg">
-                      <div className="text-xs text-slate-500">Rating</div>
+                      <div className="text-xs text-slate-500">Đánh Giá</div>
                       <div className="font-semibold text-yellow-500">4.5</div>
                     </div>
                   </div>
 
                   <Button className="w-full bg-emerald-600 text-white hover:bg-emerald-700 transition-colors rounded-xl">
-                    View Profile
+                    Xem Hồ Sơ
                   </Button>
                 </CardContent>
               </Card>

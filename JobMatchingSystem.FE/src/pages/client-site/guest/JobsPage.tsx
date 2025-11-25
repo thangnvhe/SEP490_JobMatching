@@ -58,7 +58,7 @@ export default function JobsPage() {
     experienceYearMin: null,
     experienceYearMax: null,
     jobType: null,
-    status: null,
+    status: 3,
     companyId: null,
     recruiterId: null,
     isDeleted: null,
