@@ -8,7 +8,7 @@ import {
   Loader2
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utilsCommon";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,7 +29,7 @@ import { TemplateCv } from "@/models/template-cv";
 
 // Helper
 import { API_BASE_URL } from "../../../env";
-import { generateCVHtml, CVDataCollection } from "@/utils/cv-template-helper";
+import { generateCVHtml, CVDataCollection } from "@/lib/utils/cv-template-helper";
 
 // Mock Colors data (Client-side UI only for now)
 const COLORS = [

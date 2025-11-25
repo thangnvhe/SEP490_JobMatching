@@ -5,7 +5,7 @@ import { CVExperience } from "@/models/cv-experience";
 import { CVProject } from "@/models/cv-project";
 import { CVCertificate } from "@/models/cv-certificate";
 import { CVAchievement } from "@/models/cv-achievement";
-import { API_BASE_URL } from "../../env";
+import { API_BASE_URL } from "../../../env";
 
 // ==========================================
 // INTERFACES

@@ -27,7 +27,7 @@ import { ForgotPasswordDialog } from "@/pages/client-site/auth/ForgotPasswordDia
 import { JobServices } from "@/services/job.service";
 import { CompanyServices } from "@/services/company.service";
 import { TaxonomyService } from "@/services/taxonomy.service";
-import { shortenAddress } from "@/utils/addressUtils";
+import { shortenAddress } from "@/lib/utils/addressUtils";
 import type { Job } from "@/models/job";
 import type { Company } from "@/models/company";
 import type { Taxonomy } from "@/models/taxonomy";

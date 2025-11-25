@@ -23,7 +23,7 @@ import { Job } from "@/models/job";
 import { Company } from "@/models/company";
 import { Skeleton } from "@/components/ui/skeleton";
 import { API_BASE_URL } from "../../../../env";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utilsCommon";
 
 interface JobListProps {
     jobs: Job[];

@@ -10,7 +10,7 @@ const axiosInstance = axios.create({
     timeoutErrorMessage: "Request timeout",
     headers: {
         Accept: "*/*",
-        "Content-Type": "application/json",
+        // "Content-Type": "application/json",
     },
     withCredentials: true,
 });

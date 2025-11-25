@@ -58,13 +58,13 @@ import { CVExperienceServices } from "@/services/cv-experience.service";
 import { CVProjectServices } from "@/services/cv-project.service";
 import { UserServices } from "@/services/user.service";
 import { DialogCVInformation } from "./EditInformation/DialogCVInformation";
-import type { User } from "@/models/user";
-
-import type { CVAchievement } from "@/models/cv-achievement";
-import type { CVCertificate } from "@/models/cv-certificate";
-import { type CVEducation, DegreeType } from "@/models/cv-education";
-import type { CVExperience } from "@/models/cv-experience";
-import type { CVProject } from "@/models/cv-project";
+import { User } from "@/models/user";
+import { getImageUrl } from "@/lib/utilsCommon";
+import { CVAchievement } from "@/models/cv-achievement";
+import { CVCertificate } from "@/models/cv-certificate";
+import { CVEducation, DegreeType } from "@/models/cv-education";
+import { CVExperience } from "@/models/cv-experience";
+import { CVProject } from "@/models/cv-project";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -105,7 +105,7 @@ const ProfileCvPage = () => {
     const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
     const [projects, setProjects] = useState<CVProject[]>([]);
     const [selectedProject, setSelectedProject] = useState<CVProject | null>(null);
-    
+
     const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
     const [userProfile, setUserProfile] = useState<User | null>(null);
 
@@ -213,6 +213,7 @@ const ProfileCvPage = () => {
         try {
             const response = await UserServices.getUserProfile();
             setUserProfile(response.result);
+            console.log(response.result);
         } catch (error) {
             console.error("Failed to fetch user profile", error);
         }
@@ -545,31 +546,31 @@ const ProfileCvPage = () => {
     // but we will focus on the linear bar as requested.
     const completionDegree = (profileCompletion / 100) * 360;
 
-    const contactDetails = [
-        { 
-            icon: Mail, 
-            value: userProfile?.email || "Chưa cập nhật", 
-            label: "Email" 
+    const userSection = [
+        {
+            icon: Mail,
+            value: userProfile?.email || "Chưa cập nhật",
+            label: "Email"
         },
-        { 
-            icon: Phone, 
-            value: userProfile?.phoneNumber || "Chưa cập nhật", 
-            label: "Phone" 
+        {
+            icon: Phone,
+            value: userProfile?.phoneNumber || "Chưa cập nhật",
+            label: "Phone"
         },
-        { 
-            icon: Calendar, 
-            value: userProfile?.birthday ? format(new Date(userProfile.birthday), "dd/MM/yyyy") : "Chưa cập nhật", 
-            label: "DOB" 
+        {
+            icon: Calendar,
+            value: userProfile?.birthday ? format(new Date(userProfile.birthday), "dd/MM/yyyy") : "Chưa cập nhật",
+            label: "DOB"
         },
-        { 
-            icon: UserIcon, 
-            value: userProfile?.gender === true ? "Nam" : (userProfile?.gender === false ? "Nữ" : "Chưa cập nhật"), 
-            label: "Gender" 
+        {
+            icon: UserIcon,
+            value: userProfile?.gender === true ? "Nam" : (userProfile?.gender === false ? "Nữ" : "Chưa cập nhật"),
+            label: "Gender"
         },
-        { 
-            icon: MapPin, 
-            value: userProfile?.address || "Chưa cập nhật", 
-            label: "Address" 
+        {
+            icon: MapPin,
+            value: userProfile?.address || "Chưa cập nhật",
+            label: "Address"
         },
     ];
 
@@ -910,8 +911,8 @@ const ProfileCvPage = () => {
                     <CardContent className="relative px-8 pb-8">
                         <div className="-mt-12 mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
                             <div className="flex items-end gap-6">
-                                <Avatar className="h-24 w-24 rounded-full border-4 border-white shadow-lg ring-1 ring-gray-100">
-                                    <AvatarImage src="" />
+                                <Avatar className="h-40 w-40 rounded-full border-4 border-white shadow-lg ring-1 ring-gray-100">
+                                    <AvatarImage src={getImageUrl(userProfile?.avatarUrl || "")} className="object-cover" />
                                     <AvatarFallback className="bg-emerald-50 text-2xl font-bold text-emerald-600">
                                         {userProfile?.fullName ? userProfile.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : "VN"}
                                     </AvatarFallback>
@@ -925,7 +926,7 @@ const ProfileCvPage = () => {
                                     </p>
                                 </div>
                             </div>
-                            <Button 
+                            <Button
                                 className="mb-2 gap-2 rounded-full bg-white text-gray-700 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 hover:text-emerald-600"
                                 onClick={() => setIsInfoDialogOpen(true)}
                             >
@@ -935,7 +936,7 @@ const ProfileCvPage = () => {
                         </div>
 
                         <div className="grid grid-cols-1 gap-y-4 gap-x-8 border-t border-gray-100 pt-6 sm:grid-cols-2 lg:grid-cols-3">
-                            {contactDetails.map(({ icon: Icon, value, label }) => (
+                            {userSection.map(({ icon: Icon, value, label }) => (
                                 <div key={label} className="flex items-center gap-3 text-sm">
                                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
                                         <Icon className="h-4 w-4" />
@@ -1031,8 +1032,8 @@ const ProfileCvPage = () => {
                                             <li key={index} className="flex items-start gap-2">
                                                 <CheckCircle2
                                                     className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${suggestion.completed
-                                                            ? "text-emerald-500"
-                                                            : "text-gray-300"
+                                                        ? "text-emerald-500"
+                                                        : "text-gray-300"
                                                         }`}
                                                 />
                                                 <span className={suggestion.completed ? "line-through text-gray-400" : ""}>
@@ -1118,6 +1119,7 @@ const ProfileCvPage = () => {
                 open={isInfoDialogOpen}
                 onOpenChange={setIsInfoDialogOpen}
                 onSuccess={fetchUserProfile}
+                userProfileToEdit={userProfile}
             />
 
             {/* Delete Confirmation Alert Dialog */}

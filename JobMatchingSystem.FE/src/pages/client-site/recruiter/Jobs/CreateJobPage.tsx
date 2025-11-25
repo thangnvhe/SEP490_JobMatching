@@ -38,7 +38,6 @@ import { UserServices } from "@/services/user.service";
 import { TaxonomyService } from "@/services/taxonomy.service";
 import { type Taxonomy } from "@/models/taxonomy";
 import { type User } from "@/models/user";
-import { type JobType } from "@/models/job";
 
 // Types
 interface HiringManager {
