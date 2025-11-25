@@ -6,6 +6,7 @@ using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Security.Claims;
 
 namespace JobMatchingSystem.API.Controllers
 {
@@ -37,6 +38,43 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
+        /// <summary>
+        /// Lấy danh sách các công việc mà người dùng hiện tại đã ứng tuyển
+        /// </summary>
+        /// <param name="page">Trang hiện tại (mặc định: 1)</param>
+        /// <param name="size">Số lượng item trên mỗi trang (mặc định: 10)</param>
+        /// <param name="status">Lọc theo trạng thái ứng tuyển (tùy chọn)</param>
+        /// <param name="sortBy">Trường để sắp xếp (tùy chọn)</param>
+        /// <param name="isDescending">Sắp xếp giảm dần (mặc định: false)</param>
+        /// <returns>Danh sách phân trang các công việc đã ứng tuyển</returns>
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMyApplications(
+            int page = 1,
+            int size = 10,
+            string status = "",
+            string sortBy = "",
+            bool isDescending = false)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                return Unauthorized(APIResponse<object>.Builder()
+                    .WithResult(new { message = "Không thể xác thực người dùng" })
+                    .WithSuccess(false)
+                    .WithMessage("Unauthorized")
+                    .WithStatusCode(HttpStatusCode.Unauthorized)
+                    .Build());
+            }
+
+            var result = await _candidateJobService.GetAllByUserId(userId, page, size, status, sortBy, isDescending);
+
+            return Ok(APIResponse<PagedResult<CandidateJobDTO>>.Builder()
+                .WithResult(result)
+                .WithSuccess(true)
+                .WithStatusCode(HttpStatusCode.OK)
+                .Build());
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetDetailById(int id)
         {
@@ -54,7 +92,7 @@ namespace JobMatchingSystem.API.Controllers
         {
             await _candidateJobService.Add(request);
             return Ok(APIResponse<object>.Builder()
-                .WithResult(null)
+                .WithResult(new { message = "Apply CV thành công" })
                 .WithSuccess(true)
                 .WithMessage("Apply CV thành công")
                 .WithStatusCode(HttpStatusCode.OK)
@@ -66,7 +104,7 @@ namespace JobMatchingSystem.API.Controllers
         {
             await _candidateJobService.ApproveCV(id);
             return Ok(APIResponse<object>.Builder()
-                .WithResult(null)
+                .WithResult(new { message = "CV đã được duyệt" })
                 .WithSuccess(true)
                 .WithMessage("CV đã được duyệt")
                 .WithStatusCode(HttpStatusCode.OK)
@@ -78,7 +116,7 @@ namespace JobMatchingSystem.API.Controllers
         {
             await _candidateJobService.RejectCV(id);
             return Ok(APIResponse<object>.Builder()
-                .WithResult(null)
+                .WithResult(new { message = "CV đã bị từ chối" })
                 .WithSuccess(true)
                 .WithMessage("CV đã bị từ chối")
                 .WithStatusCode(HttpStatusCode.OK)

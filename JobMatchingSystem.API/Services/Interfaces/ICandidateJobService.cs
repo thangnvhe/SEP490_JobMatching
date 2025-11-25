@@ -8,6 +8,7 @@ namespace JobMatchingSystem.API.Services.Interfaces
     {
         Task Add(CreateCandidateJobRequest request);
         Task<PagedResult<CandidateJobDTO>> GetAllByJobId(int jobid, int page = 1, int size = 5, string status = "", string sortBy = "", bool isDecending = false);
+        Task<PagedResult<CandidateJobDTO>> GetAllByUserId(int userId, int page = 1, int size = 10, string status = "", string sortBy = "", bool isDescending = false);
         Task RejectCV(int id);
         Task ApproveCV(int id);
         Task<CandidateJobDTO> GetDetailById(int id);
