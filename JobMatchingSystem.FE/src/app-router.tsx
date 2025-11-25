@@ -18,8 +18,9 @@ import { CompanyMembersPage } from './pages/client-site/recruiter/company/Compan
 import CandidateDashboard from './pages/client-site/candidate/Dashboard';
 import FavouriteJobsPage from './pages/client-site/candidate/FavouriteJobs';
 import CVManagement from './pages/client-site/candidate/CVManagement';
-import ProfileCvPage from './pages/profileCV/ProfileCVPage';
-import PreviewDownloadCV from './pages/profileCV/PreviewDownloadCV';
+import ProfileCvPage from './pages/client-site/candidate/profileCV/ProfileCVPage';
+import PreviewDownloadCV from './pages/client-site/candidate/profileCV/PreviewDownloadCV';
+import MyJobsPage from './pages/client-site/candidate/my-job/MyJobs';
 import ViewUserList from './pages/admin-site/ManageUser/ViewUserList';
 import ResetPasswordPage from './pages/client-site/auth/ResetPasswordPage';
 import CompaniesPage from './pages/client-site/guest/CompaniesPage';
@@ -82,6 +83,7 @@ const AppRouter: React.FC = () => {
       >
         <Route index element={<CandidateDashboard />} />
         <Route path="saved-jobs" element={<FavouriteJobsPage />} />
+        <Route path="my-jobs" element={<MyJobsPage />} />
         <Route path="cv-management" element={<CVManagement />} />
       </Route>
 

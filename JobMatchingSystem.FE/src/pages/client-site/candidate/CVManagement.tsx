@@ -42,7 +42,7 @@ export default function CVManagement() {
       } else {
         toast.error(`Lỗi khi tải thông tin người dùng: ${response.errorMessages?.join(', ') || 'Không xác định'}`);
       }
-    } catch (error) {
+    } catch {
       toast.error("Không thể tải thông tin người dùng");
     } finally {
       setIsLoadingProfile(false);
@@ -169,7 +169,9 @@ export default function CVManagement() {
       formData.append('name', cvName.trim());
       formData.append('userId', userId.toString());
 
-      const response = await CVServices.create(formData as any);
+      // CVServices.create expects an object of type Omit<CV, 'id'> but we need to send FormData for file upload.
+      // Cast FormData to the expected type to satisfy the type checker while preserving runtime behavior.
+      const response = await CVServices.create(formData as unknown as Omit<CV, 'id'>);
 
       if (response.isSuccess) {
         const msg = typeof response.result === 'string' ? response.result : 'CV đã được upload thành công';
