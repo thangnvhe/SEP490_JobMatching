@@ -36,40 +36,40 @@ namespace JobMatchingSystem.API.Repositories.Implementations
         {
             IQueryable<Report> query = _context.Reports.AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(request.Search))
+            if (!string.IsNullOrWhiteSpace(request.search))
             {
-                var searchLower = request.Search.ToLower();
+                var searchLower = request.search.ToLower();
                 query = query.Where(r =>
                     r.Reason.ToLower().Contains(searchLower) ||
                     r.Note.ToLower().Contains(searchLower));
             }
 
-            if (request.JobId.HasValue)
-                query = query.Where(r => r.JobId == request.JobId.Value);
-            if (request.ReporterId.HasValue)
-                query = query.Where(r => r.ReporterId == request.ReporterId.Value);
-            if (request.VerifiedById.HasValue)
-                query = query.Where(r => r.VerifiedId == request.VerifiedById.Value);
-            if (request.Status.HasValue)
-                query = query.Where(r => r.Status == request.Status.Value);
-            if (request.Subject.HasValue)
-                query = query.Where(r => r.Subject == request.Subject.Value);
+            if (request.jobId.HasValue)
+                query = query.Where(r => r.JobId == request.jobId.Value);
+            if (request.reporterId.HasValue)
+                query = query.Where(r => r.ReporterId == request.reporterId.Value);
+            if (request.verifiedById.HasValue)
+                query = query.Where(r => r.VerifiedId == request.verifiedById.Value);
+            if (request.status.HasValue)
+                query = query.Where(r => r.Status == request.status.Value);
+            if (request.subject.HasValue)
+                query = query.Where(r => r.Subject == request.subject.Value);
 
             // Filter theo khoảng ngày tạo
-            if (request.CreateMin.HasValue)
-                query = query.Where(r => r.CreatedAt >= request.CreateMin.Value);
-            if (request.CreateMax.HasValue)
-                query = query.Where(r => r.CreatedAt <= request.CreateMax.Value);
+            if (request.createMin.HasValue)
+                query = query.Where(r => r.CreatedAt >= request.createMin.Value);
+            if (request.createMax.HasValue)
+                query = query.Where(r => r.CreatedAt <= request.createMax.Value);
 
             // Sắp xếp động
-            if (!string.IsNullOrWhiteSpace(request.SortBy))
+            if (!string.IsNullOrWhiteSpace(request.sortBy))
             {
-                var propertyInfo = typeof(Report).GetProperty(request.SortBy);
+                var propertyInfo = typeof(Report).GetProperty(request.sortBy);
                 if (propertyInfo != null)
                 {
-                    query = request.IsDescending
-                        ? query.OrderByDescending(x => EF.Property<object>(x, request.SortBy))
-                        : query.OrderBy(x => EF.Property<object>(x, request.SortBy));
+                    query = request.isDescending
+                        ? query.OrderByDescending(x => EF.Property<object>(x, request.sortBy))
+                        : query.OrderBy(x => EF.Property<object>(x, request.sortBy));
                 }
                 else
                 {

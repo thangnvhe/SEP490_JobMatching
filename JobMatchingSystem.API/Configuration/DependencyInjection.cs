@@ -35,6 +35,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IJobTaxonomyRepository, JobTaxonomyRepository>();
             services.AddScoped<IServicePlanRepository, ServicePlanRepository>();
             services.AddScoped<IJobQuotaRepository, JobQuotaRepository>();
+            services.AddScoped<IOrderRepository, OrderRepository>();
             return services;
         }
 
@@ -70,6 +71,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IJobTaxonomyService, JobTaxonomyService>();
             services.AddScoped<IServicePlanService, ServicePlanService>();
             services.AddScoped<IJobQuotaService, JobQuotaService>();
+            services.AddScoped<IOrderService, OrderService>();
             return services;
         }
 

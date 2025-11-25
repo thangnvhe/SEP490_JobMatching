@@ -5,27 +5,27 @@ namespace JobMatchingSystem.API.DTOs.Request
 {
     public class GetJobPagedRequest
     {
-        public int Page { get; set; } = 1;
-        public int Size { get; set; } = 10;
-        public string? Search { get; set; } = "";
-        public string? SortBy { get; set; } = "";
-        public bool IsDescending { get; set; } = false;
+        public int page { get; set; } = 1;
+        public int size { get; set; } = 10;
+        public string? search { get; set; } = "";
+        public string? sortBy { get; set; } = "";
+        public bool isDescending { get; set; } = false;
 
         // Các filter hiện có
-        public string? Title { get; set; }
-        public string? Description { get; set; }
-        public string? Requirements { get; set; }
-        public string? Benefits { get; set; }
-        public int? SalaryMin { get; set; }
-        public int? SalaryMax { get; set; }
-        public string? Location { get; set; }
-        public int? ExperienceYearMin { get; set; }
-        public int? ExperienceYearMax { get; set; }
-        public string? JobType { get; set; }
-        public JobStatus? Status { get; set; }
-        public int? CompanyId { get; set; }
-        public int? RecuiterId { get; set; }
-        public bool? IsDeleted { get; set; }
+        public string? title { get; set; }
+        public string? description { get; set; }
+        public string? requirements { get; set; }
+        public string? benefits { get; set; }
+        public int? salaryMin { get; set; }
+        public int? salaryMax { get; set; }
+        public string? location { get; set; }
+        public int? experienceYearMin { get; set; }
+        public int? experienceYearMax { get; set; }
+        public string? jobType { get; set; }
+        public JobStatus? status { get; set; }
+        public int? companyId { get; set; }
+        public int? recuiterId { get; set; }
+        public bool? isDeleted { get; set; }
         public List<int>? TaxonomyIds { get; set; }
     }
 }

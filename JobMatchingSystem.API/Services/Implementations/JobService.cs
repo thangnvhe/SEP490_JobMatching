@@ -314,13 +314,13 @@ namespace JobMatchingSystem.API.Services.Implementations
                 return new PagedResult<JobDetailResponse>
                 {
                     Items = new List<JobDetailResponse>(),
-                    pageInfo = new PageInfo(0, request.Page, request.Size, request.SortBy ?? "", request.IsDescending)
+                    pageInfo = new PageInfo(0, request.page, request.size, request.sortBy ?? "", request.isDescending)
                 };
             }
 
             var pagedJobs = jobs
-                .Skip((request.Page - 1) * request.Size)
-                .Take(request.Size)
+                .Skip((request.page - 1) * request.size)
+                .Take(request.size)
                 .ToList();
 
             var jobDtos = pagedJobs.Select(j => new JobDetailResponse
@@ -354,7 +354,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             return new PagedResult<JobDetailResponse>
             {
                 Items = jobDtos,
-                pageInfo = new PageInfo(jobs.Count, request.Page, request.Size, request.SortBy ?? "", request.IsDescending)
+                pageInfo = new PageInfo(jobs.Count, request.page, request.size, request.sortBy ?? "", request.isDescending)
             };
         }
     }
