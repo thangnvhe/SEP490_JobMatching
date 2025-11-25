@@ -2,6 +2,7 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Filter, X } from "lucide-react";
 
 interface JobSearchFilters {
@@ -68,6 +69,26 @@ const JobSearchFilter: React.FC<JobSearchFilterProps> = ({
     });
   };
 
+  const handleCustomSalaryMinChange = (value: string) => {
+    const numValue = value === "" ? null : parseFloat(value);
+    onFiltersChange({
+      ...filters,
+      salaryMin: numValue,
+      // Clear radio selection when custom input is used
+      salaryMax: filters.salaryMax !== null && filters.salaryMax !== undefined ? filters.salaryMax : null,
+    });
+  };
+
+  const handleCustomSalaryMaxChange = (value: string) => {
+    const numValue = value === "" ? null : parseFloat(value);
+    onFiltersChange({
+      ...filters,
+      salaryMax: numValue,
+      // Clear radio selection when custom input is used
+      salaryMin: filters.salaryMin !== null && filters.salaryMin !== undefined ? filters.salaryMin : null,
+    });
+  };
+
   const handleJobTypeChange = (value: string) => {
     onFiltersChange({
       ...filters,
@@ -93,9 +114,17 @@ const JobSearchFilter: React.FC<JobSearchFilterProps> = ({
   };
 
   const getSelectedSalaryIndex = (): number => {
-    return SALARY_OPTIONS.findIndex(
+    const index = SALARY_OPTIONS.findIndex(
       (opt) => opt.min === filters.salaryMin && opt.max === filters.salaryMax
     );
+    return index >= 0 ? index : -1;
+  };
+
+  // Check if current salary values match any radio option
+  const isCustomSalaryRange = () => {
+    return getSelectedSalaryIndex() === -1 && 
+           (filters.salaryMin !== null && filters.salaryMin !== undefined || 
+            filters.salaryMax !== null && filters.salaryMax !== undefined);
   };
 
   return (
@@ -181,7 +210,7 @@ const JobSearchFilter: React.FC<JobSearchFilterProps> = ({
         <div>
           <h3 className="font-semibold text-gray-800 mb-4 text-base">Mức lương</h3>
           <RadioGroup
-            value={getSelectedSalaryIndex().toString()}
+            value={getSelectedSalaryIndex() >= 0 ? getSelectedSalaryIndex().toString() : ""}
             onValueChange={(val) => handleSalaryChange(parseInt(val))}
           >
             <div className="grid grid-cols-2 gap-y-3 gap-x-2">
@@ -202,6 +231,32 @@ const JobSearchFilter: React.FC<JobSearchFilterProps> = ({
               ))}
             </div>
           </RadioGroup>
+          
+          {/* Custom Salary Range Input */}
+          <div className="mt-4">
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                placeholder="Từ"
+                value={isCustomSalaryRange() && filters.salaryMin !== null && filters.salaryMin !== undefined ? filters.salaryMin.toString() : ""}
+                onChange={(e) => handleCustomSalaryMinChange(e.target.value)}
+                className="flex-1"
+                min="0"
+                step="0.1"
+              />
+              <span className="text-gray-600">-</span>
+              <Input
+                type="number"
+                placeholder="Đến"
+                value={isCustomSalaryRange() && filters.salaryMax !== null && filters.salaryMax !== undefined ? filters.salaryMax.toString() : ""}
+                onChange={(e) => handleCustomSalaryMaxChange(e.target.value)}
+                className="flex-1"
+                min="0"
+                step="0.1"
+              />
+              <span className="text-gray-600">triệu</span>
+            </div>
+          </div>
         </div>
 
         {/* Bottom Clear Filter Button (Optional alternative placement, keeping the top one as primary based on common UX, but user asked to "Add it" and often it's at the bottom in forms. I'll add a more prominent one at the bottom as well if the top one is subtle) */}

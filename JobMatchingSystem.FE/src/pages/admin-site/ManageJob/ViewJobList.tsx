@@ -32,8 +32,9 @@ import { DataTable } from "@/components/ui/data-table";
 // Import types và services
 import { JobServices } from "@/services/job.service";
 import { CompanyServices } from "@/services/company.service";
-import { type JobDetailResponse } from "@/models/job";
+import { type Job } from "@/models/job";
 import { type Company } from "@/models/company";
+import { PageInfo, PaginationParamsInput } from "@/models/base";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { API_BASE_URL } from "../../../../env";
@@ -60,144 +61,103 @@ export default function ViewJobList() {
   // Khai báo local state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [jobs, setJobs] = useState<JobDetailResponse[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedJob, setSelectedJob] = useState<JobDetailResponse | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedJobCompany, setSelectedJobCompany] = useState<Company | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  
-  // Pagination state - chuyển sang server-side
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
-  
-  // Sort state
-  const [sortBy, setSortBy] = useState('');
-  const [isDescending, setIsDescending] = useState(false);
-  
-  const debouncedKeyword = useDebounce(keyword, 700);
+  const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
+    currentPage: 1,
+    pageSize: 10,
+    totalItem: 0,
+    totalPage: 0,
+    hasPreviousPage: false,
+    hasNextPage: false,
+    sortBy: '',
+    isDecending: false,
+  });
+  const [paginationInput, setPaginationInput] = useState<PaginationParamsInput>({
+    page: 1,
+    size: 10,
+    search: '',
+    sortBy: '',
+    isDecending: false,
+  });
   const pageSizeOptions = [5, 10, 20, 50];
+  const debouncedKeyword = useDebounce(keyword, 700);
 
-  // Fetch jobs with server-side pagination and filtering
-  const getAllJobs = useCallback(async () => {
+  const getAllWithPagination = useCallback(async (params: PaginationParamsInput) => {
     try {
       setLoading(true);
       setError(null);
       
-      // Chuẩn bị parameters cho API với timeout
-      const params: any = {
-        page: currentPage,
-        size: pageSize,
-        search: debouncedKeyword,
-        sortBy: sortBy,
-        isDescending: isDescending
-      };
-      
       // Thêm status filter nếu có
+      const apiParams = { ...params };
       if (statusFilter !== 'all') {
-        params.status = parseInt(statusFilter);
+        apiParams.status = parseInt(statusFilter);
       }
       
-      console.log('API Request params:', params);
-      
-      // Add timeout để tránh hang
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout after 30 seconds')), 30000)
-      );
-      
-      const apiPromise = JobServices.searchJobs(params);
-      
-      const response = await Promise.race([apiPromise, timeoutPromise]) as any;
-      
-      console.log('API Response:', response);
-      
-      if (response.isSuccess && response.result) {
-        // Kiểm tra nếu response có structure paginated với items và pageInfo
-        if (response.result.items && response.result.pageInfo) {
-          console.log('Using paginated structure:', response.result);
-          setJobs(response.result.items || []);
-          setTotalItems(response.result.pageInfo.totalItem || 0);
-        } 
-        // Nếu response.result là array trực tiếp (không phân trang)
-        else if (Array.isArray(response.result)) {
-          console.log('Using direct array:', response.result.length, 'items');
-          // Trong trường hợp này, backend không hỗ trợ pagination
-          // Chúng ta cần tính toán manual
-          const startIdx = (currentPage - 1) * pageSize;
-          const endIdx = startIdx + pageSize;
-          const paginatedItems = response.result.slice(startIdx, endIdx);
-          
-          setJobs(paginatedItems);
-          setTotalItems(response.result.length);
-        } 
-        // Nếu không phải array và không có structure paginated
-        else {
-          console.log('Single object or unknown structure:', response.result);
-          setJobs([response.result]);
-          setTotalItems(1);
-        }
-      } else {
-        setError("Không thể tải danh sách công việc");
-        setJobs([]);
-        setTotalItems(0);
-      }
+      const response = await JobServices.getAllWithPagination(apiParams);
+      setJobs(response.result.items);
+      // API now returns pagination metadata in `pageInfo`
+      setPaginationInfo(response.result.pageInfo);
     } catch (err: any) {
-      console.error("Error fetching jobs:", err);
-      if (err.message?.includes('timeout')) {
-        setError("Tải dữ liệu quá lâu - có thể do server đang xử lý nhiều dữ liệu. Vui lòng thử lại!");
-      } else {
-        setError(err.message || "Lỗi khi tải dữ liệu công việc");
-      }
-      setJobs([]);
-      setTotalItems(0);
+      setError(err.response?.data?.message || "Lỗi khi tải dữ liệu công việc");
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, debouncedKeyword, statusFilter, sortBy, isDescending]);
+  }, [statusFilter]);
 
-  // Load jobs on component mount and when dependencies change
   useEffect(() => {
-    getAllJobs();
-  }, [getAllJobs]);
+    const params = {
+      ...paginationInput,
+      search: debouncedKeyword,
+    };
+    getAllWithPagination(params);
+  }, [getAllWithPagination, debouncedKeyword, paginationInput]);
 
   // Handler functions
   const handleRefresh = () => {
-    getAllJobs();
+    getAllWithPagination(paginationInput);
   };
 
   const handleSortingChange = (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
     const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(sorting) : updaterOrValue;
     setSorting(newSorting);
-    
-    // Convert sorting to backend format
-    if (newSorting.length > 0) {
-      const sortConfig = newSorting[0];
-      setSortBy(sortConfig.id);
-      setIsDescending(sortConfig.desc);
-    } else {
-      setSortBy('');
-      setIsDescending(false);
-    }
-    setCurrentPage(1); // Reset to first page when sorting
+    setPaginationInput(prev => {
+      if (!newSorting.length) {
+        return {
+          ...prev,
+          sortBy: undefined,
+          isDecending: undefined,
+        };
+      }
+
+      const sort = newSorting[0];
+      return {
+        ...prev,
+        sortBy: sort.id,
+        isDecending: !!sort.desc,
+      };
+    });
   };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    setPaginationInput(prev => ({ ...prev, page }));
   };
 
   const handlePageSizeChange = (size: string) => {
-    setPageSize(parseInt(size));
-    setCurrentPage(1);
+    setPaginationInput(prev => ({ ...prev, size: parseInt(size), page: 1 }));
   };
 
   const handleStatusFilterChange = (status: string) => {
     setStatusFilter(status);
-    setCurrentPage(1);
+    setPaginationInput(prev => ({ ...prev, page: 1 }));
   };
 
-  const handleView = async (job: JobDetailResponse) => {
+  const handleView = async (job: Job) => {
     setSelectedJob(job);
     setIsViewDialogOpen(true);
     
@@ -216,8 +176,8 @@ export default function ViewJobList() {
 
   const handleApprove = async (jobId: number) => {
     try {
-      await JobServices.censorJob(jobId.toString(), { Status: 2 }); // Moderated
-      getAllJobs(); // Refresh data
+      await JobServices.censorJob(jobId.toString(), { status: 2 }); // Moderated
+      handleRefresh(); // Refresh data
     } catch (error) {
       console.error("Error approving job:", error);
     }
@@ -225,190 +185,94 @@ export default function ViewJobList() {
 
   const handleReject = async (jobId: number) => {
     try {
-      await JobServices.censorJob(jobId.toString(), { Status: 1 }); // Rejected
-      getAllJobs(); // Refresh data
+      await JobServices.censorJob(jobId.toString(), { status: 1 }); // Rejected
+      handleRefresh(); // Refresh data
     } catch (error) {
       console.error("Error rejecting job:", error);
     }
   };
 
-  const handleActivateDeactivate = async (job: JobDetailResponse) => {
+  const handleActivateDeactivate = async (job: Job) => {
     try {
       // Toggle giữa Opened (3) và Closed (4)
-      // Ensure status is treated as a number (API may return string or number)
-      const statusNum = typeof job.status === 'string' ? parseInt(job.status, 10) || 0 : (job.status as number | undefined) ?? 0;
-      const newStatus = statusNum === 3 ? 4 : 3;
-      await JobServices.censorJob(job.jobId.toString(), { Status: newStatus });
-      getAllJobs(); // Refresh data
+      const newStatus = job.status === 'Opened' ? 4 : 3;
+      await JobServices.censorJob(job.jobId.toString(), { status: newStatus });
+      handleRefresh(); // Refresh data
     } catch (error) {
       console.error("Error toggling job status:", error);
     }
   };
 
-  const handleSoftDelete = async (job: JobDetailResponse) => {
+  const handleSoftDelete = async (job: Job) => {
     try {
-      await JobServices.censorJob(job.jobId.toString(), { Status: 5 }); // Soft Delete
-      getAllJobs(); // Refresh data
+      await JobServices.censorJob(job.jobId.toString(), { status: 5 }); // Soft Delete
+      handleRefresh(); // Refresh data
     } catch (error) {
       console.error("Error soft deleting job:", error);
     }
   };
 
   // Helper functions
-  const getStatusBadgeColor = (status: number | string) => {
-    // Handle string status from API
-    if (typeof status === 'string') {
-      const lowerStatus = status.toLowerCase();
-      switch (lowerStatus) {
-        case 'draft':
-          return 'bg-yellow-100 text-yellow-800'; // Draft/Waiting
-        case 'rejected':
-          return 'bg-red-100 text-red-800'; // Rejected
-        case 'moderated':
-          return 'bg-blue-100 text-blue-800'; // Moderated
-        case 'opened':
-          return 'bg-green-100 text-green-800'; // Opened
-        case 'closed':
-          return 'bg-red-100 text-red-800'; // Closed
-        case 'deleted':
-          return 'bg-gray-100 text-gray-800'; // Deleted
-        default:
-          return 'bg-gray-100 text-gray-800';
-      }
-    }
-    
-    // Handle numeric status
-    const statusNum = typeof status === 'string' ? parseInt(status) : status;
-    switch (statusNum) {
-      case 0:
-        return 'bg-yellow-100 text-yellow-800'; // Draft/Waiting
-      case 1:
-        return 'bg-red-100 text-red-800'; // Rejected
-      case 2:
-        return 'bg-blue-100 text-blue-800'; // Moderated
-      case 3:
-        return 'bg-green-100 text-green-800'; // Opened
-      case 4:
-        return 'bg-red-100 text-red-800'; // Closed
-      case 5:
-        return 'bg-gray-100 text-gray-800'; // Deleted
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'Draft':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Rejected':
+        return 'bg-red-100 text-red-800';
+      case 'Moderated':
+        return 'bg-blue-100 text-blue-800';
+      case 'Opened':
+        return 'bg-green-100 text-green-800';
+      case 'Closed':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusIcon = (status: number | string) => {
-    // Handle string status from API
-    if (typeof status === 'string') {
-      const lowerStatus = status.toLowerCase();
-      switch (lowerStatus) {
-        case 'draft':
-          return <Clock className="h-3 w-3 mr-1" />; // Draft/Waiting
-        case 'rejected':
-          return <XCircle className="h-3 w-3 mr-1" />; // Rejected
-        case 'moderated':
-          return <CheckCircle className="h-3 w-3 mr-1" />; // Moderated
-        case 'opened':
-          return <CheckCircle className="h-3 w-3 mr-1" />; // Opened
-        case 'closed':
-          return <XCircle className="h-3 w-3 mr-1" />; // Closed
-        case 'deleted':
-          return <Trash2 className="h-3 w-3 mr-1" />; // Deleted
-        default:
-          return null;
-      }
-    }
-    
-    // Handle numeric status
-    const statusNum = typeof status === 'string' ? parseInt(status) : status;
-    switch (statusNum) {
-      case 0:
-        return <Clock className="h-3 w-3 mr-1" />; // Draft/Waiting
-      case 1:
-        return <XCircle className="h-3 w-3 mr-1" />; // Rejected
-      case 2:
-        return <CheckCircle className="h-3 w-3 mr-1" />; // Moderated
-      case 3:
-        return <CheckCircle className="h-3 w-3 mr-1" />; // Opened
-      case 4:
-        return <XCircle className="h-3 w-3 mr-1" />; // Closed
-      case 5:
-        return <Trash2 className="h-3 w-3 mr-1" />; // Deleted
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'Draft':
+        return <Clock className="h-3 w-3 mr-1" />;
+      case 'Rejected':
+        return <XCircle className="h-3 w-3 mr-1" />;
+      case 'Moderated':
+        return <CheckCircle className="h-3 w-3 mr-1" />;
+      case 'Opened':
+        return <CheckCircle className="h-3 w-3 mr-1" />;
+      case 'Closed':
+        return <XCircle className="h-3 w-3 mr-1" />;
       default:
         return null;
     }
   };
 
-  const getStatusLabel = (status: number | string) => {
-    // Handle string status from API
-    if (typeof status === 'string') {
-      const lowerStatus = status.toLowerCase();
-      switch (lowerStatus) {
-        case 'draft':
-          return 'Đang chờ duyệt';
-        case 'rejected':
-          return 'Bị từ chối';
-        case 'moderated':
-          return 'Đã kiểm duyệt';
-        case 'opened':
-          return 'Đang mở';
-        case 'closed':
-          return 'Đã đóng';
-        case 'deleted':
-          return 'Đã xóa';
-        default:
-          return `Trạng thái: ${status}`;
-      }
-    }
-    
-    // Handle numeric status
-    const statusNum = typeof status === 'string' ? parseInt(status) : status;
-    switch (statusNum) {
-      case 0:
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'Draft':
         return 'Đang chờ duyệt';
-      case 1:
+      case 'Rejected':
         return 'Bị từ chối';
-      case 2:
+      case 'Moderated':
         return 'Đã kiểm duyệt';
-      case 3:
+      case 'Opened':
         return 'Đang mở';
-      case 4:
+      case 'Closed':
         return 'Đã đóng';
-      case 5:
-        return 'Đã xóa';
       default:
-        console.log('Unknown status:', status); // Debug log
-        return `Trạng thái: ${status}`; // Show actual status value for debugging
+        return status;
     }
   };
 
-  // Calculate pagination (server-side)
-  const totalPages = totalItems > 0 ? Math.ceil(totalItems / pageSize) : 1;
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = Math.min(startIndex + jobs.length, totalItems); // Sử dụng actual length
-  const displayedTotalItems = totalItems;
-  
-  // Đảm bảo currentPage không vượt quá totalPages
-  const safePage = Math.min(currentPage, totalPages);
-  
-  console.log('Pagination Info:', {
-    currentPage,
-    totalPages,
-    totalItems,
-    pageSize,
-    startIndex,
-    endIndex,
-    actualDataLength: jobs.length
-  });
-
   // Define columns
-  const columns = useMemo<ColumnDef<JobDetailResponse>[]>(() => [
+  const columns = useMemo<ColumnDef<Job>[]>(() => [
     {
-      id: "stt",
+      id: "id",
+      accessorKey: "jobId",
       header: "STT",
       cell: ({ row }) => {
         const index = row.index;
-        return (currentPage - 1) * pageSize + index + 1;
+        return (paginationInfo.currentPage - 1) * paginationInfo.pageSize + index + 1;
       },
       enableSorting: false,
     },
@@ -469,11 +333,12 @@ export default function ViewJobList() {
       accessorKey: "jobType",
       header: "Loại công việc",
       cell: ({ row }) => {
-        const jobType = row.getValue("jobType") as number;
+        const jobType = row.getValue("jobType") as string;
         const typeMap: { [key: string]: string } = {
-          0: 'Toàn thời gian',
-          1: 'Bán thời gian',
-          2: 'Làm từ xa'
+          'FullTime': 'Toàn thời gian',
+          'PartTime': 'Bán thời gian',
+          'Remote': 'Làm từ xa',
+          'Other': 'Khác'
         };
         return typeMap[jobType] || jobType;
       },
@@ -494,7 +359,7 @@ export default function ViewJobList() {
       accessorKey: "status",
       header: "Trạng thái",
       cell: ({ row }) => {
-        const status = row.getValue("status") as number | string;
+        const status = row.getValue("status") as string;
         return (
           <Badge className={getStatusBadgeColor(status)}>
             {getStatusIcon(status)}
@@ -521,7 +386,7 @@ export default function ViewJobList() {
             </Button>
             
             {/* Soft Delete Button for jobs that are not deleted yet */}
-            {(typeof job.status === 'string' ? parseInt(job.status) : job.status) !== 5 && (
+            {!job.isDeleted && (
               <Button
                 onClick={() => handleSoftDelete(job)}
                 variant="outline"
@@ -537,10 +402,14 @@ export default function ViewJobList() {
       },
       enableSorting: false,
     },
-  ], [currentPage, pageSize]);
+  ], [paginationInfo]);
 
   return (
     <div className="p-6 space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight">Quản lý công việc</h1>
+        <p className="text-muted-foreground">Theo dõi, tìm kiếm và cập nhật danh sách công việc trong hệ thống</p>
+      </div>
       {/* Search and Actions */}
       <Card>
         <CardHeader>
@@ -608,16 +477,16 @@ export default function ViewJobList() {
           )}
           
           {/* Pagination */}
-          {!error && totalItems > 0 && (
+          {!error && paginationInfo && (
             <div className="flex items-center justify-between mt-4 gap-6">
               <div className="text-sm text-muted-foreground">
-                Hiển thị {startIndex + 1} - {endIndex} của {displayedTotalItems} kết quả
+                Hiển thị {(paginationInfo.currentPage - 1) * paginationInfo.pageSize + 1} - {Math.min(paginationInfo.currentPage * paginationInfo.pageSize, paginationInfo.totalItem)} của {paginationInfo.totalItem} kết quả
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-3">
                   <p className="text-sm font-medium">Dòng trên trang</p>
                   <Select
-                    value={pageSize.toString()}
+                    value={paginationInfo.pageSize.toString()}
                     onValueChange={handlePageSizeChange}
                   >
                     <SelectTrigger className="h-8 w-[70px]">
@@ -635,14 +504,14 @@ export default function ViewJobList() {
 
                 <div className="flex items-center gap-3">
                   <div className="text-sm font-medium">
-                    Trang {safePage} trên {totalPages || 1}
+                    Trang {paginationInfo.currentPage} trên {paginationInfo.totalPage}
                   </div>
                   <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(1)}
-                      disabled={safePage === 1 || loading}
+                      disabled={paginationInfo.currentPage === 1 || loading}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronsLeft />
@@ -650,8 +519,8 @@ export default function ViewJobList() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handlePageChange(safePage - 1)}
-                      disabled={safePage === 1 || loading}
+                      onClick={() => handlePageChange(paginationInfo.currentPage - 1)}
+                      disabled={paginationInfo.currentPage === 1 || loading}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronLeft />
@@ -659,8 +528,8 @@ export default function ViewJobList() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handlePageChange(safePage + 1)}
-                      disabled={safePage >= totalPages || loading}
+                      onClick={() => handlePageChange(paginationInfo.currentPage + 1)}
+                      disabled={paginationInfo.currentPage >= paginationInfo.totalPage || loading}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronRight />
@@ -668,8 +537,8 @@ export default function ViewJobList() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handlePageChange(totalPages)}
-                      disabled={safePage >= totalPages || loading}
+                      onClick={() => handlePageChange(paginationInfo.totalPage)}
+                      disabled={paginationInfo.currentPage >= paginationInfo.totalPage || loading}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronsRight />
@@ -694,7 +563,7 @@ export default function ViewJobList() {
                 <div className="flex items-center space-x-3">
                   {/* Company Logo */}
                   {selectedJobCompany?.logo && (
-                    <div className="w-10 h-10 bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm flex-shrink-0">
+                    <div className="w-10 h-10 bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm shrink-0">
                       <img
                         src={getFullImageUrl(selectedJobCompany.logo)!}
                         alt={`${selectedJobCompany.name} logo`}
@@ -759,9 +628,10 @@ export default function ViewJobList() {
                         Loại công việc
                       </label>
                       <p className="text-sm mt-1">
-                        {(typeof selectedJob.jobType === 'string' ? parseInt(selectedJob.jobType) : selectedJob.jobType) === 0 ? 'Toàn thời gian' :
-                         (typeof selectedJob.jobType === 'string' ? parseInt(selectedJob.jobType) : selectedJob.jobType) === 1 ? 'Bán thời gian' :
-                         (typeof selectedJob.jobType === 'string' ? parseInt(selectedJob.jobType) : selectedJob.jobType) === 2 ? 'Làm từ xa' : selectedJob.jobType}
+                        {selectedJob.jobType === 'FullTime' ? 'Toàn thời gian' :
+                         selectedJob.jobType === 'PartTime' ? 'Bán thời gian' :
+                         selectedJob.jobType === 'Remote' ? 'Làm từ xa' :
+                         selectedJob.jobType === 'Other' ? 'Khác' : selectedJob.jobType}
                       </p>
                     </div>
                     <div>
@@ -867,7 +737,7 @@ export default function ViewJobList() {
                     </Button>
                     <div className="flex space-x-2">
                       {/* Approve/Reject buttons for Draft status */}
-                      {(typeof selectedJob.status === 'string' ? parseInt(selectedJob.status) : selectedJob.status) === 0 && (
+                      {selectedJob.status === 'Draft' && (
                         <>
                           <Button
                             onClick={() => {
@@ -892,8 +762,8 @@ export default function ViewJobList() {
                         </>
                       )}
                       
-                      {/* Activate button chỉ cho jobs đã đóng (status = 4) */}
-                      {(typeof selectedJob.status === 'string' ? parseInt(selectedJob.status) : selectedJob.status) === 4 && (
+                      {/* Activate button chỉ cho jobs đã đóng (status = Closed) */}
+                      {selectedJob.status === 'Closed' && (
                         <Button
                           onClick={() => {
                             handleActivateDeactivate(selectedJob);
