@@ -3,7 +3,8 @@ import { Taxonomy } from './taxonomy';
 // Định nghĩa các loại công việc
 export type JobType = 'FullTime' | 'PartTime' | 'Remote' | 'Other';
 export type JobStatus = 'Draft' | 'Rejected' | 'Moderated' | 'Opened' | 'Closed';
-
+export const CandidateJobStatus = { Pending: 0, RejectCv: 1, Processing: 2, Fail: 3, Pass: 4, } as const;
+export type CandidateJobStatus = typeof CandidateJobStatus[keyof typeof CandidateJobStatus];
 
 export interface Job {
   jobId: number;
@@ -28,5 +29,16 @@ export interface Job {
   taxonomies: Taxonomy[];
 }
 
+export interface CandidateJob {
+  id: number;
+  jobId: number;
+  cvId?: number;
+  status: CandidateJobStatus;
+  appliedAt: string;
+  updatedAt: string;
+}
 
-
+export interface SavedJob {
+  id: number;
+  jobId: number;
+}

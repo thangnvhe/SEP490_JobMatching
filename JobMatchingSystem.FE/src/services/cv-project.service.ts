@@ -9,5 +9,5 @@ export const CVProjectServices = {
   create: (project: Omit<CVProject, 'id'>): Promise<BaseResponse<CVProject>> => BaseApiServices.create<CVProject>('/CVProject', project),
   update: (id: string, data: Partial<CVProject>) => BaseApiServices.update<CVProject>('/CVProject', id, data),
   delete: (id: string) => BaseApiServices.delete<CVProject>('/CVProject', id),
-  getMyProjects: () => BaseApiServices.custom<CVProject[]>("get", "/CVProject/me"),
+  getMyProjects: () => BaseApiServices.custom<BaseResponse<CVProject[]>>("get", "/CVProject/me"),
 };

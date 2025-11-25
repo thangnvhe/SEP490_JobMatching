@@ -14,5 +14,5 @@ export const CompanyServices = {
   acceptCompany: (id: string) => BaseApiServices.custom<Company>("post", `/Company/${id}/accept`),
   // Reject company - POST /api/company/{id}/reject?rejectReason=reason
   rejectCompany: (id: string, rejectReason: string = "Không đạt yêu cầu") => 
-    BaseApiServices.custom<Company>("post", `/Company/${id}/reject`, undefined, { rejectReason }),
+    BaseApiServices.custom<BaseResponse<Company>>("post", `/Company/${id}/reject`, undefined, { rejectReason }),
 };
