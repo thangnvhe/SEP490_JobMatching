@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
+﻿using JobMatchingSystem.API.Models;
 using Microsoft.AspNetCore.Identity;
-using JobMatchingSystem.API.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace JobMatchingSystem.API.Data
 {
@@ -15,6 +16,7 @@ namespace JobMatchingSystem.API.Data
         // DbSets for all entities
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
         public DbSet<Company> Companies { get; set; }
+        public DbSet<BankTransactionHistory> BankTransactionHistorys { get; set; }
         public DbSet<Job> Jobs { get; set; }
         public DbSet<CandidateJob> CandidateJobs { get; set; }
         public DbSet<SavedJob> SavedJobs { get; set; }
@@ -25,6 +27,7 @@ namespace JobMatchingSystem.API.Data
         public DbSet<CVProject> CVProjects { get; set; }
         public DbSet<CVCertificate> CVCertificates { get; set; }
         public DbSet<CVAchievement> CVAchievements { get; set; }
+        public DbSet<CVProfile> CVProfiles { get; set; }
         public DbSet<Taxonomy> Taxonomies { get; set; }
         public DbSet<Report> Reports { get; set; }
         public DbSet<TemplateCV> TemplateCVs { get; set; }
@@ -33,6 +36,8 @@ namespace JobMatchingSystem.API.Data
         public DbSet<JobTaxonomy> JobTaxonomies { get; set; }
         public DbSet<CandidateTaxonomy> CandidateTaxonomies { get; set; }
         public DbSet<ServicePlan> ServicePlans { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<JobQuota> JobQuotas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -63,6 +68,27 @@ namespace JobMatchingSystem.API.Data
                         .HasForeignKey(e=>e.CompanyId)
                         .OnDelete(DeleteBehavior.NoAction);
                 entity.HasIndex(e => e.Email).IsUnique();
+            });
+
+            modelBuilder.Entity<Order>(entity =>
+            {
+                entity.HasOne(o => o.Buyer)
+                      .WithMany(u => u.Orders)
+                      .HasForeignKey(o => o.BuyerId)
+                      .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(o => o.ServicePlan)
+                      .WithMany(s => s.Orders)
+                      .HasForeignKey(o => o.ServiceId)
+                      .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            modelBuilder.Entity<JobQuota>(entity =>
+            {
+                entity.HasOne(j => j.Recruiter)
+                      .WithOne(u => u.JobQuota)
+                      .HasForeignKey<JobQuota>(j => j.RecruiterId)
+                      .OnDelete(DeleteBehavior.NoAction);
             });
 
             // Identity junctions: chặn cascade delete để không tự động xóa UserRoles khi xóa Users/Roles
@@ -256,6 +282,15 @@ namespace JobMatchingSystem.API.Data
                 entity.HasOne(e => e.User)
                       .WithMany(e=>e.CVAchievements)
                       .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            builder.Entity<CVProfile>(entity =>
+            {
+                // Quan hệ 1-1 với ApplicationUser
+                entity.HasOne(e => e.User)
+                      .WithOne(u => u.CVProfile)
+                      .HasForeignKey<CVProfile>(e => e.UserId)
                       .OnDelete(DeleteBehavior.NoAction);
             });
         }

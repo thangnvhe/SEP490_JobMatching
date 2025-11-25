@@ -1,5 +1,6 @@
 ﻿using JobMatchingSystem.API.Repositories.Implementations;
 using JobMatchingSystem.API.Repositories.Interfaces;
+using JobMatchingSystem.API.Services.BackgroundServices;
 using JobMatchingSystem.API.Services.Implementations;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -61,6 +62,8 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<ISavedJobService, SavedJobService>();
             services.AddScoped<ISavedCVService, SavedCVService>();
             services.AddHostedService<JobStatusScheduler>();
+            services.AddHostedService<SePaySyncService>();
+            services.AddHostedService<MonthlyQuotaResetService>();
             services.AddScoped<ICandidateTaxonomyService, CandidateTaxonomyService>();
             services.AddScoped<IJobTaxonomyService, JobTaxonomyService>();
 
