@@ -1,4 +1,5 @@
-﻿using JobMatchingSystem.API.DTOs.Request;
+﻿using JobMatchingSystem.API.DTOs;
+using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -22,31 +23,54 @@ namespace JobMatchingSystem.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateTemplate([FromForm] CreateTemplateCvRequest request)
         {
-            var response = await _service.CreateTemplateAsync(request);
-            return StatusCode((int)response.StatusCode, response);
+            await _service.CreateTemplateAsync(request);
+
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.Created)
+                .WithSuccess(true)
+                .WithResult("Template CV uploaded successfully")
+                .Build());
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10, 
             [FromQuery] string sortBy = "", [FromQuery] bool isDescending = false)
         {
-            var response = await _service.GetAllAsync(page, pageSize, sortBy, isDescending);
-            return StatusCode((int)response.StatusCode, response);
+            // Giả định GetAllAsync trả về một List<TemplateCvResponse> hoặc tương tự
+            var data = await _service.GetAllAsync();
+
+            return Ok(APIResponse<object>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(data)
+                .Build());
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var response = await _service.GetByIdAsync(id);
-            return StatusCode((int)response.StatusCode, response);
+            // Giả định GetByIdAsync trả về một TemplateCvResponse hoặc tương tự
+            var item = await _service.GetByIdAsync(id);
+
+            return Ok(APIResponse<object>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(item)
+                .Build());
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
-            var response = await _service.DeleteAsync(id);
-            return StatusCode((int)response.StatusCode, response);
+            await _service.DeleteAsync(id);
+
+            // Sửa đổi trả về: Dùng APIResponse<string> cho thông báo thành công
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult("Deleted successfully")
+                .Build());
         }
     }
 }

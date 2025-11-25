@@ -13,6 +13,7 @@ namespace JobMatchingSystem.API.Data.SeedData
             await CandidateSeeder.SeedCandidatesAsync(webApplication);
             await TaxonomySeeder.SeedTaxonomiesAsync(webApplication);          
             await JobSeeder.SeedJobAsync(webApplication);
+            await JobQuotaSeeder.SeedJobQuotasAsync(webApplication);
             await CVSeeder.SeedCVUploadsAsync(webApplication);
         }
     }
