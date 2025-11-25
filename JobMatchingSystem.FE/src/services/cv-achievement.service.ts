@@ -9,5 +9,5 @@ export const CVAchievementServices = {
   create: (achievement: Omit<CVAchievement, 'id'>): Promise<BaseResponse<CVAchievement>> => BaseApiServices.create<CVAchievement>('/CVAchievement', achievement),
   update: (id: string, data: Partial<CVAchievement>) => BaseApiServices.update<CVAchievement>('/CVAchievement', id, data),
   delete: (id: string) => BaseApiServices.delete<CVAchievement>('/CVAchievement', id),
-  getMyAchievements: () => BaseApiServices.custom<CVAchievement[]>("get", "/CVAchievement/me"),
+  getMyAchievements: () => BaseApiServices.custom<BaseResponse<CVAchievement[]>>("get", "/CVAchievement/me"),
 };

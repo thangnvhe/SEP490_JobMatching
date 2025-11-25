@@ -18,7 +18,8 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Heart, MapPin, Clock, DollarSign, Briefcase, Building2, ChevronRight } from "lucide-react";
+import { MapPin, Clock, DollarSign, Briefcase, Building2, ChevronRight } from "lucide-react";
+import { IconBookmark } from "@tabler/icons-react";
 import { Job } from "@/models/job";
 import { Company } from "@/models/company";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -179,14 +180,14 @@ const JobCard = ({ job, company, onJobDetails, onSaveJob }: {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-9 w-9 rounded-full hover:text-red-500 hover:bg-red-50 text-gray-400"
+                                className="h-9 w-9 rounded-full text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onSaveJob(job.jobId);
                                 }}
                                 title="Lưu công việc"
                             >
-                                <Heart className="w-5 h-5" />
+                                <IconBookmark className="w-5 h-5" />
                             </Button>
                             <Button
                                 size="sm"
