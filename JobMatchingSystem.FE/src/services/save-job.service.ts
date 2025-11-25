@@ -8,5 +8,6 @@ export const SaveJobServices = {
     delete: (id: number) => BaseApiServices.delete<SavedJob>('/SavedJob', id),
     getMySavedJobs: () => BaseApiServices.custom<BaseResponse<SavedJob[]>>('get', `/SavedJob`),
     getSavedJobsById: (id: number) => BaseApiServices.custom<BaseResponse<SavedJob[]>>('get', `/SavedJob/${id}`),
+    saveJob: (jobId: number) => BaseApiServices.custom<BaseResponse<SavedJob>>('post', `/SavedJob?jobId=${jobId}`),
     deleteSavedJob: (id: number) => BaseApiServices.custom<BaseResponse<SavedJob>>('delete', `/SavedJob/${id}`),
 }

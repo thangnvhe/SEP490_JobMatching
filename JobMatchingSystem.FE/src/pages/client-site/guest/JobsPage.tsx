@@ -20,6 +20,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { Input } from "@/components/ui/input";
 import { Province, ProvincesService } from "@/services/provinces.service";
 import { useNavigate } from "react-router";
+import { SaveJobServices } from "@/services/save-job.service";
 
 
 export default function JobsPage() {
@@ -137,14 +138,14 @@ export default function JobsPage() {
 
   const handleSaveJob = async (jobId: number) => {
     try {
-      if (authState.role?.toLowerCase() !== 'candidate') {
-        toast.error('Chỉ ứng viên mới có thể lưu việc làm');
-        return;
+      const response = await SaveJobServices.saveJob(jobId);
+      if (response.isSuccess) {
+        toast.success(`Đã lưu công việc bạn quan tâm`);
+      } else {
+        toast.error(response.errorMessages[0]);
       }
-      // TODO: Implement actual save job API call here
-      toast.success(`Đã lưu công việc ${jobId}`);
     } catch (error) {
-      toast.error("Có lỗi khi lưu công việc");
+      toast.error("Công việc này đẫ được lưu");
     }
   };
 
