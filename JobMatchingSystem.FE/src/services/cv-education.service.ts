@@ -9,5 +9,5 @@ export const CVEducationServices = {
   create: (education: Omit<CVEducation, 'id'>): Promise<BaseResponse<CVEducation>> => BaseApiServices.create<CVEducation>('/CVEducation', education),
   update: (id: string, data: Partial<CVEducation>) => BaseApiServices.update<CVEducation>('/CVEducation', id, data),
   delete: (id: string) => BaseApiServices.delete<CVEducation>('/CVEducation', id),
-  getMyEducations: () => BaseApiServices.custom<CVEducation[]>("get", "/CVEducation/me"),
+  getMyEducations: () => BaseApiServices.custom<BaseResponse<CVEducation[]>>("get", "/CVEducation/me"),
 };

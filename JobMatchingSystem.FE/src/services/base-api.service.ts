@@ -63,7 +63,7 @@ export const BaseApiServices = {
         url: string,
         data?: any,
         params?: Record<string, any>
-    ): Promise<BaseResponse<T>> => {
+    ): Promise<T> => {
         const response = await axiosInstance({ method, url, data, params, });
         return response.data;
     },

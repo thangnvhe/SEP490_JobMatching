@@ -9,6 +9,6 @@ export const CVExperienceServices = {
   create: (experience: Omit<CVExperience, 'id'>): Promise<BaseResponse<CVExperience>> => BaseApiServices.create<CVExperience>('/CVExperience', experience),
   update: (id: string, data: Partial<CVExperience>) => BaseApiServices.update<CVExperience>('/CVExperience', id, data),
   delete: (id: string) => BaseApiServices.delete<CVExperience>('/CVExperience', id),
-  getMyExperiences: () => BaseApiServices.custom<CVExperience[]>("get", "/CVExperience/me"),
+  getMyExperiences: () => BaseApiServices.custom<BaseResponse<CVExperience[]>>("get", "/CVExperience/me"),
 
 };
