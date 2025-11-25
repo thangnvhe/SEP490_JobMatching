@@ -41,5 +41,6 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundSaveJob() => new("Not Found Save Job", HttpStatusCode.NotFound);
         public static Error NotFoundSaveCV() => new("Not Found Save CV", HttpStatusCode.NotFound);
         public static Error NotFoundServicePlan() => new("Not Found ServicePlan", HttpStatusCode.NotFound);
+        public static Error NotFoundJobQuota() => new("Not Found JobQuota", HttpStatusCode.NotFound);
     }
 }
