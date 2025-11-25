@@ -33,6 +33,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<ISavedCVRepository, SavedCVRepository>();
             services.AddScoped<ICandidateTaxonomyRepository, CandidateTaxonomyRepository>();
             services.AddScoped<IJobTaxonomyRepository, JobTaxonomyRepository>();
+            services.AddScoped<IServicePlanRepository, ServicePlanRepository>();
             return services;
         }
 
@@ -66,7 +67,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddHostedService<MonthlyQuotaResetService>();
             services.AddScoped<ICandidateTaxonomyService, CandidateTaxonomyService>();
             services.AddScoped<IJobTaxonomyService, JobTaxonomyService>();
-
+            services.AddScoped<IServicePlanService, ServicePlanService>();
             return services;
         }
 
