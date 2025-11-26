@@ -101,6 +101,16 @@ export function ManageCompanyPage() {
       setLoading(true);
       setError(null);
       
+      // Xác định status để gửi lên backend
+      let backendStatus = '';
+      if (statusFilter === 'deleted') {
+        backendStatus = '-1'; // Backend sẽ lọc các company có isActive = false
+      } else if (statusFilter === 'all') {
+        backendStatus = 'all'; // Backend sẽ lấy tất cả company
+      } else {
+        backendStatus = statusFilter; // Truyền status cụ thể (0, 1, 2)
+      }
+      
       // Gọi API với đầy đủ parameters
       const response = await CompanyServices.getAllCompanies({
         page: currentPage,
@@ -108,7 +118,7 @@ export function ManageCompanyPage() {
         search: debouncedKeyword,
         sortBy: sortBy,
         isDecending: isDescending,
-        status: statusFilter === 'all' ? '' : statusFilter
+        status: backendStatus
       });
       
       if (response?.isSuccess && response?.result) {
@@ -133,15 +143,15 @@ export function ManageCompanyPage() {
     }
   }, [currentPage, pageSize, debouncedKeyword, statusFilter, sortBy, isDescending]);
 
-  // Không cần filter client-side nữa vì backend đã xử lý
-  useEffect(() => {
-    setFilteredCompanies(companies);
-  }, [companies]);
-
   // Load companies on component mount and when dependencies change
   useEffect(() => {
     getAllCompanies();
   }, [getAllCompanies]);
+
+  // Set filtered companies to companies since filtering is now handled by backend
+  useEffect(() => {
+    setFilteredCompanies(companies);
+  }, [companies]);
 
   // Handler functions
   const handleRefresh = () => {
@@ -222,6 +232,40 @@ export function ManageCompanyPage() {
       }
       
       alert('Lỗi khi kích hoạt công ty: ' + errorMessage);
+    }
+  };
+
+  const handleSoftDelete = async (companyId: number | undefined) => {
+    if (!companyId) return;
+    
+    if (!confirm('Bạn có chắc chắn muốn xóa (vô hiệu hóa) công ty này?')) {
+      return;
+    }
+    
+    console.log('Attempting to soft delete company with ID:', companyId);
+    
+    try {
+      await CompanyServices.changeStatus(String(companyId));
+      await getAllCompanies();
+      alert('Xóa công ty thành công!');
+    } catch (error: any) {
+      console.error('Error soft deleting company:', error);
+      
+      let errorMessage = 'Lỗi không xác định';
+      
+      if (error?.response?.status === 403) {
+        errorMessage = 'Bạn không có quyền thực hiện hành động này. Vui lòng đăng nhập với tài khoản Admin.';
+      } else if (error?.response?.status === 401) {
+        errorMessage = 'Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn';
+      } else if (error?.response?.data?.errorMessages) {
+        errorMessage = error.response.data.errorMessages.join(', ');
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      alert('Lỗi khi xóa công ty: ' + errorMessage);
     }
   };
 
@@ -320,7 +364,12 @@ export function ManageCompanyPage() {
   };
 
   // Helper functions
-  const getStatusBadgeColor = (status: number) => {
+  const getStatusBadgeColor = (status: number, isActive: boolean) => {
+    // Nếu công ty đã bị xóa mềm (isActive = false)
+    if (!isActive) {
+      return 'bg-gray-100 text-gray-800';
+    }
+    
     switch (status) {
       case 0:
         return 'bg-yellow-100 text-yellow-800';
@@ -333,7 +382,12 @@ export function ManageCompanyPage() {
     }
   };
 
-  const getStatusIcon = (status: number) => {
+  const getStatusIcon = (status: number, isActive: boolean) => {
+    // Nếu công ty đã bị xóa mềm (isActive = false)
+    if (!isActive) {
+      return <XCircle className="h-3 w-3 mr-1" />;
+    }
+    
     switch (status) {
       case 0:
         return <Clock className="h-3 w-3 mr-1" />;
@@ -346,7 +400,12 @@ export function ManageCompanyPage() {
     }
   };
 
-  const getStatusLabel = (status: number) => {
+  const getStatusLabel = (status: number, isActive: boolean) => {
+    // Nếu công ty đã bị xóa mềm (isActive = false)
+    if (!isActive) {
+      return 'Đã xóa';
+    }
+    
     switch (status) {
       case 0:
         return 'Chờ duyệt';
@@ -442,10 +501,12 @@ export function ManageCompanyPage() {
       header: "Trạng thái",
       cell: ({ row }) => {
         const status = row.getValue("status") as number;
+        const company = row.original;
+        const isActive = company.isActive !== false; // Mặc định là true nếu không có field này
         return (
-          <Badge className={getStatusBadgeColor(status)}>
-            {getStatusIcon(status)}
-            {getStatusLabel(status)}
+          <Badge className={getStatusBadgeColor(status, isActive)}>
+            {getStatusIcon(status, isActive)}
+            {getStatusLabel(status, isActive)}
           </Badge>
         );
       },
@@ -456,6 +517,8 @@ export function ManageCompanyPage() {
       header: "Thao tác",
       cell: ({ row }) => {
         const company = row.original;
+        const isActive = company.isActive !== false; // Mặc định là true nếu không có field này
+        
         return (
           <div className="flex items-center space-x-1">
             <Button
@@ -467,30 +530,48 @@ export function ManageCompanyPage() {
               <Eye className="h-4 w-4" />
             </Button>
             
-            {/* Accept button for pending companies */}
-            {company.status === 0 && (
-              <Button
-                onClick={() => handleToggleActive(company.id)}
-                variant="outline"
-                size="sm"
-                className="text-green-600 hover:text-green-700"
-                title="Duyệt công ty"
-              >
-                <CheckCircle className="h-4 w-4" />
-              </Button>
-            )}
-            
-            {/* Delete button for rejected companies */}
-            {company.status === 2 && (
-              <Button
-                onClick={() => handleDelete(company)}
-                variant="outline"
-                size="sm"
-                className="text-orange-600 hover:text-orange-700"
-                title="Xóa"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+            {/* Chỉ hiển thị các nút khác nếu công ty chưa bị xóa */}
+            {isActive && (
+              <>
+                {/* Accept button for pending companies */}
+                {company.status === 0 && (
+                  <Button
+                    onClick={() => handleToggleActive(company.id)}
+                    variant="outline"
+                    size="sm"
+                    className="text-green-600 hover:text-green-700"
+                    title="Duyệt công ty"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                  </Button>
+                )}
+                
+                {/* Soft delete button for approved companies */}
+                {company.status === 1 && (
+                  <Button
+                    onClick={() => handleSoftDelete(company.id)}
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 hover:text-red-700"
+                    title="Xóa công ty"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+                
+                {/* Delete button for rejected companies */}
+                {company.status === 2 && (
+                  <Button
+                    onClick={() => handleDelete(company)}
+                    variant="outline"
+                    size="sm"
+                    className="text-orange-600 hover:text-orange-700"
+                    title="Xóa vĩnh viễn"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </>
             )}
           </div>
         );
@@ -521,6 +602,7 @@ export function ManageCompanyPage() {
                   <SelectItem value="0">Chờ duyệt</SelectItem>
                   <SelectItem value="1">Đã duyệt</SelectItem>
                   <SelectItem value="2">Bị từ chối</SelectItem>
+                  <SelectItem value="deleted">Đã xóa</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -687,9 +769,9 @@ export function ManageCompanyPage() {
                     <h3 className="text-lg font-bold text-gray-900 mb-1">
                       {selectedCompany.name}
                     </h3>
-                    <Badge className={`${getStatusBadgeColor(selectedCompany.status)} text-xs px-2 py-1`}>
-                      {getStatusIcon(selectedCompany.status)}
-                      {getStatusLabel(selectedCompany.status)}
+                    <Badge className={`${getStatusBadgeColor(selectedCompany.status, selectedCompany.isActive !== false)} text-xs px-2 py-1`}>
+                      {getStatusIcon(selectedCompany.status, selectedCompany.isActive !== false)}
+                      {getStatusLabel(selectedCompany.status, selectedCompany.isActive !== false)}
                     </Badge>
                   </div>
                 </div>

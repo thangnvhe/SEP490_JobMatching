@@ -15,4 +15,6 @@ export const CompanyServices = {
   // Reject company - POST /api/company/{id}/reject?rejectReason=reason
   rejectCompany: (id: string, rejectReason: string = "Không đạt yêu cầu") => 
     BaseApiServices.custom<BaseResponse<Company>>("post", `/Company/${id}/reject`, undefined, { rejectReason }),
+  // Change status (soft delete) - PUT /api/company/{id}/change-status
+  changeStatus: (id: string) => BaseApiServices.custom<Company>("put", `/Company/${id}/change-status`),
 };
