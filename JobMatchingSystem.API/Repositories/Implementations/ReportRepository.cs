@@ -34,14 +34,20 @@ namespace JobMatchingSystem.API.Repositories.Implementations
         }
         public async Task<List<Report>> GetAllReportsPagedAsync(GetReportPagedRequest request)
         {
-            IQueryable<Report> query = _context.Reports.AsQueryable();
+            IQueryable<Report> query = _context.Reports
+                .Include(r => r.Job)
+                .Include(r => r.Reporter)
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(request.search))
             {
                 var searchLower = request.search.ToLower();
                 query = query.Where(r =>
                     r.Reason.ToLower().Contains(searchLower) ||
-                    r.Note.ToLower().Contains(searchLower));
+                    (r.Note != null && r.Note.ToLower().Contains(searchLower)) ||
+                    r.Job.Title.ToLower().Contains(searchLower) ||
+                    r.Reporter.FullName.ToLower().Contains(searchLower) ||
+                    r.Reporter.UserName.ToLower().Contains(searchLower));
             }
 
             if (request.jobId.HasValue)
