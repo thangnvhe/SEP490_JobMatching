@@ -9,9 +9,9 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task CreateJobAsync(CreateJobRequest request, int userId);
         Task UpdateJobAsync(int jobId, UpdateJobRequest request, int userId);
         Task CensorJobAsync(int jobId, CensorJobRequest request, int userId);
-        Task<JobDetailResponse> GetJobByIdAsync(int jobId);
-        Task<List<JobDetailResponse>> GetJobsAsync(GetJobRequest request);
+        Task<JobDetailResponse> GetJobByIdAsync(int jobId, int? userId);
         Task<PagedResult<JobDetailResponse>> GetJobsPagedAsync(GetJobPagedRequest request);
+        Task<PagedResult<JobDetailResponse>> GetJobsPagedAsync(GetJobPagedRequest request, int? userId);
         Task DeleteJobAsync(int jobId, int userId);
     }
 }

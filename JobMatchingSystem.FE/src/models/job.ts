@@ -27,6 +27,10 @@ export interface Job {
   expiredAt?: string;
   isDeleted: boolean;
   taxonomies: Taxonomy[];
+  isReport?: boolean;
+  isApply?: boolean;
+  isSave?: boolean;
+  applyCount?: number;
 }
 
 export interface CandidateJob {

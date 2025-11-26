@@ -22,5 +22,11 @@
         public DateTime? ExpiredAt { get; set; }
         public bool? IsDeleted { get; set; }
         public List<TaxonomyResponse> Taxonomies { get; set; } = new();
+        
+        // Các trường mới cho logic FE
+        public bool IsReport { get; set; } = false;
+        public bool IsApply { get; set; } = false;
+        public bool IsSave { get; set; } = false;
+        public int ApplyCount { get; set; } = 0;
     }
 }

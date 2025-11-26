@@ -25,24 +25,23 @@ namespace JobMatchingSystem.API.Controllers
         [HttpGet("{jobId}")]
         public async Task<IActionResult> GetJob(int jobId)
         {
-            var job = await _jobService.GetJobByIdAsync(jobId);
+            // Kiểm tra xem user có đăng nhập không
+            int? userId = null;
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(userIdClaim, out int parsedUserId))
+                {
+                    userId = parsedUserId;
+                }
+            }
+
+            var job = await _jobService.GetJobByIdAsync(jobId, userId);
 
             return Ok(APIResponse<JobDetailResponse>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
                 .WithResult(job)
-                .Build());
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetJobs([FromQuery] GetJobRequest request)
-        {
-            var jobs = await _jobService.GetJobsAsync(request);
-
-            return Ok(APIResponse<List<JobDetailResponse>>.Builder()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithSuccess(true)
-                .WithResult(jobs)
                 .Build());
         }
 
@@ -92,7 +91,7 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Recruiter")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteJob(int id)
         {
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -109,7 +108,22 @@ namespace JobMatchingSystem.API.Controllers
         [HttpGet("paged")]
         public async Task<IActionResult> GetJobsPaged([FromQuery] GetJobPagedRequest request)
         {
-            var result = await _jobService.GetJobsPagedAsync(request);
+            // Kiểm tra xem user có đăng nhập không
+            int? userId = null;
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(userIdClaim, out int parsedUserId))
+                {
+                    userId = parsedUserId;
+                }
+            }
+
+            // Gọi service với userId (nếu có)
+            var result = userId.HasValue 
+                ? await _jobService.GetJobsPagedAsync(request, userId.Value)
+                : await _jobService.GetJobsPagedAsync(request);
+                
             return Ok(APIResponse<PagedResult<JobDetailResponse>>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)

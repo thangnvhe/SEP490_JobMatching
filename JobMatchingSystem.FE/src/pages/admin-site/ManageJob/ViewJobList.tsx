@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { 
   Eye,
   Trash2,
-  Check,
   X,
   Clock,
   CheckCircle,
@@ -95,9 +94,16 @@ export default function ViewJobList() {
       
       // Thêm status filter nếu có
       const apiParams = { ...params };
-      if (statusFilter !== 'all') {
+      
+      if (statusFilter === 'deleted') {
+        // Nếu chọn "Xóa mềm" thì truyền isDeleted = true
+        apiParams.isDeleted = true;
+      } else if (statusFilter !== 'all') {
+        // Nếu không phải "tất cả" hoặc "xóa mềm" thì truyền status cụ thể và chỉ lấy chưa xóa
         apiParams.status = parseInt(statusFilter);
+        apiParams.isDeleted = false;
       }
+      // Nếu statusFilter === 'all' thì không truyền isDeleted để lấy tất cả
       
       const response = await JobServices.getAllWithPagination(apiParams);
       setJobs(response.result.items);
@@ -204,16 +210,28 @@ export default function ViewJobList() {
   };
 
   const handleSoftDelete = async (job: Job) => {
+    if (!confirm(`Bạn có chắc chắn muốn xóa công việc "${job.title}" không?`)) {
+      return;
+    }
+    
     try {
-      await JobServices.censorJob(job.jobId.toString(), { status: 5 }); // Soft Delete
+      await JobServices.delete(job.jobId.toString());
       handleRefresh(); // Refresh data
-    } catch (error) {
+      alert('Xóa công việc thành công!');
+    } catch (error: any) {
       console.error("Error soft deleting job:", error);
+      const errorMessage = error?.response?.data?.message || "Lỗi khi xóa công việc";
+      alert(`Lỗi: ${errorMessage}`);
     }
   };
 
   // Helper functions
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusBadgeColor = (status: string, isDeleted?: boolean) => {
+    // Nếu job đã bị xóa mềm
+    if (isDeleted) {
+      return 'bg-gray-100 text-gray-800';
+    }
+    
     switch (status) {
       case 'Draft':
         return 'bg-yellow-100 text-yellow-800';
@@ -230,7 +248,12 @@ export default function ViewJobList() {
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: string, isDeleted?: boolean) => {
+    // Nếu job đã bị xóa mềm
+    if (isDeleted) {
+      return <XCircle className="h-3 w-3 mr-1" />;
+    }
+    
     switch (status) {
       case 'Draft':
         return <Clock className="h-3 w-3 mr-1" />;
@@ -247,7 +270,12 @@ export default function ViewJobList() {
     }
   };
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: string, isDeleted?: boolean) => {
+    // Nếu job đã bị xóa mềm
+    if (isDeleted) {
+      return 'Đã xóa';
+    }
+    
     switch (status) {
       case 'Draft':
         return 'Đang chờ duyệt';
@@ -360,10 +388,11 @@ export default function ViewJobList() {
       header: "Trạng thái",
       cell: ({ row }) => {
         const status = row.getValue("status") as string;
+        const job = row.original;
         return (
-          <Badge className={getStatusBadgeColor(status)}>
-            {getStatusIcon(status)}
-            {getStatusLabel(status)}
+          <Badge className={getStatusBadgeColor(status, job.isDeleted)}>
+            {getStatusIcon(status, job.isDeleted)}
+            {getStatusLabel(status, job.isDeleted)}
           </Badge>
         );
       },
@@ -385,17 +414,35 @@ export default function ViewJobList() {
               <Eye className="h-4 w-4" />
             </Button>
             
-            {/* Soft Delete Button for jobs that are not deleted yet */}
+            {/* Chỉ hiển thị các nút cho jobs chưa bị xóa mềm */}
             {!job.isDeleted && (
-              <Button
-                onClick={() => handleSoftDelete(job)}
-                variant="outline"
-                size="sm"
-                className="text-red-600 hover:text-red-700"
-                title="Xóa mềm"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <>
+                {/* Nút Accept cho jobs đang chờ duyệt (Draft) */}
+                {job.status === 'Draft' && (
+                  <Button
+                    onClick={() => handleApprove(job.jobId)}
+                    variant="outline"
+                    size="sm"
+                    className="text-green-600 hover:text-green-700"
+                    title="Duyệt công việc"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                  </Button>
+                )}
+                
+                {/* Nút Xóa mềm cho jobs đã duyệt hoặc đã mở/đóng */}
+                {(job.status === 'Moderated' || job.status === 'Opened' || job.status === 'Closed') && (
+                  <Button
+                    onClick={() => handleSoftDelete(job)}
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 hover:text-red-700"
+                    title="Xóa mềm"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </>
             )}
           </div>
         );
@@ -432,7 +479,7 @@ export default function ViewJobList() {
                   <SelectItem value="2">Đã kiểm duyệt</SelectItem>
                   <SelectItem value="3">Đang mở</SelectItem>
                   <SelectItem value="4">Đã đóng</SelectItem>
-                  <SelectItem value="5">Đã xóa</SelectItem>
+                  <SelectItem value="deleted">Đã xóa</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -737,7 +784,7 @@ export default function ViewJobList() {
                     </Button>
                     <div className="flex space-x-2">
                       {/* Approve/Reject buttons for Draft status */}
-                      {selectedJob.status === 'Draft' && (
+                      {selectedJob.status === 'Draft' && !selectedJob.isDeleted && (
                         <>
                           <Button
                             onClick={() => {
@@ -746,8 +793,8 @@ export default function ViewJobList() {
                             }}
                             className="bg-green-600 hover:bg-green-700"
                           >
-                            <Check className="mr-2 h-4 w-4" />
-                            Đồng ý
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Duyệt
                           </Button>
                           <Button
                             onClick={() => {
@@ -756,7 +803,7 @@ export default function ViewJobList() {
                             }}
                             variant="destructive"
                           >
-                            <X className="mr-2 h-4 w-4" />
+                            <XCircle className="mr-2 h-4 w-4" />
                             Từ chối
                           </Button>
                         </>
