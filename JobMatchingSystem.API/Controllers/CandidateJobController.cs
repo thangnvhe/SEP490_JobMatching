@@ -3,6 +3,7 @@ using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -38,16 +39,9 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
-        /// <summary>
-        /// Lấy danh sách các công việc mà người dùng hiện tại đã ứng tuyển
-        /// </summary>
-        /// <param name="page">Trang hiện tại (mặc định: 1)</param>
-        /// <param name="size">Số lượng item trên mỗi trang (mặc định: 10)</param>
-        /// <param name="status">Lọc theo trạng thái ứng tuyển (tùy chọn)</param>
-        /// <param name="sortBy">Trường để sắp xếp (tùy chọn)</param>
-        /// <param name="isDescending">Sắp xếp giảm dần (mặc định: false)</param>
-        /// <returns>Danh sách phân trang các công việc đã ứng tuyển</returns>
+        
         [HttpGet("me")]
+        [Authorize(Roles = "Candidate")]
         public async Task<IActionResult> GetMyApplications(
             int page = 1,
             int size = 10,
