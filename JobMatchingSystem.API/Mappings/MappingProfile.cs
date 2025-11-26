@@ -11,7 +11,8 @@ namespace JobMatchingSystem.API.Mappings
             //Company
             CreateMap<CreateCompanyRequest, Company>()
             .ForMember(dest => dest.LicenseFile, opt => opt.Ignore());
-            CreateMap<Company,CompanyDTO>();
+            CreateMap<Company, CompanyDTO>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt ?? DateTime.UtcNow));
             CreateMap<UpdateCompanyRequest, Company>()
             .ForMember(dest => dest.Logo, opt => opt.Ignore());
             //CandidateJob

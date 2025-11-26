@@ -10,6 +10,10 @@ export interface Company {
   status: number; // 0: Pending, 1: Approved, 3: Rejected
   taxCode: string;
   licenseFile: string;
+  isActive: boolean; 
+  score: number;
+  rejectReason: string | null;
+  createdAt: string;
 }
 
 // Helper để convert status number thành string để hiển thị

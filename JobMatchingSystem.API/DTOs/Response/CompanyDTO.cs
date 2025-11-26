@@ -15,5 +15,9 @@ namespace JobMatchingSystem.API.DTOs.Response
         public CompanyStatus Status { get; set; }
         public string TaxCode { get; set; }
         public string LicenseFile { get; set; }
+        public bool IsActive { get; set; }
+        public int Score { get; set; }
+        public string? RejectReason { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }
