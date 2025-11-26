@@ -9,7 +9,7 @@ namespace JobMatchingSystem.API.Models
         [Key]
         public int Id { get; set; }
         public decimal Amount { get; set; }
-        public string TransferContent { get; set; } = null!;
+        public string? TransferContent { get; set; }
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
         public int BuyerId { get; set; }
         public int ServiceId { get; set; }

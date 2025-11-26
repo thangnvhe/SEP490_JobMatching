@@ -47,5 +47,7 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error EmailAlreadyExists() => new("Email already exists.", HttpStatusCode.BadRequest);
         public static Error CreateUserFailed(string errors) => new($"Failed to create user: {errors}", HttpStatusCode.BadRequest);
         public static Error AssignRoleFailed() => new("Failed to assign role to user.", HttpStatusCode.InternalServerError);
+        public static Error NotFoundServicePlan() => new("Not Found ServicePlan", HttpStatusCode.NotFound);
+        public static Error NotFoundJobQuota() => new("Not Found JobQuota", HttpStatusCode.NotFound);
     }
 }
