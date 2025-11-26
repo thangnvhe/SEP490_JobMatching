@@ -213,7 +213,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
         }
 
-        public async Task<JobDetailResponse> GetJobByIdAsync(int jobId)
+        public async Task<JobDetailResponse> GetJobByIdAsync(int jobId, int? userId = null)
         {
             var job = await _context.Jobs
                 .Include(j => j.JobTaxonomies)
@@ -224,7 +224,100 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.NotFoundJob());
 
             job.ViewsCount += 1;
+            await _context.SaveChangesAsync();
 
+            return await CreateJobDetailResponseAsync(job, userId);
+        }
+
+        public async Task DeleteJobAsync(int jobId, int userId)
+        {
+            var job = await _context.Jobs
+                .FirstOrDefaultAsync(j => j.JobId == jobId);
+
+            if (job == null)
+                throw new AppException(ErrorCode.NotFoundJob());
+
+            // Chỉ Admin mới được xóa mềm job (không cần check RecuiterId)
+            // Authorization đã được xử lý ở Controller level với [Authorize(Roles = "Admin")]
+            job.IsDeleted = true;
+
+            // Sử dụng _context.SaveChangesAsync() thay vì _jobRepository.UpdateAsync() để tránh double save
+            _context.Jobs.Update(job);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<PagedResult<JobDetailResponse>> GetJobsPagedAsync(GetJobPagedRequest request)
+        {
+            var jobs = await _jobRepository.GetAllJobsPaged(request);
+
+            if (jobs == null || !jobs.Any())
+            {
+                return new PagedResult<JobDetailResponse>
+                {
+                    Items = new List<JobDetailResponse>(),
+                    pageInfo = new PageInfo(0, request.page, request.size, request.sortBy ?? "", request.isDescending)
+                };
+            }
+
+            var pagedJobs = jobs
+                .Skip((request.page - 1) * request.size)
+                .Take(request.size)
+                .ToList();
+
+            var jobDtos = new List<JobDetailResponse>();
+            
+            foreach (var job in pagedJobs)
+            {
+                var dto = await CreateJobDetailResponseAsync(job, null);
+                jobDtos.Add(dto);
+            }
+
+            return new PagedResult<JobDetailResponse>
+            {
+                Items = jobDtos,
+                pageInfo = new PageInfo(jobs.Count, request.page, request.size, request.sortBy ?? "", request.isDescending)
+            };
+        }
+
+        public async Task<PagedResult<JobDetailResponse>> GetJobsPagedAsync(GetJobPagedRequest request, int? userId)
+        {
+            var jobs = await _jobRepository.GetAllJobsPaged(request);
+
+            if (jobs == null || !jobs.Any())
+            {
+                return new PagedResult<JobDetailResponse>
+                {
+                    Items = new List<JobDetailResponse>(),
+                    pageInfo = new PageInfo(0, request.page, request.size, request.sortBy ?? "", request.isDescending)
+                };
+            }
+
+            var pagedJobs = jobs
+                .Skip((request.page - 1) * request.size)
+                .Take(request.size)
+                .ToList();
+
+            var jobDtos = new List<JobDetailResponse>();
+            
+            foreach (var job in pagedJobs)
+            {
+                var dto = await CreateJobDetailResponseAsync(job, userId);
+                jobDtos.Add(dto);
+            }
+
+            return new PagedResult<JobDetailResponse>
+            {
+                Items = jobDtos,
+                pageInfo = new PageInfo(jobs.Count, request.page, request.size, request.sortBy ?? "", request.isDescending)
+            };
+        }
+
+        private async Task<JobDetailResponse> CreateJobDetailResponseAsync(Job job, int? userId)
+        {
+            // Tính toán ApplyCount
+            var applyCount = await _context.CandidateJobs.CountAsync(cj => cj.JobId == job.JobId);
+
+            // Khởi tạo response cơ bản
             var response = new JobDetailResponse
             {
                 JobId = job.JobId,
@@ -250,112 +343,30 @@ namespace JobMatchingSystem.API.Services.Implementations
                 {
                     Id = t.TaxonomyId,
                     Name = t.Taxonomy != null ? t.Taxonomy.Name : ""
-                }).ToList()
+                }).ToList(),
+                
+                // Các trường mới
+                ApplyCount = applyCount
             };
 
-            return response;
-        }
-
-        public async Task<List<JobDetailResponse>> GetJobsAsync(GetJobRequest request)
-        {
-            var jobs = await _jobRepository.GetJobsAsync(request);
-
-            return jobs.Select(j => new JobDetailResponse
+            // Nếu có userId, tính toán các trường dựa trên user
+            if (userId.HasValue)
             {
-                JobId = j.JobId,
-                Title = j.Title,
-                Description = j.Description,
-                Requirements = j.Requirements,
-                Benefits = j.Benefits,
-                SalaryMin = j.SalaryMin,
-                SalaryMax = j.SalaryMax,
-                Location = j.Location,
-                ExperienceYear = j.ExperienceYear,
-                JobType = j.JobType,
-                Status = j.Status.ToString(),
-                ViewsCount = j.ViewsCount,
-                CompanyId = j.CompanyId,
-                RecuiterId = j.RecuiterId,
-                VerifiedBy = j.VerifiedBy,
-                CreatedAt = j.CreatedAt,
-                OpenedAt = j.OpenedAt,
-                ExpiredAt = j.ExpiredAt,
-                IsDeleted = j.IsDeleted,
-                Taxonomies = j.JobTaxonomies.Select(t => new TaxonomyResponse
-                {
-                    Id = t.TaxonomyId,
-                    Name = t.Taxonomy != null ? t.Taxonomy.Name : ""
-                }).ToList()
-            }).ToList();
-        }
+                // Kiểm tra user đã apply chưa (thông qua CV của user)
+                response.IsApply = await _context.CandidateJobs
+                    .Include(cj => cj.CandidateCV)
+                    .AnyAsync(cj => cj.JobId == job.JobId && cj.CandidateCV != null && cj.CandidateCV.UserId == userId.Value);
 
-        public async Task DeleteJobAsync(int jobId, int userId)
-        {
-            var job = await _context.Jobs
-                .FirstOrDefaultAsync(j => j.JobId == jobId);
+                // Kiểm tra user đã save chưa (giả sử có bảng SavedJobs hoặc tương tự)
+                response.IsSave = await _context.SavedJobs
+                    .AnyAsync(sj => sj.JobId == job.JobId && sj.UserId == userId.Value);
 
-            if (job == null)
-                throw new AppException(ErrorCode.NotFoundJob());
-
-            if (job.RecuiterId != userId)
-                throw new AppException(ErrorCode.NotFoundRecruiter());
-
-            job.IsDeleted = true;
-
-            await _jobRepository.UpdateAsync(job);
-        }
-
-        public async Task<PagedResult<JobDetailResponse>> GetJobsPagedAsync(GetJobPagedRequest request)
-        {
-            var jobs = await _jobRepository.GetAllJobsPaged(request);
-
-            if (jobs == null || !jobs.Any())
-            {
-                return new PagedResult<JobDetailResponse>
-                {
-                    Items = new List<JobDetailResponse>(),
-                    pageInfo = new PageInfo(0, request.page, request.size, request.sortBy ?? "", request.isDescending)
-                };
+                // Kiểm tra user đã report chưa (giả sử có bảng JobReports hoặc tương tự)
+                response.IsReport = await _context.Reports
+                    .AnyAsync(jr => jr.JobId == job.JobId && jr.ReporterId == userId.Value);
             }
 
-            var pagedJobs = jobs
-                .Skip((request.page - 1) * request.size)
-                .Take(request.size)
-                .ToList();
-
-            var jobDtos = pagedJobs.Select(j => new JobDetailResponse
-            {
-                JobId = j.JobId,
-                Title = j.Title,
-                Description = j.Description,
-                Requirements = j.Requirements,
-                Benefits = j.Benefits,
-                SalaryMin = j.SalaryMin,
-                SalaryMax = j.SalaryMax,
-                Location = j.Location,
-                ExperienceYear = j.ExperienceYear,
-                JobType = j.JobType,
-                Status = j.Status.ToString(),
-                ViewsCount = j.ViewsCount,
-                CompanyId = j.CompanyId,
-                RecuiterId = j.RecuiterId,
-                VerifiedBy = j.VerifiedBy,
-                CreatedAt = j.CreatedAt,
-                OpenedAt = j.OpenedAt,
-                ExpiredAt = j.ExpiredAt,
-                IsDeleted = j.IsDeleted,
-                Taxonomies = j.JobTaxonomies.Select(t => new TaxonomyResponse
-                {
-                    Id = t.TaxonomyId,
-                    Name = t.Taxonomy != null ? t.Taxonomy.Name : ""
-                }).ToList()
-            }).ToList();
-
-            return new PagedResult<JobDetailResponse>
-            {
-                Items = jobDtos,
-                pageInfo = new PageInfo(jobs.Count, request.page, request.size, request.sortBy ?? "", request.isDescending)
-            };
+            return response;
         }
     }
 }

@@ -6,9 +6,8 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
     public interface IJobRepository
     {
         Task CreateAsync(Job job);
-        Task<List<Job>> GetJobsAsync(GetJobRequest request);
         Task<Job?> GetById(int id);
-        Task<List<Job>> GetAllJobsPaged(GetJobPagedRequest request); // Thêm mới
+        Task<List<Job>> GetAllJobsPaged(GetJobPagedRequest request);
         Task UpdateAsync(Job job);
     }
 }
