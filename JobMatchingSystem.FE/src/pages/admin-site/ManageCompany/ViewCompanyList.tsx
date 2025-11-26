@@ -195,14 +195,33 @@ export function ManageCompanyPage() {
 
   const handleToggleActive = async (companyId: number | undefined) => {
     if (!companyId) return;
+    
+    console.log("Toggle active status for company:", companyId);
+    
     try {
-      // Call API to toggle company status
-      // This might need to be implemented in CompanyServices
-      console.log("Toggle active status for company:", companyId);
-      // For now, just refresh the data
+      // Call API to accept the company
+      await CompanyServices.acceptCompany(String(companyId));
+      // Refresh data to show updated status
       await getAllCompanies();
-    } catch (error) {
+      alert('Kích hoạt công ty thành công!');
+    } catch (error: any) {
       console.error("Error toggling company status:", error);
+      
+      let errorMessage = 'Lỗi không xác định';
+      
+      if (error?.response?.status === 403) {
+        errorMessage = 'Bạn không có quyền thực hiện hành động này. Vui lòng đăng nhập với tài khoản Admin.';
+      } else if (error?.response?.status === 401) {
+        errorMessage = 'Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn';
+      } else if (error?.response?.data?.errorMessages) {
+        errorMessage = error.response.data.errorMessages.join(', ');
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      alert('Lỗi khi kích hoạt công ty: ' + errorMessage);
     }
   };
 
@@ -448,22 +467,21 @@ export function ManageCompanyPage() {
               <Eye className="h-4 w-4" />
             </Button>
             
-            {/* Toggle Active/Inactive */}
-            <Button
-              onClick={() => handleToggleActive(company.id)}
-              variant="outline"
-              size="sm"
-              className={company.status === 1 ? "text-orange-600 hover:text-orange-700" : "text-green-600 hover:text-green-700"}
-              title={company.status === 1 ? "Vô hiệu hóa" : "Kích hoạt"}
-            >
-              {company.status === 1 ? (
-                <XCircle className="h-4 w-4" />
-              ) : (
+            {/* Accept button for pending companies */}
+            {company.status === 0 && (
+              <Button
+                onClick={() => handleToggleActive(company.id)}
+                variant="outline"
+                size="sm"
+                className="text-green-600 hover:text-green-700"
+                title="Duyệt công ty"
+              >
                 <CheckCircle className="h-4 w-4" />
-              )}
-            </Button>
+              </Button>
+            )}
             
-            {(company.status === 2) && (
+            {/* Delete button for rejected companies */}
+            {company.status === 2 && (
               <Button
                 onClick={() => handleDelete(company)}
                 variant="outline"
