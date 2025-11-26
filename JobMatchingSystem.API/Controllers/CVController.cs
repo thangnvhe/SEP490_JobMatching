@@ -23,6 +23,7 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         [RequestSizeLimit(5 * 1024 * 1024)] // 5MB limit
         [ProducesResponseType(typeof(APIResponse<string>), 201)]
         [ProducesResponseType(typeof(APIResponse<string>), 400)]
@@ -51,19 +52,51 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
-        [HttpGet("user/{userId}")]
-        public async Task<IActionResult> GetCVsByUserId(int userId)
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetMyCVs()
         {
-            var cvs = await _cvService.GetCVsByUserIdAsync(userId);
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim))
+                {
+                    return Unauthorized(APIResponse<string>.Builder()
+                        .WithStatusCode(HttpStatusCode.Unauthorized)
+                        .WithSuccess(false)
+                        .WithResult("Không tìm thấy thông tin người dùng trong token")
+                        .Build());
+                }
 
-            return Ok(APIResponse<List<CVUpload>>.Builder()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithSuccess(true)
-                .WithResult(cvs)
-                .Build());
+                if (!int.TryParse(userIdClaim, out int userId))
+                {
+                    return BadRequest(APIResponse<string>.Builder()
+                        .WithStatusCode(HttpStatusCode.BadRequest)
+                        .WithSuccess(false)
+                        .WithResult("User ID không hợp lệ")
+                        .Build());
+                }
+
+                var cvs = await _cvService.GetCVsByUserIdAsync(userId);
+
+                return Ok(APIResponse<List<CVUpload>>.Builder()
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithSuccess(true)
+                    .WithResult(cvs)
+                    .Build());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, APIResponse<string>.Builder()
+                    .WithStatusCode(HttpStatusCode.InternalServerError)
+                    .WithSuccess(false)
+                    .WithResult($"Lỗi server khi lấy danh sách CV: {ex.Message}")
+                    .Build());
+            }
         }
 
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteCV(int id)
         {
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -76,6 +109,7 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpPut("{id}/set-primary")]
+        [Authorize]
         public async Task<IActionResult> SetPrimaryCV(int id)
         {
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
