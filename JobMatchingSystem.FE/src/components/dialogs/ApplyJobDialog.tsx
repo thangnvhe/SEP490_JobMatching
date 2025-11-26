@@ -1,6 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useSelector } from 'react-redux';
-import type { RootState } from '@/store';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,30 +9,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Upload, CheckCircle } from 'lucide-react';
+import { FileText, Upload, CheckCircle, Sparkles, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { UserServices } from '@/services/user.service';
-import { User } from '@/models/user';
-
-// Types
-interface CV {
-  id: number;
-  userId: number;
-  name: string;
-  isPrimary: boolean;
-  fileName: string;
-  fileUrl: string;
-  user: null;
-  savedCVs: [];
-  candidateJobs: [];
-}
-
-interface ApiResponse {
-  statusCode: number;
-  isSuccess: boolean;
-  errorMessages: string[];
-  result: CV[];
-}
+import { CVServices } from '@/services/cv.service';
+import { CandidateJobServices } from '@/services/candidate-job.service';
+import { CV } from '@/models/cv';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ApplyJobDialogProps {
   isOpen: boolean;
@@ -55,95 +35,44 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({
   const [selectedCvId, setSelectedCvId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userProfile, setUserProfile] = useState<User | null>(null);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
-  // Get authentication state from Redux
-  const authState = useSelector((state: RootState) => state.authState);
-  
-  // Get user ID from auth state or user profile
-  const userId = userProfile?.id || authState.nameid;
-
-  const fetchUserProfile = async () => {
-    try {
-      setIsLoadingProfile(true);
-      const response = await UserServices.getUserProfile();
-      
-      if (response.isSuccess) {
-        setUserProfile(response.result);
-      } else {
-        console.error('Failed to fetch user profile:', response.errorMessages);
-        toast.error(`Lỗi khi tải thông tin người dùng: ${response.errorMessages?.join(', ') || 'Không xác định'}`);
-      }
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      toast.error("Không thể tải thông tin người dùng");
-    } finally {
-      setIsLoadingProfile(false);
-    }
-  };
-
-  const fetchCVs = useCallback(async () => {
-    if (!userId) {
-      console.warn('User ID not available, cannot fetch CVs');
-      setIsLoading(false);
-      return;
-    }
-
+  const fetchCVs = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`https://localhost:7044/api/CV/user/${userId}`);
+      const response = await CVServices.getMyCVs();
       
-      if (!response.ok) {
-        // Check if it's 404 (no CVs found) - this is normal for new users
-        if (response.status === 404) {
-          setCvs([]);
-          return;
+      if (response.isSuccess) {
+        setCvs(response.result || []);
+        // Auto-select primary CV if exists
+        const primaryCV = response.result?.find(cv => cv.isPrimary);
+        if (primaryCV) {
+          setSelectedCvId(primaryCV.id);
         }
-        throw new Error('Failed to fetch CVs');
-      }
-      
-      const data: ApiResponse = await response.json();
-      
-      if (data.isSuccess) {
-        setCvs(data.result || []); // Ensure we set empty array if result is null
       } else {
-        // Only show error if it's not an empty result scenario
-        if (data.errorMessages?.some(msg => !msg.toLowerCase().includes('not found') && !msg.toLowerCase().includes('no cv'))) {
-          console.error('Error fetching CVs:', data.errorMessages);
-          toast.error(`Lỗi: ${data.errorMessages.join(', ')}`);
+        // Handle "not found" as empty list (normal for new users)
+        if (response.errorMessages?.some(msg => 
+          msg.toLowerCase().includes('not found') || 
+          msg.toLowerCase().includes('no cv')
+        )) {
+          setCvs([]);
         } else {
-          setCvs([]); // Set empty array for "not found" scenarios
+          toast.error(response.errorMessages?.[0] || 'Không thể tải danh sách CV');
         }
       }
     } catch (error) {
       console.error('Error fetching CVs:', error);
-      // Only show alert for actual network errors, not for empty results
-      if (error instanceof Error && !error.message.includes('404')) {
-        toast.error("Không thể tải danh sách CV");
-      } else {
-        setCvs([]);
-      }
+      setCvs([]);
     } finally {
       setIsLoading(false);
     }
-  }, [userId]);
+  };
 
   useEffect(() => {
     if (isOpen) {
-      // Reset states when dialog opens
       setSelectedCvId(null);
-      // Fetch user profile first
-      fetchUserProfile();
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    // Fetch CVs when user profile is loaded and userId is available
-    if (isOpen && !isLoadingProfile && userId) {
       fetchCVs();
     }
-  }, [isOpen, isLoadingProfile, userId, fetchCVs]);
+  }, [isOpen]);
 
   const handleSubmitApplication = async () => {
     if (!selectedCvId) {
@@ -154,44 +83,20 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({
     setIsSubmitting(true);
     
     try {
-      // Get token from localStorage or cookies
-      const token = localStorage.getItem('accessToken') || document.cookie
-        .split('; ')
-        .find(row => row.startsWith('accessToken='))
-        ?.split('=')[1];
-
-      if (!token) {
-        toast.error("Lỗi: Bạn cần đăng nhập để thực hiện thao tác này");
-        return;
-      }
-
-      const requestData = {
+      const response = await CandidateJobServices.create({
         jobId: jobId,
         cvId: selectedCvId
-      };
-
-      const response = await fetch('https://localhost:7044/api/CandidateJob', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestData)
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.isSuccess) {
-        toast.success(data.message || "Ứng tuyển thành công!");
+      if (response.isSuccess) {
+        toast.success("Ứng tuyển thành công!");
         onOpenChange(false);
       } else {
-        // Handle API error response
-        const errorMessage = data.errorMessages?.join(', ') || data.message || 'Không thể ứng tuyển';
-        toast.error(`Lỗi: ${errorMessage}`);
+        toast.error(response.errorMessages?.[0] || 'Không thể ứng tuyển');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting application:', error);
-      toast.error("Lỗi: Không thể kết nối đến server. Vui lòng thử lại.");
+      toast.error(error?.response?.data?.errorMessages?.[0] || "Không thể ứng tuyển. Vui lòng thử lại.");
     } finally {
       setIsSubmitting(false);
     }
@@ -208,116 +113,132 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-hidden">
+      <DialogContent className="sm:max-w-[640px] max-h-[85vh] overflow-hidden border-0 shadow-2xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">
-            Ứng tuyển cho vị trí: {jobTitle}
+          <DialogTitle className="text-2xl font-bold text-slate-900">
+            Ứng tuyển công việc
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col space-y-4 overflow-y-auto max-h-[50vh]">
-          {/* Upload CV Button */}
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              onClick={handleUploadClick}
-              className="flex items-center space-x-2"
-            >
-              <Upload className="h-4 w-4" />
-              <span>Upload CV mới</span>
-            </Button>
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
+            <div className="flex items-start gap-3">
+              <div className="rounded-xl bg-white p-3 shadow-sm">
+                <Sparkles className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-emerald-700">Ứng tuyển vị trí</p>
+                <h3 className="text-lg font-semibold text-slate-900">{jobTitle}</h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  Vui lòng chọn CV phù hợp nhất để nhà tuyển dụng ấn tượng ngay từ vòng đầu.
+                </p>
+              </div>
+              <Button variant="secondary" onClick={handleUploadClick} className="bg-white text-emerald-700 hover:bg-emerald-100">
+                <Upload className="h-4 w-4 mr-1.5" />
+                Upload CV
+              </Button>
+            </div>
           </div>
 
           {/* Loading state */}
-          {(isLoadingProfile || isLoading) && (
+          {isLoading && (
             <div className="flex items-center justify-center py-8">
               <div className="text-center space-y-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-200 border-t-blue-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-4 border-emerald-200 border-t-emerald-600 mx-auto"></div>
                 <p className="text-gray-600">Đang tải danh sách CV...</p>
               </div>
             </div>
           )}
 
           {/* CV List */}
-          {!isLoadingProfile && !isLoading && cvs.length > 0 && (
+          {!isLoading && cvs.length > 0 && (
             <div className="space-y-3">
-              <h3 className="text-lg font-medium text-gray-900">
-                Chọn CV để ứng tuyển:
-              </h3>
-              <div className="space-y-2">
-                {cvs.map((cv) => (
-                  <Card
-                    key={cv.id}
-                    className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
-                      selectedCvId === cv.id
-                        ? 'ring-2 ring-blue-500 border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    onClick={() => handleCVSelect(cv.id)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-3">
-                          <div className={`flex-shrink-0 p-2 rounded-lg ${
-                            selectedCvId === cv.id ? 'bg-blue-100' : 'bg-gray-100'
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Bước 1</p>
+                  <h3 className="text-lg font-semibold text-slate-900">Chọn CV để ứng tuyển</h3>
+                  <p className="text-sm text-slate-500">Bạn có thể tạo mới CV nếu chưa có.</p>
+                </div>
+              </div>
+              <ScrollArea className="max-h-[320px] pr-3">
+                <div className="space-y-3">
+                  {cvs.map((cv) => (
+                    <Card
+                      key={cv.id}
+                      className={`cursor-pointer border transition-all duration-200 hover:shadow-lg ${
+                        selectedCvId === cv.id
+                          ? 'border-emerald-400 bg-emerald-50/80 shadow-emerald-100'
+                          : 'border-slate-200 hover:border-emerald-200'
+                      }`}
+                      onClick={() => handleCVSelect(cv.id)}
+                    >
+                      <CardContent className="p-4 flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <div className={`rounded-2xl p-3 transition-colors ${
+                            selectedCvId === cv.id ? 'bg-white text-emerald-600 shadow-inner' : 'bg-slate-100 text-slate-600'
                           }`}>
-                            <FileText className={`h-5 w-5 ${
-                              selectedCvId === cv.id ? 'text-blue-600' : 'text-gray-600'
-                            }`} />
+                            <FileText className="h-5 w-5" />
                           </div>
-                          
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2">
-                              <h4 className="font-medium text-gray-900">{cv.name}</h4>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-slate-900">{cv.name}</h4>
                               {cv.isPrimary && (
-                                <Badge variant="secondary" className="text-xs">
-                                  CV chính
-                                </Badge>
+                                <Badge className="bg-emerald-100 text-emerald-700">CV chính</Badge>
                               )}
                             </div>
-                            <p className="text-sm text-gray-500 mt-1">{cv.fileName}</p>
+                            <p className="text-sm text-slate-500 mt-1">{cv.fileName}</p>
                           </div>
                         </div>
-                        
-                        {selectedCvId === cv.id && (
-                          <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                        <div className="flex items-center gap-2">
+                          {selectedCvId === cv.id && (
+                            <span className="text-sm font-medium text-emerald-600">Đang chọn</span>
+                          )}
+                          <div className={`rounded-full border p-1 ${
+                            selectedCvId === cv.id ? 'border-emerald-400 bg-emerald-50' : 'border-slate-200'
+                          }`}>
+                            <CheckCircle className={`h-5 w-5 ${
+                              selectedCvId === cv.id ? 'text-emerald-600' : 'text-slate-300'
+                            }`} />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
           )}
 
           {/* Empty state */}
-          {!isLoadingProfile && !isLoading && cvs.length === 0 && (
-            <div className="text-center py-8">
-              <div className="rounded-full bg-gray-100 p-6 mx-auto w-fit mb-4">
-                <FileText className="h-8 w-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Chưa có CV nào
-              </h3>
-              <p className="text-gray-500 mb-4">
-                Bạn cần upload CV để có thể ứng tuyển vào vị trí này.
-              </p>
-              <Button onClick={handleUploadClick} className="bg-blue-600 hover:bg-blue-700">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload CV ngay
-              </Button>
-            </div>
+          {!isLoading && cvs.length === 0 && (
+            <Card className="bg-slate-50 border-dashed border-slate-200 text-center py-10">
+              <CardContent className="space-y-4">
+                <div className="mx-auto w-16 h-16 rounded-full bg-white shadow-inner flex items-center justify-center">
+                  <FileText className="h-7 w-7 text-slate-400" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-semibold text-slate-900">Bạn chưa có CV nào</h3>
+                  <p className="text-sm text-slate-500">
+                    Hãy upload CV đầu tiên để có thể ứng tuyển nhanh chóng.
+                  </p>
+                </div>
+                <Button onClick={handleUploadClick} className="bg-emerald-600 hover:bg-emerald-700">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload CV ngay
+                </Button>
+              </CardContent>
+            </Card>
           )}
         </div>
 
-        <DialogFooter className="flex justify-between space-x-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex justify-between gap-2 pt-4">
+          <Button variant="outline" className="w-full" onClick={() => onOpenChange(false)}>
             Hủy
           </Button>
           <Button
             onClick={handleSubmitApplication}
             disabled={!selectedCvId || isSubmitting}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="w-full bg-linear-to-r from-emerald-600 to-emerald-500 hover:from-emerald-600 hover:to-emerald-600 shadow-lg shadow-emerald-500/30"
           >
             {isSubmitting ? (
               <>
