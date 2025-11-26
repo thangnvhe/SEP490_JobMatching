@@ -1,4 +1,4 @@
-import type { Job, SavedJob } from "@/models/job";
+import type { Job } from "@/models/job";
 import { BaseApiServices } from "./base-api.service";
 import type { BaseResponse, PaginationParamsInput } from "@/models/base";
 

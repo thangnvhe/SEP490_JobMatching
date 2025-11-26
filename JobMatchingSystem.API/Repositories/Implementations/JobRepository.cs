@@ -143,12 +143,12 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                 }
                 else
                 {
-                    query = query.OrderBy(j => j.JobId); // default
+                    query = query.OrderByDescending(j => j.JobId); // default descending
                 }
             }
             else
             {
-                query = query.OrderBy(j => j.JobId);
+                query = query.OrderByDescending(j => j.JobId); // default descending
             }
 
             return await query.ToListAsync();

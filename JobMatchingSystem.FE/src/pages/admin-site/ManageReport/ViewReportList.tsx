@@ -187,7 +187,7 @@ export default function ViewReportList() {
   const handleApprove = async (reportId: number) => {
     try {
       const response = await ReportService.updateReportCensor(reportId, {
-        status: ReportStatus.Approved,
+        status: 1, // Approved
         note: "Báo cáo được chấp nhận"
       });
       if (response.isSuccess) {
@@ -203,7 +203,7 @@ export default function ViewReportList() {
   const handleReject = async (reportId: number) => {
     try {
       const response = await ReportService.updateReportCensor(reportId, {
-        status: ReportStatus.Rejected,
+        status: 2, // Rejected
         note: "Báo cáo bị từ chối"
       });
       if (response.isSuccess) {
@@ -217,68 +217,120 @@ export default function ViewReportList() {
   };
 
   // Helper functions
-  const getStatusBadgeColor = (status: ReportStatus) => {
-    switch (status) {
-      case ReportStatus.Pending:
+  const getStatusBadgeColor = (status: ReportStatus | number | string) => {
+    // Handle both string and number values
+    let normalizedStatus: string;
+    
+    if (typeof status === 'number') {
+      switch (status) {
+        case 0: normalizedStatus = 'Pending'; break;
+        case 1: normalizedStatus = 'Approved'; break;
+        case 2: normalizedStatus = 'Rejected'; break;
+        default: normalizedStatus = status.toString();
+      }
+    } else {
+      normalizedStatus = status.toString();
+    }
+    
+    switch (normalizedStatus) {
+      case 'Pending':
         return 'bg-yellow-100 text-yellow-800';
-      case ReportStatus.Approved:
+      case 'Approved':
         return 'bg-green-100 text-green-800';
-      case ReportStatus.Rejected:
+      case 'Rejected':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusIcon = (status: ReportStatus) => {
-    switch (status) {
-      case ReportStatus.Pending:
+  const getStatusIcon = (status: ReportStatus | number | string) => {
+    // Handle both string and number values
+    let normalizedStatus: string;
+    
+    if (typeof status === 'number') {
+      switch (status) {
+        case 0: normalizedStatus = 'Pending'; break;
+        case 1: normalizedStatus = 'Approved'; break;
+        case 2: normalizedStatus = 'Rejected'; break;
+        default: normalizedStatus = status.toString();
+      }
+    } else {
+      normalizedStatus = status.toString();
+    }
+    
+    switch (normalizedStatus) {
+      case 'Pending':
         return <Clock className="h-3 w-3 mr-1" />;
-      case ReportStatus.Approved:
+      case 'Approved':
         return <CheckCircle className="h-3 w-3 mr-1" />;
-      case ReportStatus.Rejected:
+      case 'Rejected':
         return <XCircle className="h-3 w-3 mr-1" />;
       default:
         return null;
     }
   };
 
-  const getStatusLabel = (status: ReportStatus) => {
-    switch (status) {
-      case ReportStatus.Pending:
+  const getStatusLabel = (status: ReportStatus | number | string) => {
+    // Handle both string and number values
+    let normalizedStatus: string;
+    
+    if (typeof status === 'number') {
+      // Convert number to string enum
+      switch (status) {
+        case 0: normalizedStatus = 'Pending'; break;
+        case 1: normalizedStatus = 'Approved'; break;
+        case 2: normalizedStatus = 'Rejected'; break;
+        default: normalizedStatus = status.toString();
+      }
+    } else {
+      normalizedStatus = status.toString();
+    }
+    
+    // Convert to Vietnamese
+    switch (normalizedStatus) {
+      case 'Pending':
         return 'Đang chờ xử lý';
-      case ReportStatus.Approved:
+      case 'Approved':
         return 'Đã chấp nhận';
-      case ReportStatus.Rejected:
+      case 'Rejected':
         return 'Đã từ chối';
       default:
+        console.log('Unknown status:', status);
         return 'Không xác định';
     }
   };
 
-  const getReportTypeLabel = (type: string) => {
-    const normalizedType = type.toLowerCase();
-    switch (normalizedType) {
-      case 'spam':
+  const getReportTypeLabel = (subject: number | string) => {
+    // Handle both string and number values
+    let normalizedSubject: string;
+    
+    if (typeof subject === 'number') {
+      // Convert number to string enum
+      switch (subject) {
+        case 0: normalizedSubject = 'Spam'; break;
+        case 1: normalizedSubject = 'InappropriateContent'; break;
+        case 2: normalizedSubject = 'FraudulentJobPosting'; break;
+        case 3: normalizedSubject = 'Other'; break;
+        default: normalizedSubject = subject.toString();
+      }
+    } else {
+      normalizedSubject = subject;
+    }
+    
+    // Convert to Vietnamese
+    switch (normalizedSubject) {
+      case 'Spam':
         return 'Thư rác/Spam';
-      case 'fake_job':
-      case 'fakejob':
-        return 'Việc làm giả mạo';
-      case 'inappropriate':
-      case 'inappropriatecontent':
+      case 'InappropriateContent':
         return 'Nội dung không phù hợp';
-      case 'discrimination':
-        return 'Phân biệt đối xử';
-      case 'misleading':
-        return 'Thông tin sai lệch';
-      case 'scam':
-        return 'Lừa đảo';
-      case 'harassment':
-        return 'Quấy rối';
-      case 'other':
+      case 'FraudulentJobPosting':
+        return 'Việc làm giả mạo';
+      case 'Other':
         return 'Khác';
       default:
-        return type;
+        console.log('Unknown report type:', subject);
+        return 'Không xác định';
     }
   };
 
@@ -317,7 +369,7 @@ export default function ViewReportList() {
       header: "Loại báo cáo",
       enableSorting: true,
       cell: ({ row }) => {
-        const subject = row.getValue("subject") as string;
+        const subject = row.getValue("subject") as number;
         return (
           <Badge variant="outline" className="text-xs">
             {getReportTypeLabel(subject)}
@@ -372,7 +424,17 @@ export default function ViewReportList() {
       header: "Thao tác",
       cell: ({ row }) => {
         const report = row.original;
-        const isPending = report.status === ReportStatus.Pending;
+        const status = report.status;
+        // Handle both string and number status values
+        let normalizedStatus: string;
+        if (typeof status === 'string') {
+          normalizedStatus = status;
+        } else if (typeof status === 'number') {
+          normalizedStatus = status === 0 ? 'Pending' : status === 1 ? 'Approved' : status === 2 ? 'Rejected' : String(status);
+        } else {
+          normalizedStatus = String(status);
+        }
+        const isPending = normalizedStatus === 'Pending';
         
         return (
           <div className="flex items-center space-x-1">
@@ -386,27 +448,15 @@ export default function ViewReportList() {
             </Button>
             
             {isPending && (
-              <>
-                <Button
-                  onClick={() => handleApprove(report.id)}
-                  variant="outline"
-                  size="sm"
-                  className="text-green-600 hover:text-green-700"
-                  title="Chấp nhận"
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
-                
-                <Button
-                  onClick={() => handleReject(report.id)}
-                  variant="outline"
-                  size="sm"
-                  className="text-red-600 hover:text-red-700"
-                  title="Từ chối"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </>
+              <Button
+                onClick={() => handleApprove(report.id)}
+                variant="outline"
+                size="sm"
+                className="text-green-600 hover:text-green-700"
+                title="Chấp nhận"
+              >
+                <Check className="h-4 w-4" />
+              </Button>
             )}
           </div>
         );
@@ -438,9 +488,9 @@ export default function ViewReportList() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                  <SelectItem value={ReportStatus.Pending.toString()}>Đang chờ xử lý</SelectItem>
-                  <SelectItem value={ReportStatus.Approved.toString()}>Đã chấp nhận</SelectItem>
-                  <SelectItem value={ReportStatus.Rejected.toString()}>Đã từ chối</SelectItem>
+                  <SelectItem value="0">Đang chờ xử lý</SelectItem>
+                  <SelectItem value="1">Đã chấp nhận</SelectItem>
+                  <SelectItem value="2">Đã từ chối</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -682,7 +732,18 @@ export default function ViewReportList() {
               </div>
               
               {/* Action buttons for pending reports */}
-              {selectedReport.status === ReportStatus.Pending && (
+              {(() => {
+                const status = selectedReport.status;
+                let normalizedStatus: string;
+                if (typeof status === 'string') {
+                  normalizedStatus = status;
+                } else if (typeof status === 'number') {
+                  normalizedStatus = status === 0 ? 'Pending' : status === 1 ? 'Approved' : status === 2 ? 'Rejected' : String(status);
+                } else {
+                  normalizedStatus = String(status);
+                }
+                return normalizedStatus === 'Pending';
+              })() && (
                 <div className="flex justify-end space-x-2 mt-6 pt-4 border-t">
                   <Button
                     onClick={() => {
