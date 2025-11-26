@@ -207,13 +207,42 @@ export function ManageCompanyPage() {
   };
 
   const handleApprove = async (companyId: number | undefined) => {
-    if (!companyId) return;
+    if (!companyId) {
+      console.error('Company ID is missing');
+      return;
+    }
+    
+    console.log('Attempting to approve company with ID:', companyId);
+    
     try {
       await CompanyServices.acceptCompany(String(companyId));
       setIsViewDialogOpen(false);
       await getAllCompanies();
-    } catch (error) {
-      console.error("Error approving company:", error);
+      alert('Duyệt công ty thành công!');
+      console.log('Company approved successfully');
+    } catch (error: any) {
+      console.error('Error approving company:', error);
+      console.error('Error details:', {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message
+      });
+      
+      let errorMessage = 'Lỗi không xác định';
+      
+      if (error?.response?.status === 403) {
+        errorMessage = 'Bạn không có quyền thực hiện hành động này. Vui lòng đăng nhập với tài khoản Admin.';
+      } else if (error?.response?.status === 401) {
+        errorMessage = 'Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn';
+      } else if (error?.response?.data?.errorMessages) {
+        errorMessage = error.response.data.errorMessages.join(', ');
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      alert('Lỗi khi duyệt công ty: ' + errorMessage);
     }
   };
 
@@ -224,7 +253,18 @@ export function ManageCompanyPage() {
   };
 
   const confirmReject = async () => {
-    if (!rejectedCompanyId) return;
+    if (!rejectedCompanyId) {
+      console.error('Rejected company ID is missing');
+      return;
+    }
+    
+    if (!rejectReason.trim()) {
+      alert('Vui lòng nhập lý do từ chối');
+      return;
+    }
+    
+    console.log('Attempting to reject company:', { companyId: rejectedCompanyId, reason: rejectReason });
+    
     try {
       await CompanyServices.rejectCompany(String(rejectedCompanyId), rejectReason);
       setIsRejectDialogOpen(false);
@@ -232,8 +272,31 @@ export function ManageCompanyPage() {
       setRejectedCompanyId(null);
       setIsViewDialogOpen(false);
       await getAllCompanies();
-    } catch (error) {
-      console.error("Error rejecting company:", error);
+      alert('Từ chối công ty thành công!');
+      console.log('Company rejected successfully');
+    } catch (error: any) {
+      console.error('Error rejecting company:', error);
+      console.error('Error details:', {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message
+      });
+      
+      let errorMessage = 'Lỗi không xác định';
+      
+      if (error?.response?.status === 403) {
+        errorMessage = 'Bạn không có quyền thực hiện hành động này. Vui lòng đăng nhập với tài khoản Admin.';
+      } else if (error?.response?.status === 401) {
+        errorMessage = 'Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn';
+      } else if (error?.response?.data?.errorMessages) {
+        errorMessage = error.response.data.errorMessages.join(', ');
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      alert('Lỗi khi từ chối công ty: ' + errorMessage);
     }
   };
 
