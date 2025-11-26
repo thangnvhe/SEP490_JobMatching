@@ -59,7 +59,7 @@ export default function JobsPage() {
     experienceYearMin: null,
     experienceYearMax: null,
     jobType: null,
-    status: null,
+    status: "Opened", // Chỉ hiển thị jobs có status = "Opened" (đã được mở)
     companyId: null,
     recruiterId: null,
     isDeleted: null,
@@ -70,7 +70,9 @@ export default function JobsPage() {
   const getAllWithPagination = useCallback(async (params: PaginationParamsInput) => {
     try {
       setLoading(true);
+      console.log("🔍 API Params:", params); // Debug log
       const response = await JobServices.getAllWithPagination(params);
+      console.log("📊 API Response:", response.result); // Debug log
       setJobs(response.result.items);
       setPaginationInfo(response.result.pageInfo);
     } catch (err: any) {
@@ -131,6 +133,7 @@ export default function JobsPage() {
     const params = {
       ...paginationInput,
       search: debouncedKeyword,
+      status: "Opened", // Đảm bảo chỉ lấy jobs có status = "Opened"
     };
     getAllWithPagination(params);
   }, [getAllWithPagination, debouncedKeyword, paginationInput]);

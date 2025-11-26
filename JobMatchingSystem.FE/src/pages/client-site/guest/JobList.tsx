@@ -242,6 +242,18 @@ const JobList: React.FC<JobListProps> = ({
     loading,
     className
 }) => {
+    // Safety filter để chỉ hiển thị jobs có status = "Opened" 
+    const openedJobs = jobs.filter(job => job.status === 'Opened');
+    
+    // Debug logs
+    console.log("📊 Total jobs from API:", total);
+    console.log("📋 Jobs received in current page:", jobs.length);
+    console.log("📋 Jobs with status 'Opened' in current page:", openedJobs.length);
+    console.log("📋 Jobs status breakdown:", jobs.reduce((acc, job) => {
+        acc[job.status] = (acc[job.status] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>));
+    
     const generatePageNumbers = () => {
         const pages: (number | string)[] = [];
         const maxVisible = 5;
@@ -299,7 +311,7 @@ const JobList: React.FC<JobListProps> = ({
             {/* List of Jobs */}
             {loading ? (
                 <JobListSkeleton />
-            ) : jobs.length === 0 ? (
+            ) : openedJobs.length === 0 ? (
                 <Card className="py-16 px-4 text-center bg-white border-dashed border-2 border-gray-200 shadow-none">
                     <div className="text-gray-400 space-y-4 flex flex-col items-center">
                         <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center">
@@ -314,7 +326,7 @@ const JobList: React.FC<JobListProps> = ({
                 </Card>
             ) : (
                 <div className="grid grid-cols-1 gap-4">
-                    {jobs.map((job) => (
+                    {openedJobs.map((job) => (
                         <JobCard
                             key={job.jobId}
                             job={job}
@@ -327,7 +339,7 @@ const JobList: React.FC<JobListProps> = ({
             )}
 
             {/* Pagination */}
-            {!loading && jobs.length > 0 && totalPages > 1 && (
+            {!loading && openedJobs.length > 0 && totalPages > 1 && (
                 <div className="py-8 flex justify-center">
                     <Pagination>
                         <PaginationContent className="gap-2">
