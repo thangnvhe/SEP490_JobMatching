@@ -6,7 +6,7 @@ export const CandidateJobServices = {
     getAll: (params: Record<string, any>) => BaseApiServices.getAll<CandidateJob[]>('/CandidateJob', params),
     getAllWithPagination: (params: PaginationParamsInput) => BaseApiServices.getAllWithPagination<CandidateJob>('/CandidateJob', params),
     getById: (id: string) => BaseApiServices.getById<CandidateJob>('/CandidateJob', id),
-    create: (candidateJob: Omit<CandidateJob, 'id'>) => BaseApiServices.create<CandidateJob>('/CandidateJob', candidateJob),
+    create: (candidateJob: Pick<CandidateJob, 'jobId' | 'cvId'>) => BaseApiServices.create<CandidateJob>('/CandidateJob', candidateJob),
     update: (id: string, candidateJob: CandidateJob) => BaseApiServices.update<CandidateJob>('/CandidateJob', id, candidateJob),
     delete: (id: string) => BaseApiServices.delete<CandidateJob>('/CandidateJob', id),
     //

@@ -12,4 +12,5 @@ export const CVServices = {
   setPrimary: (id: string) => BaseApiServices.custom<BaseResponse<CV>>('put', `/CV/${id}/set-primary`),
   getByUserId: (userId: string) => BaseApiServices.custom<BaseResponse<CV[]>>('get', `/CV/user/${userId}`),
   validate: (file: FormData) => BaseApiServices.custom<BaseResponse<CVValidate>>('post', `/CV/validate`, file),
+  getMyCVs: () => BaseApiServices.custom<BaseResponse<CV[]>>('get', `/CV/me`),
 };

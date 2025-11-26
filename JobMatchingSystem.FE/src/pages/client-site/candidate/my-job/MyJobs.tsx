@@ -125,7 +125,6 @@ export default function MyJobsPage() {
         try {
             setLoadingSaved(true);
             const response = await SaveJobServices.getMySavedJobs();
-            console.log(response.result);
             setSavedJobs(response.result);
         } catch (err: any) {
             console.log(err);

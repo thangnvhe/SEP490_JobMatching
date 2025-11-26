@@ -6,13 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import type { RootState } from '@/store';
 import { UserServices } from '@/services/user.service';
 import { CVServices } from '@/services/cv.service';
-import  { User } from '@/models/user';
-import  { CV, CVValidate } from '@/models/cv';
+import { User } from '@/models/user';
+import { CV, CVValidate } from '@/models/cv';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileText, Upload, Download, Star, Trash2, Eye, File, Calendar, CheckCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from 'sonner';
+import { API_BASE_URL } from '../../../../env.ts';
+
 
 export default function CVManagement() {
   const [cvs, setCvs] = useState<CV[]>([]);
@@ -28,7 +30,7 @@ export default function CVManagement() {
 
   // Get authentication state from Redux
   const authState = useSelector((state: RootState) => state.authState);
-  
+
   // Get user ID from auth state or user profile
   const userId = userProfile?.id || authState.nameid;
 
@@ -36,7 +38,7 @@ export default function CVManagement() {
     try {
       setIsLoadingProfile(true);
       const response = await UserServices.getUserProfile();
-      
+
       if (response.isSuccess) {
         setUserProfile(response.result);
       } else {
@@ -53,16 +55,16 @@ export default function CVManagement() {
 
     try {
       setIsLoading(true);
-      const response = await CVServices.getByUserId(userId.toString());
-      
+      const response = await CVServices.getMyCVs();
+
       if (response.isSuccess) {
         setCvs(response.result || []);
       } else {
         // Only show error if it's not a "not found" scenario
-        const isNotFoundError = response.errorMessages?.some(msg => 
+        const isNotFoundError = response.errorMessages?.some(msg =>
           msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('no cv')
         );
-        
+
         if (!isNotFoundError && response.errorMessages?.length) {
           console.error('Error fetching CVs:', response.errorMessages);
           alert(`Lỗi: ${response.errorMessages.join(', ')}`);
@@ -120,12 +122,12 @@ export default function CVManagement() {
         alert("Lỗi: Chỉ chấp nhận file PDF");
         return;
       }
-      
+
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
         alert("Lỗi: File không được vượt quá 5MB");
         return;
       }
-      
+
       setSelectedFile(file);
       if (!cvName) {
         setCvName(file.name.replace('.pdf', ''));
@@ -162,7 +164,7 @@ export default function CVManagement() {
     }
 
     setIsUploading(true);
-    
+
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
@@ -249,7 +251,7 @@ export default function CVManagement() {
   };
 
   const handlePreview = (cv: CV) => {
-    window.open(`https://localhost:7044/${cv.fileUrl}`, '_blank');
+    window.open(`${API_BASE_URL}${cv.fileUrl}`, '_blank');
   };
 
   if (isLoadingProfile || isLoading) {
@@ -317,7 +319,7 @@ export default function CVManagement() {
                   </div>
                 </div>
               </div>
-              
+
               <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
                 <DialogTrigger asChild>
                   <Button size="lg" className="shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
@@ -381,11 +383,10 @@ export default function CVManagement() {
                     )}
 
                     {validationResult && (
-                      <div className={`rounded-lg border p-3 ${
-                        validationResult.is_cv 
-                          ? 'bg-green-50 border-green-200' 
-                          : 'bg-red-50 border-red-200'
-                      }`}>
+                      <div className={`rounded-lg border p-3 ${validationResult.is_cv
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-red-50 border-red-200'
+                        }`}>
                         <div className="flex items-center gap-2 text-sm">
                           {validationResult.is_cv ? (
                             <>
@@ -421,20 +422,19 @@ export default function CVManagement() {
                     <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
                       Hủy
                     </Button>
-                    <Button 
+                    <Button
                       onClick={handleUpload}
                       disabled={
-                        !selectedFile || 
-                        !cvName.trim() || 
-                        isUploading || 
+                        !selectedFile ||
+                        !cvName.trim() ||
+                        isUploading ||
                         isValidating ||
                         (validationResult?.is_cv === false)
                       }
-                      className={`${
-                        (validationResult?.is_cv === false) 
-                          ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' 
-                          : 'bg-blue-600 hover:bg-blue-700'
-                      }`}
+                      className={`${(validationResult?.is_cv === false)
+                        ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-700'
+                        }`}
                     >
                       {isUploading ? (
                         <>
@@ -480,7 +480,7 @@ export default function CVManagement() {
               </CardContent>
               <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10" />
             </Card>
-            
+
             <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-xl">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-emerald-100">CV chính</CardTitle>
@@ -498,7 +498,7 @@ export default function CVManagement() {
               </CardContent>
               <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10" />
             </Card>
-            
+
             <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-violet-500 to-violet-600 text-white shadow-xl">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-violet-100">CV phụ</CardTitle>
@@ -531,7 +531,7 @@ export default function CVManagement() {
                     <p className="text-gray-600 dark:text-gray-400 text-center mb-8 max-w-md">
                       Bạn chưa upload CV nào. Hãy upload CV đầu tiên để bắt đầu ứng tuyển và tăng cơ hội tìm được việc làm phù hợp!
                     </p>
-                    <Button 
+                    <Button
                       onClick={() => setIsUploadDialogOpen(true)}
                       size="lg"
                       className="bg-blue-600 hover:bg-blue-700 shadow-lg"
@@ -574,11 +574,11 @@ export default function CVManagement() {
                         </div>
                       </div>
                     </CardHeader>
-                    
+
                     <CardContent className="relative pt-0">
                       <div className="flex flex-wrap gap-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handlePreview(cv)}
                           className="hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 dark:hover:bg-blue-900/20"
@@ -586,9 +586,9 @@ export default function CVManagement() {
                           <Eye className="h-4 w-4 mr-2" />
                           Xem trước
                         </Button>
-                        
-                        <Button 
-                          size="sm" 
+
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handleDownload(cv)}
                           className="hover:bg-green-50 hover:border-green-200 hover:text-green-700 dark:hover:bg-green-900/20"
@@ -596,10 +596,10 @@ export default function CVManagement() {
                           <Download className="h-4 w-4 mr-2" />
                           Tải xuống
                         </Button>
-                        
+
                         {!cv.isPrimary && (
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             onClick={() => handleSetPrimary(cv.id)}
                             className="hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 dark:hover:bg-amber-900/20"
@@ -608,9 +608,9 @@ export default function CVManagement() {
                             Đặt làm CV chính
                           </Button>
                         )}
-                        
-                        <Button 
-                          size="sm" 
+
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handleDelete(cv.id)}
                           className="hover:bg-red-50 hover:border-red-200 hover:text-red-700 dark:hover:bg-red-900/20 ml-auto"
