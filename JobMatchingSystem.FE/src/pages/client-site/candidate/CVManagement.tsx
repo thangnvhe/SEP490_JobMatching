@@ -401,9 +401,6 @@ export default function CVManagement() {
                               <span className="font-medium text-red-800">⚠️ File này không phải CV hợp lệ</span>
                             </>
                           )}
-                          <span className="text-xs text-gray-600 ml-auto">
-                            Độ tin cậy: {(validationResult.confidence * 100).toFixed(0)}%
-                          </span>
                         </div>
                         <p className="text-xs text-gray-700 mt-1">
                           {validationResult.reason}
