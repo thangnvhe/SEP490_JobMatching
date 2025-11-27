@@ -21,12 +21,22 @@ namespace JobMatchingSystem.API.Services.Implementations
         protected readonly IMapper _mapper;
         protected readonly UserManager<ApplicationUser> _userManager;
         protected readonly IEmailService _emailService;
-        public CompanyService(IUnitOfWork unitOfWork, IWebHostEnvironment env,IMapper mapper, UserManager<ApplicationUser> userManager,IEmailService emailService) {
-        _unitOfWork = unitOfWork;
-        _env = env;
-        _mapper = mapper;
-        _userManager = userManager;
-        _emailService = emailService;
+        protected readonly ITaxCodeValidationService _taxCodeValidationService;
+        
+        public CompanyService(
+            IUnitOfWork unitOfWork, 
+            IWebHostEnvironment env,
+            IMapper mapper, 
+            UserManager<ApplicationUser> userManager,
+            IEmailService emailService,
+            ITaxCodeValidationService taxCodeValidationService) 
+        {
+            _unitOfWork = unitOfWork;
+            _env = env;
+            _mapper = mapper;
+            _userManager = userManager;
+            _emailService = emailService;
+            _taxCodeValidationService = taxCodeValidationService;
         }
 
         public async Task AcceptCompany(int id,int verifyBy)
@@ -56,6 +66,20 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (await _unitOfWork.AuthRepository.ExistsAsync(request.Email))
             {
                 throw new AppException(ErrorCode.EmailExist());
+            }
+            
+            // Validate tax code with external API
+            var taxCodeValidation = await _taxCodeValidationService.ValidateTaxCodeAsync(request.TaxCode);
+            if (!taxCodeValidation.IsValid)
+            {
+                throw new AppException(ErrorCode.InvalidFile(taxCodeValidation.ErrorMessage));
+            }
+            
+            // Check if tax code already exists in database
+            var existingCompany = await _unitOfWork.CompanyRepository.GetByTaxCodeAsync(request.TaxCode);
+            if (existingCompany != null)
+            {
+                throw new AppException(ErrorCode.InvalidFile("Mã số thuế này đã được đăng ký bởi công ty khác"));
             }
             var fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.LicenseFile.FileName)}";
             var savePath = Path.Combine(_env.WebRootPath, "images", "LicenseFile", fileName);

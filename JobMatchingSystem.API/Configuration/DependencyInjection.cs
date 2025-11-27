@@ -48,6 +48,12 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IJobService, JobService>();
             services.AddScoped<ICompanyService, CompanyService>();
+            services.AddScoped<ITaxCodeValidationService, TaxCodeValidationService>();
+            services.AddHttpClient<ITaxCodeValidationService, TaxCodeValidationService>(client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(30);
+                client.DefaultRequestHeaders.Add("User-Agent", "JobMatchingSystem/1.0");
+            });
             services.AddScoped<IJobStageService, JobStageService>();
             services.AddScoped<ITaxonomyService, TaxonomyService>();
             services.AddScoped<ICandidateJobService, CandidateJobService>();

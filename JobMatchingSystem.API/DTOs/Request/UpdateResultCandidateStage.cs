@@ -2,6 +2,7 @@
 {
     public class UpdateResultCandidateStage
     {
-        public string Result {  get; set; }
+        public string Result { get; set; }
+        public string? HiringManagerFeedback { get; set; } // Đánh giá của Hiring Manager
     }
 }

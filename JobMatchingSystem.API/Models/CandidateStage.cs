@@ -17,6 +17,9 @@ namespace JobMatchingSystem.API.Models
         public int JobStageId { get; set; }
         public CandidateStageStatus? Status { get; set; } = CandidateStageStatus.Draft;
         public DateTime? ScheduleTime { get; set; }
+        public string? InterviewLocation { get; set; } // Địa chỉ nơi phỏng vấn
+        public string? GoogleMeetLink { get; set; } // Link Google Meet cho phỏng vấn online
+        public string? HiringManagerFeedback { get; set; } // Đánh giá của Hiring Manager
         // Navigation properties
         [ForeignKey("CandidateJobId")]
         public virtual CandidateJob? CandidateJob { get; set; } = null;
