@@ -5,7 +5,7 @@ namespace JobMatchingSystem.API.DTOs.Response
     public class CandidateStageDetailResponse
     {
         // CandidateStage information
-        public int Id { get; set; }
+        public int CandidateStageId { get; set; }
         public int CandidateJobId { get; set; }
         public int JobStageId { get; set; }
         public string? Status { get; set; }
