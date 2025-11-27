@@ -9,5 +9,5 @@ export const CVCertificateServices = {
   create: (certificate: Omit<CVCertificate, 'id'>): Promise<BaseResponse<CVCertificate>> => BaseApiServices.create<CVCertificate>('/CVCertificate', certificate),
   update: (id: string, data: Partial<CVCertificate>) => BaseApiServices.update<CVCertificate>('/CVCertificate', id, data),
   delete: (id: string) => BaseApiServices.delete<CVCertificate>('/CVCertificate', id),
-  getMyCertificates: () => BaseApiServices.custom<CVCertificate[]>("get", "/CVCertificate/me"),
+  getMyCertificates: () => BaseApiServices.custom<BaseResponse<CVCertificate[]>>("get", "/CVCertificate/me"),
 };
