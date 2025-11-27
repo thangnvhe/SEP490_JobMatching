@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Upload, CheckCircle, Sparkles, ShieldCheck } from 'lucide-react';
+import { FileText, Upload, CheckCircle, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { CVServices } from '@/services/cv.service';
 import { CandidateJobServices } from '@/services/candidate-job.service';

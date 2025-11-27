@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import toast, { Toaster } from 'react-hot-toast';
 
 // shadcn/ui components
 import { Button } from "@/components/ui/button";
@@ -42,8 +41,8 @@ import {
   Building2,
   Send,
   CheckCircle,
-  AlertCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 
 // --- validation/schema ---
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -186,9 +185,8 @@ const ContactRecruiterPage: React.FC = () => {
       const response = await CompanyServices.createCompany(formData);
       console.log("API Response Success:", response);
 
-      toast.success("Đăng ký công ty thành công! Chúng tôi sẽ xem xét và liên hệ với bạn sớm.", {
-        duration: 5000,
-        position: 'top-center',
+      toast.success("Đăng ký công ty thành công!", {
+        description: "Chúng tôi sẽ xem xét và liên hệ với bạn sớm.",
       });
       
       setSubmittedCompanyName(data.name);
@@ -235,15 +233,7 @@ const ContactRecruiterPage: React.FC = () => {
       console.error("Error Message:", errorMessage);
       
       // Hiển thị toast error thay vì setSubmitResult
-      toast.error(errorMessage, {
-        duration: 6000,
-        position: 'top-center',
-        style: {
-          maxWidth: '500px',
-          wordBreak: 'break-word'
-        }
-      });
-      
+      toast.error(errorMessage);
       setSubmitResult({ success: false, message: errorMessage });
     } finally {
       setIsLoading(false);
@@ -252,46 +242,6 @@ const ContactRecruiterPage: React.FC = () => {
 
   return (
     <>
-      <Toaster 
-        position="top-center"
-        reverseOrder={false}
-        gutter={8}
-        containerClassName=""
-        containerStyle={{}}
-        toastOptions={{
-          // Define default options
-          className: '',
-          duration: 4000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
-          // Default options for specific types
-          success: {
-            duration: 5000,
-            style: {
-              background: '#10B981',
-              color: '#fff',
-            },
-            iconTheme: {
-              primary: '#fff',
-              secondary: '#10B981',
-            },
-          },
-          error: {
-            duration: 6000,
-            style: {
-              background: '#EF4444',
-              color: '#fff',
-            },
-            iconTheme: {
-              primary: '#fff',
-              secondary: '#EF4444',
-            },
-          },
-        }}
-      />
-      
       <ContactSuccessModal
         isOpen={showSuccessModal}
         onClose={() => {

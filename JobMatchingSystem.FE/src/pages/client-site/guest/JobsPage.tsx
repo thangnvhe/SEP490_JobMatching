@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store";
 import { Search, MapPin } from "lucide-react";
 
 // Components
@@ -24,7 +22,6 @@ import { SaveJobServices } from "@/services/save-job.service";
 
 
 export default function JobsPage() {
-  const authState = useSelector((state: RootState) => state.authState);
   const navigate = useNavigate();
   // Data
   const [jobs, setJobs] = useState<Job[]>([]);
