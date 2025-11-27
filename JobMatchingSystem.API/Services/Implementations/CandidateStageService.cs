@@ -37,18 +37,32 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (request.Result.Equals("Pass"))
             {
             candidateStage.Status=Enums.CandidateStageStatus.Passed;
-            int numberCount = await _unitOfWork.JobStageRepository.GetNumberStageById(candidateJob.JobId);
-                int numberCurrent = candidateStage.JobStageId;
+            
+                // Lấy tất cả các JobStage của Job này
+                var jobStages = await _unitOfWork.JobStageRepository.GetByJobIdAsync(candidateJob.JobId);
+                var orderedStages = jobStages.OrderBy(x => x.StageNumber).ToList();
                 
-                if (numberCurrent == numberCount)
+                // Tìm stage hiện tại trong danh sách
+                var currentStageIndex = orderedStages.FindIndex(x => x.Id == candidateStage.JobStageId);
+                
+                if (currentStageIndex == -1)
                 {
+                    throw new AppException(ErrorCode.NotFoundJobStage());
+                }
+                
+                // Kiểm tra xem đây có phải là stage cuối cùng không
+                if (currentStageIndex == orderedStages.Count - 1)
+                {
+                    // Đây là stage cuối cùng
                     candidateJob.Status=Enums.CandidateJobStatus.Pass;
                 }
                 else
                 {
+                    // Tạo stage tiếp theo
+                    var nextStage = orderedStages[currentStageIndex + 1];
                     CandidateStage candidatestagenext=new CandidateStage();
                     candidatestagenext.CandidateJobId=candidateStage.CandidateJobId;
-                    candidatestagenext.JobStageId = candidateStage.JobStageId + 1;
+                    candidatestagenext.JobStageId = nextStage.Id;
                     candidatestagenext.Status=Enums.CandidateStageStatus.Draft;
                     await _unitOfWork.CandidateStageRepository.Add(candidatestagenext);
                 }
@@ -87,49 +101,120 @@ namespace JobMatchingSystem.API.Services.Implementations
             await _unitOfWork.SaveAsync();
         }
 
-        public async Task<List<CandidateStageResponse>> GetAllByJobStageId(int jobStageId, string? status, string? sortBy, bool isDescending)
+        public async Task<List<CandidateStageDetailResponse>> GetCandidateDetailsByJobStageId(int jobStageId, string? status = null, string? sortBy = null, bool isDescending = false)
         {
-            var candidateStages = await _unitOfWork.CandidateStageRepository.GetAllCandidateStageByJobStageId(jobStageId, status ?? string.Empty, sortBy ?? string.Empty, isDescending);
+            var candidateStages = await _unitOfWork.CandidateStageRepository.GetCandidateDetailsByJobStageId(jobStageId, status);
             
-            var response = new List<CandidateStageResponse>();
+            var response = new List<CandidateStageDetailResponse>();
+            
             foreach (var stage in candidateStages)
             {
-                response.Add(new CandidateStageResponse
+                var candidateJob = stage.CandidateJob;
+                var cv = candidateJob?.CVUpload;
+                var user = cv?.User; // Get user from CV instead of CandidateJob
+                
+                response.Add(new CandidateStageDetailResponse
                 {
                     Id = stage.Id,
                     CandidateJobId = stage.CandidateJobId,
                     JobStageId = stage.JobStageId,
-                    Status = stage.Status,
+                    Status = stage.Status?.ToString(),
                     ScheduleTime = stage.ScheduleTime,
                     InterviewLocation = stage.InterviewLocation,
                     GoogleMeetLink = stage.GoogleMeetLink,
                     HiringManagerFeedback = stage.HiringManagerFeedback,
+                    User = new UserInfo
+                    {
+                        FullName = user?.FullName ?? "Unknown",
+                        Email = user?.Email ?? "Unknown",
+                        PhoneNumber = user?.PhoneNumber,
+                        Address = user?.Address,
+                        AvatarUrl = user?.AvatarUrl,
+                        DateOfBirth = user?.Birthday,
+                        Gender = user?.Gender
+                    },
+                    CV = new CVInfo
+                    {
+                        CVId = cv?.Id ?? 0,
+                        Name = cv?.Name ?? "Unknown",
+                        Url = cv?.FileUrl ?? ""
+                    },
                     JobStageTitle = stage.JobStage?.Name
                 });
+            }
+            
+            // Apply sorting if specified
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                switch (sortBy.ToLower())
+                {
+                    case "name":
+                        response = isDescending 
+                            ? response.OrderByDescending(x => x.User.FullName).ToList()
+                            : response.OrderBy(x => x.User.FullName).ToList();
+                        break;
+                    case "email":
+                        response = isDescending 
+                            ? response.OrderByDescending(x => x.User.Email).ToList()
+                            : response.OrderBy(x => x.User.Email).ToList();
+                        break;
+                    case "status":
+                        response = isDescending 
+                            ? response.OrderByDescending(x => x.Status).ToList()
+                            : response.OrderBy(x => x.Status).ToList();
+                        break;
+                    case "scheduletime":
+                        response = isDescending 
+                            ? response.OrderByDescending(x => x.ScheduleTime).ToList()
+                            : response.OrderBy(x => x.ScheduleTime).ToList();
+                        break;
+                    default:
+                        break;
+                }
             }
             
             return response;
         }
 
-        public async Task<CandidateStageResponse?> GetDetailById(int id)
+        public async Task<CandidateStageDetailResponse?> GetDetailById(int id)
         {
             var candidateStage = await _unitOfWork.CandidateStageRepository.GetDetailById(id);
             if (candidateStage == null)
             {
                 return null;
             }
-            
-            return new CandidateStageResponse
+
+            var candidateJob = candidateStage.CandidateJob;
+            var cv = candidateJob?.CVUpload;
+            var user = cv?.User;
+
+            return new CandidateStageDetailResponse
             {
                 Id = candidateStage.Id,
                 CandidateJobId = candidateStage.CandidateJobId,
                 JobStageId = candidateStage.JobStageId,
-                Status = candidateStage.Status,
+                Status = candidateStage.Status?.ToString(),
                 ScheduleTime = candidateStage.ScheduleTime,
                 InterviewLocation = candidateStage.InterviewLocation,
                 GoogleMeetLink = candidateStage.GoogleMeetLink,
                 HiringManagerFeedback = candidateStage.HiringManagerFeedback,
-                JobStageTitle = candidateStage.JobStage?.Name
+                JobStageTitle = candidateStage.JobStage?.Name,
+                User = new UserInfo
+                {
+                    FullName = user?.FullName ?? "Unknown",
+                    Email = user?.Email ?? "Unknown",
+                    PhoneNumber = user?.PhoneNumber,
+                    Address = user?.Address,
+                    AvatarUrl = user?.AvatarUrl,
+                    DateOfBirth = user?.Birthday,
+                    Gender = user?.Gender
+                },
+                CV = new CVInfo
+                {
+                    CVId = cv?.Id ?? 0,
+                    Name = cv?.Name ?? "Unknown",
+                    Url = cv?.FileUrl ?? ""
+                }
             };
         }
     }

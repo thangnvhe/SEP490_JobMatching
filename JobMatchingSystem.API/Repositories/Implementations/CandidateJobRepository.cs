@@ -43,8 +43,8 @@ namespace JobMatchingSystem.API.Repositories.Implementations
         {
             IQueryable<CandidateJob> query = _context.CandidateJobs
                 .Include(c => c.Job)
-                .Include(c => c.CandidateCV)
-                .Where(c => c.CandidateCV != null && c.CandidateCV.UserId == userId);
+                .Include(c => c.CVUpload)
+                .Where(c => c.CVUpload != null && c.CVUpload.UserId == userId);
             
             if (!string.IsNullOrEmpty(status))
             {

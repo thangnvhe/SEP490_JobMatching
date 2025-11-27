@@ -17,35 +17,40 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             await _context.AddAsync(candidateStage);
         }
 
-        public async Task<List<CandidateStage>> GetAllCandidateStageByJobStageId(int jobstageId, string status, string sortBy, bool IsDescending)
-        {
-            IQueryable<CandidateStage> query = _context.CandidateStages;
-            query = query.Where(x => x.JobStageId==jobstageId);
-            if (!string.IsNullOrEmpty(status))
-            {
-                if (Enum.TryParse<CandidateStageStatus>(status, true, out var statusEnum))
-                {
-                    query = query.Where(u => u.Status == statusEnum);
-                }
-            }
-            if (!string.IsNullOrEmpty(sortBy))
-            {
-                query = IsDescending
-                    ? query.OrderByDescending(x => EF.Property<object>(x, sortBy))
-                    : query.OrderBy(x => EF.Property<object>(x, sortBy));
-            }
-            return await query.ToListAsync();
-        }
-
         public async Task<CandidateStage?> GetDetailById(int id)
         {
-            return await _context.CandidateStages.Include(x=>x.JobStage).FirstOrDefaultAsync(x => x.Id == id);
+            return await _context.CandidateStages
+                .Include(x => x.JobStage)
+                .Include(x => x.CandidateJob)
+                    .ThenInclude(cj => cj!.CVUpload)
+                        .ThenInclude(cv => cv!.User)
+                .FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public Task Update(CandidateStage candidateStage)
         {
             _context.CandidateStages.Update(candidateStage);
             return Task.CompletedTask;
+        }
+
+        public async Task<List<CandidateStage>> GetCandidateDetailsByJobStageId(int jobStageId, string? status = null)
+        {
+            IQueryable<CandidateStage> query = _context.CandidateStages
+                .Include(x => x.CandidateJob)
+                    .ThenInclude(cj => cj!.CVUpload)
+                        .ThenInclude(cv => cv!.User)
+                .Include(x => x.JobStage)
+                .Where(x => x.JobStageId == jobStageId);
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                if (Enum.TryParse<CandidateStageStatus>(status, true, out var statusEnum))
+                {
+                    query = query.Where(x => x.Status == statusEnum);
+                }
+            }
+
+            return await query.OrderBy(x => x.Id).ToListAsync();
         }
     }
 }

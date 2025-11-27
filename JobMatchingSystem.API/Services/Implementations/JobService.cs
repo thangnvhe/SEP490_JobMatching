@@ -354,8 +354,8 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 // Kiểm tra user đã apply chưa (thông qua CV của user)
                 response.IsApply = await _context.CandidateJobs
-                    .Include(cj => cj.CandidateCV)
-                    .AnyAsync(cj => cj.JobId == job.JobId && cj.CandidateCV != null && cj.CandidateCV.UserId == userId.Value);
+                    .Include(cj => cj.CVUpload)
+                    .AnyAsync(cj => cj.JobId == job.JobId && cj.CVUpload != null && cj.CVUpload.UserId == userId.Value);
 
                 // Kiểm tra user đã save chưa (giả sử có bảng SavedJobs hoặc tương tự)
                 response.IsSave = await _context.SavedJobs
