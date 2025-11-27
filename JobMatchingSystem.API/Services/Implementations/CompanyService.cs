@@ -63,48 +63,73 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task Add(CreateCompanyRequest request)
         {
-            if (await _unitOfWork.AuthRepository.ExistsAsync(request.Email))
+            try
             {
-                throw new AppException(ErrorCode.EmailExist());
-            }
-            
-            // Validate tax code with external API
-            var taxCodeValidation = await _taxCodeValidationService.ValidateTaxCodeAsync(request.TaxCode);
-            if (!taxCodeValidation.IsValid)
-            {
-                throw new AppException(ErrorCode.InvalidFile(taxCodeValidation.ErrorMessage));
-            }
-            
-            // Check if tax code already exists in database
-            var existingCompany = await _unitOfWork.CompanyRepository.GetByTaxCodeAsync(request.TaxCode);
-            if (existingCompany != null)
-            {
-                throw new AppException(ErrorCode.InvalidFile("Mã số thuế này đã được đăng ký bởi công ty khác"));
-            }
-            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.LicenseFile.FileName)}";
-            var savePath = Path.Combine(_env.WebRootPath, "images", "LicenseFile", fileName);
-            Directory.CreateDirectory(Path.GetDirectoryName(savePath)!);
-            using (var stream = new FileStream(savePath, FileMode.Create))
-            {
-                await request.LicenseFile.CopyToAsync(stream);
-            }
-            var company = _mapper.Map<Company>(request);
-            company.LicenseFile = Path.Combine("images", "LicenseFile", fileName);
-            company.Logo = "Empty";
-            await _unitOfWork.CompanyRepository.AddAsync(company);
-            await _unitOfWork.SaveAsync();
-            var randomPassword = Guid.NewGuid().ToString("N").Substring(0, 10) + "aA1!";
-            var recruiter = new ApplicationUser
-            {
-                FullName = request.FullName,
-                Email = request.Email,
-                UserName = request.Email,
-                EmailConfirmed = false,
-                CompanyId=company.Id,
-            };
-            var result = await _userManager.CreateAsync(recruiter, randomPassword);
-            await _userManager.AddToRoleAsync(recruiter, Contraints.RoleRecruiter);
+                // Validate email first
+                if (await _unitOfWork.AuthRepository.ExistsAsync(request.Email))
+                {
+                    throw new AppException(ErrorCode.EmailExist());
+                }
+                
+                // Validate tax code with external API
+                var taxCodeValidation = await _taxCodeValidationService.ValidateTaxCodeAsync(request.TaxCode);
+                if (!taxCodeValidation.IsValid)
+                {
+                    throw new AppException(ErrorCode.InvalidFile(taxCodeValidation.ErrorMessage));
+                }
+                
+                // Check if tax code already exists in database
+                var existingCompany = await _unitOfWork.CompanyRepository.GetByTaxCodeAsync(request.TaxCode);
+                if (existingCompany != null)
+                {
+                    throw new AppException(ErrorCode.InvalidFile("Mã số thuế này đã được đăng ký bởi công ty khác"));
+                }
 
+                // Handle file upload
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.LicenseFile.FileName)}";
+                var savePath = Path.Combine(_env.WebRootPath, "images", "LicenseFile", fileName);
+                Directory.CreateDirectory(Path.GetDirectoryName(savePath)!);
+                
+                using (var stream = new FileStream(savePath, FileMode.Create))
+                {
+                    await request.LicenseFile.CopyToAsync(stream);
+                }
+
+                // Create company entity
+                var company = _mapper.Map<Company>(request);
+                company.LicenseFile = Path.Combine("images", "LicenseFile", fileName);
+                company.Logo = "Empty";
+                
+                // Save company first
+                await _unitOfWork.CompanyRepository.AddAsync(company);
+                await _unitOfWork.SaveAsync();
+
+                // Generate password and create user
+                var randomPassword = Guid.NewGuid().ToString("N").Substring(0, 10) + "aA1!";
+                var recruiter = new ApplicationUser
+                {
+                    FullName = request.FullName,
+                    Email = request.Email,
+                    UserName = request.Email,
+                    EmailConfirmed = false,
+                    CompanyId = company.Id,
+                };
+
+                var result = await _userManager.CreateAsync(recruiter, randomPassword);
+                if (!result.Succeeded)
+                {
+                    // If user creation fails, log the errors
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    throw new AppException(ErrorCode.CreateUserFailed(errors));
+                }
+
+                await _userManager.AddToRoleAsync(recruiter, Contraints.RoleRecruiter);
+            }
+            catch (Exception ex) when (!(ex is AppException))
+            {
+                // Log the actual exception for debugging
+                throw new AppException(ErrorCode.InvalidCreate());
+            }
         }
         public async Task RejectCompany(int id, int verifyBy, string rejectReason)
         {

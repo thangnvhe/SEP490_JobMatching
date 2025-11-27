@@ -204,10 +204,15 @@ const ContactRecruiterPage: React.FC = () => {
       if (apiError?.response?.data) {
         const d = apiError.response.data;
         
-        // Kiểm tra format response từ backend API
-        if (d.result && typeof d.result === "string") {
+        // Kiểm tra format response từ backend API theo thứ tự ưu tiên
+        if (d.errorMessages && Array.isArray(d.errorMessages) && d.errorMessages.length > 0) {
+          // Ưu tiên errorMessages array trước
+          errorMessage = d.errorMessages.join(" \n");
+        } else if (d.result && typeof d.result === "string") {
+          // Sau đó mới đến result
           errorMessage = d.result;
         } else if (d.errors && typeof d.errors === "object") {
+          // Xử lý validation errors
           const messages: string[] = [];
           Object.keys(d.errors).forEach((k) => {
             const val = d.errors[k];
@@ -215,14 +220,19 @@ const ContactRecruiterPage: React.FC = () => {
             else if (typeof val === "string") messages.push(val);
           });
           if (messages.length) errorMessage = messages.join(" \n");
-        } else if (d.title) errorMessage = d.title;
-        else if (d.message) errorMessage = d.message;
-        else errorMessage = JSON.stringify(d);
+        } else if (d.title) {
+          errorMessage = d.title;
+        } else if (d.message) {
+          errorMessage = d.message;
+        } else {
+          errorMessage = JSON.stringify(d);
+        }
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
       
       console.error("API Response Error:", error);
+      console.error("Error Message:", errorMessage);
       
       // Hiển thị toast error thay vì setSubmitResult
       toast.error(errorMessage, {
