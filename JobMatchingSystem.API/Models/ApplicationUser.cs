@@ -36,7 +36,6 @@ namespace JobMatchingSystem.API.Models
         public virtual ICollection<Job> CreatedJobs { get; set; } = new List<Job>();
         public virtual ICollection<Job> AdminJobs { get; set; } = new List<Job>();
         public virtual ICollection<Company> VerifiedCompanies { get; set; } = new List<Company>();
-        public virtual ICollection<CandidateJob> ApplyJobs { get; set; } = new List<CandidateJob>();
         public virtual ICollection<SavedJob> SavedJobs { get; set; } = new List<SavedJob>();
         public virtual ICollection<SavedCV> SavedCVs { get; set; } = new List<SavedCV>();
         public virtual ICollection<CVUpload> DataCVs { get; set; } = new List<CVUpload>();

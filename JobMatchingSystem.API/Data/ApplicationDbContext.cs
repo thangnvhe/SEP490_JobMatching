@@ -168,7 +168,7 @@ namespace JobMatchingSystem.API.Data
                       .WithMany(e => e.CandidateJobs)
                       .HasForeignKey(e => e.JobId)
                       .OnDelete(DeleteBehavior.NoAction);
-                entity.HasOne(e => e.CandidateCV)
+                entity.HasOne(e => e.CVUpload)
                         .WithMany(e => e.CandidateJobs)
                         .HasForeignKey(e => e.CVId)
                         .OnDelete(DeleteBehavior.Cascade);

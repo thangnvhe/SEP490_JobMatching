@@ -51,9 +51,18 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
             else
             {
+                // Lấy JobStage đầu tiên của Job này
+                var jobStages = await _unitOfWork.JobStageRepository.GetByJobIdAsync(candidatejob.JobId);
+                var firstJobStage = jobStages.OrderBy(x => x.StageNumber).FirstOrDefault();
+                
+                if (firstJobStage == null)
+                {
+                    throw new AppException(ErrorCode.NotFoundJobStage());
+                }
+                
                 CandidateStage candidateStage = new CandidateStage();
                 candidateStage.CandidateJobId = candidatejob.Id ;
-                candidateStage.JobStageId = 1;
+                candidateStage.JobStageId = firstJobStage.Id;
                 candidateStage.Status=Enums.CandidateStageStatus.Schedule;
                 candidatejob.Status = Enums.CandidateJobStatus.Processing;
                 await _unitOfWork.CandidateStageRepository.Add(candidateStage);

@@ -21,12 +21,12 @@ namespace JobMatchingSystem.API.Controllers
         
         [HttpGet("jobStage/{jobStageId}")]
         [Authorize]
-        public async Task<IActionResult> GetAllByJobStageId(int jobStageId, [FromQuery] string? status = null, [FromQuery] string? sortBy = null, [FromQuery] bool isDescending = false)
+        public async Task<IActionResult> GetCandidateDetailsByJobStageId(int jobStageId, [FromQuery] string? status = null, [FromQuery] string? sortBy = null, [FromQuery] bool isDescending = false)
         {
-            var candidateStages = await _candidateStageService.GetAllByJobStageId(jobStageId, status, sortBy, isDescending);
+            var candidateDetails = await _candidateStageService.GetCandidateDetailsByJobStageId(jobStageId, status, sortBy, isDescending);
             
             return Ok(APIResponse<object>.Builder()
-                .WithResult(candidateStages)
+                .WithResult(candidateDetails)
                 .WithSuccess(true)
                 .WithStatusCode(HttpStatusCode.OK)
                 .Build());
