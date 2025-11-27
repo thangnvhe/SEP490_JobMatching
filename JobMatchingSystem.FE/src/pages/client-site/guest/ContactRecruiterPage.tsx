@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import toast, { Toaster } from 'react-hot-toast';
 
 // shadcn/ui components
 import { Button } from "@/components/ui/button";
@@ -185,21 +186,28 @@ const ContactRecruiterPage: React.FC = () => {
       const response = await CompanyServices.createCompany(formData);
       console.log("API Response Success:", response);
 
-      setSubmitResult({
-        success: true,
-        message: "Đăng ký công ty thành công! Chúng tôi sẽ xem xét và liên hệ với bạn sớm.",
+      toast.success("Đăng ký công ty thành công! Chúng tôi sẽ xem xét và liên hệ với bạn sớm.", {
+        duration: 5000,
+        position: 'top-center',
       });
+      
       setSubmittedCompanyName(data.name);
       setShowSuccessModal(true);
       // Reset form and also clear wards
       form.reset();
       setWards([]);
+      setSubmitResult(null); // Clear any previous error
     } catch (error) {
       let errorMessage = "Có lỗi không xác định xảy ra, vui lòng thử lại.";
       const apiError = error as any;
+      
       if (apiError?.response?.data) {
         const d = apiError.response.data;
-        if (d.errors && typeof d.errors === "object") {
+        
+        // Kiểm tra format response từ backend API
+        if (d.result && typeof d.result === "string") {
+          errorMessage = d.result;
+        } else if (d.errors && typeof d.errors === "object") {
           const messages: string[] = [];
           Object.keys(d.errors).forEach((k) => {
             const val = d.errors[k];
@@ -213,7 +221,19 @@ const ContactRecruiterPage: React.FC = () => {
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
+      
       console.error("API Response Error:", error);
+      
+      // Hiển thị toast error thay vì setSubmitResult
+      toast.error(errorMessage, {
+        duration: 6000,
+        position: 'top-center',
+        style: {
+          maxWidth: '500px',
+          wordBreak: 'break-word'
+        }
+      });
+      
       setSubmitResult({ success: false, message: errorMessage });
     } finally {
       setIsLoading(false);
@@ -222,6 +242,46 @@ const ContactRecruiterPage: React.FC = () => {
 
   return (
     <>
+      <Toaster 
+        position="top-center"
+        reverseOrder={false}
+        gutter={8}
+        containerClassName=""
+        containerStyle={{}}
+        toastOptions={{
+          // Define default options
+          className: '',
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          // Default options for specific types
+          success: {
+            duration: 5000,
+            style: {
+              background: '#10B981',
+              color: '#fff',
+            },
+            iconTheme: {
+              primary: '#fff',
+              secondary: '#10B981',
+            },
+          },
+          error: {
+            duration: 6000,
+            style: {
+              background: '#EF4444',
+              color: '#fff',
+            },
+            iconTheme: {
+              primary: '#fff',
+              secondary: '#EF4444',
+            },
+          },
+        }}
+      />
+      
       <ContactSuccessModal
         isOpen={showSuccessModal}
         onClose={() => {
@@ -317,26 +377,10 @@ const ContactRecruiterPage: React.FC = () => {
                 </CardHeader>
 
                 <CardContent className="space-y-6">
-                  {submitResult && (
-                    <Alert
-                      className={
-                        submitResult.success
-                          ? "border-green-200 bg-green-50"
-                          : "border-red-200 bg-red-50"
-                      }
-                    >
-                      {submitResult.success ? (
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      ) : (
-                        <AlertCircle className="h-4 w-4 text-red-600" />
-                      )}
-                      <AlertDescription
-                        className={
-                          submitResult.success
-                            ? "text-green-800"
-                            : "text-red-800"
-                        }
-                      >
+                  {submitResult && submitResult.success && (
+                    <Alert className="border-green-200 bg-green-50">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <AlertDescription className="text-green-800">
                         {submitResult.message}
                       </AlertDescription>
                     </Alert>

@@ -1,6 +1,7 @@
 ﻿using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
+using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -24,12 +25,23 @@ namespace JobMatchingSystem.API.Controllers
         [HttpPost()]
         public async Task<IActionResult> Create([FromForm] CreateCompanyRequest request)
         {
-            await _companyService.Add(request);
-            return Ok(APIResponse<string>.Builder()
-                .WithResult("Create Company Success")
-                .WithSuccess(true)
-                .WithStatusCode(HttpStatusCode.Created)
-                .Build());
+            try
+            {
+                await _companyService.Add(request);
+                return Ok(APIResponse<string>.Builder()
+                    .WithResult("Create Company Success")
+                    .WithSuccess(true)
+                    .WithStatusCode(HttpStatusCode.Created)
+                    .Build());
+            }
+            catch (AppException ex)
+            {
+                return BadRequest(APIResponse<string>.Builder()
+                    .WithResult(ex.Error.Message)
+                    .WithSuccess(false)
+                    .WithStatusCode(HttpStatusCode.BadRequest)
+                    .Build());
+            }
         }
         [HttpPost("{id}/accept")]
         [Authorize(Roles = "Admin")]

@@ -79,6 +79,11 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             return await _context.Companies.FindAsync(id);
         }
 
+        public async Task<Company?> GetByTaxCodeAsync(string taxCode)
+        {
+            return await _context.Companies.FirstOrDefaultAsync(x => x.TaxCode == taxCode && x.IsActive);
+        }
+
         public Task Update(Company company)
         {
             _context.Companies.Update(company);
