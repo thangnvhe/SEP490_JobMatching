@@ -115,7 +115,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 
                 response.Add(new CandidateStageDetailResponse
                 {
-                    Id = stage.Id,
+                    CandidateStageId = stage.Id,
                     CandidateJobId = stage.CandidateJobId,
                     JobStageId = stage.JobStageId,
                     Status = stage.Status?.ToString(),
@@ -190,7 +190,7 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             return new CandidateStageDetailResponse
             {
-                Id = candidateStage.Id,
+                CandidateStageId = candidateStage.Id,
                 CandidateJobId = candidateStage.CandidateJobId,
                 JobStageId = candidateStage.JobStageId,
                 Status = candidateStage.Status?.ToString(),
