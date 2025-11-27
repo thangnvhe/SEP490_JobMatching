@@ -37,7 +37,7 @@ namespace JobMatchingSystem.API.Controllers
             catch (AppException ex)
             {
                 return BadRequest(APIResponse<string>.Builder()
-                    .WithResult(ex.Error.Message)
+                    .WithErrorMessages(new List<string> { ex.Error.Message })
                     .WithSuccess(false)
                     .WithStatusCode(HttpStatusCode.BadRequest)
                     .Build());
