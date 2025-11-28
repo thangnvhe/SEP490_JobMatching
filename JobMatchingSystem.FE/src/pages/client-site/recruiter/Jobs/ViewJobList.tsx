@@ -13,7 +13,8 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  X
+  X,
+  Filter
 } from "lucide-react";
 
 // Import các UI components
@@ -36,7 +37,7 @@ import { JobServices } from "@/services/job.service";
 import { CompanyServices } from "@/services/company.service";
 import { type Job } from "@/models/job";
 import { type Company } from "@/models/company";
-import { useAppSelector } from "@/store";
+import { PageInfo, PaginationParamsInput } from "@/models/base";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 
 // Import Edit Dialog
@@ -49,9 +50,6 @@ const truncateText = (text: string, maxLength: number = 100): string => {
 };
 
 export default function ViewJobList() {
-  // Redux state để lấy thông tin recruiter hiện tại
-  const authState = useAppSelector((state) => state.authState);
-  const currentUserId = authState.nameid;
   const navigate = useNavigate();
 
   // Khai báo local state
@@ -60,138 +58,107 @@ export default function ViewJobList() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [keyword, setKeyword] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedJobCompany, setSelectedJobCompany] = useState<Company | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
-  // Pagination state - server-side
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
-  
-  // Sort state
-  const [sortBy, setSortBy] = useState('');
-  const [isDescending, setIsDescending] = useState(false);
-  
-  const debouncedKeyword = useDebounce(keyword, 700);
-  const pageSizeOptions = [5, 10, 20, 50];
+  const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
+      currentPage: 1,
+      pageSize: 10,
+      totalItem: 0,
+      totalPage: 0,
+      hasPreviousPage: false,
+      hasNextPage: false,
+      sortBy: '',
+      isDecending: false,
+  });
 
-  // Fetch jobs với filter theo recruiterId
-  const getAllJobs = useCallback(async () => {
-    if (!currentUserId) return;
-    
+  const [paginationInput, setPaginationInput] = useState<PaginationParamsInput>({
+      page: 1,
+      size: 10,
+      search: '',
+      sortBy: '',
+      isDecending: false,
+  });
+
+  const pageSizeOptions = [5, 10, 20, 50];
+  const debouncedKeyword = useDebounce(keyword, 700);
+
+  // Fetch jobs với filter
+  const getAllWithPagination = useCallback(async (params: PaginationParamsInput) => {
     try {
       setLoading(true);
       setError(null);
       
-      // Chuẩn bị parameters cho API
-      const params: any = {
-        page: currentPage,
-        size: pageSize,
-        search: debouncedKeyword,
-        sortBy: sortBy,
-        isDescending: isDescending,
-        recuiterId: parseInt(currentUserId) // Filter theo recruiter ID
-      };
-      
-      // Thêm status filter nếu có
+      // Merge status filter into params
+      const apiParams: any = { ...params };
       if (statusFilter !== 'all') {
-        params.status = parseInt(statusFilter);
+        apiParams.status = parseInt(statusFilter);
       }
       
-      console.log('API Request params:', params);
-      
-      // Add timeout để tránh hang
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout after 30 seconds')), 30000)
-      );
-      
-      const apiPromise = JobServices.getAllWithPagination(params);
-      
-      const response = await Promise.race([apiPromise, timeoutPromise]) as any;
-      
-      console.log('API Response:', response);
+      const response = await JobServices.getAllMyJobsPagination(apiParams);
       
       if (response.isSuccess && response.result) {
-        // Kiểm tra nếu response có structure paginated
-        if (response.result.items && response.result.pageInfo) {
-          console.log('Using paginated structure:', response.result);
-          setJobs(response.result.items || []);
-          setTotalItems(response.result.pageInfo.totalItem || 0);
-        } 
-        // Nếu response.result là array trực tiếp
-        else if (Array.isArray(response.result)) {
-          console.log('Using direct array:', response.result.length, 'items');
-          const startIdx = (currentPage - 1) * pageSize;
-          const endIdx = startIdx + pageSize;
-          const paginatedItems = response.result.slice(startIdx, endIdx);
-          
-          setJobs(paginatedItems);
-          setTotalItems(response.result.length);
-        } 
-        else {
-          console.log('Single object or unknown structure:', response.result);
-          setJobs([response.result]);
-          setTotalItems(1);
-        }
+          setJobs(response.result.items);
+          setPaginationInfo(response.result.pageInfo);
       } else {
-        setError("Không thể tải danh sách tin tuyển dụng");
-        setJobs([]);
-        setTotalItems(0);
+          setError("Không thể tải danh sách tin tuyển dụng");
       }
     } catch (err: any) {
-      console.error("Error fetching jobs:", err);
-      if (err.message?.includes('timeout')) {
-        setError("Tải dữ liệu quá lâu. Vui lòng thử lại!");
-      } else {
-        setError(err.message || "Lỗi khi tải dữ liệu tin tuyển dụng");
-      }
-      setJobs([]);
-      setTotalItems(0);
+      setError(err.response?.data?.message || "Lỗi khi tải dữ liệu tin tuyển dụng");
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, debouncedKeyword, statusFilter, sortBy, isDescending, currentUserId]);
+  }, [statusFilter]);
 
-  // Load jobs on component mount và khi dependencies thay đổi
   useEffect(() => {
-    getAllJobs();
-  }, [getAllJobs]);
+      const params = {
+          ...paginationInput,
+          search: debouncedKeyword,
+      };
+      getAllWithPagination(params);
+  }, [getAllWithPagination, debouncedKeyword, paginationInput]);
 
   // Handler functions
   const handleRefresh = () => {
-    getAllJobs();
+    getAllWithPagination(paginationInput);
   };
 
   const handleSortingChange = (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
     const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(sorting) : updaterOrValue;
     setSorting(newSorting);
-    
-    if (newSorting.length > 0) {
-      const sortConfig = newSorting[0];
-      setSortBy(sortConfig.id);
-      setIsDescending(sortConfig.desc);
-    } else {
-      setSortBy('');
-      setIsDescending(false);
-    }
-    setCurrentPage(1);
+    setPaginationInput(prev => {
+        if (!newSorting.length) {
+            return {
+                ...prev,
+                sortBy: undefined,
+                isDecending: undefined,
+            };
+        }
+
+        const sort = newSorting[0];
+        return {
+            ...prev,
+            sortBy: sort.id,
+            isDecending: !!sort.desc,
+        };
+    });
   };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    setPaginationInput(prev => ({ ...prev, page }));
   };
 
   const handlePageSizeChange = (size: string) => {
-    setPageSize(parseInt(size));
-    setCurrentPage(1);
+    setPaginationInput(prev => ({ ...prev, size: parseInt(size), page: 1 }));
   };
 
   const handleStatusFilterChange = (status: string) => {
     setStatusFilter(status);
-    setCurrentPage(1);
+    setPaginationInput(prev => ({ ...prev, page: 1 }));
   };
 
   const handleView = async (job: Job) => {
@@ -277,12 +244,6 @@ export default function ViewJobList() {
     }
   };
 
-  // Calculate pagination
-  const totalPages = totalItems > 0 ? Math.ceil(totalItems / pageSize) : 1;
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = Math.min(startIndex + jobs.length, totalItems);
-  const safePage = Math.min(currentPage, totalPages);
-
   // Define columns
   const columns = useMemo<ColumnDef<Job>[]>(() => [
     {
@@ -290,7 +251,7 @@ export default function ViewJobList() {
       header: "STT",
       cell: ({ row }) => {
         const index = row.index;
-        return (currentPage - 1) * pageSize + index + 1;
+        return (paginationInfo.currentPage - 1) * paginationInfo.pageSize + index + 1;
       },
       enableSorting: false,
     },
@@ -306,7 +267,7 @@ export default function ViewJobList() {
           <div title={title} className="max-w-[200px] truncate text-sm">
             <button
               onClick={() => {
-                navigate(`/recruiter/recruitment-process?jobId=${job.jobId}`);
+                navigate(`/recruiter/recruitment-process/${job.jobId}`);
               }}
               className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left"
             >
@@ -394,7 +355,6 @@ export default function ViewJobList() {
               <Eye className="h-4 w-4" />
             </Button>
             
-            {/* Edit Button */}
             <Button
               onClick={() => handleEdit(job)}
               variant="outline"
@@ -408,27 +368,15 @@ export default function ViewJobList() {
       },
       enableSorting: false,
     },
-  ], [currentPage, pageSize]);
+  ], [paginationInfo, navigate]);
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quản lý tin tuyển dụng</h1>
+      <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight">Quản lý tin tuyển dụng</h1>
           <p className="text-muted-foreground">
             Danh sách các tin tuyển dụng của bạn
           </p>
-        </div>
-        <Button
-          onClick={() => {
-            navigate("/recruiter/jobs/create");
-          }}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Tạo tin tuyển dụng mới
-        </Button>
       </div>
 
       {/* Search and Actions */}
@@ -444,7 +392,10 @@ export default function ViewJobList() {
               />
               <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                 <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Lọc theo trạng thái" />
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4" />
+                    <SelectValue placeholder="Lọc theo trạng thái" />
+                  </div>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả trạng thái</SelectItem>
@@ -457,6 +408,13 @@ export default function ViewJobList() {
               </Select>
             </div>
             <div className="flex space-x-2">
+              <Button
+                onClick={() => navigate("/recruiter/jobs/create")}
+                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Tạo tin tuyển dụng</span>
+              </Button>
               <Button
                 onClick={handleRefresh}
                 variant="outline"
@@ -474,8 +432,8 @@ export default function ViewJobList() {
           {loading && !jobs.length ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-center">
-                <RefreshCcw className="h-8 w-8 animate-spin mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Đang tải dữ liệu...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                <p className="mt-2 text-sm text-muted-foreground">Đang tải dữ liệu...</p>
               </div>
             </div>
           ) : error ? (
@@ -497,20 +455,23 @@ export default function ViewJobList() {
           )}
           
           {/* Pagination */}
-          {!error && totalItems > 0 && (
+          {!error && paginationInfo && (
             <div className="flex items-center justify-between mt-4 gap-6">
               <div className="text-sm text-muted-foreground">
-                Hiển thị {startIndex + 1} - {endIndex} của {totalItems} kết quả
+                Hiển thị {(paginationInfo.currentPage - 1) * paginationInfo.pageSize + 1} - {Math.min(paginationInfo.currentPage * paginationInfo.pageSize, paginationInfo.totalItem)} của {paginationInfo.totalItem} kết quả
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-muted-foreground">Số dòng mỗi trang:</p>
-                  <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
-                    <SelectTrigger className="w-20">
+                <div className="flex items-center gap-3">
+                  <p className="text-sm font-medium">Dòng trên trang</p>
+                  <Select
+                    value={paginationInfo.pageSize.toString()}
+                    onValueChange={handlePageSizeChange}
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      {pageSizeOptions.map(size => (
+                    <SelectContent side="top">
+                      {pageSizeOptions.map((size) => (
                         <SelectItem key={size} value={size.toString()}>
                           {size}
                         </SelectItem>
@@ -519,51 +480,48 @@ export default function ViewJobList() {
                   </Select>
                 </div>
 
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(1)}
-                    disabled={safePage === 1}
-                    title="Trang đầu"
-                  >
-                    <ChevronsLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(safePage - 1)}
-                    disabled={safePage === 1}
-                    title="Trang trước"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  
-                  <div className="flex items-center gap-1 px-2">
-                    <span className="text-sm">Trang</span>
-                    <span className="text-sm font-semibold">{safePage}</span>
-                    <span className="text-sm">của</span>
-                    <span className="text-sm font-semibold">{totalPages}</span>
+                <div className="flex items-center gap-3">
+                  <div className="text-sm font-medium">
+                    Trang {paginationInfo.currentPage} trên {paginationInfo.totalPage}
                   </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(safePage + 1)}
-                    disabled={safePage === totalPages}
-                    title="Trang sau"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(totalPages)}
-                    disabled={safePage === totalPages}
-                    title="Trang cuối"
-                  >
-                    <ChevronsRight className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(1)}
+                      disabled={paginationInfo.currentPage === 1 || loading}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronsLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(paginationInfo.currentPage - 1)}
+                      disabled={paginationInfo.currentPage === 1 || loading}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(paginationInfo.currentPage + 1)}
+                      disabled={paginationInfo.currentPage >= paginationInfo.totalPage || loading}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(paginationInfo.totalPage)}
+                      disabled={paginationInfo.currentPage >= paginationInfo.totalPage || loading}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronsRight className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -706,7 +664,7 @@ export default function ViewJobList() {
             setSelectedJob(null);
           }}
           onSave={() => {
-            getAllJobs(); // Refresh data
+            getAllWithPagination(paginationInput); // Refresh data
           }}
         />
       )}
