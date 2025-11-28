@@ -9,7 +9,7 @@ export const UserServices = {
   create: (user: Omit<User, 'id'>): Promise<BaseResponse<User>> => BaseApiServices.create<User>('/User', user),
   update: (id: string, data: Partial<User> | FormData) => BaseApiServices.update<User>('/User', id, data),
   delete: (id: string) => BaseApiServices.delete<User>('/User', id),
-  changeStatus: (id: string, isActive: boolean) => BaseApiServices.update<User>('/User', id, { isActive }),
+  changeStatus: (id: string, isActive: boolean) => BaseApiServices.custom<BaseResponse<User>>("put", `/User/${id}/status`, { isActive }),
   forgotPassword: (email: string) => BaseApiServices.custom<BaseResponse<User>>("post", "/Auth/forgot-password", { email }),
   resetPassword: (email: string, token: string, newPassword: string, confirmPassword: string) =>
     BaseApiServices.custom<BaseResponse<User>>("post", "/Auth/reset-password", { email, token, newPassword, confirmPassword }),
