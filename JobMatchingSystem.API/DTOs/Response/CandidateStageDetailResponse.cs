@@ -5,7 +5,7 @@ namespace JobMatchingSystem.API.DTOs.Response
     public class CandidateStageDetailResponse
     {
         // CandidateStage information
-        public int CandidateStageId { get; set; }
+        public int Id { get; set; }
         public int CandidateJobId { get; set; }
         public int JobStageId { get; set; }
         public string? Status { get; set; }
@@ -29,14 +29,14 @@ namespace JobMatchingSystem.API.DTOs.Response
         public string? PhoneNumber { get; set; }
         public string? Address { get; set; }
         public string? AvatarUrl { get; set; }
-        public DateTime? DateOfBirth { get; set; }
+        public DateTime? Birthday { get; set; }
         public bool? Gender { get; set; }
     }
     
     public class CVInfo
     {
-        public int CVId { get; set; }
+        public int Id { get; set; }
         public string Name { get; set; } = null!;
-        public string Url { get; set; } = null!;
+        public string FileUrl { get; set; } = null!;
     }
 }
