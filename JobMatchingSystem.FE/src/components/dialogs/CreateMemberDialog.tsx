@@ -241,7 +241,6 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
                   </h4>
                   <div className="mt-1 text-sm text-blue-700">
                     <p>Hệ thống sẽ tự động tạo mật khẩu tạm thời và gửi qua email cho thành viên mới.</p>
-                    <p className="mt-1">Thành viên sẽ được yêu cầu đổi mật khẩu khi đăng nhập lần đầu.</p>
                   </div>
                 </div>
               </div>
