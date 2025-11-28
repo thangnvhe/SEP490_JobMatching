@@ -25,23 +25,13 @@ namespace JobMatchingSystem.API.Controllers
         [HttpPost()]
         public async Task<IActionResult> Create([FromForm] CreateCompanyRequest request)
         {
-            try
-            {
-                await _companyService.Add(request);
-                return Ok(APIResponse<string>.Builder()
-                    .WithResult("Create Company Success")
-                    .WithSuccess(true)
-                    .WithStatusCode(HttpStatusCode.Created)
-                    .Build());
-            }
-            catch (AppException ex)
-            {
-                return BadRequest(APIResponse<string>.Builder()
-                    .WithErrorMessages(new List<string> { ex.Error.Message })
-                    .WithSuccess(false)
-                    .WithStatusCode(HttpStatusCode.BadRequest)
-                    .Build());
-            }
+            await _companyService.Add(request);
+            return Ok(APIResponse<string>.Builder()
+                .WithResult("Create Company Success")
+                .WithSuccess(true)
+                .WithStatusCode(HttpStatusCode.Created)
+                .Build());
+            
         }
         [HttpPost("{id}/accept")]
         [Authorize(Roles = "Admin")]
