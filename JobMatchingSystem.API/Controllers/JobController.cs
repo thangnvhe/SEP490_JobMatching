@@ -130,5 +130,23 @@ namespace JobMatchingSystem.API.Controllers
                 .WithResult(result)
                 .Build());
         }
+
+        [HttpGet("my-jobs")]
+        [Authorize(Roles = "Recruiter")]
+        public async Task<IActionResult> GetMyJobs([FromQuery] GetJobPagedRequest request)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+            // Tự động set recruiterId từ user đang đăng nhập
+            request.recuiterId = userId;
+
+            var result = await _jobService.GetJobsPagedAsync(request, userId);
+                
+            return Ok(APIResponse<PagedResult<JobDetailResponse>>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(result)
+                .Build());
+        }
     }
 }
