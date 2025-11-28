@@ -39,7 +39,6 @@ import {
   Users,
   CheckCircle,
   XCircle,
-  Clock,
   Phone,
   Mail,
   Briefcase,
@@ -52,7 +51,6 @@ import { CreateMemberDialog } from "@/components/dialogs/CreateMemberDialog";
 
 // Import types và services
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
-import type { HiringManager } from "@/models/hiring-manager";
 import type { User } from "@/models/user";
 import { UserServices } from "@/services/user.service";
 
@@ -67,18 +65,13 @@ const formatDate = (dateString: string) => {
   });
 };
 
-// Helper function để format date ngắn
-const formatDateShort = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
-};
-
 // Helper function để tạo avatar initials
-const getInitials = (firstName: string, lastName: string) => {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+const getInitials = (fullName: string) => {
+  const names = fullName.split(' ');
+  if (names.length >= 2) {
+    return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
+  }
+  return fullName.slice(0, 2).toUpperCase();
 };
 
 export function CompanyMembersPage() {
@@ -88,8 +81,8 @@ export function CompanyMembersPage() {
   // Khai báo local state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [members, setMembers] = useState<HiringManager[]>([]);
-  const [filteredMembers, setFilteredMembers] = useState<HiringManager[]>([]);
+  const [members, setMembers] = useState<User[]>([]);
+  const [filteredMembers, setFilteredMembers] = useState<User[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -97,7 +90,7 @@ export function CompanyMembersPage() {
   
   // Dialog states
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<HiringManager | null>(null);
+  const [selectedMember, setSelectedMember] = useState<User | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   // Pagination state
@@ -124,23 +117,25 @@ export function CompanyMembersPage() {
         // response.result có structure: { items: User[], pageInfo: PageInfo }
         const userData = response.result.items || [];
         
-        // Map dữ liệu từ API thành HiringManager format
-        const hiringManagers: HiringManager[] = userData.map((user: any) => ({
+        // Map dữ liệu từ API thành User format
+        const users: User[] = userData.map((user: any) => ({
           id: user.id,
-          firstName: user.fullName ? user.fullName.split(' ')[0] : '',
-          lastName: user.fullName ? user.fullName.split(' ').slice(1).join(' ') : '',
+          userName: user.userName || user.email,
           email: user.email,
-          phoneNumber: user.phoneNumber || user.phone || '',
-          position: 'Hiring Manager', // Default position
-          department: 'Nhân sự', // Default department  
+          fullName: user.fullName || '',
+          avatarUrl: user.avatarUrl || user.avatar || null,
+          gender: user.gender || null,
+          birthday: user.birthday || null,
+          score: user.score || 100,
           isActive: user.isActive,
           createdAt: user.createdAt,
-          lastLoginAt: undefined, // API chưa có thông tin này
+          phoneNumber: user.phoneNumber || user.phone || '',
+          address: user.address || '',
           companyId: user.companyId,
-          avatar: user.avatarUrl || user.avatar || undefined
+          role: 'hiringmanager'
         }));
         
-        setMembers(hiringManagers);
+        setMembers(users);
       } else {
         setMembers([]);
         setError('Không thể tải danh sách thành viên');
@@ -207,11 +202,9 @@ export function CompanyMembersPage() {
     if (keyword.trim()) {
       const searchTerm = keyword.toLowerCase();
       filtered = filtered.filter(member =>
-        `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchTerm) ||
+        member.fullName.toLowerCase().includes(searchTerm) ||
         member.email.toLowerCase().includes(searchTerm) ||
-        member.phoneNumber.includes(searchTerm) ||
-        member.position.toLowerCase().includes(searchTerm) ||
-        member.department.toLowerCase().includes(searchTerm)
+        member.phoneNumber.includes(searchTerm)
       );
     }
 
@@ -252,47 +245,31 @@ export function CompanyMembersPage() {
     setCurrentPage(1);
   };
 
-  const handleView = (member: HiringManager) => {
+  const handleView = (member: User) => {
     setSelectedMember(member);
     setIsViewDialogOpen(true);
   };
 
-  const handleEdit = (member: HiringManager) => {
+  const handleEdit = (member: User) => {
     // TODO: Implement edit functionality
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     console.log('Edit member:', member);
     toast.info("Tính năng chỉnh sửa sẽ được cập nhật sớm");
   };
 
-  const handleDelete = async (member: HiringManager) => {
-    // TODO: Implement delete functionality
+  const handleDelete = async (member: User) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setMembers(prev => prev.filter(m => m.id !== member.id));
-      toast.success("Xóa thành viên thành công!");
-    } catch (error) {
-      toast.error("Có lỗi xảy ra khi xóa thành viên");
-      console.error("Error deleting member:", error);
-    }
-  };
-
-  const handleToggleActive = async (member: HiringManager) => {
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await UserServices.changeStatus(member.id.toString(), false);
       
       setMembers(prev => prev.map(m => 
         m.id === member.id 
-          ? { ...m, isActive: !m.isActive }
+          ? { ...m, isActive: false }
           : m
       ));
-      
-      toast.success(`${member.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'} thành viên thành công!`);
+      toast.success("Xóa mềm thành viên thành công!");
     } catch (error) {
-      toast.error("Có lỗi xảy ra khi cập nhật trạng thái thành viên");
-      console.error("Error toggling member status:", error);
+      toast.error("Có lỗi xảy ra khi xóa thành viên");
+      console.error("Error soft deleting member:", error);
     }
   };
 
@@ -332,7 +309,7 @@ export function CompanyMembersPage() {
   const paginatedData = filteredMembers.slice(startIndex, endIndex);
 
   // Define columns
-  const columns = useMemo<ColumnDef<HiringManager>[]>(() => [
+  const columns = useMemo<ColumnDef<User>[]>(() => [
     {
       id: "stt",
       header: "STT",
@@ -344,22 +321,21 @@ export function CompanyMembersPage() {
     },
     {
       id: "member",
-      accessorFn: (row) => `${row.firstName} ${row.lastName}`,
+      accessorFn: (row) => row.fullName,
       header: "Thành viên",
       enableSorting: true,
       cell: ({ row }) => {
         const member = row.original;
-        const fullName = `${member.firstName} ${member.lastName}`;
         return (
           <div className="flex items-center space-x-3">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={member.avatar} alt={fullName} />
+              <AvatarImage src={member.avatarUrl || ''} alt={member.fullName} />
               <AvatarFallback className="text-xs">
-                {getInitials(member.firstName, member.lastName)}
+                {getInitials(member.fullName)}
               </AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-medium text-sm">{fullName}</div>
+              <div className="font-medium text-sm">{member.fullName}</div>
               <div className="text-xs text-muted-foreground">{member.email}</div>
             </div>
           </div>
@@ -368,16 +344,12 @@ export function CompanyMembersPage() {
     },
     {
       id: "position",
-      accessorKey: "position",
+      accessorKey: "role",
       header: "Chức vụ",
       enableSorting: true,
-      cell: ({ row }) => {
-        const member = row.original;
+      cell: ({ row: _ }) => {
         return (
-          <div>
-            <div className="font-medium text-sm">{member.position}</div>
-            <div className="text-xs text-muted-foreground">{member.department}</div>
-          </div>
+          <div className="font-medium text-sm">Hiring Manager</div>
         );
       },
     },
@@ -391,20 +363,6 @@ export function CompanyMembersPage() {
         return (
           <div className="text-sm">
             {phoneNumber}
-          </div>
-        );
-      },
-    },
-    {
-      id: "lastLogin",
-      accessorKey: "lastLoginAt",
-      header: "Lần đăng nhập cuối",
-      enableSorting: true,
-      cell: ({ row }) => {
-        const lastLoginAt = row.getValue("lastLogin") as string | undefined;
-        return (
-          <div className="text-sm">
-            {lastLoginAt ? formatDateShort(lastLoginAt) : 'Chưa đăng nhập'}
           </div>
         );
       },
@@ -440,39 +398,17 @@ export function CompanyMembersPage() {
               <Eye className="h-4 w-4" />
             </Button>
             
-            <Button
-              onClick={() => handleEdit(member)}
-              variant="outline"
-              size="sm"
-              title="Chỉnh sửa"
-              className="text-blue-600 hover:text-blue-700"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            
-            <Button
-              onClick={() => handleToggleActive(member)}
-              variant="outline"
-              size="sm"
-              className={member.isActive ? "text-orange-600 hover:text-orange-700" : "text-green-600 hover:text-green-700"}
-              title={member.isActive ? "Vô hiệu hóa" : "Kích hoạt"}
-            >
-              {member.isActive ? (
-                <XCircle className="h-4 w-4" />
-              ) : (
-                <CheckCircle className="h-4 w-4" />
-              )}
-            </Button>
-            
-            <Button
-              onClick={() => handleDelete(member)}
-              variant="outline"
-              size="sm"
-              className="text-red-600 hover:text-red-700"
-              title="Xóa"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {member.isActive && (
+              <Button
+                onClick={() => handleDelete(member)}
+                variant="outline"
+                size="sm"
+                className="text-red-600 hover:text-red-700"
+                title="Xóa mềm"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         );
       },
@@ -546,7 +482,9 @@ export function CompanyMembersPage() {
           {/* Page Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Thành viên công ty</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Thành viên công ty
+              </h1>
               <p className="text-gray-600 mt-2">
                 Quản lý danh sách Hiring Manager và nhân sự tuyển dụng
               </p>
@@ -575,7 +513,10 @@ export function CompanyMembersPage() {
                       className="pl-10 w-80"
                     />
                   </div>
-                  <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                  <Select
+                    value={statusFilter}
+                    onValueChange={handleStatusFilterChange}
+                  >
                     <SelectTrigger className="w-48">
                       <SelectValue placeholder="Lọc theo trạng thái" />
                     </SelectTrigger>
@@ -595,7 +536,9 @@ export function CompanyMembersPage() {
                     title="Làm mới dữ liệu"
                     disabled={loading}
                   >
-                    <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                    <RefreshCcw
+                      className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                    />
                   </Button>
                 </div>
               </div>
@@ -608,15 +551,16 @@ export function CompanyMembersPage() {
                   </div>
                   <div className="text-center">
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      {keyword || statusFilter !== 'all' ? 'Không tìm thấy thành viên' : 'Chưa có thành viên nào'}
+                      {keyword || statusFilter !== "all"
+                        ? "Không tìm thấy thành viên"
+                        : "Chưa có thành viên nào"}
                     </h3>
                     <p className="text-sm text-gray-500 mb-4">
-                      {keyword || statusFilter !== 'all' 
-                        ? 'Thử thay đổi tiêu chí tìm kiếm hoặc bộ lọc'
-                        : 'Hãy tạo thành viên đầu tiên cho công ty của bạn'
-                      }
+                      {keyword || statusFilter !== "all"
+                        ? "Thử thay đổi tiêu chí tìm kiếm hoặc bộ lọc"
+                        : "Hãy tạo thành viên đầu tiên cho công ty của bạn"}
                     </p>
-                    {!keyword && statusFilter === 'all' && (
+                    {!keyword && statusFilter === "all" && (
                       <Button
                         onClick={() => setIsCreateDialogOpen(true)}
                         className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -636,12 +580,13 @@ export function CompanyMembersPage() {
                   onSortingChange={handleSortingChange}
                 />
               )}
-              
+
               {/* Pagination */}
               {totalItems > 0 && (
                 <div className="flex items-center justify-between mt-6 gap-6">
                   <div className="text-sm text-muted-foreground">
-                    Hiển thị {startIndex + 1} - {endIndex} của {totalItems} kết quả
+                    Hiển thị {startIndex + 1} - {endIndex} của {totalItems} kết
+                    quả
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-3">
@@ -717,33 +662,40 @@ export function CompanyMembersPage() {
       {/* View Member Dialog */}
       {isViewDialogOpen && selectedMember && (
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-6xl w-[90vw] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-xl font-semibold flex items-center">
-                <Users className="w-5 h-5 mr-2 text-blue-600" />
+              <DialogTitle className="text-2xl font-semibold flex items-center">
+                <Users className="w-6 h-6 mr-3 text-blue-600" />
                 Chi tiết thành viên
               </DialogTitle>
-              <DialogDescription>
-                Thông tin chi tiết về thành viên {selectedMember.firstName} {selectedMember.lastName}
+              <DialogDescription className="text-base">
+                Thông tin chi tiết về thành viên {selectedMember.fullName}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-8 py-4">
               {/* Member Header */}
-              <div className="flex items-start space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={selectedMember.avatar} alt={`${selectedMember.firstName} ${selectedMember.lastName}`} />
-                  <AvatarFallback className="text-lg">
-                    {getInitials(selectedMember.firstName, selectedMember.lastName)}
+              <div className="flex items-start space-x-6 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage
+                    src={selectedMember.avatarUrl || ""}
+                    alt={selectedMember.fullName}
+                  />
+                  <AvatarFallback className="text-2xl font-semibold">
+                    {getInitials(selectedMember.fullName)}
                   </AvatarFallback>
                 </Avatar>
-                
+
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">
-                    {selectedMember.firstName} {selectedMember.lastName}
+                  <h3 className="text-3xl font-bold text-gray-900 mb-3">
+                    {selectedMember.fullName}
                   </h3>
-                  <p className="text-sm text-gray-600 mb-2">{selectedMember.position}</p>
-                  <Badge className={getStatusBadgeColor(selectedMember.isActive)}>
+                  <p className="text-xl text-gray-600 mb-4">Hiring Manager</p>
+                  <Badge
+                    className={`${getStatusBadgeColor(
+                      selectedMember.isActive
+                    )} text-base px-4 py-2`}
+                  >
                     {getStatusIcon(selectedMember.isActive)}
                     {getStatusLabel(selectedMember.isActive)}
                   </Badge>
@@ -751,71 +703,60 @@ export function CompanyMembersPage() {
               </div>
 
               {/* Member Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 flex items-center mb-1">
-                      <Mail className="w-4 h-4 mr-1" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div className="p-6 border border-gray-200 rounded-xl">
+                    <label className="text-sm font-semibold text-gray-500 flex items-center mb-3">
+                      <Mail className="w-5 h-5 mr-2" />
                       Email
                     </label>
-                    <p className="text-gray-900">{selectedMember.email}</p>
+                    <p className="text-lg text-gray-900 break-all">
+                      {selectedMember.email}
+                    </p>
                   </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 flex items-center mb-1">
-                      <Phone className="w-4 h-4 mr-1" />
+                  <div className="p-6 border border-gray-200 rounded-xl">
+                    <label className="text-sm font-semibold text-gray-500 flex items-center mb-3">
+                      <Phone className="w-5 h-5 mr-2" />
                       Số điện thoại
                     </label>
-                    <p className="text-gray-900">{selectedMember.phoneNumber}</p>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 flex items-center mb-1">
-                      <Briefcase className="w-4 h-4 mr-1" />
-                      Phòng ban
-                    </label>
-                    <p className="text-gray-900">{selectedMember.department}</p>
+                    <p className="text-lg text-gray-900">
+                      {selectedMember.phoneNumber || "Chưa cập nhật"}
+                    </p>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 flex items-center mb-1">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      Ngày tham gia
+                <div className="space-y-6">
+                  <div className="p-6 border border-gray-200 rounded-xl">
+                    <label className="text-sm font-semibold text-gray-500 flex items-center mb-3">
+                      <Briefcase className="w-5 h-5 mr-2" />
+                      Chức vụ
                     </label>
-                    <p className="text-gray-900">{formatDate(selectedMember.createdAt)}</p>
+                    <p className="text-lg text-gray-900">Hiring Manager</p>
                   </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 flex items-center mb-1">
-                      <Clock className="w-4 h-4 mr-1" />
-                      Lần đăng nhập cuối
+                  <div className="p-6 border border-gray-200 rounded-xl">
+                    <label className="text-sm font-semibold text-gray-500 flex items-center mb-3">
+                      <Calendar className="w-5 h-5 mr-2" />
+                      Ngày tham gia
                     </label>
-                    <p className="text-gray-900">
-                      {selectedMember.lastLoginAt ? formatDate(selectedMember.lastLoginAt) : 'Chưa đăng nhập'}
+                    <p className="text-lg text-gray-900">
+                      {selectedMember.createdAt
+                        ? formatDate(selectedMember.createdAt)
+                        : "Không xác định"}
                     </p>
                   </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end space-x-3 pt-4 border-t">
+              <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
                 <Button
                   variant="outline"
                   onClick={() => setIsViewDialogOpen(false)}
+                  className="px-8 py-3 text-base"
                 >
                   Đóng
-                </Button>
-                <Button
-                  onClick={() => {
-                    setIsViewDialogOpen(false);
-                    handleEdit(selectedMember);
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Chỉnh sửa
                 </Button>
               </div>
             </div>
