@@ -115,7 +115,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 
                 response.Add(new CandidateStageDetailResponse
                 {
-                    CandidateStageId = stage.Id,
+                    Id = stage.Id,
                     CandidateJobId = stage.CandidateJobId,
                     JobStageId = stage.JobStageId,
                     Status = stage.Status?.ToString(),
@@ -130,14 +130,14 @@ namespace JobMatchingSystem.API.Services.Implementations
                         PhoneNumber = user?.PhoneNumber,
                         Address = user?.Address,
                         AvatarUrl = user?.AvatarUrl,
-                        DateOfBirth = user?.Birthday,
+                        Birthday = user?.Birthday,
                         Gender = user?.Gender
                     },
                     CV = new CVInfo
                     {
-                        CVId = cv?.Id ?? 0,
+                        Id = cv?.Id ?? 0,
                         Name = cv?.Name ?? "Unknown",
-                        Url = cv?.FileUrl ?? ""
+                        FileUrl = cv?.FileUrl ?? ""
                     },
                     JobStageTitle = stage.JobStage?.Name
                 });
@@ -190,7 +190,7 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             return new CandidateStageDetailResponse
             {
-                CandidateStageId = candidateStage.Id,
+                Id = candidateStage.Id,
                 CandidateJobId = candidateStage.CandidateJobId,
                 JobStageId = candidateStage.JobStageId,
                 Status = candidateStage.Status?.ToString(),
@@ -206,14 +206,14 @@ namespace JobMatchingSystem.API.Services.Implementations
                     PhoneNumber = user?.PhoneNumber,
                     Address = user?.Address,
                     AvatarUrl = user?.AvatarUrl,
-                    DateOfBirth = user?.Birthday,
+                    Birthday = user?.Birthday,
                     Gender = user?.Gender
                 },
                 CV = new CVInfo
                 {
-                    CVId = cv?.Id ?? 0,
+                    Id = cv?.Id ?? 0,
                     Name = cv?.Name ?? "Unknown",
-                    Url = cv?.FileUrl ?? ""
+                    FileUrl = cv?.FileUrl ?? ""
                 }
             };
         }
