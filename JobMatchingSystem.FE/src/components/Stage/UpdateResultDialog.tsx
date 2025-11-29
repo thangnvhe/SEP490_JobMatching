@@ -172,7 +172,7 @@ export function UpdateResultDialog({
                             Kết quả <span className="text-destructive">*</span>
                         </Label>
                         <RadioGroup
-                            value={selectedResult}
+                            value={selectedResult ?? ""}
                             onValueChange={(value) =>
                                 setValue("result", value as "Pass" | "Fail", { shouldValidate: true })
                             }
