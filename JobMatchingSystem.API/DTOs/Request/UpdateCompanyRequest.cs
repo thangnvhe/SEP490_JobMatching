@@ -23,7 +23,7 @@ namespace JobMatchingSystem.API.DTOs.Request
         [Required(ErrorMessage = "Address is required")]
         [StringLength(255, ErrorMessage = "Address must not exceed 255 characters")]
         public string Description { get; set; }
-        [Required(ErrorMessage = "License file is required")]
+        
         [DataType(DataType.Upload)]
         public IFormFile? Logo { get; set; }
     }

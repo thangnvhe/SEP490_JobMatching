@@ -29,15 +29,36 @@ namespace JobMatchingSystem.API.Controllers
         [ProducesResponseType(typeof(APIResponse<string>), 400)]
         public async Task<IActionResult> UploadCV([FromForm] UploadCVRequest request)
         {
-            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            try
+            {
+                // Validate CV file before upload
+                var validationError = ValidateCVFile(request.File);
+                if (!string.IsNullOrEmpty(validationError))
+                {
+                    return BadRequest(APIResponse<string>.Builder()
+                        .WithStatusCode(HttpStatusCode.BadRequest)
+                        .WithSuccess(false)
+                        .WithResult(validationError)
+                        .Build());
+                }
 
-            await _cvService.UploadCVAsync(request, userId);
+                int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                await _cvService.UploadCVAsync(request, userId);
 
-            return Ok(APIResponse<string>.Builder()
-                .WithStatusCode(HttpStatusCode.Created)
-                .WithSuccess(true)
-                .WithResult("CV uploaded successfully")
-                .Build());
+                return Ok(APIResponse<string>.Builder()
+                    .WithStatusCode(HttpStatusCode.Created)
+                    .WithSuccess(true)
+                    .WithResult("CV uploaded successfully")
+                    .Build());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, APIResponse<string>.Builder()
+                    .WithStatusCode(HttpStatusCode.InternalServerError)
+                    .WithSuccess(false)
+                    .WithResult($"Upload failed: {ex.Message}")
+                    .Build());
+            }
         }
 
         [HttpGet("{id}")]
@@ -160,6 +181,31 @@ namespace JobMatchingSystem.API.Controllers
                     .WithResult($"Validation failed: {ex.Message}")
                     .Build());
             }
+        }
+
+        /// <summary>
+        /// Validate CV file type and size
+        /// </summary>
+        /// <param name="file">File to validate</param>
+        /// <returns>Error message if invalid, null if valid</returns>
+        private static string? ValidateCVFile(IFormFile? file)
+        {
+            if (file == null || file.Length == 0)
+                return "CV file is required";
+
+            // Check file size (10MB limit)
+            const long maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.Length > maxSize)
+                return "File size must be less than 10MB";
+
+            // Check file type
+            var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
+            var fileExtension = Path.GetExtension(file.FileName)?.ToLower();
+            
+            if (string.IsNullOrEmpty(fileExtension) || !allowedExtensions.Contains(fileExtension))
+                return $"Invalid file type. Allowed types: {string.Join(", ", allowedExtensions)}";
+
+            return null; // Valid file
         }
     }
 }

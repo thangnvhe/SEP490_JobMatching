@@ -13,5 +13,6 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task DeleteCVAsync(int cvId, int userId);
         Task SetPrimaryCVAsync(int cvId, int userId);
         Task<CVValidationResponse> ValidateCVAsync(IFormFile file);
+        Task CleanupUserCVsAsync(int userId);
     }
 }

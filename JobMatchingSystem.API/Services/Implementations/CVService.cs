@@ -1,6 +1,8 @@
 ﻿using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Exceptions;
+using JobMatchingSystem.API.Extensions;
+using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
@@ -17,13 +19,15 @@ namespace JobMatchingSystem.API.Services.Implementations
         private readonly ICVRepository _cvRepository;
         private readonly IWebHostEnvironment _env;
         private readonly HttpClient _httpClient;
+        private readonly IBlobStorageService _blobStorageService;
         private readonly string _aiServiceUrl;
 
-        public CVService(ICVRepository cvRepository, IWebHostEnvironment env)
+        public CVService(ICVRepository cvRepository, IWebHostEnvironment env, IBlobStorageService blobStorageService)
         {
             _cvRepository = cvRepository;
             _env = env;
             _httpClient = new HttpClient();
+            _blobStorageService = blobStorageService;
             _aiServiceUrl = "http://localhost:8000"; // AI Service URL
         }
 
@@ -58,19 +62,10 @@ namespace JobMatchingSystem.API.Services.Implementations
                 }
             }
 
-            // Lưu file vào wwwroot/cv với tên mã hóa
-            var cvFolder = Path.Combine(_env.WebRootPath, "cv");
-            if (!Directory.Exists(cvFolder))
-                Directory.CreateDirectory(cvFolder);
-
+            // Upload CV file to Azure Blob Storage
             var fileExtension = Path.GetExtension(request.File.FileName);
             var hashedFileName = Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(Guid.NewGuid() + request.File.FileName))) + fileExtension;
-            var filePath = Path.Combine(cvFolder, hashedFileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await request.File.CopyToAsync(stream);
-            }
+            var cvFileUrl = await _blobStorageService.UploadFileAsync(request.File, "cvs", hashedFileName);
 
             // Tạo CVUpload entity
             var cvUpload = new CVUpload
@@ -79,7 +74,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 Name = request.Name,
                 IsPrimary = request.IsPrimary ?? false,
                 FileName = request.File.FileName,
-                FileUrl = $"cv/{hashedFileName}"
+                FileUrl = cvFileUrl
             };
 
             await _cvRepository.CreateAsync(cvUpload);
@@ -90,6 +85,10 @@ namespace JobMatchingSystem.API.Services.Implementations
             var cv = await _cvRepository.GetByIdAsync(id);
             if (cv == null)
                 throw new AppException(ErrorCode.NotFoundCV());
+            
+            // Generate secure URL with SAS token for file access
+            cv.FileUrl = await _blobStorageService.GetSecureFileUrlAsync(cv.FileUrl) ?? cv.FileUrl;
+            
             return cv;
         }
 
@@ -98,6 +97,13 @@ namespace JobMatchingSystem.API.Services.Implementations
             var cvs = await _cvRepository.GetCVsByUserIdAsync(userId);
             if (cvs == null || !cvs.Any())
                 throw new AppException(ErrorCode.NotFoundCV());
+            
+            // Generate secure URLs with SAS tokens for all CVs
+            foreach (var cv in cvs)
+            {
+                cv.FileUrl = await _blobStorageService.GetSecureFileUrlAsync(cv.FileUrl) ?? cv.FileUrl;
+            }
+            
             return cvs;
         }
 
@@ -124,10 +130,11 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             await _cvRepository.DeleteAsync(cvId);
 
-            // Xóa file vật lý
-            var filePath = Path.Combine(_env.WebRootPath, cv.FileUrl);
-            if (System.IO.File.Exists(filePath))
-                System.IO.File.Delete(filePath);
+            // Xóa file từ Azure Blob Storage
+            if (!string.IsNullOrEmpty(cv.FileUrl))
+            {
+                await _blobStorageService.DeleteFileAsync(cv.FileUrl);
+            }
         }
 
         public async Task SetPrimaryCVAsync(int cvId, int userId)
@@ -259,6 +266,35 @@ namespace JobMatchingSystem.API.Services.Implementations
                         Error = "Processing failed"
                     }
                 };
+            }
+        }
+
+        /// <summary>
+        /// Clean up all CV files for a user (useful when deleting user account)
+        /// </summary>
+        /// <param name="userId">User ID to clean up CVs for</param>
+        /// <returns></returns>
+        public async Task CleanupUserCVsAsync(int userId)
+        {
+            try
+            {
+                var userCVs = await _cvRepository.GetCVsByUserIdAsync(userId);
+                foreach (var cv in userCVs)
+                {
+                    // Delete from Azure Blob Storage
+                    if (!string.IsNullOrEmpty(cv.FileUrl))
+                    {
+                        await _blobStorageService.DeleteFileAsync(cv.FileUrl);
+                    }
+                    
+                    // Delete from database
+                    await _cvRepository.DeleteAsync(cv.Id);
+                }
+            }
+            catch (Exception)
+            {
+                // Log error but don't throw - file cleanup shouldn't break the main flow
+                // You might want to add proper logging here
             }
         }
 

@@ -80,6 +80,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IServicePlanService, ServicePlanService>();
             services.AddScoped<IJobQuotaService, JobQuotaService>();
             services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<IBlobStorageService, BlobStorageService>();
             return services;
         }
 
