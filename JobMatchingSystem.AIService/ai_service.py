@@ -82,8 +82,8 @@ async def root():
         status="healthy",
         version="1.0.0",
         services={
-            "gemini_ai": "connected" if get_gemini_client().check_connection() else "disconnected",
-            "pdf_processor": "available"
+            "gemini_ai": "ready",
+            "document_processor": "available"
         },
         timestamp=datetime.utcnow().isoformat()
     )
@@ -135,15 +135,17 @@ async def validate_cv(file: UploadFile = File(...)):
     """
     Validate if uploaded file is a CV
     
-    - **file**: PDF file to validate
+    - **file**: PDF or Word document file (DOCX, DOC) to validate
     - Returns: CV validation result with confidence score
     """
     try:
-        if not file.filename.lower().endswith('.pdf'):
+        # Check file extension
+        from utils.document_processor import DocumentProcessor
+        if not DocumentProcessor.is_supported_file(file.filename):
             return CVValidationResponse(
                 is_cv=False,
                 confidence=0.0,
-                reason="Only PDF files are supported",
+                reason="Unsupported file format. Supported: PDF, DOCX",
                 file_info={"filename": file.filename, "error": "Invalid file type"}
             )
         
@@ -152,45 +154,6 @@ async def validate_cv(file: UploadFile = File(...)):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error validating CV: {str(e)}")
-
-
-@app.post("/extract_cv_info", response_model=CVExtractionResponse)
-async def extract_cv_info(file: UploadFile = File(...)):
-    """
-    Extract key information from CV
-    
-    - **file**: PDF CV file
-    - Returns: Extracted CV information (name, email, skills, etc.)
-    """
-    try:
-        if not file.filename.lower().endswith('.pdf'):
-            raise HTTPException(status_code=400, detail="Only PDF files are supported")
-        
-        result = await cv_service.extract_cv_information(file)
-        return result
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error extracting CV info: {str(e)}")
-
-
-@app.post("/match_cv_job", response_model=JobMatchResponse)
-async def match_cv_job(request: JobMatchRequest):
-    """
-    Match CV text with job description
-    
-    - **cv_text**: CV content as text
-    - **job_description**: Job description text
-    - Returns: Match score and analysis
-    """
-    try:
-        result = cv_service.match_cv_with_job(
-            cv_text=request.cv_text,
-            job_description=request.job_description
-        )
-        return result
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error matching CV with job: {str(e)}")
 
 
 # Error handlers

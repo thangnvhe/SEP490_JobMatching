@@ -118,19 +118,26 @@ export default function CVManagement() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.type !== 'application/pdf') {
-        alert("Lỗi: Chỉ chấp nhận file PDF");
+      const allowedTypes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+        'application/msword' // .doc
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        alert("Lỗi: Chỉ chấp nhận file PDF, DOCX hoặc DOC");
         return;
       }
 
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        alert("Lỗi: File không được vượt quá 5MB");
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        alert("Lỗi: File không được vượt quá 10MB");
         return;
       }
 
       setSelectedFile(file);
       if (!cvName) {
-        setCvName(file.name.replace('.pdf', ''));
+        // Remove file extension (.pdf, .docx, .doc)
+        const nameWithoutExt = file.name.replace(/\.(pdf|docx|doc)$/i, '');
+        setCvName(nameWithoutExt);
       }
 
       // Validate CV with AI
@@ -334,7 +341,7 @@ export default function CVManagement() {
                       Upload CV mới
                     </DialogTitle>
                     <DialogDescription>
-                      Chọn file PDF để upload CV của bạn. File phải nhỏ hơn 5MB.
+                      Chọn file PDF, DOCX hoặc DOC để upload CV của bạn. File phải nhỏ hơn 10MB.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
@@ -349,12 +356,12 @@ export default function CVManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cvFile" className="text-sm font-medium">Chọn file CV (PDF)</Label>
+                      <Label htmlFor="cvFile" className="text-sm font-medium">Chọn file CV (PDF, DOCX, DOC)</Label>
                       <div className="relative">
                         <Input
                           id="cvFile"
                           type="file"
-                          accept=".pdf"
+                          accept=".pdf,.docx,.doc"
                           onChange={handleFileChange}
                           className="h-11 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                         />

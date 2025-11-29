@@ -1,7 +1,7 @@
 from typing import Tuple
 from fastapi import UploadFile
 from models.schemas import CVValidationResponse, CVExtractionResponse, JobMatchResponse, ErrorResponse
-from utils.pdf_processor import PDFProcessor
+from utils.document_processor import DocumentProcessor
 from utils.gemini_client import get_gemini_client, GeminiClient
 from prompts.cv_validation import CVValidationPrompts
 from config.config import Config
@@ -12,7 +12,7 @@ class CVService:
     
     def __init__(self):
         self.gemini_client = get_gemini_client()
-        self.pdf_processor = PDFProcessor()
+        self.document_processor = DocumentProcessor()
     
     async def validate_cv_file(self, file: UploadFile) -> CVValidationResponse:
         """Validate if uploaded file is a CV"""
@@ -20,8 +20,8 @@ class CVService:
             # Read file content
             content = await file.read()
             
-            # Validate PDF file
-            is_valid, error_msg = self.pdf_processor.validate_pdf_file(content, file.filename)
+            # Validate file
+            is_valid, error_msg = self.document_processor.validate_file(content, file.filename)
             if not is_valid:
                 return CVValidationResponse(
                     is_cv=False,
@@ -30,15 +30,15 @@ class CVService:
                     file_info={"filename": file.filename, "error": error_msg}
                 )
             
-            # Extract text from PDF
-            text = self.pdf_processor.extract_text_from_bytes(content)
+            # Extract text from file
+            text = self.document_processor.extract_text_from_file(content, file.filename)
             
             if len(text) < Config.PDF_MIN_TEXT_LENGTH:
                 return CVValidationResponse(
                     is_cv=False,
                     confidence=0.0,
                     reason=f"File contains insufficient text content (minimum {Config.PDF_MIN_TEXT_LENGTH} characters required)",
-                    file_info=self.pdf_processor.get_pdf_info(content, file.filename)
+                    file_info=self.document_processor.get_file_info(content, file.filename)
                 )
             
             # Generate prompt and get AI response
@@ -55,7 +55,7 @@ class CVService:
                 is_cv=is_cv,
                 confidence=confidence,
                 reason=reason,
-                file_info=self.pdf_processor.get_pdf_info(content, file.filename)
+                file_info=self.document_processor.get_file_info(content, file.filename)
             )
             
         except Exception as e:
@@ -64,54 +64,6 @@ class CVService:
                 confidence=0.0,
                 reason=f"Error processing file: {str(e)}",
                 file_info={"filename": file.filename, "error": str(e)}
-            )
-    
-    async def extract_cv_information(self, file: UploadFile) -> CVExtractionResponse:
-        """Extract key information from CV"""
-        try:
-            # Read and validate file
-            content = await file.read()
-            is_valid, error_msg = self.pdf_processor.validate_pdf_file(content, file.filename)
-            if not is_valid:
-                raise ValueError(error_msg)
-            
-            # Extract text
-            text = self.pdf_processor.extract_text_from_bytes(content)
-            
-            # Generate prompt and get AI response
-            prompt = CVValidationPrompts.extract_cv_info(text)
-            ai_response = self.gemini_client.generate_json_content(prompt)
-            
-            # Convert to response model
-            return CVExtractionResponse(**ai_response)
-            
-        except Exception as e:
-            # Return empty response with error in summary
-            return CVExtractionResponse(summary=f"Error extracting CV info: {str(e)}")
-    
-    def match_cv_with_job(self, cv_text: str, job_description: str) -> JobMatchResponse:
-        """Match CV with job description"""
-        try:
-            prompt = CVValidationPrompts.match_cv_with_job(cv_text, job_description)
-            ai_response = self.gemini_client.generate_json_content(prompt)
-            
-            # Set defaults for missing fields
-            response_data = {
-                "match_score": ai_response.get("match_score", 0),
-                "matching_skills": ai_response.get("matching_skills", []),
-                "missing_skills": ai_response.get("missing_skills", []),
-                "experience_match": ai_response.get("experience_match", False),
-                "education_match": ai_response.get("education_match", False),
-                "overall_assessment": ai_response.get("overall_assessment", "Unable to assess"),
-                "recommendations": ai_response.get("recommendations", [])
-            }
-            
-            return JobMatchResponse(**response_data)
-            
-        except Exception as e:
-            return JobMatchResponse(
-                match_score=0,
-                overall_assessment=f"Error matching CV with job: {str(e)}"
             )
     
     def _calculate_confidence(self, ai_response: str, is_cv: bool) -> float:
