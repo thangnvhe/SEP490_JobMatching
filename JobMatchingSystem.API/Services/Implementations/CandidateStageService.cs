@@ -34,6 +34,13 @@ namespace JobMatchingSystem.API.Services.Implementations
                 candidateStage.HiringManagerFeedback = request.HiringManagerFeedback;
             }
             
+            // Validate Result value
+            if (!request.Result.Equals("Pass", StringComparison.OrdinalIgnoreCase) && 
+                !request.Result.Equals("Fail", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new AppException(ErrorCode.InvalidStatus());
+            }
+            
             // Lấy tất cả các JobStage của Job này để validation
             var jobStages = await _unitOfWork.JobStageRepository.GetByJobIdAsync(candidateJob.JobId);
             var orderedStages = jobStages.OrderBy(x => x.StageNumber).ToList();
@@ -47,7 +54,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             
             CandidateStage? nextCandidateStage = null;
             
-            if (request.Result.Equals("Pass"))
+            if (request.Result.Equals("Pass", StringComparison.OrdinalIgnoreCase))
             {
                 candidateStage.Status = Enums.CandidateStageStatus.Passed;
                 
@@ -100,7 +107,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                     }
                 }
             }
-            else if (request.Result.Equals("Fail"))
+            else if (request.Result.Equals("Fail", StringComparison.OrdinalIgnoreCase))
             {
                 candidateStage.Status = Enums.CandidateStageStatus.Failed;
                 candidateJob.Status = Enums.CandidateJobStatus.Fail;
