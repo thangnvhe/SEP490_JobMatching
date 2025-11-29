@@ -61,6 +61,7 @@ namespace JobMatchingSystem.API.DTOs.Request
         public List<int>? TaxonomyIds { get; set; }
 
         public int? HighlightJobId { get; set; }
+        public int? ExtensionJobId { get; set; }
     }
 
     public class CreateJobStageRequest
