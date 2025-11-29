@@ -7,7 +7,7 @@ namespace JobMatchingSystem.API.Services.Interfaces
     {
         Task UpdateSchedule(int id, UpdateCandidateStageRequest request);
         Task<CandidateStageDetailResponse?> UpdateResult(int id, UpdateResultCandidateStage request);
-        Task<List<CandidateStageDetailResponse>> GetCandidateDetailsByJobStageId(int jobStageId, string? status = null, string? sortBy = null, bool isDescending = false);
+        Task<List<CandidateStageDetailResponse>> GetCandidateDetailsByJobStageId(int jobStageId);
         Task<CandidateStageDetailResponse?> GetDetailById(int id);
     }
 }
