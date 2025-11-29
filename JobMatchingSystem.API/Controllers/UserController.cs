@@ -68,25 +68,50 @@ namespace JobMatchingSystem.API.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateCurrentUser([FromForm] UpdateCurrentUserRequest request)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            
-            if (string.IsNullOrEmpty(userIdClaim))
+            try
             {
-                return Unauthorized(APIResponse<string>.Builder()
-                    .WithStatusCode(HttpStatusCode.Unauthorized)
-                    .WithSuccess(false)
-                    .WithMessage("Không tìm thấy thông tin người dùng")
+                // Validate avatar file if provided
+                if (request.AvatarFile != null)
+                {
+                    var validationError = ValidateAvatarFile(request.AvatarFile);
+                    if (!string.IsNullOrEmpty(validationError))
+                    {
+                        return BadRequest(APIResponse<string>.Builder()
+                            .WithStatusCode(HttpStatusCode.BadRequest)
+                            .WithSuccess(false)
+                            .WithMessage(validationError)
+                            .Build());
+                    }
+                }
+
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                
+                if (string.IsNullOrEmpty(userIdClaim))
+                {
+                    return Unauthorized(APIResponse<string>.Builder()
+                        .WithStatusCode(HttpStatusCode.Unauthorized)
+                        .WithSuccess(false)
+                        .WithMessage("Không tìm thấy thông tin người dùng")
+                        .Build());
+                }
+
+                var updatedUser = await _userService.UpdateCurrentUser(userIdClaim, request);
+
+                return Ok(APIResponse<UserDetailResponseDTO>.Builder()
+                    .WithResult(updatedUser)
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithSuccess(true)
+                    .WithMessage("Cập nhật thông tin thành công")
                     .Build());
             }
-
-            var updatedUser = await _userService.UpdateCurrentUser(userIdClaim, request);
-
-            return Ok(APIResponse<UserDetailResponseDTO>.Builder()
-                .WithResult(updatedUser)
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithSuccess(true)
-                .WithMessage("Cập nhật thông tin thành công")
-                .Build());
+            catch (Exception ex)
+            {
+                return StatusCode(500, APIResponse<string>.Builder()
+                    .WithStatusCode(HttpStatusCode.InternalServerError)
+                    .WithSuccess(false)
+                    .WithMessage($"Cập nhật thất bại: {ex.Message}")
+                    .Build());
+            }
         }
 
         [HttpGet("{id}")]
@@ -136,6 +161,31 @@ namespace JobMatchingSystem.API.Controllers
                 _logger.LogError(ex, "Error creating hiring manager for email: {Email}", request?.Email);
                 throw; // Re-throw to let global exception handler deal with it
             }
-        }        
+        }
+
+        /// <summary>
+        /// Validate avatar file type and size
+        /// </summary>
+        /// <param name="file">File to validate</param>
+        /// <returns>Error message if invalid, null if valid</returns>
+        private static string? ValidateAvatarFile(IFormFile file)
+        {
+            if (file.Length == 0)
+                return "Avatar file cannot be empty";
+
+            // Check file size (5MB limit)
+            const long maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.Length > maxSize)
+                return "File size must be less than 5MB";
+
+            // Check file type
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            var fileExtension = Path.GetExtension(file.FileName)?.ToLower();
+            
+            if (string.IsNullOrEmpty(fileExtension) || !allowedExtensions.Contains(fileExtension))
+                return $"Invalid file type. Allowed types: {string.Join(", ", allowedExtensions)}";
+
+            return null; // Valid file
+        }
     }
 }

@@ -2,6 +2,7 @@
 using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Exceptions;
+using JobMatchingSystem.API.Extensions;
 using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Implementations;
@@ -21,8 +22,9 @@ namespace JobMatchingSystem.API.Services.Implementations
         protected readonly UserManager<ApplicationUser> _userManager;
         protected readonly RoleManager<IdentityRole<int>> _roleManager;
         protected readonly IEmailService _emailService;
+        protected readonly IBlobStorageService _blobStorageService;
 
-        public UserService(IUnitOfWork unitOfWork, IMapper mapper, IWebHostEnvironment webHostEnvironment, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<int>> roleManager, IEmailService emailService)
+        public UserService(IUnitOfWork unitOfWork, IMapper mapper, IWebHostEnvironment webHostEnvironment, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<int>> roleManager, IEmailService emailService, IBlobStorageService blobStorageService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
@@ -30,6 +32,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             _userManager = userManager;
             _roleManager = roleManager;
             _emailService = emailService;
+            _blobStorageService = blobStorageService;
         }
         public async Task ChangeStatus(int userId)
         {
@@ -69,6 +72,9 @@ namespace JobMatchingSystem.API.Services.Implementations
                 if (!string.IsNullOrEmpty(role) && (userRole == null || !userRole.Equals(role, StringComparison.OrdinalIgnoreCase)))
                     continue;
                 
+                // Generate secure URL with SAS token for avatar access
+                var secureAvatarUrl = await _blobStorageService.GetSecureFileUrlAsync(user.AvatarUrl);
+                
                 var userDetailDto = new UserDetailResponseDTO
                 {
                     Id = user.Id,
@@ -77,7 +83,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                     UserName = user.UserName ?? string.Empty,
                     PhoneNumber = user.PhoneNumber ?? string.Empty,
                     Address = user.Address ?? string.Empty,
-                    AvatarUrl = user.AvatarUrl,
+                    AvatarUrl = secureAvatarUrl,
                     Gender = user.Gender,
                     Birthday = user.Birthday,
                     IsActive = user.IsActive,
@@ -121,6 +127,9 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             // Get user roles
             var roles = await _unitOfWork.AuthRepository.GetRolesAsync(user);
+            
+            // Generate secure URL with SAS token for avatar access
+            var secureAvatarUrl = await _blobStorageService.GetSecureFileUrlAsync(user.AvatarUrl);
 
             var userDetailDto = new UserDetailResponseDTO
             {
@@ -130,7 +139,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 UserName = user.UserName ?? string.Empty,
                 PhoneNumber = user.PhoneNumber ?? string.Empty,
                 Address = user.Address ?? string.Empty,
-                AvatarUrl = user.AvatarUrl,
+                AvatarUrl = secureAvatarUrl,
                 Gender = user.Gender,
                 Birthday = user.Birthday,
                 IsActive = user.IsActive,
@@ -164,6 +173,9 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             // Get user roles
             var roles = await _unitOfWork.AuthRepository.GetRolesAsync(user);
+            
+            // Generate secure URL with SAS token for avatar access
+            var secureAvatarUrl = await _blobStorageService.GetSecureFileUrlAsync(user.AvatarUrl);
 
             var userDetailDto = new UserDetailResponseDTO
             {
@@ -173,7 +185,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 UserName = user.UserName ?? string.Empty,
                 PhoneNumber = user.PhoneNumber ?? string.Empty,
                 Address = user.Address ?? string.Empty,
-                AvatarUrl = user.AvatarUrl,
+                AvatarUrl = secureAvatarUrl,
                 Gender = user.Gender,
                 Birthday = user.Birthday,
                 IsActive = user.IsActive,
@@ -223,36 +235,20 @@ namespace JobMatchingSystem.API.Services.Implementations
                     throw new AppException(ErrorCode.FileSizeExceeded());
                 }
 
-                // Create upload directory if it doesn't exist
-                var uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "avatars");
-                if (!Directory.Exists(uploadsDir))
-                {
-                    Directory.CreateDirectory(uploadsDir);
-                }
-
-                // Generate unique filename
-                var fileName = $"{user.Id}_{DateTime.Now:yyyyMMddHHmmss}{fileExtension}";
-                var filePath = Path.Combine(uploadsDir, fileName);
-
-                // Delete old avatar file if exists
+                // Delete old avatar from Azure Blob Storage if exists
                 if (!string.IsNullOrEmpty(user.AvatarUrl))
                 {
-                    var oldFileName = Path.GetFileName(user.AvatarUrl);
-                    var oldFilePath = Path.Combine(uploadsDir, oldFileName);
-                    if (File.Exists(oldFilePath))
-                    {
-                        File.Delete(oldFilePath);
-                    }
+                    await _blobStorageService.DeleteFileAsync(user.AvatarUrl);
                 }
 
-                // Save new avatar file
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await request.AvatarFile.CopyToAsync(stream);
-                }
-
-                // Update avatar URL - system generated path
-                user.AvatarUrl = $"/uploads/avatars/{fileName}";
+                // Generate unique filename for avatar
+                var fileName = $"avatar_{user.Id}_{DateTime.Now:yyyyMMddHHmmss}{fileExtension}";
+                
+                // Upload new avatar to Azure Blob Storage
+                var avatarFileUrl = await _blobStorageService.UploadFileAsync(request.AvatarFile, "avartars", fileName);
+                
+                // Update avatar URL
+                user.AvatarUrl = avatarFileUrl;
             }
 
             // Update user properties only if they are provided (partial update)
@@ -295,6 +291,9 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.NotFoundUser());
             }
 
+            // Generate secure URL with SAS token for avatar access
+            var secureAvatarUrl = await _blobStorageService.GetSecureFileUrlAsync(updatedUser.AvatarUrl);
+
             var updatedUserDTO = new UserDetailResponseDTO
             {
                 Id = updatedUser.Id,
@@ -303,7 +302,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 UserName = updatedUser.UserName ?? string.Empty,
                 PhoneNumber = updatedUser.PhoneNumber ?? string.Empty,
                 Address = updatedUser.Address ?? string.Empty,
-                AvatarUrl = updatedUser.AvatarUrl,
+                AvatarUrl = secureAvatarUrl,
                 Gender = updatedUser.Gender,
                 Birthday = updatedUser.Birthday,
                 IsActive = updatedUser.IsActive,
@@ -427,5 +426,26 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
         }
 
+        /// <summary>
+        /// Clean up user avatar when deleting user account
+        /// </summary>
+        /// <param name="userId">User ID to clean up avatar for</param>
+        /// <returns></returns>
+        public async Task CleanupUserAvatarAsync(int userId)
+        {
+            try
+            {
+                var user = await _unitOfWork.AuthRepository.GetUserById(userId);
+                if (user != null && !string.IsNullOrEmpty(user.AvatarUrl))
+                {
+                    await _blobStorageService.DeleteFileAsync(user.AvatarUrl);
+                }
+            }
+            catch (Exception)
+            {
+                // Log error but don't throw - file cleanup shouldn't break the main flow
+                // You might want to add proper logging here
+            }
+        }
     }
 }
