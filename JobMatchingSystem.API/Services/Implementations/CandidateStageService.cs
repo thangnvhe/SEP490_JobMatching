@@ -28,6 +28,13 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.NotFoundCandidateJob());
             }
             
+            // Validate trạng thái của candidate stage
+            // Chỉ cho phép cập nhật result khi status là Schedule
+            if (candidateStage.Status != Enums.CandidateStageStatus.Schedule)
+            {
+                throw new AppException(ErrorCode.InvalidCandidateStageStatus());
+            }
+            
             // Update hiring manager feedback if provided
             if (!string.IsNullOrEmpty(request.HiringManagerFeedback))
             {
@@ -69,6 +76,12 @@ namespace JobMatchingSystem.API.Services.Implementations
                     }
                     
                     var targetStageIndex = orderedStages.FindIndex(x => x.Id == request.JobStageId.Value);
+                    
+                    // Validate không được kéo về stage trước đó
+                    if (targetStageIndex < currentStageIndex)
+                    {
+                        throw new AppException(ErrorCode.CannotMoveToPreviousStage());
+                    }
                     
                     // Validate chỉ được chuyển đến stage tiếp theo (không nhảy cóc)
                     if (targetStageIndex != currentStageIndex + 1)
