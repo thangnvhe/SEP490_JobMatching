@@ -28,7 +28,7 @@ import CompanyDetailPage from './pages/client-site/guest/CompanyDetailPage';
 import JobDetailPage from './pages/client-site/guest/JobDetailPage';
 import { ConfirmEmailPage } from './pages/client-site/auth/ConfirmEmailPage';
 import ViewReportList from './pages/admin-site/ManageReport/ViewReportList';
-import { AuthGuard } from './guards/AuthGuard'; 
+import { StageBoardDemo } from './components/Stage/StageBoardDemo';
 
 const AppRouter: React.FC = () => {
   return (
@@ -73,9 +73,10 @@ const AppRouter: React.FC = () => {
         <Route index element={<RecruiterDashboard />} />
         <Route path="jobs" element={<RecruiterViewJobList />} />
         <Route path="jobs/create" element={<CreateJobPage />} />
-        <Route path="recruitment-process" element={<RecruitmentProcessManagement />} />
+        <Route path="recruitment-process/:jobId" element={<RecruitmentProcessManagement />} />
         <Route path="company" element={<CompanyProfile />} />
         <Route path="company/members" element={<CompanyMembersPage />} />
+        <Route path="stage-board" element={<StageBoardDemo />} />
       </Route>
 
       {/* Candidate routes - Protected */}

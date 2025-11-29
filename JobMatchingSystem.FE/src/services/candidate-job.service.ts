@@ -10,9 +10,10 @@ export const CandidateJobServices = {
     update: (id: string, candidateJob: CandidateJob) => BaseApiServices.update<CandidateJob>('/CandidateJob', id, candidateJob),
     delete: (id: string) => BaseApiServices.delete<CandidateJob>('/CandidateJob', id),
     //
+    getCandidateJobsByJobId: (jobId: string | number, params: PaginationParamsInput) => BaseApiServices.getAllWithPagination<CandidateJob>(`/CandidateJob/job/${jobId}`, params),
     getMyCandidateJobs: (params: PaginationParamsInput) => BaseApiServices.custom<PaginatedResponse<CandidateJob>>('get', `/CandidateJob/me`, params),
     getCandidateJobById: (id: number) => BaseApiServices.custom<BaseResponse<CandidateJob>>('get', `/CandidateJob/${id}`),
     getCandidateJobs: () => BaseApiServices.custom<BaseResponse<CandidateJob[]>>('get', `/CandidateJob`),
-    approveCandidateJob: (id: number) => BaseApiServices.custom<BaseResponse<CandidateJob>>('post', `/CandidateJob/${id}/approve`),
-    rejectCandidateJob: (id: number) => BaseApiServices.custom<BaseResponse<CandidateJob>>('post', `/CandidateJob/${id}/reject`),
+    approveCandidateJob: (id: number) => BaseApiServices.custom<BaseResponse<CandidateJob>>('put', `/CandidateJob/${id}/approve`),
+    rejectCandidateJob: (id: number) => BaseApiServices.custom<BaseResponse<CandidateJob>>('put', `/CandidateJob/${id}/reject`),
 }
