@@ -15,6 +15,7 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundJob() => new("Not Found Job", HttpStatusCode.NotFound);
         public static Error NotFoundJobStage() => new("Not Found JobStage", HttpStatusCode.NotFound);
         public static Error SalaryError() => new("Salary min large than Salary max", HttpStatusCode.BadRequest);
+        public static Error DayError() => new("Invalid Day", HttpStatusCode.BadRequest);
         public static Error NotFoundUser() => new("Not Found User", HttpStatusCode.NotFound);
         public static Error EmailNotExist() => new("Email Not Exist", HttpStatusCode.NotFound);
         public static Error NotFoundTemplateCV() => new("Not Found TemplateCV", HttpStatusCode.NotFound);
@@ -49,5 +50,6 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error AssignRoleFailed() => new("Failed to assign role to user.", HttpStatusCode.InternalServerError);
         public static Error NotFoundServicePlan() => new("Not Found ServicePlan", HttpStatusCode.NotFound);
         public static Error NotFoundJobQuota() => new("Not Found JobQuota", HttpStatusCode.NotFound);
+        public static Error NotFoundHighlightJob() => new("Not Found HighlightJob", HttpStatusCode.NotFound);
     }
 }

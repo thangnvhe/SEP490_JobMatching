@@ -59,6 +59,8 @@ namespace JobMatchingSystem.API.DTOs.Request
 
         // Danh sách các ID phân loại/ngành nghề (Không áp dụng validation theo yêu cầu)
         public List<int>? TaxonomyIds { get; set; }
+
+        public int? HighlightJobId { get; set; }
     }
 
     public class CreateJobStageRequest
