@@ -22,6 +22,7 @@ import { CandidateCard } from "./CandidateCard";
 import { CandidateDetailDialog } from "./CandidateDetailDialog";
 import { UpdateResultDialog } from "./UpdateResultDialog";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 
 // Interface for pending move operation
 interface PendingMoveOperation {
@@ -210,6 +211,29 @@ export function StageBoard({
     
     if (!toColumn) {
       setColumns(columnsBeforeDragRef.current);
+      return;
+    }
+
+    // Validate: Candidates with "Failed" status cannot be moved
+    if (draggedCandidate?.status === "Failed") {
+      const isMoveToDifferentColumn = fromColumn.id !== toColumn.id;
+      // Check reorder condition: dropped on another item in same column
+      const isReorderInSameColumn = 
+        fromColumn.id === toColumn.id && 
+        overData?.type === "item" && 
+        overId !== activeId;
+
+      if (isMoveToDifferentColumn || isReorderInSameColumn) {
+        setColumns(columnsBeforeDragRef.current);
+        toast.error("Ứng viên đã bị loại, không thể chuyển giai đoạn.");
+        return;
+      }
+    }
+
+    // Prevent moving backwards to previous stages
+    if (fromColumn.id !== toColumn.id && toColumn.stageNumber < fromColumn.stageNumber) {
+      setColumns(columnsBeforeDragRef.current);
+      toast.error("Không thể chuyển ứng viên về giai đoạn trước đó.");
       return;
     }
 
