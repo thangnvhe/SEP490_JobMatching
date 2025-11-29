@@ -15,7 +15,6 @@ namespace JobMatchingSystem.API.Data.SeedData
             await JobSeeder.SeedJobAsync(webApplication);
             await JobQuotaSeeder.SeedJobQuotasAsync(webApplication);
             await CVSeeder.SeedCVUploadsAsync(webApplication);
-            await ServicePlanSeeder.SeedServicePlansAsync(webApplication);
         }
     }
 }
