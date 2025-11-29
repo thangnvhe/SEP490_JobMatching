@@ -157,17 +157,26 @@ namespace JobMatchingSystem.API.Services.Implementations
                 if (file == null || file.Length == 0)
                     throw new AppException(ErrorCode.InvalidFile());
 
-                if (!file.FileName.ToLower().EndsWith(".pdf"))
-                    throw new AppException(ErrorCode.InvalidFile("Only PDF files are allowed"));
+                var fileName = file.FileName.ToLower();
+                var allowedExtensions = new[] { ".pdf", ".docx", ".doc" };
+                if (!allowedExtensions.Any(ext => fileName.EndsWith(ext)))
+                    throw new AppException(ErrorCode.InvalidFile("Only PDF, DOCX, and DOC files are allowed"));
 
-                if (file.Length > 5 * 1024 * 1024) // 5MB limit
-                    throw new AppException(ErrorCode.InvalidFile("File size must be less than 5MB"));
+                if (file.Length > 10 * 1024 * 1024) // 10MB limit
+                    throw new AppException(ErrorCode.InvalidFile("File size must be less than 10MB"));
 
                 // Prepare request to AI service
                 using var form = new MultipartFormDataContent();
                 using var stream = file.OpenReadStream();
                 using var content = new StreamContent(stream);
-                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+                
+                // Set appropriate Content-Type based on file extension
+                var contentType = fileName.EndsWith(".pdf") ? "application/pdf" :
+                                fileName.EndsWith(".docx") ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document" :
+                                fileName.EndsWith(".doc") ? "application/msword" :
+                                "application/octet-stream";
+                
+                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
                 form.Add(content, "file", file.FileName);
 
                 // Call AI service

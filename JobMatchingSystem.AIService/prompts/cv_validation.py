@@ -12,69 +12,59 @@ class CVValidationPrompts:
         truncated_text = text[:max_length] if len(text) > max_length else text
         
         return f"""
-Bạn là chuyên gia HR kinh nghiệm. Hãy đánh giá xem văn bản sau có phải là CV/Resume hợp lệ không:
+Bạn là chuyên gia HR với 15 năm kinh nghiệm tuyển dụng. Phân tích CHÍNH XÁC xem văn bản sau có phải CV/Resume thật không:
 
 ===== NỘI DUNG FILE =====
 {truncated_text}
 ==========================
 
-TIÊU CHÍ ĐÁNH GIÁ CV HỢP LỆ:
+🔍 PHÂN TÍCH THEO BƯỚC:
 
-📋 YÊU CẦU BẮT BUỘC (PHẢI CÓ ĐỦ 3 YÉU TỐ):
+BƯỚC 1: KIỂM TRA LOẠI TÀI LIỆU
+❌ LOẠI BỎ NGAY nếu thuộc các loại sau:
+- Database Design, ERD, Schema, SQL
+- Technical Documentation, API docs
+- Scientific Papers, Research
+- Legal Documents, Contracts
+- Product Manuals, Tutorials
+- Financial Reports, Invoices
+- Medical Records, Prescriptions
+- Academic Assignments, Homework
+- News Articles, Blog Posts
+- Marketing Materials, Brochures
 
-1. ✅ THÔNG TIN CÁ NHÂN:
-   - Tên (họ và tên đầy đủ hoặc tên gọi)
-   - VÀ ít nhất 1 trong 2: Số điện thoại HOẶC Email
+BƯỚC 2: KIỂM TRA THÔNG TIN CÁ NHÂN (BẮT BUỘC)
+✅ PHẢI CÓ TẤT CẢ:
+- Tên người (họ tên đầy đủ, không phải tên dự án/công ty)
+- Ít nhất 1 liên lạc: Email hoặc Số điện thoại
+- Thông tin này PHẢI xuất hiện ở đầu tài liệu
 
-2. ✅ HỌC VẤN:
-   - Trường học/đại học
-   - Chuyên ngành học
-   - Bằng cấp/trình độ
-   - Thời gian học
+BƯỚC 3: KIỂM TRA NỘI DUNG CV (BẮT BUỘC CÓ ÍT NHẤT 4/6 MỤC)
+1. 🎓 HỌC VẤN: Trường học + Chuyên ngành + Thời gian
+2. 💼 KINH NGHIỆM: Vị trí + Công ty + Thời gian + Mô tả
+3. 🛠️ KỸ NĂNG: Kỹ năng chuyên môn/lập trình/mềm
+4. 📚 DỰ ÁN: Tên dự án + Mô tả + Công nghệ + Vai trò
+5. 🏆 THÀNH TỰU: Giải thưởng/Thành tích/Kết quả xuất sắc
+6. 📜 CHỨNG CHỈ: Chứng chỉ nghề/Khóa học/Giấy phép
 
-3. ✅ KINH NGHIỆM LÀM VIỆC:
-   - Vị trí công việc
-   - Tên công ty/tổ chức
-   - Thời gian làm việc
-   - Mô tả công việc/trách nhiệm
+BƯỚC 4: KIỂM TRA CẤU TRÚC CV
+- Có cấu trúc rõ ràng theo sections
+- Thông tin được trình bày theo thời gian hoặc mức độ ưu tiên
+- Không phải list data, bảng kỹ thuật
 
-🎯 YÊU CẦU PHỤ (PHẢI CÓ ÍT NHẤT 2 TRONG 4 MỤC SAU):
-
-1. 🛠️ KỸ NĂNG:
-   - Kỹ năng chuyên môn
-   - Kỹ năng lập trình/công nghệ
-   - Kỹ năng mềm
-   - Ngôn ngữ/công cụ sử dụng
-
-2. 🏆 THÀNH TỰU:
-   - Giải thưởng
-   - Thành tích nổi bật
-   - Kết quả công việc xuất sắc
-   - Danh hiệu được nhận
-
-3. 📚 DỰ ÁN:
-   - Tên dự án đã thực hiện
-   - Mô tả dự án
-   - Công nghệ/phương pháp sử dụng
-   - Vai trò trong dự án
-
-4. 📜 CHỨNG CHỈ:
-   - Chứng chỉ nghề nghiệp
-   - Chứng nhận kỹ năng
-   - Khóa học đã hoàn thành
-   - Giấy phép hành nghề
-
-❌ LOẠI BỎ - KHÔNG PHẢI CV:
-- Hóa đơn, phiếu thu
-- Hợp đồng, văn bản pháp lý
-- Quảng cáo, thông báo
-- Báo cáo, tài liệu kỹ thuật
-- Sách, truyện, bài viết
-- Catalog sản phẩm
-- Hướng dẫn sử dụng
+🎯 QUY TẮC CHẤM ĐIỂM:
+- Database/Technical docs: NGAY LẬP TỨC = NO
+- Thiếu thông tin cá nhân: = NO
+- Có dưới 4/6 mục CV: = NO
+- Đủ tiêu chí: = YES
 
 ĐỊNH DẠNG TRẢ LỜI:
-- Nếu đủ tiêu chí: "YES - CV hợp lệ. Có [3 yếu tố bắt buộc + X/4 yếu tố phụ: liệt kê cụ thể]"
-- Nếu thiếu: "NO - Thiếu [liệt kê yếu tố còn thiếu]. Cần đủ 3 yếu tố bắt buộc và 2/4 yếu tố phụ"
+- "YES - CV hợp lệ. Có [X/6 mục]: [liệt kê cụ thể các mục tìm thấy]"
+- "NO - [Lý do cụ thể]. [Mô tả ngắn gọn tài liệu này là gì]"
 
-Hãy phân tích cẩn thận theo đúng tiêu chí:"""
+VÍ DỤ TRẢ LỜI CHUẨN:
+- "NO - Đây là tài liệu thiết kế database với ERD và bảng dữ liệu, không phải CV"
+- "NO - Thiếu thông tin cá nhân (tên/liên lạc) và chỉ có 2/6 mục CV"
+- "YES - CV hợp lệ. Có 5/6 mục: Thông tin cá nhân, Học vấn, Kinh nghiệm, Kỹ năng, Dự án"
+
+Phân tích ngay:"""
