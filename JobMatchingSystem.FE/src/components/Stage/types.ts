@@ -19,6 +19,8 @@ export interface StageBoardProps {
     fromStageId: number,
     toStageId: number
   ) => void;
+  onCandidateUpdated?: (updatedCandidate: CandidateStage) => void;
+  onRefreshData?: () => void;
 }
 
 // Helper to convert JobStage[] and CandidateStage[] to StageColumn[]

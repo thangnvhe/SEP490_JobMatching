@@ -1,16 +1,17 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   DndContext,
   DragOverlay,
-  closestCorners,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   DragStartEvent,
-  DragOverEvent,
   DragEndEvent,
-  UniqueIdentifier,
+  CollisionDetection,
+  closestCenter,
+  pointerWithin,
+  rectIntersection,
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
@@ -19,17 +20,98 @@ import { CandidateStage } from "@/models/candidate-stage";
 import { StageColumnContainer } from "./StageColumn";
 import { CandidateCard } from "./CandidateCard";
 import { CandidateDetailDialog } from "./CandidateDetailDialog";
+import { UpdateResultDialog } from "./UpdateResultDialog";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+
+// Interface for pending move operation
+interface PendingMoveOperation {
+  candidate: CandidateStage;
+  fromStageId: number;
+  toStageId: number;
+  toStageName: string;
+  previousColumns: StageColumn[];
+}
 
 export function StageBoard({
   columns: initialColumns,
   onColumnsChange,
   onCandidateMoved,
+  onCandidateUpdated,
+  onRefreshData,
 }: StageBoardProps) {
   const [columns, setColumns] = useState<StageColumn[]>(initialColumns);
   const [activeCandidate, setActiveCandidate] = useState<CandidateStage | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateStage | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  
+  // State for update result dialog
+  const [updateResultDialogOpen, setUpdateResultDialogOpen] = useState(false);
+  const [pendingMove, setPendingMove] = useState<PendingMoveOperation | null>(null);
+  
+  // Track the original column state before drag
+  const columnsBeforeDragRef = useRef<StageColumn[]>([]);
+
+  // Sync local state when prop changes (e.g., after refresh)
+  useEffect(() => {
+    setColumns(initialColumns);
+  }, [initialColumns]);
+
+  // Custom collision detection - prioritizes columns over items
+  const collisionDetectionStrategy: CollisionDetection = useCallback(
+    (args) => {
+      // Step 1: Try pointerWithin first - most accurate when pointer is inside a droppable
+      const pointerCollisions = pointerWithin(args);
+      
+      // Step 2: Filter to find column collisions (columns are our main drop targets)
+      const columnCollisions = pointerCollisions.filter(
+        (collision) => collision.data?.droppableContainer?.data?.current?.type === "column"
+      );
+
+      // If pointer is inside a column, return that column
+      if (columnCollisions.length > 0) {
+        return columnCollisions;
+      }
+
+      // Step 3: If pointer is inside an item (candidate card), return that
+      const itemCollisions = pointerCollisions.filter(
+        (collision) => collision.data?.droppableContainer?.data?.current?.type === "item"
+      );
+      if (itemCollisions.length > 0) {
+        return itemCollisions;
+      }
+
+      // Step 4: Fallback - use rectIntersection for edge cases (pointer between columns)
+      const rectCollisions = rectIntersection(args);
+      if (rectCollisions.length > 0) {
+        // Prioritize column collisions from rectIntersection
+        const rectColumnCollisions = rectCollisions.filter(
+          (collision) => collision.data?.droppableContainer?.data?.current?.type === "column"
+        );
+        if (rectColumnCollisions.length > 0) {
+          return rectColumnCollisions;
+        }
+        return rectCollisions;
+      }
+
+      // Step 5: Last resort - closestCenter for when pointer is completely outside
+      return closestCenter(args);
+    },
+    []
+  );
+
+  // Handle candidate update (e.g., after scheduling)
+  const handleCandidateUpdated = useCallback((updatedCandidate: CandidateStage) => {
+    setColumns((prevColumns) => {
+      return prevColumns.map((column) => ({
+        ...column,
+        candidates: column.candidates.map((candidate) =>
+          candidate.id === updatedCandidate.id ? updatedCandidate : candidate
+        ),
+      }));
+    });
+    // Also notify parent if needed
+    onCandidateUpdated?.(updatedCandidate);
+  }, [onCandidateUpdated]);
 
   // Configure sensors for drag detection
   const sensors = useSensors(
@@ -43,9 +125,17 @@ export function StageBoard({
     })
   );
 
+  // Find column by its id
+  const findColumnById = useCallback(
+    (columnId: string): StageColumn | undefined => {
+      return columns.find((col) => col.id === columnId);
+    },
+    [columns]
+  );
+
   // Find column containing a candidate
   const findColumnByCandidateId = useCallback(
-    (candidateId: UniqueIdentifier): StageColumn | undefined => {
+    (candidateId: number | string): StageColumn | undefined => {
       return columns.find((column) =>
         column.candidates.some((c) => c.id === candidateId)
       );
@@ -60,123 +150,80 @@ export function StageBoard({
 
     if (activeData?.type === "item") {
       setActiveCandidate(activeData.item);
+      // Save the columns state before drag starts
+      columnsBeforeDragRef.current = JSON.parse(JSON.stringify(columns));
     }
   };
 
-  // Handle drag over (when candidate hovers over another container)
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-
-    if (!over) return;
-
-    const activeId = active.id;
-    const overId = over.id;
-
-    if (activeId === overId) return;
-
-    const activeData = active.data.current;
-    const overData = over.data.current;
-
-    if (!activeData || activeData.type !== "item") return;
-
-    const activeColumn = findColumnByCandidateId(activeId);
-    let overColumnId: string | undefined;
-
-    // Determine if we're hovering over a column or a candidate
-    if (overData?.type === "column") {
-      overColumnId = overId as string;
-    } else if (overData?.type === "item") {
-      const overColumn = findColumnByCandidateId(overId);
-      overColumnId = overColumn?.id;
-    }
-
-    if (!activeColumn || !overColumnId) return;
-
-    // If moving to a different column
-    if (activeColumn.id !== overColumnId) {
-      setColumns((prevColumns) => {
-        const sourceColumn = prevColumns.find(
-          (col) => col.id === activeColumn.id
-        );
-        const destColumn = prevColumns.find((col) => col.id === overColumnId);
-
-        if (!sourceColumn || !destColumn) return prevColumns;
-
-        const activeCandidateIndex = sourceColumn.candidates.findIndex(
-          (c) => c.id === activeId
-        );
-        const activeCandidateData = sourceColumn.candidates[activeCandidateIndex];
-
-        if (!activeCandidateData) return prevColumns;
-
-        // Find the position to insert
-        let newIndex = destColumn.candidates.length;
-
-        if (overData?.type === "item") {
-          const overCandidateIndex = destColumn.candidates.findIndex(
-            (c) => c.id === overId
-          );
-          if (overCandidateIndex >= 0) {
-            newIndex = overCandidateIndex;
-          }
-        }
-
-        // Create new columns with candidate moved
-        return prevColumns.map((column) => {
-          if (column.id === activeColumn.id) {
-            return {
-              ...column,
-              candidates: column.candidates.filter((c) => c.id !== activeId),
-            };
-          }
-          if (column.id === overColumnId) {
-            const newCandidates = [...column.candidates];
-            newCandidates.splice(newIndex, 0, activeCandidateData);
-            return {
-              ...column,
-              candidates: newCandidates,
-            };
-          }
-          return column;
-        });
-      });
-    }
-  };
-
-  // Handle drag end
+  // Handle drag end - clean and simplified logic
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-
     const draggedCandidate = activeCandidate;
-    const fromColumn = findColumnByCandidateId(active.id);
 
+    // Reset active state
     setActiveCandidate(null);
 
-    if (!over) return;
+    // If no drop target, revert to original state
+    if (!over) {
+      setColumns(columnsBeforeDragRef.current);
+      return;
+    }
 
-    const activeId = active.id;
+    const activeId = active.id as number;
     const overId = over.id;
-
-    if (activeId === overId) return;
-
     const overData = over.data.current;
 
-    // If dropped on same column, reorder candidates
-    if (overData?.type === "item") {
-      const activeColumn = findColumnByCandidateId(activeId);
-      const overColumn = findColumnByCandidateId(overId);
+    // Get source column from saved state (before any modifications)
+    const fromColumn = columnsBeforeDragRef.current.find((col) =>
+      col.candidates.some((c) => c.id === activeId)
+    );
 
-      if (activeColumn && overColumn && activeColumn.id === overColumn.id) {
+    if (!fromColumn || !draggedCandidate) {
+      setColumns(columnsBeforeDragRef.current);
+      return;
+    }
+
+    // Determine target column based on what we dropped on
+    let targetColumnId: string | null = null;
+    
+    if (overData?.type === "column") {
+      // Dropped directly on a column
+      targetColumnId = overId as string;
+    } else if (overData?.type === "item") {
+      // Dropped on an item - find its parent column
+      const parentColumn = findColumnByCandidateId(overId);
+      targetColumnId = parentColumn?.id || null;
+    } else {
+      // Fallback: check if overId matches a column id
+      const matchedColumn = findColumnById(overId as string);
+      if (matchedColumn) {
+        targetColumnId = matchedColumn.id;
+      }
+    }
+    
+    if (!targetColumnId) {
+      setColumns(columnsBeforeDragRef.current);
+      return;
+    }
+
+    const toColumn = findColumnById(targetColumnId);
+    
+    if (!toColumn) {
+      setColumns(columnsBeforeDragRef.current);
+      return;
+    }
+
+    // Same column - handle reorder within column
+    if (fromColumn.id === toColumn.id) {
+      if (overData?.type === "item" && overId !== activeId) {
         setColumns((prevColumns) => {
           return prevColumns.map((column) => {
-            if (column.id !== activeColumn.id) return column;
+            if (column.id !== fromColumn.id) return column;
 
-            const activeIndex = column.candidates.findIndex(
-              (c) => c.id === activeId
-            );
-            const overIndex = column.candidates.findIndex(
-              (c) => c.id === overId
-            );
+            const activeIndex = column.candidates.findIndex((c) => c.id === activeId);
+            const overIndex = column.candidates.findIndex((c) => c.id === overId);
+
+            if (activeIndex === -1 || overIndex === -1) return column;
 
             return {
               ...column,
@@ -185,28 +232,86 @@ export function StageBoard({
           });
         });
       }
+      return;
     }
 
-    // Notify parent of changes
-    onColumnsChange?.(columns);
+    // Different column - move candidate to new column
+    const updatedColumns = columnsBeforeDragRef.current.map((column) => {
+      // Remove from source column
+      if (column.id === fromColumn.id) {
+        return {
+          ...column,
+          candidates: column.candidates.filter((c) => c.id !== activeId),
+        };
+      }
 
-    // Notify if candidate moved to different stage
-    const toColumn = columns.find((col) =>
-      col.candidates.some((c) => c.id === activeId)
-    );
+      // Add to target column
+      if (column.id === toColumn.id) {
+        // Determine insert position
+        let insertIndex = column.candidates.length;
+        
+        if (overData?.type === "item") {
+          const overIndex = column.candidates.findIndex((c) => c.id === overId);
+          if (overIndex !== -1) {
+            insertIndex = overIndex;
+          }
+        }
 
-    if (
-      draggedCandidate &&
-      fromColumn &&
-      toColumn &&
-      fromColumn.stageId !== toColumn.stageId
-    ) {
+        const newCandidates = [...column.candidates];
+        newCandidates.splice(insertIndex, 0, draggedCandidate);
+        
+        return {
+          ...column,
+          candidates: newCandidates,
+        };
+      }
+
+      return column;
+    });
+
+    // Update state with new columns
+    setColumns(updatedColumns);
+
+    // Show update result dialog for stage change
+    if (fromColumn.stageId !== toColumn.stageId) {
+      setPendingMove({
+        candidate: draggedCandidate,
+        fromStageId: fromColumn.stageId,
+        toStageId: toColumn.stageId,
+        toStageName: toColumn.title,
+        previousColumns: columnsBeforeDragRef.current,
+      });
+      setUpdateResultDialogOpen(true);
+    } else {
+      onColumnsChange?.(updatedColumns);
+    }
+  };
+
+  // Handle update result success
+  const handleUpdateResultSuccess = () => {
+    if (pendingMove) {
+      // Notify parent about the move
       onCandidateMoved?.(
-        draggedCandidate.id,
-        fromColumn.stageId,
-        toColumn.stageId
+        pendingMove.candidate.id,
+        pendingMove.fromStageId,
+        pendingMove.toStageId
       );
     }
+    
+    // Clear pending move
+    setPendingMove(null);
+    
+    // Refresh data from API
+    onRefreshData?.();
+  };
+
+  // Handle update result cancel - revert to original state
+  const handleUpdateResultCancel = () => {
+    if (pendingMove) {
+      // Revert to original columns state
+      setColumns(pendingMove.previousColumns);
+    }
+    setPendingMove(null);
   };
 
   // Handle view detail
@@ -219,19 +324,19 @@ export function StageBoard({
     <div className="h-full w-full bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-lg">
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
         <ScrollArea className="h-full w-full">
-          <div className="flex gap-4 p-6 min-h-full">
+          <div className="flex gap-4 p-4 min-h-full">
             {columns.map((column) => (
               <StageColumnContainer
                 key={column.id}
                 column={column}
                 candidates={column.candidates}
                 onViewDetail={handleViewDetail}
+                onCandidateUpdated={handleCandidateUpdated}
               />
             ))}
           </div>
@@ -254,6 +359,17 @@ export function StageBoard({
         candidate={selectedCandidate}
         open={detailDialogOpen}
         onOpenChange={setDetailDialogOpen}
+      />
+
+      {/* Update Result Dialog - shown when moving candidate to different stage */}
+      <UpdateResultDialog
+        candidate={pendingMove?.candidate || null}
+        toStageId={pendingMove?.toStageId || null}
+        toStageName={pendingMove?.toStageName}
+        open={updateResultDialogOpen}
+        onOpenChange={setUpdateResultDialogOpen}
+        onUpdateSuccess={handleUpdateResultSuccess}
+        onCancel={handleUpdateResultCancel}
       />
     </div>
   );

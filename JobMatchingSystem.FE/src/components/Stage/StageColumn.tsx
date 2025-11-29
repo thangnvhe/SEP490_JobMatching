@@ -14,6 +14,7 @@ interface StageColumnProps {
   column: StageColumnType;
   candidates: CandidateStage[];
   onViewDetail?: (candidate: CandidateStage) => void;
+  onCandidateUpdated?: (updatedCandidate: CandidateStage) => void;
 }
 
 const columnColors: Record<string, string> = {
@@ -31,12 +32,14 @@ export function StageColumnContainer({
   column,
   candidates,
   onViewDetail,
+  onCandidateUpdated,
 }: StageColumnProps) {
   const candidateIds = useMemo(
     () => candidates.map((c) => c.id),
     [candidates]
   );
 
+  // Setup droppable for the entire column
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
     data: {
@@ -47,10 +50,12 @@ export function StageColumnContainer({
 
   return (
     <div
+      ref={setNodeRef}
       className={cn(
-        "flex flex-col rounded-xl bg-muted/50 border border-border/50 w-[320px] min-w-[320px] max-h-full",
-        "border-t-4 shadow-sm",
-        column.color ? columnColors[column.color] : "border-t-slate-500"
+        "flex flex-col rounded-xl bg-muted/50 border border-border/50 w-[320px] min-w-[320px] min-h-full",
+        "border-t-4 shadow-sm transition-all duration-200",
+        column.color ? columnColors[column.color] : "border-t-slate-500",
+        isOver && "ring-2 ring-primary/50 bg-primary/5"
       )}
     >
       {/* Column Header */}
@@ -68,16 +73,10 @@ export function StageColumnContainer({
         </div>
       </div>
 
-      {/* Column Content with Scroll */}
-      <div
-        ref={setNodeRef}
-        className={cn(
-          "flex-1 min-h-0 transition-colors duration-200",
-          isOver && "bg-primary/5"
-        )}
-      >
+      {/* Column Content - entire area is droppable */}
+      <div className="flex-1">
         <ScrollArea className="h-full max-h-[calc(100vh-280px)]">
-          <div className="p-2 space-y-2">
+          <div className="p-2 space-y-2 ">
             <SortableContext
               items={candidateIds}
               strategy={verticalListSortingStrategy}
@@ -87,11 +86,12 @@ export function StageColumnContainer({
                   key={candidate.id}
                   candidate={candidate}
                   onViewDetail={() => onViewDetail?.(candidate)}
+                  onCandidateUpdated={onCandidateUpdated}
                 />
               ))}
             </SortableContext>
 
-            {/* Drop zone placeholder when empty */}
+            {/* Drop zone placeholder when empty or as bottom padding */}
             {candidates.length === 0 && (
               <div
                 className={cn(

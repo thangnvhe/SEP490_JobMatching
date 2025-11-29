@@ -24,12 +24,10 @@ export function StageBoardDemo({ jobId = 655 }: StageBoardDemoProps) {
       setLoading(true);
       setError(null);
 
-      // 1. Fetch job stages
       const stagesResponse = await JobStageServices.getJobStagesByJobId(jobId);
       if (!stagesResponse.isSuccess || !stagesResponse.result) {
         throw new Error("Không thể tải danh sách vòng tuyển dụng");
       }
-
       const jobStages = stagesResponse.result;
 
       // 2. Fetch candidates for each stage
@@ -99,7 +97,7 @@ export function StageBoardDemo({ jobId = 655 }: StageBoardDemoProps) {
   return (
     <div className="h-[calc(100vh-100px)] w-full">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 px-6 pt-6">
+      <div className="flex items-center justify-between mb-2 ">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold tracking-tight">
             Quy trình tuyển dụng
@@ -145,10 +143,11 @@ export function StageBoardDemo({ jobId = 655 }: StageBoardDemoProps) {
           </p>
         </div>
       ) : (
-        <StageBoard 
+        <StageBoard
           columns={columns}
           onColumnsChange={handleColumnsChange}
           onCandidateMoved={handleCandidateMoved}
+          onRefreshData={fetchStagesAndCandidates}
         />
       )}
     </div>
