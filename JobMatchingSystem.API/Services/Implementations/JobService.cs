@@ -46,6 +46,33 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.SalaryError());
             }
 
+            int extensionDays = 0;
+
+            // XỬ LÝ EXTENSION JOB
+            if (request.ExtensionJobId.HasValue)
+            {
+                var extension = await _context.ExtensionJobs
+                    .FirstOrDefaultAsync(e => e.Id == request.ExtensionJobId.Value);
+
+                if (extension == null)
+                    throw new AppException(ErrorCode.NotFoundExtensionJob());
+
+                if (extension.RecuiterId != userId)
+                    throw new AppException(ErrorCode.NotFoundExtensionJob());
+
+                if (extension.ExtensionJobDaysCount == 0)
+                {
+                    throw new AppException(ErrorCode.NotFoundExtensionJob());
+                }
+
+                if (extension.ExtensionJobDaysCount.HasValue && extension.ExtensionJobDaysCount > 0)
+                {
+                    extensionDays = extension.ExtensionJobDays ?? 0;
+                    extension.ExtensionJobDaysCount -= 1;
+                    _context.ExtensionJobs.Update(extension);
+                }
+            }
+
             if (request.OpenedAt.HasValue && request.ExpiredAt.HasValue)
             {
                 var duration = request.ExpiredAt.Value - request.OpenedAt.Value;
@@ -55,7 +82,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                     throw new AppException(ErrorCode.DayError());
                 }
 
-                if (duration.TotalDays > 30)
+                if (duration.TotalDays > 30 + extensionDays)
                 {
                     throw new AppException(ErrorCode.DayError());
                 }
@@ -117,6 +144,9 @@ namespace JobMatchingSystem.API.Services.Implementations
                     throw new AppException(ErrorCode.NotFoundHighlightJob());
 
                 if (highlight.RecuiterId != userId)
+                    throw new AppException(ErrorCode.NotFoundHighlightJob());
+
+                if (highlight.HighlightJobDaysCount == 0)
                     throw new AppException(ErrorCode.NotFoundHighlightJob());
 
                 if (highlight.HighlightJobDaysCount.HasValue && highlight.HighlightJobDaysCount > 0)
@@ -186,6 +216,33 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.SalaryError());
             }
 
+            int extensionDays = 0;
+
+            // XỬ LÝ EXTENSION JOB
+            if (request.ExtensionJobId.HasValue)
+            {
+                var extension = await _context.ExtensionJobs
+                    .FirstOrDefaultAsync(e => e.Id == request.ExtensionJobId.Value);
+
+                if (extension == null)
+                    throw new AppException(ErrorCode.NotFoundExtensionJob());
+
+                if (extension.RecuiterId != userId)
+                    throw new AppException(ErrorCode.NotFoundExtensionJob());
+
+                if (extension.ExtensionJobDaysCount == 0)
+                {
+                    throw new AppException(ErrorCode.NotFoundExtensionJob());
+                }
+
+                if (extension.ExtensionJobDaysCount.HasValue && extension.ExtensionJobDaysCount > 0)
+                {
+                    extensionDays = extension.ExtensionJobDays ?? 0;
+                    extension.ExtensionJobDaysCount -= 1;
+                    _context.ExtensionJobs.Update(extension);
+                }
+            }
+
             // Update job properties
             job.Title = request.Title ?? job.Title;
             job.Description = request.Description ?? job.Description;
@@ -218,7 +275,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (newExpiredAt <= newOpenedAt)
                 throw new AppException(ErrorCode.DayError());
 
-            if ((newExpiredAt - newOpenedAt).TotalDays > 30)
+            if ((newExpiredAt - newOpenedAt).TotalDays > 30 + extensionDays)
                 throw new AppException(ErrorCode.DayError());
 
             // Gán lại vào entity
@@ -249,6 +306,9 @@ namespace JobMatchingSystem.API.Services.Implementations
                     throw new AppException(ErrorCode.NotFoundHighlightJob());
 
                 if (highlight.RecuiterId != userId)
+                    throw new AppException(ErrorCode.NotFoundHighlightJob());
+
+                if (highlight.HighlightJobDaysCount == 0)
                     throw new AppException(ErrorCode.NotFoundHighlightJob());
 
                 if (highlight.HighlightJobDaysCount.HasValue && highlight.HighlightJobDaysCount > 0)

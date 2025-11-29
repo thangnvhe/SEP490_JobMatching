@@ -51,5 +51,6 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundServicePlan() => new("Not Found ServicePlan", HttpStatusCode.NotFound);
         public static Error NotFoundJobQuota() => new("Not Found JobQuota", HttpStatusCode.NotFound);
         public static Error NotFoundHighlightJob() => new("Not Found HighlightJob", HttpStatusCode.NotFound);
+        public static Error NotFoundExtensionJob() => new("Not Found ExtensionJob", HttpStatusCode.NotFound);
     }
 }
