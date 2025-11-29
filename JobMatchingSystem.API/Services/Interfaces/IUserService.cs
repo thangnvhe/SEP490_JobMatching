@@ -12,5 +12,6 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task<UserDetailResponseDTO> GetCurrentUser(string userId);
         Task<UserDetailResponseDTO> UpdateCurrentUser(string userId, UpdateCurrentUserRequest request);
         Task<UserDetailResponseDTO> CreateHiringManager(CreateHiringManagerRequest request);
+        Task CleanupUserAvatarAsync(int userId);
     }
 }
