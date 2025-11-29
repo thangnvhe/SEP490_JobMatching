@@ -14,5 +14,6 @@ export const JobServices = {
   censorJob: (jobId: string, censorData: { status: number }) =>
     BaseApiServices.custom<BaseResponse<Job>>('put', `/Job/${jobId}/censor`, censorData),
 
+  getAllMyJobsPagination: (params: PaginationParamsInput) => BaseApiServices.getAllWithPagination<Job>('/Job/my-jobs', params),
 
 };
