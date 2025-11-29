@@ -7,5 +7,6 @@
         public int StageNumber { get; set; }
         public string Name { get; set; }
         public int? HiringManagerId { get; set; }
+        public string? HiringManagerName { get; set; }
     }
 }
