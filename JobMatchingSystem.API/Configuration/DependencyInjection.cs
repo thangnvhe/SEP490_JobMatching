@@ -36,6 +36,8 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IServicePlanRepository, ServicePlanRepository>();
             services.AddScoped<IJobQuotaRepository, JobQuotaRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IHighlightJobRepository, HighlightJobRepository>();
+            services.AddScoped<IExtensionJobRepository, ExtensionJobRepository>();
             return services;
         }
 
@@ -81,6 +83,8 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IServicePlanService, ServicePlanService>();
             services.AddScoped<IJobQuotaService, JobQuotaService>();
             services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<IHighlightJobService, HighlightJobService>();
+            services.AddScoped<IExtensionJobService, ExtensionJobService>();
             return services;
         }
 
