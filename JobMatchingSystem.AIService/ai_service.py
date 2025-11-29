@@ -82,8 +82,8 @@ async def root():
         status="healthy",
         version="1.0.0",
         services={
-            "gemini_ai": "connected" if get_gemini_client().check_connection() else "disconnected",
-            "pdf_processor": "available"
+            "gemini_ai": "ready",
+            "document_processor": "available"
         },
         timestamp=datetime.utcnow().isoformat()
     )
@@ -135,16 +135,17 @@ async def validate_cv(file: UploadFile = File(...)):
     """
     Validate if uploaded file is a CV
     
-    - **file**: PDF, Image (JPG/PNG), or Word document file to validate
+    - **file**: PDF or Word document file (DOCX, DOC) to validate
     - Returns: CV validation result with confidence score
     """
     try:
-        # Check file extension - only support PDF for CV validation  
-        if not file.filename.lower().endswith('.pdf'):
+        # Check file extension
+        from utils.document_processor import DocumentProcessor
+        if not DocumentProcessor.is_supported_file(file.filename):
             return CVValidationResponse(
                 is_cv=False,
                 confidence=0.0,
-                reason="Only PDF files are supported for CV validation",
+                reason="Unsupported file format. Supported: PDF, DOCX",
                 file_info={"filename": file.filename, "error": "Invalid file type"}
             )
         
