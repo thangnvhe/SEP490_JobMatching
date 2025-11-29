@@ -1,5 +1,6 @@
 ﻿using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -58,10 +59,10 @@ namespace JobMatchingSystem.API.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateResult(int id, [FromBody] UpdateResultCandidateStage request)
         {
-            await _candidateStageService.UpdateResult(id, request);
+            var result = await _candidateStageService.UpdateResult(id, request);
 
-            return Ok(APIResponse<string>.Builder()
-                .WithResult("Update result thành công")
+            return Ok(APIResponse<CandidateStageDetailResponse>.Builder()
+                .WithResult(result)
                 .WithSuccess(true)
                 .WithStatusCode(HttpStatusCode.OK)
                 .Build());
