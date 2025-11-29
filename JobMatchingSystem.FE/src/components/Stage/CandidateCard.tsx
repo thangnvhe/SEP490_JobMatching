@@ -1,17 +1,20 @@
+import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utilsCommon";
 import { CandidateStage } from "@/models/candidate-stage";
-import { GripVertical, Mail, Phone, Calendar, Eye } from "lucide-react";
+import { GripVertical, Mail, Phone, Calendar, Eye, CalendarPlus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { getImageUrl } from "@/lib/utilsCommon";
+import { ScheduleInterviewDialog } from "./ScheduleInterviewDialog";
 
 interface CandidateCardProps {
   candidate: CandidateStage;
   isDragging?: boolean;
   isOverlay?: boolean;
   onViewDetail?: () => void;
+  onCandidateUpdated?: (updatedCandidate: CandidateStage) => void;
 }
 
 const statusColors: Record<string, { bg: string; text: string }> = {
@@ -27,6 +30,7 @@ export function CandidateCard({
   isDragging,
   isOverlay,
   onViewDetail,
+  onCandidateUpdated,
 }: CandidateCardProps) {
   const {
     attributes,
@@ -85,7 +89,11 @@ export function CandidateCard({
         <GripVertical className="h-4 w-4 text-muted-foreground" />
       </button>
 
-      <CandidateContent candidate={candidate} onViewDetail={onViewDetail} />
+      <CandidateContent 
+        candidate={candidate} 
+        onViewDetail={onViewDetail} 
+        onCandidateUpdated={onCandidateUpdated}
+      />
     </div>
   );
 }
@@ -93,10 +101,14 @@ export function CandidateCard({
 function CandidateContent({
   candidate,
   onViewDetail,
+  onCandidateUpdated,
 }: {
   candidate: CandidateStage;
   onViewDetail?: () => void;
+  onCandidateUpdated?: (updatedCandidate: CandidateStage) => void;
 }) {
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  
   const user = candidate.user;
   const status = candidate.status || "Pending";
   const statusStyle = statusColors[status] || statusColors.Pending;
@@ -169,19 +181,41 @@ function CandidateContent({
         </div>
       )}
 
-      {/* View Detail Button */}
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full mt-1 h-8 text-xs"
-        onClick={(e) => {
-          e.stopPropagation();
-          onViewDetail?.();
-        }}
-      >
-        <Eye className="h-3.5 w-3.5 mr-1.5" />
-        Xem chi tiết
-      </Button>
+      {/* Action Buttons */}
+      <div className="flex gap-2 mt-1">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1 h-8 text-xs"
+          onClick={(e) => {
+            e.stopPropagation();
+            setScheduleDialogOpen(true);
+          }}
+        >
+          <CalendarPlus className="h-3.5 w-3.5 mr-1.5" />
+          Đặt lịch
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1 h-8 text-xs"
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewDetail?.();
+          }}
+        >
+          <Eye className="h-3.5 w-3.5 mr-1.5" />
+          Chi tiết
+        </Button>
+      </div>
+
+      {/* Schedule Interview Dialog */}
+      <ScheduleInterviewDialog
+        candidate={candidate}
+        open={scheduleDialogOpen}
+        onOpenChange={setScheduleDialogOpen}
+        onScheduleSuccess={onCandidateUpdated}
+      />
     </>
   );
 }
