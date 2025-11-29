@@ -33,7 +33,7 @@ import { CandidateJob, CandidateJobStatus } from "@/models/job";
 import { PageInfo, PaginationParamsInput } from "@/models/base";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Input } from "@/components/ui/input";
-import { StageBoardDemo } from "@/components/Stage";
+import { StageBoardDemo } from "@/components/Stage/StageBoardDemo";
 
 const RecruitmentProcessManagement = () => {
   // URL search params
@@ -47,7 +47,6 @@ const RecruitmentProcessManagement = () => {
 
   // Loading & Error states
   const [loading, setLoading] = useState(false);
-  const [jobsLoading, setJobsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Search & Sorting
@@ -264,20 +263,6 @@ const RecruitmentProcessManagement = () => {
         },
       },
       {
-        id: "updatedAt",
-        accessorKey: "updatedAt",
-        header: "Cập nhật lần cuối",
-        enableSorting: true,
-        cell: ({ row }) => {
-          const date = row.getValue("updatedAt") as string;
-          return (
-            <span className="text-sm text-muted-foreground">
-              {new Date(date).toLocaleDateString("vi-VN")}
-            </span>
-          );
-        },
-      },
-      {
         id: "actions",
         header: "Thao tác",
         enableSorting: false,
@@ -322,28 +307,7 @@ const RecruitmentProcessManagement = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">
-            Quản lý quy trình tuyển dụng
-          </h1>
-          <p className="text-muted-foreground">
-            Quản lý và theo dõi các ứng viên đã ứng tuyển vào tin tuyển dụng
-          </p>
-        </div>
-        <Button
-          onClick={handleRefresh}
-          variant="outline"
-          size="icon"
-          disabled={loading || jobsLoading}
-          title="Làm mới dữ liệu"
-        >
-          <RefreshCcw
-            className={`h-4 w-4 ${loading || jobsLoading ? "animate-spin" : ""}`}
-          />
-        </Button>
-      </div>
+
 
       {/* Tabs */}
       {jobId && (
@@ -355,24 +319,34 @@ const RecruitmentProcessManagement = () => {
 
           {/* Tab 1: Screening List */}
           <TabsContent value="screening" className="mt-4">
+
+            
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center space-x-2">
                     <UserIcon className="h-5 w-5" />
                     <span>Danh sách ứng viên</span>
-                    {paginationInfo.totalItem > 0 && (
-                      <Badge variant="outline">
-                        {paginationInfo.totalItem} ứng viên
-                      </Badge>
-                    )}
                   </CardTitle>
-                  <Input
-                    placeholder="Tìm kiếm..."
-                    value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
-                    className="w-64"
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="Tìm kiếm..."
+                      value={keyword}
+                      onChange={(e) => setKeyword(e.target.value)}
+                      className="w-64"
+                    />
+                    <Button
+                      onClick={handleRefresh}
+                      variant="outline"
+                      size="icon"
+                      disabled={loading}
+                      title="Làm mới dữ liệu"
+                    >
+                      <RefreshCcw
+                        className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                      />
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
