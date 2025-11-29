@@ -38,7 +38,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (!request.Result.Equals("Pass", StringComparison.OrdinalIgnoreCase) && 
                 !request.Result.Equals("Fail", StringComparison.OrdinalIgnoreCase))
             {
-                throw new AppException(ErrorCode.InvalidStatus());
+                throw new AppException(ErrorCode.InvalidResultValue());
             }
             
             // Lấy tất cả các JobStage của Job này để validation
@@ -65,7 +65,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                     var targetStage = orderedStages.FirstOrDefault(x => x.Id == request.JobStageId.Value);
                     if (targetStage == null)
                     {
-                        throw new AppException(ErrorCode.NotFoundJobStage());
+                        throw new AppException(ErrorCode.JobStageNotBelongToJob());
                     }
                     
                     var targetStageIndex = orderedStages.FindIndex(x => x.Id == request.JobStageId.Value);
@@ -73,7 +73,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                     // Validate chỉ được chuyển đến stage tiếp theo (không nhảy cóc)
                     if (targetStageIndex != currentStageIndex + 1)
                     {
-                        throw new AppException(ErrorCode.InvalidStatus());
+                        throw new AppException(ErrorCode.InvalidStageProgression());
                     }
                     
                     // Tạo CandidateStage mới cho stage được chỉ định
@@ -147,13 +147,20 @@ namespace JobMatchingSystem.API.Services.Implementations
             await _unitOfWork.SaveAsync();
         }
 
-        public async Task<List<CandidateStageDetailResponse>> GetCandidateDetailsByJobStageId(int jobStageId, string? status = null, string? sortBy = null, bool isDescending = false)
+        public async Task<List<CandidateStageDetailResponse>> GetCandidateDetailsByJobStageId(int jobStageId)
         {
-            var candidateStages = await _unitOfWork.CandidateStageRepository.GetCandidateDetailsByJobStageId(jobStageId, status);
+            // Chỉ lấy các candidate stage có status khác "Passed"
+            var candidateStages = await _unitOfWork.CandidateStageRepository.GetCandidateDetailsByJobStageId(jobStageId, null);
+            
+            // Lọc ra các stage có status khác "Passed"
+            var filteredStages = candidateStages.Where(stage => 
+                stage.Status == null || 
+                !stage.Status.Value.ToString().Equals("Passed", StringComparison.OrdinalIgnoreCase)
+            ).ToList();
             
             var response = new List<CandidateStageDetailResponse>();
             
-            foreach (var stage in candidateStages)
+            foreach (var stage in filteredStages)
             {
                 var candidateJob = stage.CandidateJob;
                 var cv = candidateJob?.CVUpload;
@@ -187,36 +194,6 @@ namespace JobMatchingSystem.API.Services.Implementations
                     },
                     JobStageTitle = stage.JobStage?.Name
                 });
-            }
-            
-            // Apply sorting if specified
-            if (!string.IsNullOrEmpty(sortBy))
-            {
-                switch (sortBy.ToLower())
-                {
-                    case "name":
-                        response = isDescending 
-                            ? response.OrderByDescending(x => x.User.FullName).ToList()
-                            : response.OrderBy(x => x.User.FullName).ToList();
-                        break;
-                    case "email":
-                        response = isDescending 
-                            ? response.OrderByDescending(x => x.User.Email).ToList()
-                            : response.OrderBy(x => x.User.Email).ToList();
-                        break;
-                    case "status":
-                        response = isDescending 
-                            ? response.OrderByDescending(x => x.Status).ToList()
-                            : response.OrderBy(x => x.Status).ToList();
-                        break;
-                    case "scheduletime":
-                        response = isDescending 
-                            ? response.OrderByDescending(x => x.ScheduleTime).ToList()
-                            : response.OrderBy(x => x.ScheduleTime).ToList();
-                        break;
-                    default:
-                        break;
-                }
             }
             
             return response;

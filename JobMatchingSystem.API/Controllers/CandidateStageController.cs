@@ -22,9 +22,9 @@ namespace JobMatchingSystem.API.Controllers
         
         [HttpGet("jobStage/{jobStageId}")]
         [Authorize]
-        public async Task<IActionResult> GetCandidateDetailsByJobStageId(int jobStageId, [FromQuery] string? status = null, [FromQuery] string? sortBy = null, [FromQuery] bool isDescending = false)
+        public async Task<IActionResult> GetCandidateDetailsByJobStageId(int jobStageId)
         {
-            var candidateDetails = await _candidateStageService.GetCandidateDetailsByJobStageId(jobStageId, status, sortBy, isDescending);
+            var candidateDetails = await _candidateStageService.GetCandidateDetailsByJobStageId(jobStageId);
             
             return Ok(APIResponse<object>.Builder()
                 .WithResult(candidateDetails)

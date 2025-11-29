@@ -49,5 +49,10 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error AssignRoleFailed() => new("Failed to assign role to user.", HttpStatusCode.InternalServerError);
         public static Error NotFoundServicePlan() => new("Not Found ServicePlan", HttpStatusCode.NotFound);
         public static Error NotFoundJobQuota() => new("Not Found JobQuota", HttpStatusCode.NotFound);
+        
+        // UpdateResult specific errors
+        public static Error InvalidResultValue() => new("Giá trị Result chỉ được phép là 'Pass' hoặc 'Fail'", HttpStatusCode.BadRequest);
+        public static Error InvalidStageProgression() => new("Chỉ được phép chuyển ứng viên đến giai đoạn tiếp theo, không thể nhảy cóc", HttpStatusCode.BadRequest);
+        public static Error JobStageNotBelongToJob() => new("Giai đoạn được chỉ định không thuộc về công việc này", HttpStatusCode.BadRequest);
     }
 }
