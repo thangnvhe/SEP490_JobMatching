@@ -14,7 +14,7 @@ namespace JobMatchingSystem.API.Services.Implementations
         _unitOfWork = unitOfWork;
         }
 
-        public async Task UpdateResult(int id,UpdateResultCandidateStage request)
+        public async Task<CandidateStageDetailResponse?> UpdateResult(int id,UpdateResultCandidateStage request)
         {
             var candidateStage = await _unitOfWork.CandidateStageRepository.GetDetailById(id);
             if (candidateStage == null)
@@ -28,51 +28,116 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.NotFoundCandidateJob());
             }
             
+            // Validate trạng thái của candidate stage
+            // Chỉ cho phép cập nhật result khi status là Schedule
+            if (candidateStage.Status != Enums.CandidateStageStatus.Schedule)
+            {
+                throw new AppException(ErrorCode.InvalidCandidateStageStatus());
+            }
+            
             // Update hiring manager feedback if provided
             if (!string.IsNullOrEmpty(request.HiringManagerFeedback))
             {
                 candidateStage.HiringManagerFeedback = request.HiringManagerFeedback;
             }
             
-            if (request.Result.Equals("Pass"))
+            // Validate Result value
+            if (!request.Result.Equals("Pass", StringComparison.OrdinalIgnoreCase) && 
+                !request.Result.Equals("Fail", StringComparison.OrdinalIgnoreCase))
             {
-            candidateStage.Status=Enums.CandidateStageStatus.Passed;
+                throw new AppException(ErrorCode.InvalidResultValue());
+            }
             
-                // Lấy tất cả các JobStage của Job này
-                var jobStages = await _unitOfWork.JobStageRepository.GetByJobIdAsync(candidateJob.JobId);
-                var orderedStages = jobStages.OrderBy(x => x.StageNumber).ToList();
+            // Lấy tất cả các JobStage của Job này để validation
+            var jobStages = await _unitOfWork.JobStageRepository.GetByJobIdAsync(candidateJob.JobId);
+            var orderedStages = jobStages.OrderBy(x => x.StageNumber).ToList();
+            
+            // Tìm stage hiện tại trong danh sách
+            var currentStageIndex = orderedStages.FindIndex(x => x.Id == candidateStage.JobStageId);
+            if (currentStageIndex == -1)
+            {
+                throw new AppException(ErrorCode.NotFoundJobStage());
+            }
+            
+            CandidateStage? nextCandidateStage = null;
+            
+            if (request.Result.Equals("Pass", StringComparison.OrdinalIgnoreCase))
+            {
+                candidateStage.Status = Enums.CandidateStageStatus.Passed;
                 
-                // Tìm stage hiện tại trong danh sách
-                var currentStageIndex = orderedStages.FindIndex(x => x.Id == candidateStage.JobStageId);
-                
-                if (currentStageIndex == -1)
+                // Nếu có JobStageId từ request (drag & drop)
+                if (request.JobStageId.HasValue)
                 {
-                    throw new AppException(ErrorCode.NotFoundJobStage());
-                }
-                
-                // Kiểm tra xem đây có phải là stage cuối cùng không
-                if (currentStageIndex == orderedStages.Count - 1)
-                {
-                    // Đây là stage cuối cùng
-                    candidateJob.Status=Enums.CandidateJobStatus.Pass;
+                    // Validate JobStageId có tồn tại và thuộc về Job này không
+                    var targetStage = orderedStages.FirstOrDefault(x => x.Id == request.JobStageId.Value);
+                    if (targetStage == null)
+                    {
+                        throw new AppException(ErrorCode.JobStageNotBelongToJob());
+                    }
+                    
+                    var targetStageIndex = orderedStages.FindIndex(x => x.Id == request.JobStageId.Value);
+                    
+                    // Validate không được kéo về stage trước đó
+                    if (targetStageIndex < currentStageIndex)
+                    {
+                        throw new AppException(ErrorCode.CannotMoveToPreviousStage());
+                    }
+                    
+                    // Validate chỉ được chuyển đến stage tiếp theo (không nhảy cóc)
+                    if (targetStageIndex != currentStageIndex + 1)
+                    {
+                        throw new AppException(ErrorCode.InvalidStageProgression());
+                    }
+                    
+                    // Tạo CandidateStage mới cho stage được chỉ định
+                    nextCandidateStage = new CandidateStage
+                    {
+                        CandidateJobId = candidateStage.CandidateJobId,
+                        JobStageId = request.JobStageId.Value,
+                        Status = Enums.CandidateStageStatus.Draft
+                    };
+                    await _unitOfWork.CandidateStageRepository.Add(nextCandidateStage);
                 }
                 else
                 {
-                    // Tạo stage tiếp theo
-                    var nextStage = orderedStages[currentStageIndex + 1];
-                    CandidateStage candidatestagenext=new CandidateStage();
-                    candidatestagenext.CandidateJobId=candidateStage.CandidateJobId;
-                    candidatestagenext.JobStageId = nextStage.Id;
-                    candidatestagenext.Status=Enums.CandidateStageStatus.Draft;
-                    await _unitOfWork.CandidateStageRepository.Add(candidatestagenext);
+                    // Logic cũ - tự động chuyển đến stage tiếp theo
+                    if (currentStageIndex == orderedStages.Count - 1)
+                    {
+                        // Đây là stage cuối cùng
+                        candidateJob.Status = Enums.CandidateJobStatus.Pass;
+                    }
+                    else
+                    {
+                        // Tạo stage tiếp theo
+                        var nextStage = orderedStages[currentStageIndex + 1];
+                        nextCandidateStage = new CandidateStage
+                        {
+                            CandidateJobId = candidateStage.CandidateJobId,
+                            JobStageId = nextStage.Id,
+                            Status = Enums.CandidateStageStatus.Draft
+                        };
+                        await _unitOfWork.CandidateStageRepository.Add(nextCandidateStage);
+                    }
                 }
-            }else if (request.Result.Equals("Fail"))
+            }
+            else if (request.Result.Equals("Fail", StringComparison.OrdinalIgnoreCase))
             {
                 candidateStage.Status = Enums.CandidateStageStatus.Failed;
-                candidateJob.Status=Enums.CandidateJobStatus.Fail;
+                candidateJob.Status = Enums.CandidateJobStatus.Fail;
             }
+            
             await _unitOfWork.CandidateStageRepository.Update(candidateStage);
             await _unitOfWork.SaveAsync();
+            
+            // Trả về thông tin của stage mới được tạo (nếu có), hoặc stage hiện tại
+            if (nextCandidateStage != null)
+            {
+                return await GetDetailById(nextCandidateStage.Id);
+            }
+            else
+            {
+                return await GetDetailById(candidateStage.Id);
+            }
         }
 
         public async Task UpdateSchedule(int id,UpdateCandidateStageRequest request)
@@ -84,30 +149,31 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
             candidateStage.ScheduleTime = request.Schedule;
             
-            // Update interview location if provided
-            if (!string.IsNullOrEmpty(request.InterviewLocation))
-            {
-                candidateStage.InterviewLocation = request.InterviewLocation;
-            }
+            // Update interview location (allow empty string to clear the field)
+            candidateStage.InterviewLocation = request.InterviewLocation;
             
-            // Update Google Meet link if provided
-            if (!string.IsNullOrEmpty(request.GoogleMeetLink))
-            {
-                candidateStage.GoogleMeetLink = request.GoogleMeetLink;
-            }
+            // Update Google Meet link (allow empty string to clear the field)
+            candidateStage.GoogleMeetLink = request.GoogleMeetLink;
             
             candidateStage.Status=Enums.CandidateStageStatus.Schedule;
             await _unitOfWork.CandidateStageRepository.Update(candidateStage);
             await _unitOfWork.SaveAsync();
         }
 
-        public async Task<List<CandidateStageDetailResponse>> GetCandidateDetailsByJobStageId(int jobStageId, string? status = null, string? sortBy = null, bool isDescending = false)
+        public async Task<List<CandidateStageDetailResponse>> GetCandidateDetailsByJobStageId(int jobStageId)
         {
-            var candidateStages = await _unitOfWork.CandidateStageRepository.GetCandidateDetailsByJobStageId(jobStageId, status);
+            // Chỉ lấy các candidate stage có status khác "Passed"
+            var candidateStages = await _unitOfWork.CandidateStageRepository.GetCandidateDetailsByJobStageId(jobStageId, null);
+            
+            // Lọc ra các stage có status khác "Passed"
+            var filteredStages = candidateStages.Where(stage => 
+                stage.Status == null || 
+                !stage.Status.Value.ToString().Equals("Passed", StringComparison.OrdinalIgnoreCase)
+            ).ToList();
             
             var response = new List<CandidateStageDetailResponse>();
             
-            foreach (var stage in candidateStages)
+            foreach (var stage in filteredStages)
             {
                 var candidateJob = stage.CandidateJob;
                 var cv = candidateJob?.CVUpload;
@@ -141,36 +207,6 @@ namespace JobMatchingSystem.API.Services.Implementations
                     },
                     JobStageTitle = stage.JobStage?.Name
                 });
-            }
-            
-            // Apply sorting if specified
-            if (!string.IsNullOrEmpty(sortBy))
-            {
-                switch (sortBy.ToLower())
-                {
-                    case "name":
-                        response = isDescending 
-                            ? response.OrderByDescending(x => x.User.FullName).ToList()
-                            : response.OrderBy(x => x.User.FullName).ToList();
-                        break;
-                    case "email":
-                        response = isDescending 
-                            ? response.OrderByDescending(x => x.User.Email).ToList()
-                            : response.OrderBy(x => x.User.Email).ToList();
-                        break;
-                    case "status":
-                        response = isDescending 
-                            ? response.OrderByDescending(x => x.Status).ToList()
-                            : response.OrderBy(x => x.Status).ToList();
-                        break;
-                    case "scheduletime":
-                        response = isDescending 
-                            ? response.OrderByDescending(x => x.ScheduleTime).ToList()
-                            : response.OrderBy(x => x.ScheduleTime).ToList();
-                        break;
-                    default:
-                        break;
-                }
             }
             
             return response;

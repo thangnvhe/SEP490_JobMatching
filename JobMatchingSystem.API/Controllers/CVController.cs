@@ -24,7 +24,7 @@ namespace JobMatchingSystem.API.Controllers
 
         [HttpPost]
         [Authorize]
-        [RequestSizeLimit(5 * 1024 * 1024)] // 5MB limit
+        [RequestSizeLimit(10 * 1024 * 1024)] // 10MB limit for PDF/DOCX files
         [ProducesResponseType(typeof(APIResponse<string>), 201)]
         [ProducesResponseType(typeof(APIResponse<string>), 400)]
         public async Task<IActionResult> UploadCV([FromForm] UploadCVRequest request)
@@ -124,10 +124,11 @@ namespace JobMatchingSystem.API.Controllers
         /// <summary>
         /// Validate if uploaded file is a valid CV using AI
         /// </summary>
-        /// <param name="file">PDF file to validate</param>
+        /// <param name="file">PDF, DOCX, or Image file to validate</param>
         /// <returns>CV validation result with confidence score</returns>
         [HttpPost("validate")]
-        [RequestSizeLimit(5 * 1024 * 1024)] // 5MB limit
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(10 * 1024 * 1024)] // 10MB limit for multiple file types
         [ProducesResponseType(typeof(APIResponse<CVValidationResponse>), 200)]
         [ProducesResponseType(typeof(APIResponse<string>), 400)]
         [ProducesResponseType(typeof(APIResponse<string>), 500)]

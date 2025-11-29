@@ -22,7 +22,11 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<List<JobStageResponse>> GetByJobIdAsync(int jobId)
         {
-            var stages = await _repo.GetByJobIdAsync(jobId);
+            var stages = await _context.JobStages
+                .Include(js => js.HiringManager)
+                .Where(js => js.JobId == jobId)
+                .OrderBy(js => js.StageNumber)
+                .ToListAsync();
 
             if (stages == null || !stages.Any())
                 throw new AppException(ErrorCode.NotFoundJobStage());
@@ -33,13 +37,16 @@ namespace JobMatchingSystem.API.Services.Implementations
                 JobId = s.JobId,
                 StageNumber = s.StageNumber,
                 Name = s.Name,
-                HiringManagerId = s.HiringManagerId
+                HiringManagerId = s.HiringManagerId,
+                HiringManagerName = s.HiringManager?.FullName
             }).ToList();
         }
 
         public async Task<JobStageResponse?> GetByIdAsync(int id)
         {
-            var s = await _repo.GetByIdAsync(id);
+            var s = await _context.JobStages
+                .Include(js => js.HiringManager)
+                .FirstOrDefaultAsync(js => js.Id == id);
 
             if (s == null)
                 throw new AppException(ErrorCode.NotFoundJobStage());
@@ -50,7 +57,8 @@ namespace JobMatchingSystem.API.Services.Implementations
                 JobId = s.JobId,
                 StageNumber = s.StageNumber,
                 Name = s.Name,
-                HiringManagerId = s.HiringManagerId
+                HiringManagerId = s.HiringManagerId,
+                HiringManagerName = s.HiringManager?.FullName
             };
         }
 
