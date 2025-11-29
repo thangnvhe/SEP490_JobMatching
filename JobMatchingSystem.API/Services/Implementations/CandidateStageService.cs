@@ -84,17 +84,11 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
             candidateStage.ScheduleTime = request.Schedule;
             
-            // Update interview location if provided
-            if (!string.IsNullOrEmpty(request.InterviewLocation))
-            {
-                candidateStage.InterviewLocation = request.InterviewLocation;
-            }
+            // Update interview location (allow empty string to clear the field)
+            candidateStage.InterviewLocation = request.InterviewLocation;
             
-            // Update Google Meet link if provided
-            if (!string.IsNullOrEmpty(request.GoogleMeetLink))
-            {
-                candidateStage.GoogleMeetLink = request.GoogleMeetLink;
-            }
+            // Update Google Meet link (allow empty string to clear the field)
+            candidateStage.GoogleMeetLink = request.GoogleMeetLink;
             
             candidateStage.Status=Enums.CandidateStageStatus.Schedule;
             await _unitOfWork.CandidateStageRepository.Update(candidateStage);
