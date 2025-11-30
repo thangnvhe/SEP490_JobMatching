@@ -1,5 +1,6 @@
 ﻿using JobMatchingSystem.API.Data;
 using JobMatchingSystem.API.Enums;
+using JobMatchingSystem.API.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace JobMatchingSystem.API.Services.BackgroundServices
@@ -83,13 +84,80 @@ namespace JobMatchingSystem.API.Services.BackgroundServices
                     order.Status = OrderStatus.Success;
                     updatedCount++;
 
-                    // Cập nhật JobQuota nếu có (giữ nguyên logic cũ)
-                    var jobQuota = await _dbContext.JobQuotas
-                        .FirstOrDefaultAsync(jq => jq.RecruiterId == order.BuyerId, cancellationToken);
+                    // LẤY ServicePlan ĐỂ XỬ LÝ CÁC QUY TẮC
+                    var servicePlan = await _dbContext.ServicePlans
+                        .FirstOrDefaultAsync(sp => sp.Id == order.ServiceId, cancellationToken);
 
-                    if (jobQuota != null)
+                    if (servicePlan != null)
                     {
-                        jobQuota.ExtraQuota += 2;
+                        var user = await _dbContext.Users
+                            .Include(u => u.JobQuota)
+                            .FirstOrDefaultAsync(u => u.Id == order.BuyerId, cancellationToken);
+
+                        // 1. JobPostAdditional → cộng vào ExtraQuota
+                        if (servicePlan.JobPostAdditional.HasValue)
+                        {
+                            if (user?.JobQuota != null)
+                            {
+                                user.JobQuota.ExtraQuota += servicePlan.JobPostAdditional.Value;
+                            }
+                        }
+
+                        // 2. HighlightJobDays + HighlightJobDaysCount (CHỈ cộng nếu NGÀY GIỐNG NHAU)
+                        if (servicePlan.HighlightJobDays.HasValue && servicePlan.HighlightJobDaysCount.HasValue)
+                        {
+                            var existingHighlight = await _dbContext.HighlightJobs
+                                .FirstOrDefaultAsync(h => h.RecuiterId == order.BuyerId &&
+                                                        h.HighlightJobDays == servicePlan.HighlightJobDays.Value,
+                                                        cancellationToken);
+
+                            if (existingHighlight != null)
+                            {
+                                // NGÀY GIỐNG NHAU → cộng dồn Count
+                                existingHighlight.HighlightJobDaysCount += servicePlan.HighlightJobDaysCount.Value;
+                            }
+                            else
+                            {
+                                // NGÀY KHÁC NHAU → tạo mới
+                                _dbContext.HighlightJobs.Add(new HighlightJob
+                                {
+                                    RecuiterId = order.BuyerId,
+                                    HighlightJobDays = servicePlan.HighlightJobDays.Value,
+                                    HighlightJobDaysCount = servicePlan.HighlightJobDaysCount.Value
+                                });
+                            }
+                        }
+
+                        // 3. ExtensionJobDays + ExtensionJobDaysCount (CHỈ cộng nếu NGÀY GIỐNG NHAU)
+                        if (servicePlan.ExtensionJobDays.HasValue && servicePlan.ExtensionJobDaysCount.HasValue)
+                        {
+                            var existingExtension = await _dbContext.ExtensionJobs
+                                .FirstOrDefaultAsync(e => e.RecuiterId == order.BuyerId &&
+                                                        e.ExtensionJobDays == servicePlan.ExtensionJobDays.Value,
+                                                        cancellationToken);
+
+                            if (existingExtension != null)
+                            {
+                                // NGÀY GIỐNG NHAU → cộng dồn Count
+                                existingExtension.ExtensionJobDaysCount += servicePlan.ExtensionJobDaysCount.Value;
+                            }
+                            else
+                            {
+                                // NGÀY KHÁC NHAU → tạo mới
+                                _dbContext.ExtensionJobs.Add(new ExtensionJob
+                                {
+                                    RecuiterId = order.BuyerId,
+                                    ExtensionJobDays = servicePlan.ExtensionJobDays.Value,
+                                    ExtensionJobDaysCount = servicePlan.ExtensionJobDaysCount.Value
+                                });
+                            }
+                        }
+
+                        // 4. CVSaveAdditional → cộng vào SaveCVCount của User
+                        if (servicePlan.CVSaveAdditional.HasValue)
+                        {
+                            user.SaveCVCount += servicePlan.CVSaveAdditional.Value;
+                        }
                     }
                 }
             }
