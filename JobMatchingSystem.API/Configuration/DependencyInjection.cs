@@ -36,6 +36,8 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IServicePlanRepository, ServicePlanRepository>();
             services.AddScoped<IJobQuotaRepository, JobQuotaRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IHighlightJobRepository, HighlightJobRepository>();
+            services.AddScoped<IExtensionJobRepository, ExtensionJobRepository>();
             return services;
         }
 
@@ -75,12 +77,15 @@ namespace JobMatchingSystem.API.Configuration
             services.AddHostedService<MonthlyQuotaResetService>();
             services.AddHostedService<OrderTimeoutService>();
             services.AddHostedService<OrderPaymentSyncService>();
+            services.AddHostedService<JobHighlightExpirationService>();
             services.AddScoped<ICandidateTaxonomyService, CandidateTaxonomyService>();
             services.AddScoped<IJobTaxonomyService, JobTaxonomyService>();
             services.AddScoped<IServicePlanService, ServicePlanService>();
             services.AddScoped<IJobQuotaService, JobQuotaService>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IBlobStorageService, BlobStorageService>();
+            services.AddScoped<IHighlightJobService, HighlightJobService>();
+            services.AddScoped<IExtensionJobService, ExtensionJobService>();
             return services;
         }
 

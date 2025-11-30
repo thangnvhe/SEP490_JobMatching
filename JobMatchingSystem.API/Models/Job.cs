@@ -1,4 +1,4 @@
-using JobMatchingSystem.API.Enums;
+﻿using JobMatchingSystem.API.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -27,6 +27,11 @@ namespace JobMatchingSystem.API.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? OpenedAt { get; set; }
         public DateTime? ExpiredAt { get; set; }
+
+        public bool IsHighlighted { get; set; } = false;
+        // Thời điểm Job nổi bật sẽ kết thúc
+        public DateTime? HighlightedUntil { get; set; }
+
         public bool IsDeleted { get; set; } = false;
 
         // Navigation properties
