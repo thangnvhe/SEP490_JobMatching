@@ -52,5 +52,15 @@ namespace JobMatchingSystem.API.Repositories.Implementations
 
             return await query.OrderBy(x => x.Id).ToListAsync();
         }
+
+        public async Task<List<CandidateStage>> GetAllAsync()
+        {
+            return await _context.CandidateStages
+                .Include(x => x.JobStage)
+                .Include(x => x.CandidateJob)
+                    .ThenInclude(cj => cj!.CVUpload)
+                        .ThenInclude(cv => cv!.User)
+                .ToListAsync();
+        }
     }
 }
