@@ -31,6 +31,8 @@ import JobDetailPage from './pages/client-site/guest/JobDetailPage';
 import { ConfirmEmailPage } from './pages/client-site/auth/ConfirmEmailPage';
 import ViewReportList from './pages/admin-site/ManageReport/ViewReportList';
 import { StageBoardDemo } from './components/Stage/StageBoardDemo';
+import InterviewSchedule from './pages/client-site/interview-schedule/interview-schedule';
+import EvaluationHistory from './pages/client-site/evaluation-history/evaluation-history';
 
 const AppRouter: React.FC = () => {
   return (
@@ -92,8 +94,13 @@ const AppRouter: React.FC = () => {
         <Route path="cv-management" element={<CVManagement />} />
       </Route>
 
+      <Route path="/hiringmanager" element={<ClientLayout />}>
+        <Route path="interview-schedule" element={<InterviewSchedule />} />
+        <Route path="evaluation-history" element={<EvaluationHistory />} />
+      </Route>
+
       <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+    </Routes >
   );
 };
 

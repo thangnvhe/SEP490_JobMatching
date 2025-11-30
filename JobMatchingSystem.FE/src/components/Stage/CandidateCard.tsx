@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { cn } from "@/lib/utilsCommon";
+import { cn } from "@/lib/utils";
 import { CandidateStage } from "@/models/candidate-stage";
 import { GripVertical, Mail, Phone, Calendar, Eye, CalendarPlus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { getImageUrl } from "@/lib/utilsCommon";
 import { ScheduleInterviewDialog } from "./ScheduleInterviewDialog";
 
 interface CandidateCardProps {
@@ -130,7 +129,7 @@ function CandidateContent({
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10 border">
-            <AvatarImage src={getImageUrl(user?.avatarUrl)} alt={user?.fullName} />
+            <AvatarImage src={user.avatarUrl || ""} alt={user?.fullName || ""} />
             <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
               {getInitials(user?.fullName || "")}
             </AvatarFallback>

@@ -20,8 +20,7 @@ import {
   User,
   ExternalLink,
 } from "lucide-react";
-import { cn } from "@/lib/utilsCommon";
-import { getImageUrl } from "@/lib/utilsCommon";
+import { cn } from "@/lib/utils";
 
 interface CandidateDetailDialogProps {
   candidate: CandidateStage | null;
@@ -107,7 +106,7 @@ export function CandidateDetailDialog({
           {/* Profile Header */}
           <div className="flex items-start gap-4 p-4 rounded-lg bg-muted/30 border">
             <Avatar className="h-16 w-16 border-2">
-              <AvatarImage src={getImageUrl(user?.avatarUrl)} alt={user?.fullName} />
+              <AvatarImage src={user.avatarUrl || ""} alt={user?.fullName || ""} />
               <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
                 {getInitials(user?.fullName || "")}
               </AvatarFallback>
@@ -232,7 +231,7 @@ export function CandidateDetailDialog({
                 {cv.fileUrl && (
                   <Button variant="outline" size="sm" asChild>
                     <a
-                      href={getImageUrl(cv.fileUrl)}
+                      href={cv.fileUrl || ""}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
