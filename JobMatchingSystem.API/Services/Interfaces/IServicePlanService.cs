@@ -7,6 +7,8 @@ namespace JobMatchingSystem.API.Services.Interfaces
     {
         Task<List<ServicePlanResponse>> GetAllAsync();
         Task<ServicePlanResponse> GetByIdAsync(int id);
+        Task CreateAsync(CreateServicePlanRequest request);
         Task UpdateAsync(int id, UpdateServicePlanRequest request);
+        Task DeleteAsync(int id);
     }
 }
