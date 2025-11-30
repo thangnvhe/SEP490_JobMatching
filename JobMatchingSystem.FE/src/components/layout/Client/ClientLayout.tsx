@@ -20,6 +20,7 @@ export function ClientLayout() {
     "/admin",
     "/recruiter",
     "/candidate",
+    "/hiringmanager","Show me button variants"
   ];
   const showSidebar = SIDEBAR_ENABLED_PATHS.some((p) =>
     location.pathname.startsWith(p)

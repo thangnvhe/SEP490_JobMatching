@@ -59,7 +59,6 @@ import { CVProjectServices } from "@/services/cv-project.service";
 import { UserServices } from "@/services/user.service";
 import { DialogCVInformation } from "./EditInformation/DialogCVInformation";
 import { User } from "@/models/user";
-import { getImageUrl } from "@/lib/utilsCommon";
 import { CVAchievement } from "@/models/cv-achievement";
 import { CVCertificate } from "@/models/cv-certificate";
 import { CVEducation, DegreeType } from "@/models/cv-education";
@@ -912,7 +911,7 @@ const ProfileCvPage = () => {
                         <div className="-mt-12 mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
                             <div className="flex items-end gap-6">
                                 <Avatar className="h-40 w-40 rounded-full border-4 border-white shadow-lg ring-1 ring-gray-100">
-                                    <AvatarImage src={getImageUrl(userProfile?.avatarUrl || "")} className="object-cover" />
+                                    <AvatarImage src={userProfile?.avatarUrl || ""} className="object-cover" />
                                     <AvatarFallback className="bg-emerald-50 text-2xl font-bold text-emerald-600">
                                         {userProfile?.fullName ? userProfile.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : "VN"}
                                     </AvatarFallback>

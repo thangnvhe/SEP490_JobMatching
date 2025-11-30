@@ -29,30 +29,17 @@ import {
 // Services
 import { UserServices } from "@/services/user.service";
 import { CompanyServices } from "@/services/company.service";
-
 // Types
 import type { Company } from "@/models/company";
 import type { User } from "@/models/user";
-
 // Components
 import { EditCompanyDialog } from "@/components/dialogs/EditCompanyDialog";
 
-// ===================== UTILITY FUNCTIONS =====================
-
-const getLogoUrl = (logoPath?: string): string | undefined => {
-  if (!logoPath) return undefined;
-  
-  if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
-    return logoPath;
-  }
-  
-  return `https://localhost:7044${logoPath.startsWith('/') ? '' : '/'}${logoPath}`;
-};
 
 const getCompanyStatusBadge = (status: number | string) => {
   // Convert to number if string
   const statusNum = typeof status === 'string' ? parseInt(status) : status;
-  
+
   switch (statusNum) {
     case 0:
       return (
@@ -104,7 +91,7 @@ const CompanyHeader: React.FC<CompanyHeaderProps> = ({ company, onEdit }) => {
                 <div className="w-24 h-24 rounded-2xl overflow-hidden border-4 border-white shadow-lg bg-white">
                   {company.logo ? (
                     <img
-                      src={getLogoUrl(company.logo)}
+                      src={company.logo}
                       alt={company.name}
                       className="w-full h-full object-cover"
                     />
@@ -137,7 +124,7 @@ const CompanyHeader: React.FC<CompanyHeaderProps> = ({ company, onEdit }) => {
                       <span className="text-sm">{company.address}</span>
                     </div>
                   )}
-                  
+
                   {company.phoneContact && (
                     <div className="flex items-center space-x-2">
                       <Phone className="w-4 h-4 text-gray-500" />
@@ -155,9 +142,9 @@ const CompanyHeader: React.FC<CompanyHeaderProps> = ({ company, onEdit }) => {
                   {company.website && (
                     <div className="flex items-center space-x-2">
                       <Globe className="w-4 h-4 text-gray-500" />
-                      <a 
-                        href={company.website} 
-                        target="_blank" 
+                      <a
+                        href={company.website}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
                       >
@@ -203,7 +190,7 @@ interface CompanyStatsProps {
 
 const CompanyStats: React.FC<CompanyStatsProps> = ({ company: _company }) => {
   const navigate = useNavigate();
-  
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <Card>
@@ -220,7 +207,7 @@ const CompanyStats: React.FC<CompanyStatsProps> = ({ company: _company }) => {
         </CardContent>
       </Card>
 
-      <Card 
+      <Card
         className="cursor-pointer hover:shadow-lg transition-shadow"
         onClick={() => navigate('/recruiter/company/members')}
       >
@@ -319,9 +306,9 @@ const CompanyInfoDetail: React.FC<CompanyInfoDetailProps> = ({ company }) => {
           <div>
             <label className="text-sm font-medium text-gray-500">Website</label>
             {company.website ? (
-              <a 
-                href={company.website} 
-                target="_blank" 
+              <a
+                href={company.website}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-800 hover:underline block"
               >
@@ -347,7 +334,7 @@ const CompanyProfile: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
-  
+
   // Dialog states
   const [showEditDialog, setShowEditDialog] = useState(false);
 
@@ -366,7 +353,7 @@ const CompanyProfile: React.FC = () => {
 
         // 1. Get current user info to get companyId
         const userResponse = await UserServices.getUserProfile();
-        
+
         if (!userResponse.isSuccess || !userResponse.result) {
           setError("Không thể tải thông tin người dùng");
           setLoading(false);
@@ -384,7 +371,7 @@ const CompanyProfile: React.FC = () => {
 
         // 2. Get company details using companyId
         const companyResponse = await CompanyServices.getCompanyById(userData.companyId.toString());
-        
+
         if (!companyResponse.isSuccess || !companyResponse.result) {
           setError("Không thể tải thông tin công ty");
           setLoading(false);
@@ -495,8 +482,8 @@ const CompanyProfile: React.FC = () => {
           </div>
 
           {/* Company Header */}
-          <CompanyHeader 
-            company={company} 
+          <CompanyHeader
+            company={company}
             onEdit={handleEditCompany}
           />
 

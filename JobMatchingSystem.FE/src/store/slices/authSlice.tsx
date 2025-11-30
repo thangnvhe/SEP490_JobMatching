@@ -41,7 +41,7 @@ export const loginAsync = createAsyncThunk(
       if (rememberMe) {
         localStorage.setItem('accessToken', token);
       } else {
-        Cookies.set('accessToken', token, { path: '/', expires: new Date(Date.now() + 30 * 60 * 1000) });
+        Cookies.set('accessToken', token, { path: '/', expires: new Date(Date.now() + 24 * 60 * 60 * 1000) });
       }
       // Decode token để lấy thông tin
       const decodedToken = JWTUtils.decodeToken(token);

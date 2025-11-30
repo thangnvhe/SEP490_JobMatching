@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlertTriangle, Ban, FileWarning, ShieldAlert, HelpCircle, Check } from "lucide-react";
 import { toast } from "sonner";
 import { ReportCreateInput, ReportTypes } from "@/models/report";
-import { cn } from "@/lib/utilsCommon";
+import { cn } from "@/lib/utils";
 
 type ReportTypeKey = keyof typeof ReportTypes;
 
