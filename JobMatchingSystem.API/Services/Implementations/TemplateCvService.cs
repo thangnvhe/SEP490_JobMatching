@@ -5,6 +5,7 @@ using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
+using JobMatchingSystem.API.Extensions;
 using Microsoft.AspNetCore.Hosting;
 using System;
 using System.IO;
@@ -17,11 +18,13 @@ namespace JobMatchingSystem.API.Services.Implementations
     {
         private readonly ITemplateCvRepository _repository;
         private readonly IWebHostEnvironment _env;
+        private readonly IBlobStorageService _blobStorageService;
 
-        public TemplateCvService(ITemplateCvRepository repository, IWebHostEnvironment env)
+        public TemplateCvService(ITemplateCvRepository repository, IWebHostEnvironment env, IBlobStorageService blobStorageService)
         {
             _repository = repository;
             _env = env;
+            _blobStorageService = blobStorageService;
         }
 
         public async Task<APIResponse<TemplateCV>> CreateTemplateAsync(CreateTemplateCvRequest request)
@@ -51,24 +54,15 @@ namespace JobMatchingSystem.API.Services.Implementations
                         .WithMessage("Chỉ chấp nhận file HTML (.html, .htm)")
                         .Build();
 
-                // ensure folder exists
-                var folder = Path.Combine(_env.WebRootPath ?? "wwwroot", "template_cv");
-                if (!Directory.Exists(folder))
-                    Directory.CreateDirectory(folder);
-
-                // create unique filename
+                // Create unique filename for template CV
                 var originalName = Path.GetFileNameWithoutExtension(file.FileName)
                               .Replace(" ", "_")
                               .Replace(".", "_");
 
                 var fileName = $"{originalName}_{Guid.NewGuid()}{extension}";
-                var fullPath = Path.Combine(folder, fileName);
 
-                // save file
-                using (var stream = new FileStream(fullPath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
+                // Upload template file to Azure Blob Storage
+                var templateFileUrl = await _blobStorageService.UploadFileAsync(file, "template-cvs", fileName);
 
                 // Handle image upload if provided
                 string? imageUrl = null;
@@ -82,19 +76,10 @@ namespace JobMatchingSystem.API.Services.Implementations
                         // Validate image file size (max 5MB)
                         if (request.ImageFile.Length <= 5 * 1024 * 1024)
                         {
-                            var imageFolder = Path.Combine(_env.WebRootPath ?? "wwwroot", "template_cv", "images");
-                            if (!Directory.Exists(imageFolder))
-                                Directory.CreateDirectory(imageFolder);
-
                             var imageFileName = $"{originalName}_preview_{Guid.NewGuid()}{imageExtension}";
-                            var imageFullPath = Path.Combine(imageFolder, imageFileName);
 
-                            using (var imageStream = new FileStream(imageFullPath, FileMode.Create))
-                            {
-                                await request.ImageFile.CopyToAsync(imageStream);
-                            }
-
-                            imageUrl = $"/template_cv/images/{imageFileName}";
+                            // Upload image to Azure Blob Storage
+                            imageUrl = await _blobStorageService.UploadFileAsync(request.ImageFile, "template-cv-images", imageFileName);
                         }
                     }
                 }
@@ -103,7 +88,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 var template = new TemplateCV
                 {
                     Name = request.Name,
-                    PathUrl = $"/template_cv/{fileName}", // relative url to serve
+                    PathUrl = templateFileUrl, // Full Azure blob URL
                     ImageUrl = imageUrl
                 };
 
@@ -129,6 +114,22 @@ namespace JobMatchingSystem.API.Services.Implementations
             try
             {
                 var templates = await _repository.GetAllAsync();
+                
+                // Generate secure URLs with SAS tokens for all templates
+                foreach (var template in templates)
+                {
+                    // Generate secure URL for template file
+                    if (!string.IsNullOrEmpty(template.PathUrl))
+                    {
+                        template.PathUrl = await _blobStorageService.GetSecureFileUrlAsync(template.PathUrl) ?? template.PathUrl;
+                    }
+                    
+                    // Generate secure URL for image file
+                    if (!string.IsNullOrEmpty(template.ImageUrl))
+                    {
+                        template.ImageUrl = await _blobStorageService.GetSecureFileUrlAsync(template.ImageUrl) ?? template.ImageUrl;
+                    }
+                }
                 
                 // Apply sorting
                 if (!string.IsNullOrEmpty(sortBy))
@@ -203,6 +204,17 @@ namespace JobMatchingSystem.API.Services.Implementations
                         .WithMessage("Không tìm thấy template CV")
                         .Build();
 
+                // Generate secure URLs with SAS tokens
+                if (!string.IsNullOrEmpty(template.PathUrl))
+                {
+                    template.PathUrl = await _blobStorageService.GetSecureFileUrlAsync(template.PathUrl) ?? template.PathUrl;
+                }
+                
+                if (!string.IsNullOrEmpty(template.ImageUrl))
+                {
+                    template.ImageUrl = await _blobStorageService.GetSecureFileUrlAsync(template.ImageUrl) ?? template.ImageUrl;
+                }
+
                 return APIResponse<TemplateCV>.Builder()
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
@@ -238,17 +250,16 @@ namespace JobMatchingSystem.API.Services.Implementations
                         .WithMessage("Không tìm thấy template CV")
                         .Build();
 
-                var fullPath = Path.Combine(_env.WebRootPath ?? "wwwroot", template.PathUrl.TrimStart('/'));
+                // Delete template file from Azure Blob Storage
+                if (!string.IsNullOrEmpty(template.PathUrl))
+                {
+                    await _blobStorageService.DeleteFileAsync(template.PathUrl);
+                }
 
-                if (File.Exists(fullPath))
-                    File.Delete(fullPath);
-
-                // Delete image file if exists
+                // Delete image file from Azure Blob Storage if exists
                 if (!string.IsNullOrEmpty(template.ImageUrl))
                 {
-                    var imageFullPath = Path.Combine(_env.WebRootPath ?? "wwwroot", template.ImageUrl.TrimStart('/'));
-                    if (File.Exists(imageFullPath))
-                        File.Delete(imageFullPath);
+                    await _blobStorageService.DeleteFileAsync(template.ImageUrl);
                 }
 
                 await _repository.DeleteAsync(template);

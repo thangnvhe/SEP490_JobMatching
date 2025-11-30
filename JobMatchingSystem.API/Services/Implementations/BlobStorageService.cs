@@ -256,7 +256,7 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         private static void ValidateFolder(string folder)
         {
-            var allowedFolders = new[] { "avartars", "company-logos", "cvs", "licenses" };
+            var allowedFolders = new[] { "avartars", "company-logos", "cvs", "licenses", "template-cvs", "template-cv-images" };
             
             if (string.IsNullOrEmpty(folder) || !allowedFolders.Contains(folder.ToLower()))
             {

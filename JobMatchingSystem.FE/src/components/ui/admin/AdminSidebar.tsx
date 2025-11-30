@@ -7,6 +7,7 @@ import {
   Flag,
   Settings,
   Package,
+  FileText,
 } from "lucide-react";
 import {
   Sidebar,
@@ -92,6 +93,19 @@ function AdminNav() {
             <Link to="/admin/manage-report">
               <Flag />
               <span>Quản lý báo cáo</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            asChild
+            isActive={useIsActivePath("/admin/manage-template-cv")}
+            tooltip="Manage Template CV"
+          >
+            <Link to="/admin/manage-template-cv">
+              <FileText />
+              <span>Quản lý Template CV</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
