@@ -24,7 +24,7 @@ import {
 import { toast } from "sonner";
 import { CalendarIcon, X, User as UserIcon, ChevronDown, Camera } from "lucide-react";
 import { format } from "date-fns";
-import { cn, getImageUrl } from "@/lib/utilsCommon";
+import { cn } from "@/lib/utils";
 import { useDisableBodyScroll } from "@/hooks/useDisableBodyScroll";
 import { User } from "@/models/user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -87,7 +87,7 @@ export function DialogCVInformation({
   // Reset form when dialog opens using passed userProfileToEdit
   useEffect(() => {
     if (open && userProfileToEdit) {
-      setAvatarPreview(getImageUrl(userProfileToEdit.avatarUrl));
+      setAvatarPreview(userProfileToEdit.avatarUrl || "");
       setAvatarFile(null);
       reset({
         fullName: userProfileToEdit.fullName || "",

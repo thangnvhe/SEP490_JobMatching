@@ -4,7 +4,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
-import { cn } from "@/lib/utilsCommon";
+import { cn } from "@/lib/utils";
 import { StageColumn as StageColumnType } from "./types";
 import { CandidateStage } from "@/models/candidate-stage";
 import { CandidateCard } from "./CandidateCard";
@@ -15,6 +15,7 @@ interface StageColumnProps {
   candidates: CandidateStage[];
   onViewDetail?: (candidate: CandidateStage) => void;
   onCandidateUpdated?: (updatedCandidate: CandidateStage) => void;
+  className?: string;
 }
 
 const columnColors: Record<string, string> = {
@@ -33,6 +34,7 @@ export function StageColumnContainer({
   candidates,
   onViewDetail,
   onCandidateUpdated,
+  className,
 }: StageColumnProps) {
   const candidateIds = useMemo(
     () => candidates.map((c) => c.id),
@@ -52,10 +54,11 @@ export function StageColumnContainer({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex flex-col rounded-xl bg-muted/50 border border-border/50 w-[320px] min-w-[320px] min-h-full",
+        "flex flex-col rounded-xl bg-muted/50 border border-border/50 min-w-[320px] min-h-full",
         "border-t-4 shadow-sm transition-all duration-200",
         column.color ? columnColors[column.color] : "border-t-slate-500",
-        isOver && "ring-2 ring-primary/50 bg-primary/5"
+        isOver && "ring-2 ring-primary/50 bg-primary/5",
+        className
       )}
     >
       {/* Column Header */}

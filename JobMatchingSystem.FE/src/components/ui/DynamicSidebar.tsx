@@ -12,6 +12,8 @@ import {
   Package,
   UserPlus,
   GitBranch,
+  Calendar,
+  HistoryIcon,
 } from "lucide-react";
 import {
   Sidebar,
@@ -26,7 +28,6 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import React from "react";
-
 function useIsActivePath(path: string) {
   const location = useLocation();
   return location.pathname.startsWith(path);
@@ -353,40 +354,14 @@ function HiringManagerNav() {
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                isActive={useIsActivePath("/recruiter/dashboard")}
+                isActive={useIsActivePath("/hiringmanager/dashboard")}
                 tooltip="Dashboard"
                 size="default"
                 className="h-9 px-3"
               >
-                <Link to="/recruiter/dashboard">
+                <Link to="/hiringmanager/dashboard">
                   <LayoutDashboard className="size-4" />
-                  <span className="font-medium text-sm">Dashboard</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-
-      <SidebarSeparator className="my-2" />
-
-      <SidebarGroup>
-        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
-          Quản lý
-        </SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu className="">
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={useIsActivePath("/recruiter/process-management")}
-                tooltip="Process Management"
-                size="default"
-                className="h-9 px-3"
-              >
-                <Link to="/recruiter/process-management">
-                  <GitBranch className="size-4" />
-                  <span className="font-medium text-sm">Quản lý quy trình</span>
+                  <span className="font-medium text-sm">Tổng quan</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -394,46 +369,37 @@ function HiringManagerNav() {
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                isActive={useIsActivePath("/recruiter/company")}
-                tooltip="Company"
+                isActive={useIsActivePath("/hiringmanager/interview-schedule")}
+                tooltip="Lịch phỏng vấn"
                 size="default"
                 className="h-9 px-3"
               >
-                <Link to="/recruiter/company">
-                  <Building2 className="size-4" />
-                  <span className="font-medium text-sm">Công ty</span>
+                <Link to="/hiringmanager/interview-schedule">
+                  <Calendar className="size-4" />
+                  <span className="font-medium text-sm">Lịch phỏng vấn</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
 
-      <SidebarSeparator className="my-2" />
-
-      <SidebarGroup>
-        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
-          Cá nhân
-        </SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu className="">
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                isActive={useIsActivePath("/profile")}
-                tooltip="Profile"
+                isActive={useIsActivePath("/hiringmanager/evaluation-history")}
+                tooltip="Lịch sử đánh giá"
                 size="default"
                 className="h-9 px-3"
               >
-                <Link to="/profile">
-                  <User className="size-4" />
-                  <span className="font-medium text-sm">Hồ sơ cá nhân</span>
+                <Link to="/hiringmanager/evaluation-history">
+                  <HistoryIcon className="size-4" />
+                  <span className="font-medium text-sm">Lịch sử đánh giá</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+
     </>
   );
 }
@@ -443,7 +409,7 @@ export function DynamicSidebar({
 }: React.ComponentProps<typeof Sidebar>) {
   const authState = useSelector((state: RootState) => state.authState);
   const userRole = authState.role?.toLowerCase() || 'guest';
-  
+
   // Determine navigation component based on role
   const getNavigationComponent = () => {
     switch (userRole) {

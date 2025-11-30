@@ -17,7 +17,7 @@ import { CheckCircle, XCircle, Loader2, ArrowRightLeft, MessageSquare } from "lu
 import { toast } from "sonner";
 import { CandidateStageServices } from "@/services/candidate-stage.service";
 import { CandidateStage } from "@/models/candidate-stage";
-import { cn } from "@/lib/utilsCommon";
+import { cn } from "@/lib/utils";
 import { AxiosError } from "axios";
 import { BaseResponse } from "@/models/base";
 
