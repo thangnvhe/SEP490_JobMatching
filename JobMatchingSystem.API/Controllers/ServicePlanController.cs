@@ -42,6 +42,32 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Create([FromBody] CreateServicePlanRequest request)
+        {
+            await _servicePlanService.CreateAsync(request);
+
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult("Service plan created successfully")
+                .Build());
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _servicePlanService.DeleteAsync(id);
+
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult("Service plan deleted successfully")
+                .Build());
+        }
+
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateServicePlanRequest request)

@@ -46,6 +46,48 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.SalaryError());
             }
 
+            int extensionDays = 0;
+
+            // XỬ LÝ EXTENSION JOB
+            if (request.ExtensionJobId.HasValue)
+            {
+                var extension = await _context.ExtensionJobs
+                    .FirstOrDefaultAsync(e => e.Id == request.ExtensionJobId.Value);
+
+                if (extension == null)
+                    throw new AppException(ErrorCode.NotFoundExtensionJob());
+
+                if (extension.RecuiterId != userId)
+                    throw new AppException(ErrorCode.NotFoundExtensionJob());
+
+                if (extension.ExtensionJobDaysCount == 0)
+                {
+                    throw new AppException(ErrorCode.NotFoundExtensionJob());
+                }
+
+                if (extension.ExtensionJobDaysCount.HasValue && extension.ExtensionJobDaysCount > 0)
+                {
+                    extensionDays = extension.ExtensionJobDays ?? 0;
+                    extension.ExtensionJobDaysCount -= 1;
+                    _context.ExtensionJobs.Update(extension);
+                }
+            }
+
+            if (request.OpenedAt.HasValue && request.ExpiredAt.HasValue)
+            {
+                var duration = request.ExpiredAt.Value - request.OpenedAt.Value;
+
+                if (request.ExpiredAt.Value <= request.OpenedAt.Value)
+                {
+                    throw new AppException(ErrorCode.DayError());
+                }
+
+                if (duration.TotalDays > 30 + extensionDays)
+                {
+                    throw new AppException(ErrorCode.DayError());
+                }
+            }
+
             // 3. KIỂM TRA VÀ TRỪ QUOTA MỚI THÊM
             var jobQuota = await _context.JobQuotas
                                          .FirstOrDefaultAsync(q => q.RecruiterId == userId);
@@ -91,6 +133,37 @@ namespace JobMatchingSystem.API.Services.Implementations
                 ExpiredAt = request.ExpiredAt,
                 Status = JobStatus.Draft
             };
+
+            // XỬ LÝ HIGHLIGHT JOB
+            if (request.HighlightJobId.HasValue)
+            {
+                var highlight = await _context.HighlightJobs
+                    .FirstOrDefaultAsync(h => h.Id == request.HighlightJobId);
+
+                if (highlight == null)
+                    throw new AppException(ErrorCode.NotFoundHighlightJob());
+
+                if (highlight.RecuiterId != userId)
+                    throw new AppException(ErrorCode.NotFoundHighlightJob());
+
+                if (highlight.HighlightJobDaysCount == 0)
+                    throw new AppException(ErrorCode.NotFoundHighlightJob());
+
+                if (highlight.HighlightJobDaysCount.HasValue && highlight.HighlightJobDaysCount > 0)
+                {
+                    job.IsHighlighted = true;
+
+                    if (highlight.HighlightJobDays.HasValue)
+                    {
+                        // Create: HighlightedUntil = OpenedAt + Days
+                        var baseDate = request.OpenedAt ?? DateTime.UtcNow;
+                        job.HighlightedUntil = baseDate.AddDays(highlight.HighlightJobDays.Value);
+                    }
+
+                    highlight.HighlightJobDaysCount -= 1;
+                    _context.HighlightJobs.Update(highlight);
+                }
+            }
 
             if (request.JobStages != null)
             {
@@ -143,6 +216,33 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.SalaryError());
             }
 
+            int extensionDays = 0;
+
+            // XỬ LÝ EXTENSION JOB
+            if (request.ExtensionJobId.HasValue)
+            {
+                var extension = await _context.ExtensionJobs
+                    .FirstOrDefaultAsync(e => e.Id == request.ExtensionJobId.Value);
+
+                if (extension == null)
+                    throw new AppException(ErrorCode.NotFoundExtensionJob());
+
+                if (extension.RecuiterId != userId)
+                    throw new AppException(ErrorCode.NotFoundExtensionJob());
+
+                if (extension.ExtensionJobDaysCount == 0)
+                {
+                    throw new AppException(ErrorCode.NotFoundExtensionJob());
+                }
+
+                if (extension.ExtensionJobDaysCount.HasValue && extension.ExtensionJobDaysCount > 0)
+                {
+                    extensionDays = extension.ExtensionJobDays ?? 0;
+                    extension.ExtensionJobDaysCount -= 1;
+                    _context.ExtensionJobs.Update(extension);
+                }
+            }
+
             // Update job properties
             job.Title = request.Title ?? job.Title;
             job.Description = request.Description ?? job.Description;
@@ -153,8 +253,35 @@ namespace JobMatchingSystem.API.Services.Implementations
             job.Location = request.Location ?? job.Location;
             job.ExperienceYear = request.ExperienceYear ?? job.ExperienceYear;
             job.JobType = request.JobType ?? job.JobType;
-            job.OpenedAt = request.OpenedAt ?? job.OpenedAt;
-            job.ExpiredAt = request.ExpiredAt ?? job.ExpiredAt;
+
+            // Lấy giá trị hiện tại để tính toán
+            DateTime currentOpenedAt = job.OpenedAt ?? DateTime.UtcNow;
+            DateTime newOpenedAt = currentOpenedAt;
+            DateTime newExpiredAt = job.ExpiredAt ?? currentOpenedAt.AddDays(1);
+
+            // Nếu job đang Draft → có thể update OpenedAt
+            if (job.Status == JobStatus.Draft && request.OpenedAt.HasValue)
+            {
+                newOpenedAt = request.OpenedAt.Value;
+            }
+
+            // ExpiredAt luôn có thể update nếu request có
+            if (request.ExpiredAt.HasValue)
+            {
+                newExpiredAt = request.ExpiredAt.Value;
+            }
+
+            // Validation khoảng thời gian
+            if (newExpiredAt <= newOpenedAt)
+                throw new AppException(ErrorCode.DayError());
+
+            if ((newExpiredAt - newOpenedAt).TotalDays > 30 + extensionDays)
+                throw new AppException(ErrorCode.DayError());
+
+            // Gán lại vào entity
+            job.OpenedAt = newOpenedAt;
+            job.ExpiredAt = newExpiredAt;
+
 
             // Update taxonomy
             if (request.TaxonomyIds != null)
@@ -166,6 +293,60 @@ namespace JobMatchingSystem.API.Services.Implementations
                 foreach (var taxonomyId in request.TaxonomyIds)
                 {
                     job.JobTaxonomies.Add(new JobTaxonomy { TaxonomyId = taxonomyId });
+                }
+            }
+
+            // XỬ LÝ HIGHLIGHT JOB KHI UPDATE
+            if (request.HighlightJobId.HasValue)
+            {
+                var highlight = await _context.HighlightJobs
+                    .FirstOrDefaultAsync(h => h.Id == request.HighlightJobId);
+
+                if (highlight == null)
+                    throw new AppException(ErrorCode.NotFoundHighlightJob());
+
+                if (highlight.RecuiterId != userId)
+                    throw new AppException(ErrorCode.NotFoundHighlightJob());
+
+                if (highlight.HighlightJobDaysCount == 0)
+                    throw new AppException(ErrorCode.NotFoundHighlightJob());
+
+                if (highlight.HighlightJobDaysCount.HasValue && highlight.HighlightJobDaysCount > 0)
+                {
+                    job.IsHighlighted = true;
+
+                    if (highlight.HighlightJobDays.HasValue)
+                    {
+                        var now = DateTime.UtcNow;
+
+                        // Lấy ngày mở để tính HighlightedUntil
+                        DateTime openDate;
+
+                        if (job.Status == JobStatus.Draft && request.OpenedAt.HasValue)
+                        {
+                            // Job đang Draft → dùng OpenedAt mới từ request
+                            openDate = request.OpenedAt.Value;
+                        }
+                        else
+                        {
+                            // Job không phải Draft → dùng OpenedAt hiện tại của job
+                            openDate = job.OpenedAt ?? now;
+                        }
+
+                        if (now > openDate)
+                        {
+                            // Nếu hiện tại > OpenedAt → dùng hiện tại
+                            job.HighlightedUntil = now.AddDays(highlight.HighlightJobDays.Value);
+                        }
+                        else
+                        {
+                            // Nếu hiện tại <= OpenedAt → dùng OpenedAt
+                            job.HighlightedUntil = openDate.AddDays(highlight.HighlightJobDays.Value);
+                        }
+                    }
+
+                    highlight.HighlightJobDaysCount -= 1;
+                    _context.HighlightJobs.Update(highlight);
                 }
             }
 

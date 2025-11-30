@@ -25,6 +25,18 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                                  .FirstOrDefaultAsync(x => x.Id == id);
         }
 
+        public async Task AddAsync(ServicePlan plan)
+        {
+            await _context.ServicePlans.AddAsync(plan);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(ServicePlan plan)
+        {
+            _context.ServicePlans.Remove(plan);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task UpdateAsync(ServicePlan plan)
         {
             _context.ServicePlans.Update(plan);

@@ -1,10 +1,10 @@
 ﻿namespace JobMatchingSystem.API.DTOs.Request
 {
-    public class UpdateServicePlanRequest
+    public class CreateServicePlanRequest
     {
-        public string? Name { get; set; }
-        public string? Description { get; set; }
-        public decimal? Price { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public decimal Price { get; set; }
 
         public int? JobPostAdditional { get; set; }
         public int? HighlightJobDays { get; set; }
