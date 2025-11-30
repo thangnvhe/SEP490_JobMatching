@@ -103,7 +103,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 await _unitOfWork.SaveAsync();
 
                 // Generate password and create user
-                var randomPassword = Guid.NewGuid().ToString("N").Substring(0, 10) + "aA1!";
+                var randomPassword = "Recruiter123@";
                 var recruiter = new ApplicationUser
                 {
                     FullName = request.FullName,
