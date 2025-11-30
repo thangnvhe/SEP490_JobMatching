@@ -153,6 +153,15 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 throw new AppException(ErrorCode.NotFoundCandidateStage());
             }
+            
+            // Validate trạng thái của candidate stage
+            // Chỉ cho phép cập nhật lịch khi status là Draft hoặc Schedule
+            if (candidateStage.Status != Enums.CandidateStageStatus.Draft && 
+                candidateStage.Status != Enums.CandidateStageStatus.Schedule)
+            {
+                throw new AppException(ErrorCode.InvalidCandidateStageStatus("Không thể cập nhật lịch khi ứng viên đã hoàn thành hoặc thất bại"));
+            }
+            
             candidateStage.ScheduleTime = request.Schedule;
             
             // Update interview location (allow empty string to clear the field)
