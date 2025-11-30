@@ -1,6 +1,7 @@
 ﻿using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.DTOs.Response;
+using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -82,13 +83,24 @@ namespace JobMatchingSystem.API.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateSchedule(int id, [FromBody] UpdateCandidateStageRequest request)
         {
-            await _candidateStageService.UpdateSchedule(id, request);
+            try
+            {
+                await _candidateStageService.UpdateSchedule(id, request);
 
-            return Ok(APIResponse<string>.Builder()
-                .WithResult("Update schedule thành công")
-                .WithSuccess(true)
-                .WithStatusCode(HttpStatusCode.OK)
-                .Build());
+                return Ok(APIResponse<string>.Builder()
+                    .WithResult("Update schedule thành công")
+                    .WithSuccess(true)
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .Build());
+            }
+            catch (AppException ex)
+            {
+                return BadRequest(APIResponse<string>.Builder()
+                    .WithResult(ex.Message)
+                    .WithSuccess(false)
+                    .WithStatusCode(ex.Error.StatusCode)
+                    .Build());
+            }
         }
 
         [HttpGet("hiring-manager")]
