@@ -361,6 +361,7 @@ export function StageBoard({
                 candidates={column.candidates}
                 onViewDetail={handleViewDetail}
                 onCandidateUpdated={handleCandidateUpdated}
+                className="flex-1 w-full"
               />
             ))}
           </div>

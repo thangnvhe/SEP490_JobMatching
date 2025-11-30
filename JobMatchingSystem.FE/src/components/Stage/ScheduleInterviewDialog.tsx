@@ -22,7 +22,7 @@ import { Calendar as CalendarIcon, MapPin, Video, Loader2, ChevronDown } from "l
 import { toast } from "sonner";
 import { CandidateStageServices } from "@/services/candidate-stage.service";
 import { CandidateStage } from "@/models/candidate-stage";
-import { cn } from "@/lib/utilsCommon";
+import { cn } from "@/lib/utils";
 
 // Zod schema for form validation
 const scheduleFormSchema = z.object({
