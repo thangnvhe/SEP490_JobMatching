@@ -23,6 +23,7 @@ import PreviewDownloadCV from './pages/client-site/candidate/profileCV/PreviewDo
 import MyJobsPage from './pages/client-site/candidate/my-job/MyJobs';
 import ViewUserList from './pages/admin-site/ManageUser/ViewUserList';
 import ViewTemplateCvList from './pages/admin-site/ManageTemplateCV/ViewTemplateCvList';
+import ViewServicePlanList from './pages/admin-site/ManageServicePlan/ViewServicePlanList';
 import ResetPasswordPage from './pages/client-site/auth/ResetPasswordPage';
 import CompaniesPage from './pages/client-site/guest/CompaniesPage';
 import CompanyDetailPage from './pages/client-site/guest/CompanyDetailPage';
@@ -65,6 +66,7 @@ const AppRouter: React.FC = () => {
         <Route path="manage-job" element={<ViewJobList />} />
         <Route path="manage-report" element={<ViewReportList />} />
         <Route path="manage-template-cv" element={<ViewTemplateCvList />} />
+        <Route path="manage-service-plan" element={<ViewServicePlanList />} />
         <Route path="manage-user/create" element={<CreateEditUserPage />} />
         <Route path="manage-user/edit/:id" element={<CreateEditUserPage />} />
       </Route>

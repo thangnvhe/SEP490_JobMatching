@@ -7,26 +7,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { DataTable } from "@/components/ui/data-table";
-import CreateTemplateCvDialog from "@/components/template-cv/CreateTemplateCvDialog";
+import CreateServicePlanDialog from "@/components/service-plan/CreateServicePlanDialog";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
-import type { TemplateCv } from "@/models/template-cv";
+import type { ServicePlan } from "@/models/service-plan";
 import type { PageInfo, PaginationParamsInput } from "@/models/base";
-import { TemplateCvServices } from "@/services/template-cv.service";
+import { ServicePlanServices } from "@/services/service-plan.service";
 import { 
   RefreshCcw, 
   Eye, 
   Trash2, 
-  Download,
-  Image as ImageIcon,
+  Edit,
+  DollarSign,
   AlertTriangle,
-  FileText
 } from "lucide-react";
 
-export default function ViewTemplateCvList() {
+export default function ViewServicePlanList() {
   // State management
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [templates, setTemplates] = useState<TemplateCv[]>([]);
+  const [servicePlans, setServicePlans] = useState<ServicePlan[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [keyword, setKeyword] = useState('');
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
@@ -57,11 +56,76 @@ export default function ViewTemplateCvList() {
     try {
       setLoading(true);
       setError(null);
-      const response = await TemplateCvServices.getAllWithPagination(params);
-      setTemplates(response.result.items);
-      setPaginationInfo(response.result.pageInfo);
+      console.log('Calling API with params:', params);
+      
+      // Try pagination first
+      try {
+        const response = await ServicePlanServices.getAllWithPagination(params);
+        console.log('Pagination API response:', response);
+        
+        // Check if response has the expected structure
+        if (response && response.result && Array.isArray(response.result.items)) {
+          setServicePlans(response.result.items);
+          setPaginationInfo(response.result.pageInfo);
+          return;
+        }
+      } catch (paginationError) {
+        console.warn('Pagination API failed, trying getAll:', paginationError);
+      }
+
+      // Fallback to getAll if pagination fails
+      try {
+        const fallbackResponse = await ServicePlanServices.getAll();
+        console.log('Fallback getAll response:', fallbackResponse);
+        
+        if (fallbackResponse && Array.isArray(fallbackResponse.result)) {
+          const allItems = fallbackResponse.result;
+          
+          // Client-side filtering if search exists
+          const filteredItems = params.search 
+            ? allItems.filter(item => 
+                item.name?.toLowerCase().includes(params.search!.toLowerCase()) ||
+                item.description?.toLowerCase().includes(params.search!.toLowerCase())
+              )
+            : allItems;
+            
+          // Client-side pagination
+          const startIndex = (params.page - 1) * params.size;
+          const endIndex = startIndex + params.size;
+          const pageItems = filteredItems.slice(startIndex, endIndex);
+          
+          setServicePlans(pageItems);
+          setPaginationInfo({
+            currentPage: params.page,
+            pageSize: params.size,
+            totalItem: filteredItems.length,
+            totalPage: Math.ceil(filteredItems.length / params.size),
+            hasPreviousPage: params.page > 1,
+            hasNextPage: endIndex < filteredItems.length,
+            sortBy: params.sortBy || '',
+            isDecending: params.isDescending || false,
+          });
+        } else {
+          setServicePlans([]);
+          setPaginationInfo({
+            currentPage: 1,
+            pageSize: 10,
+            totalItem: 0,
+            totalPage: 0,
+            hasPreviousPage: false,
+            hasNextPage: false,
+            sortBy: '',
+            isDecending: false,
+          });
+        }
+      } catch (fallbackError) {
+        console.error('Both pagination and getAll failed:', fallbackError);
+        throw fallbackError;
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Lỗi khi tải dữ liệu template CV");
+      console.error('API error:', err);
+      setError(err.response?.data?.message || "Lỗi khi tải dữ liệu gói dịch vụ");
+      setServicePlans([]);
     } finally {
       setLoading(false);
     }
@@ -80,41 +144,33 @@ export default function ViewTemplateCvList() {
     getAllWithPagination(paginationInput);
   }, [getAllWithPagination, paginationInput]);
 
-  const handleView = useCallback((template: TemplateCv) => {
-    if (template.pathUrl) {
-      window.open(template.pathUrl, '_blank');
-    }
+  const handleView = useCallback((servicePlan: ServicePlan) => {
+    console.log('Viewing service plan:', servicePlan);
+    // TODO: Implement view details modal
   }, []);
 
-  const handleDownload = useCallback((template: TemplateCv) => {
-    if (template.pathUrl) {
-      const link = document.createElement('a');
-      link.href = template.pathUrl;
-      link.download = `${template.name}.html`;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+  const handleEdit = useCallback((servicePlan: ServicePlan) => {
+    console.log('Editing service plan:', servicePlan);
+    // TODO: Implement edit dialog
   }, []);
 
-  const handleDeleteTemplate = useCallback(async (template: TemplateCv) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa template "${template.name}"?`)) {
+  const handleDeleteServicePlan = useCallback(async (servicePlan: ServicePlan) => {
+    if (!confirm(`Bạn có chắc chắn muốn xóa gói dịch vụ "${servicePlan.name}"?`)) {
       return;
     }
 
     try {
-      setDeleteLoading(template.id.toString());
-      await TemplateCvServices.delete(template.id.toString());
+      setDeleteLoading(servicePlan.id.toString());
+      await ServicePlanServices.delete(servicePlan.id.toString());
       toast({
         title: "Thành công",
-        description: "Xóa template CV thành công",
+        description: "Xóa gói dịch vụ thành công",
       });
       handleRefresh();
     } catch (error: any) {
       toast({
         title: "Lỗi",
-        description: error.response?.data?.message || "Có lỗi xảy ra khi xóa template CV",
+        description: error.response?.data?.message || "Có lỗi xảy ra khi xóa gói dịch vụ",
         variant: "destructive",
       });
     } finally {
@@ -151,8 +207,16 @@ export default function ViewTemplateCvList() {
     setPaginationInput(prev => ({ ...prev, size: parseInt(size), page: 1 }));
   }, []);
 
+  // Format price
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(price);
+  };
+
   // Columns definition
-  const columns = useMemo<ColumnDef<TemplateCv>[]>(() => [
+  const columns = useMemo<ColumnDef<ServicePlan>[]>(() => [
     {
       id: "id",
       accessorKey: "id",
@@ -166,52 +230,63 @@ export default function ViewTemplateCvList() {
     {
       id: "name",
       accessorKey: "name",
-      header: "Tên Template",
+      header: "Tên gói",
       enableSorting: true,
     },
     {
-      id: "imageUrl",
-      accessorKey: "imageUrl",
-      header: "Ảnh xem trước",
+      id: "description",
+      accessorKey: "description",
+      header: "Mô tả",
       cell: ({ row }) => {
-        const imageUrl = row.getValue("imageUrl") as string | null;
-        return imageUrl ? (
-          <div className="flex items-center justify-center w-16 h-12 rounded border overflow-hidden">
-            <img 
-              src={imageUrl} 
-              alt="Preview" 
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                target.nextElementSibling?.classList.remove('hidden');
-              }}
-            />
-            <div className="hidden flex items-center justify-center w-full h-full bg-gray-100">
-              <ImageIcon className="h-4 w-4 text-gray-400" />
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center justify-center w-16 h-12 rounded border bg-gray-100">
-            <ImageIcon className="h-4 w-4 text-gray-400" />
-          </div>
+        const description = row.getValue("description") as string;
+        return (
+          <span className="max-w-xs truncate" title={description}>
+            {description}
+          </span>
         );
       },
       enableSorting: false,
     },
     {
-      id: "pathUrl",
-      accessorKey: "pathUrl",
-      header: "File Template",
+      id: "price",
+      accessorKey: "price",
+      header: "Giá",
       cell: ({ row }) => {
-        const pathUrl = row.getValue("pathUrl") as string;
-        return pathUrl ? (
-          <Badge variant="outline" className="flex items-center gap-1 w-fit">
-            <FileText className="h-3 w-3" />
-            HTML
+        const price = row.getValue("price") as number;
+        return (
+          <Badge variant="outline" className="flex items-center gap-1 w-fit font-semibold text-green-700 bg-green-50">
+            <DollarSign className="h-3 w-3" />
+            {formatPrice(price)}
           </Badge>
-        ) : (
-          <span className="text-gray-400">Không có file</span>
+        );
+      },
+      enableSorting: true,
+    },
+    {
+      id: "features",
+      header: "Tính năng",
+      cell: ({ row }) => {
+        const servicePlan = row.original;
+        const features = [
+          servicePlan.jobPostAdditional && `${servicePlan.jobPostAdditional} bài đăng thêm`,
+          servicePlan.highlightJobDays && `Nổi bật ${servicePlan.highlightJobDays} ngày`,
+          servicePlan.extensionJobDays && `Gia hạn ${servicePlan.extensionJobDays} ngày`,
+          servicePlan.cvSaveAdditional && `${servicePlan.cvSaveAdditional} CV thêm`,
+        ].filter(Boolean);
+        
+        return (
+          <div className="flex flex-wrap gap-1 max-w-xs">
+            {features.slice(0, 2).map((feature, index) => (
+              <Badge key={index} variant="secondary" className="text-xs">
+                {feature}
+              </Badge>
+            ))}
+            {features.length > 2 && (
+              <Badge variant="secondary" className="text-xs">
+                +{features.length - 2} khác
+              </Badge>
+            )}
+          </div>
         );
       },
       enableSorting: false,
@@ -220,35 +295,35 @@ export default function ViewTemplateCvList() {
       id: "actions",
       header: "Thao tác",
       cell: ({ row }) => {
-        const template = row.original;
-        const isDeleting = deleteLoading === template.id.toString();
+        const servicePlan = row.original;
+        const isDeleting = deleteLoading === servicePlan.id.toString();
         
         return (
           <div className="flex items-center space-x-2">
             <Button
-              onClick={() => handleView(template)}
+              onClick={() => handleView(servicePlan)}
               variant="outline"
               size="sm"
-              title="Xem trước"
+              title="Xem chi tiết"
               disabled={isDeleting}
             >
               <Eye className="h-4 w-4" />
             </Button>
             <Button
-              onClick={() => handleDownload(template)}
+              onClick={() => handleEdit(servicePlan)}
               variant="outline"
               size="sm"
-              title="Tải xuống"
+              title="Chỉnh sửa"
               disabled={isDeleting}
             >
-              <Download className="h-4 w-4" />
+              <Edit className="h-4 w-4" />
             </Button>
             <Button
-              onClick={() => handleDeleteTemplate(template)}
+              onClick={() => handleDeleteServicePlan(servicePlan)}
               variant="outline"
               size="sm"
               className="text-red-600 hover:text-red-700"
-              title="Xóa template"
+              title="Xóa gói dịch vụ"
               disabled={isDeleting}
             >
               {isDeleting ? (
@@ -262,13 +337,13 @@ export default function ViewTemplateCvList() {
       },
       enableSorting: false,
     },
-  ], [paginationInfo, deleteLoading, handleView, handleDownload, handleDeleteTemplate]);
+  ], [paginationInfo, deleteLoading, handleView, handleEdit, handleDeleteServicePlan, formatPrice]);
 
   return (
     <div className="p-6 space-y-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Quản lý Template CV</h1>
-        <p className="text-muted-foreground">Theo dõi, tìm kiếm và quản lý các template CV trong hệ thống</p>
+        <h1 className="text-2xl font-bold tracking-tight">Quản lý Gói Dịch vụ</h1>
+        <p className="text-muted-foreground">Theo dõi, tìm kiếm và quản lý các gói dịch vụ trong hệ thống</p>
       </div>
 
       {/* Search and Actions */}
@@ -277,14 +352,14 @@ export default function ViewTemplateCvList() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Input
-                placeholder="Tìm kiếm template CV..."
+                placeholder="Tìm kiếm gói dịch vụ..."
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 className="w-80"
               />
             </div>
             <div className="flex space-x-2">
-              <CreateTemplateCvDialog onSuccess={handleRefresh} />
+              <CreateServicePlanDialog onSuccess={handleRefresh} />
               <Button
                 onClick={handleRefresh}
                 variant="outline"
@@ -299,7 +374,7 @@ export default function ViewTemplateCvList() {
           </div>
         </CardHeader>
         <CardContent>
-          {loading && !templates.length ? (
+          {loading && !servicePlans.length ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
@@ -314,7 +389,7 @@ export default function ViewTemplateCvList() {
           ) : (
             <DataTable
               columns={columns}
-              data={templates}
+              data={servicePlans || []}
               loading={loading}
               sorting={sorting}
               onSortingChange={handleSortingChange}
