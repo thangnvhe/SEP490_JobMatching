@@ -113,12 +113,12 @@ function AdminNav() {
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
-            isActive={useIsActivePath("/admin/services")}
-            tooltip="Services"
+            isActive={useIsActivePath("/admin/manage-service-plan")}
+            tooltip="Manage Service Plans"
           >
-            <Link to="/admin/services">
+            <Link to="/admin/manage-service-plan">
               <Package />
-              <span>Dịch vụ</span>
+              <span>Quản lý Gói dịch vụ</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
