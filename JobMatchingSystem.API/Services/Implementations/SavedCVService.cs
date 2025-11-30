@@ -73,6 +73,13 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (exists)
                 throw new AppException(ErrorCode.CantCreate());
 
+            if (recruiter.SaveCVCount <= 0)
+                throw new AppException(ErrorCode.NoMoreSaveCVCount()); // hoặc ErrorCode phù hợp
+
+            // giảm số lượt lưu
+            recruiter.SaveCVCount -= 1;
+            await _userManager.UpdateAsync(recruiter);
+
             var savedCV = new SavedCV
             {
                 RecruiterId = recruiterId,
@@ -93,6 +100,9 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.NotFoundSaveCV());
 
             await _savedCVRepository.DeleteAsync(savedCV);
+            // cộng lại lượt lưu
+            recruiter.SaveCVCount += 1;
+            await _userManager.UpdateAsync(recruiter);
         }
     }
 }

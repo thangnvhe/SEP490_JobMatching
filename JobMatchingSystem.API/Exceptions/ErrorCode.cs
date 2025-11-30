@@ -15,6 +15,7 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundJob() => new("Not Found Job", HttpStatusCode.NotFound);
         public static Error NotFoundJobStage() => new("Not Found JobStage", HttpStatusCode.NotFound);
         public static Error SalaryError() => new("Salary min large than Salary max", HttpStatusCode.BadRequest);
+        public static Error DayError() => new("Invalid Day", HttpStatusCode.BadRequest);
         public static Error NotFoundUser() => new("Not Found User", HttpStatusCode.NotFound);
         public static Error EmailNotExist() => new("Email Not Exist", HttpStatusCode.NotFound);
         public static Error NotFoundTemplateCV() => new("Not Found TemplateCV", HttpStatusCode.NotFound);
@@ -33,6 +34,7 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundSkill() => new("Not Found Skill", HttpStatusCode.NotFound);
         public static Error CantDelete() => new("Can't Delete", HttpStatusCode.BadRequest);
         public static Error CantCreate() => new("Can't Create", HttpStatusCode.BadRequest);
+        public static Error NoMoreSaveCVCount() => new("No More SaveCVCount", HttpStatusCode.BadRequest);
         public static Error NotConfirmEmail() => new("Email is Not Confirm",HttpStatusCode.BadRequest);
         public static Error AccountIsBand() => new("Account is Band",HttpStatusCode.BadRequest);
         public static Error CantUpdate() => new("Can't update", HttpStatusCode.BadRequest);
@@ -56,5 +58,7 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error CannotMoveToPreviousStage() => new("Không thể chuyển ứng viên về giai đoạn trước đó", HttpStatusCode.BadRequest);
         public static Error JobStageNotBelongToJob() => new("Giai đoạn được chỉ định không thuộc về công việc này", HttpStatusCode.BadRequest);
         public static Error InvalidCandidateStageStatus() => new("Ứng viên chưa được lên lịch hẹn. Cần lên lịch trước khi cập nhật kết quả", HttpStatusCode.BadRequest);
+        public static Error NotFoundHighlightJob() => new("Not Found HighlightJob", HttpStatusCode.NotFound);
+        public static Error NotFoundExtensionJob() => new("Not Found ExtensionJob", HttpStatusCode.NotFound);
     }
 }

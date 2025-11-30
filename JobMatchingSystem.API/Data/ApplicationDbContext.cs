@@ -38,6 +38,8 @@ namespace JobMatchingSystem.API.Data
         public DbSet<ServicePlan> ServicePlans { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<JobQuota> JobQuotas { get; set; }
+        public DbSet<HighlightJob> HighlightJobs { get; set; }
+        public DbSet<ExtensionJob> ExtensionJobs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -89,6 +91,30 @@ namespace JobMatchingSystem.API.Data
                       .WithOne(u => u.JobQuota)
                       .HasForeignKey<JobQuota>(j => j.RecruiterId)
                       .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // HighlightJob
+            modelBuilder.Entity<HighlightJob>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                // Mỗi HighlightJob thuộc về 1 Recruiter
+                entity.HasOne(e => e.Recruiter)
+                      .WithMany(u => u.HighlightJobs)
+                      .HasForeignKey(e => e.RecuiterId)
+                      .OnDelete(DeleteBehavior.NoAction); // Không xóa cascade khi xóa user
+            });
+
+            // ExtensionJob
+            modelBuilder.Entity<ExtensionJob>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                // Mỗi ExtensionJob thuộc về 1 Recruiter
+                entity.HasOne(e => e.Recruiter)
+                      .WithMany(u => u.ExtensionJobs)
+                      .HasForeignKey(e => e.RecuiterId)
+                      .OnDelete(DeleteBehavior.NoAction); // Không xóa cascade khi xóa user
             });
 
             // Identity junctions: chặn cascade delete để không tự động xóa UserRoles khi xóa Users/Roles
