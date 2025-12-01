@@ -162,7 +162,10 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.InvalidCandidateStageStatus("Không thể cập nhật lịch khi ứng viên đã hoàn thành hoặc thất bại"));
             }
             
-            candidateStage.ScheduleTime = request.Schedule;
+            // Update interview date and time fields
+            candidateStage.InterviewDate = request.InterviewDate;
+            candidateStage.InterviewStartTime = request.InterviewStartTime;
+            candidateStage.InterviewEndTime = request.InterviewEndTime;
             
             // Update interview location (allow empty string to clear the field)
             candidateStage.InterviewLocation = request.InterviewLocation;
@@ -204,7 +207,9 @@ namespace JobMatchingSystem.API.Services.Implementations
                     CandidateJobId = stage.CandidateJobId,
                     JobStageId = stage.JobStageId,
                     Status = stage.Status?.ToString(),
-                    ScheduleTime = stage.ScheduleTime,
+                    InterviewDate = stage.InterviewDate,
+                    InterviewStartTime = stage.InterviewStartTime,
+                    InterviewEndTime = stage.InterviewEndTime,
                     InterviewLocation = stage.InterviewLocation,
                     GoogleMeetLink = stage.GoogleMeetLink,
                     HiringManagerFeedback = stage.HiringManagerFeedback,
@@ -253,7 +258,9 @@ namespace JobMatchingSystem.API.Services.Implementations
                 CandidateJobId = candidateStage.CandidateJobId,
                 JobStageId = candidateStage.JobStageId,
                 Status = candidateStage.Status?.ToString(),
-                ScheduleTime = candidateStage.ScheduleTime,
+                InterviewDate = candidateStage.InterviewDate,
+                InterviewStartTime = candidateStage.InterviewStartTime,
+                InterviewEndTime = candidateStage.InterviewEndTime,
                 InterviewLocation = candidateStage.InterviewLocation,
                 GoogleMeetLink = candidateStage.GoogleMeetLink,
                 HiringManagerFeedback = candidateStage.HiringManagerFeedback,
@@ -327,7 +334,9 @@ namespace JobMatchingSystem.API.Services.Implementations
                     CandidateJobId = candidateStage.CandidateJobId,
                     JobStageId = candidateStage.JobStageId,
                     Status = candidateStage.Status.ToString(),
-                    ScheduleTime = candidateStage.ScheduleTime,
+                    InterviewDate = candidateStage.InterviewDate,
+                    InterviewStartTime = candidateStage.InterviewStartTime,
+                    InterviewEndTime = candidateStage.InterviewEndTime,
                     InterviewLocation = candidateStage.InterviewLocation,
                     GoogleMeetLink = candidateStage.GoogleMeetLink,
                     HiringManagerFeedback = candidateStage.HiringManagerFeedback,
@@ -363,10 +372,10 @@ namespace JobMatchingSystem.API.Services.Implementations
                             ? candidateResponses.OrderByDescending(x => x.User.FullName).ToList()
                             : candidateResponses.OrderBy(x => x.User.FullName).ToList();
                         break;
-                    case "scheduletime":
+                    case "interviewdate":
                         candidateResponses = isDecending 
-                            ? candidateResponses.OrderByDescending(x => x.ScheduleTime).ToList()
-                            : candidateResponses.OrderBy(x => x.ScheduleTime).ToList();
+                            ? candidateResponses.OrderByDescending(x => x.InterviewDate).ToList()
+                            : candidateResponses.OrderBy(x => x.InterviewDate).ToList();
                         break;
                     case "jobstagetitle":
                         candidateResponses = isDecending 
@@ -382,8 +391,8 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
             else
             {
-                // Default sort by ScheduleTime descending
-                candidateResponses = candidateResponses.OrderByDescending(x => x.ScheduleTime).ToList();
+                // Default sort by InterviewDate descending
+                candidateResponses = candidateResponses.OrderByDescending(x => x.InterviewDate).ToList();
             }
 
             // Apply pagination
