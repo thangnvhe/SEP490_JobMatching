@@ -126,6 +126,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 Location = request.Location,
                 ExperienceYear = request.ExperienceYear,
                 JobType = request.JobType,
+                PositionId = request.PositionId,
                 CompanyId = user.CompanyId.Value,
                 RecuiterId = user.Id,
                 VerifiedBy = null,
@@ -253,6 +254,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             job.Location = request.Location ?? job.Location;
             job.ExperienceYear = request.ExperienceYear ?? job.ExperienceYear;
             job.JobType = request.JobType ?? job.JobType;
+            job.PositionId = request.PositionId ?? job.PositionId;
 
             // Lấy giá trị hiện tại để tính toán
             DateTime currentOpenedAt = job.OpenedAt ?? DateTime.UtcNow;
@@ -512,6 +514,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 ExperienceYear = job.ExperienceYear,
                 JobType = job.JobType,
                 Status = job.Status.ToString(),
+                PositionId = job.PositionId,
                 ViewsCount = job.ViewsCount,
                 CompanyId = job.CompanyId,
                 RecuiterId = job.RecuiterId,
