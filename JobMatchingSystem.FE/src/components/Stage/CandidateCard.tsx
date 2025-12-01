@@ -167,15 +167,18 @@ function CandidateContent({
         )}
       </div>
 
-      {/* Schedule Time */}
-      {candidate.scheduleTime && (
+      {/* Interview Schedule */}
+      {candidate.interviewDate && candidate.interviewDate !== "0001-01-01" && (
         <div className="flex items-center gap-2 text-muted-foreground bg-muted/50 rounded px-2 py-1.5">
           <Calendar className="h-3.5 w-3.5 shrink-0" />
           <span className="text-xs">
-            {new Date(candidate.scheduleTime).toLocaleString("vi-VN", {
-              dateStyle: "short",
-              timeStyle: "short",
-            })}
+            {new Date(candidate.interviewDate).toLocaleDateString("vi-VN")}
+            {candidate.interviewStartTime && (
+              <> • {candidate.interviewStartTime.slice(0, 5)}</>
+            )}
+            {candidate.interviewEndTime && (
+              <> - {candidate.interviewEndTime.slice(0, 5)}</>
+            )}
           </span>
         </div>
       )}
