@@ -30,7 +30,6 @@ import {
   UserPlus,
   RefreshCcw,
   Eye,
-  Edit,
   Trash2,
   ChevronLeft,
   ChevronRight,
@@ -248,13 +247,6 @@ export function CompanyMembersPage() {
   const handleView = (member: User) => {
     setSelectedMember(member);
     setIsViewDialogOpen(true);
-  };
-
-  const handleEdit = (member: User) => {
-    // TODO: Implement edit functionality
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    console.log('Edit member:', member);
-    toast.info("Tính năng chỉnh sửa sẽ được cập nhật sớm");
   };
 
   const handleDelete = async (member: User) => {
