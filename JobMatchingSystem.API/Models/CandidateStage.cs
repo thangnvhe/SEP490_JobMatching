@@ -16,10 +16,16 @@ namespace JobMatchingSystem.API.Models
         public int CandidateJobId { get; set; }
         public int JobStageId { get; set; }
         public CandidateStageStatus? Status { get; set; } = CandidateStageStatus.Draft;
-        public DateTime? ScheduleTime { get; set; }
+        
+        // Interview scheduling fields
+        public DateOnly? InterviewDate { get; set; } // Ngày phỏng vấn
+        public TimeOnly? InterviewStartTime { get; set; } // Thời gian bắt đầu
+        public TimeOnly? InterviewEndTime { get; set; } // Thời gian kết thúc
+        
         public string? InterviewLocation { get; set; } // Địa chỉ nơi phỏng vấn
         public string? GoogleMeetLink { get; set; } // Link Google Meet cho phỏng vấn online
         public string? HiringManagerFeedback { get; set; } // Đánh giá của Hiring Manager
+        
         // Navigation properties
         [ForeignKey("CandidateJobId")]
         public virtual CandidateJob? CandidateJob { get; set; } = null;

@@ -9,7 +9,9 @@ namespace JobMatchingSystem.API.DTOs.Response
         public int CandidateJobId { get; set; }
         public int JobStageId { get; set; }
         public string? Status { get; set; }
-        public DateTime? ScheduleTime { get; set; }
+        public DateOnly? InterviewDate { get; set; }
+        public TimeOnly? InterviewStartTime { get; set; }
+        public TimeOnly? InterviewEndTime { get; set; }
         public string? InterviewLocation { get; set; }
         public string? GoogleMeetLink { get; set; }
         public string? HiringManagerFeedback { get; set; }

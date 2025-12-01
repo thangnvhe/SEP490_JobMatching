@@ -23,6 +23,7 @@ namespace JobMatchingSystem.API.DTOs.Request
         public int? experienceYearMax { get; set; }
         public string? jobType { get; set; }
         public JobStatus? status { get; set; }
+        public int? positionId { get; set; }
         public int? companyId { get; set; }
         public int? recuiterId { get; set; }
         public bool? isDeleted { get; set; }
