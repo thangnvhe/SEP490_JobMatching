@@ -291,7 +291,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             // Get all candidate stages for this hiring manager (all statuses)
             var candidateStages = await _unitOfWork.CandidateStageRepository.GetAllAsync();
             
-            // Filter by hiring manager only (remove Schedule status filter)
+            // Filter by hiring manager only
             var filteredCandidates = candidateStages
                 .Where(cs => cs.JobStage != null && cs.JobStage.HiringManagerId == hiringManagerId)
                 .ToList();

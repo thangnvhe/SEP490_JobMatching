@@ -104,7 +104,7 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpGet("hiring-manager")]
-        [Authorize]
+        [Authorize(Roles = "HiringManager")]
         public async Task<IActionResult> GetCandidatesForHiringManager(
             [FromQuery] int page = 1,
             [FromQuery] int size = 5,
