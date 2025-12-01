@@ -29,9 +29,13 @@ const scheduleFormSchema = z.object({
     selectedDate: z.date({
         required_error: "Vui lòng chọn ngày phỏng vấn",
     }),
-    selectedTime: z
+    startTime: z
         .string()
-        .min(1, "Vui lòng chọn giờ phỏng vấn")
+        .min(1, "Vui lòng chọn giờ bắt đầu")
+        .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Định dạng giờ không hợp lệ"),
+    endTime: z
+        .string()
+        .min(1, "Vui lòng chọn giờ kết thúc")
         .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Định dạng giờ không hợp lệ"),
     interviewLocation: z
         .string()
@@ -43,6 +47,15 @@ const scheduleFormSchema = z.object({
         .url("Link Google Meet không hợp lệ")
         .optional()
         .or(z.literal("")),
+}).refine((data) => {
+    // Validate that end time is after start time
+    if (data.startTime && data.endTime) {
+        return data.endTime > data.startTime;
+    }
+    return true;
+}, {
+    message: "Giờ kết thúc phải sau giờ bắt đầu",
+    path: ["endTime"],
 });
 
 type ScheduleFormData = z.infer<typeof scheduleFormSchema>;
@@ -53,17 +66,20 @@ const getCurrentTime = () => {
     return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 };
 
-// Helper to format date as local timezone string (not UTC)
-// Format: YYYY-MM-DDTHH:mm:ss (without Z, keeping local timezone)
+// Helper to get time 1 hour later as HH:mm string
+const getOneHourLater = () => {
+    const now = new Date();
+    now.setHours(now.getHours() + 1);
+    return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+};
+
+// Helper to format date as local timezone string (YYYY-MM-DD)
 const formatDateToLocalString = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const seconds = String(date.getSeconds()).padStart(2, "0");
     
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+    return `${year}-${month}-${day}`;
 };
 
 interface ScheduleInterviewDialogProps {
@@ -93,21 +109,24 @@ export function ScheduleInterviewDialog({
         resolver: zodResolver(scheduleFormSchema),
         defaultValues: {
             selectedDate: new Date(),
-            selectedTime: getCurrentTime(),
+            startTime: getCurrentTime(),
+            endTime: getOneHourLater(),
             interviewLocation: "",
             googleMeetLink: "",
         },
     });
 
     const selectedDate = watch("selectedDate");
-    const selectedTime = watch("selectedTime");
+    const startTime = watch("startTime");
+    const endTime = watch("endTime");
 
     const handleOpenChange = (newOpen: boolean) => {
         if (!newOpen) {
             // Reset form when closing
             reset({
                 selectedDate: new Date(),
-                selectedTime: getCurrentTime(),
+                startTime: getCurrentTime(),
+                endTime: getOneHourLater(),
                 interviewLocation: "",
                 googleMeetLink: "",
             });
@@ -121,17 +140,17 @@ export function ScheduleInterviewDialog({
         try {
             setIsLoading(true);
 
-            // Combine date and time
-            const [hours, minutes] = data.selectedTime.split(":").map(Number);
-            const scheduleDateTime = new Date(data.selectedDate);
-            scheduleDateTime.setHours(hours, minutes, 0, 0);
+            // Format date as YYYY-MM-DD
+            const interviewDate = formatDateToLocalString(data.selectedDate);
+            // Format times as HH:mm:ss
+            const interviewStartTime = `${data.startTime}:00`;
+            const interviewEndTime = `${data.endTime}:00`;
 
-            // Format as local timezone string (not UTC)
-            const scheduleDate = formatDateToLocalString(scheduleDateTime);
-            console.log(scheduleDate);
             await CandidateStageServices.updateScheduleCandidateStage(
                 candidate.id,
-                scheduleDate,
+                interviewDate,
+                interviewStartTime,
+                interviewEndTime,
                 data.interviewLocation?.trim() || "",
                 data.googleMeetLink?.trim() || ""
             );
@@ -175,76 +194,101 @@ export function ScheduleInterviewDialog({
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 mt-2">
-                    {/* Date and Time Picker */}
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Date Picker */}
-                        <div className="space-y-2">
-                            <Label className="flex items-center gap-2">
-                                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                                Ngày <span className="text-destructive">*</span>
-                            </Label>
-                            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        className={cn(
-                                            "w-full justify-between font-normal",
-                                            !selectedDate && "text-muted-foreground",
-                                            errors.selectedDate && "border-destructive"
-                                        )}
-                                    >
-                                        {selectedDate
-                                            ? selectedDate.toLocaleDateString("vi-VN")
-                                            : "Chọn ngày"}
-                                        <ChevronDown className="h-4 w-4 opacity-50" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                        mode="single"
-                                        selected={selectedDate}
-                                        onSelect={(date) => {
-                                            if (date) {
-                                                setValue("selectedDate", date, { shouldValidate: true });
-                                            }
-                                            setDatePickerOpen(false);
-                                        }}
-                                        disabled={(date) =>
-                                            date < new Date(new Date().setHours(0, 0, 0, 0))
+                    {/* Date Picker */}
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                            Ngày phỏng vấn <span className="text-destructive">*</span>
+                        </Label>
+                        <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className={cn(
+                                        "w-full justify-between font-normal",
+                                        !selectedDate && "text-muted-foreground",
+                                        errors.selectedDate && "border-destructive"
+                                    )}
+                                >
+                                    {selectedDate
+                                        ? selectedDate.toLocaleDateString("vi-VN")
+                                        : "Chọn ngày"}
+                                    <ChevronDown className="h-4 w-4 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={selectedDate}
+                                    onSelect={(date) => {
+                                        if (date) {
+                                            setValue("selectedDate", date, { shouldValidate: true });
                                         }
-                                        initialFocus
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                            {errors.selectedDate && (
+                                        setDatePickerOpen(false);
+                                    }}
+                                    disabled={(date) =>
+                                        date < new Date(new Date().setHours(0, 0, 0, 0))
+                                    }
+                                    initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                        {errors.selectedDate && (
+                            <p className="text-xs text-destructive">
+                                {errors.selectedDate.message}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Time Pickers */}
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Start Time Picker */}
+                        <div className="space-y-2">
+                            <Label htmlFor="start-time-picker" className="flex items-center gap-2">
+                                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                                Giờ bắt đầu <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="start-time-picker"
+                                type="time"
+                                value={startTime}
+                                onChange={(e) =>
+                                    setValue("startTime", e.target.value, { shouldValidate: true })
+                                }
+                                className={cn(
+                                    "w-full",
+                                    errors.startTime && "border-destructive"
+                                )}
+                            />
+                            {errors.startTime && (
                                 <p className="text-xs text-destructive">
-                                    {errors.selectedDate.message}
+                                    {errors.startTime.message}
                                 </p>
                             )}
                         </div>
 
-                        {/* Time Picker */}
+                        {/* End Time Picker */}
                         <div className="space-y-2">
-                            <Label htmlFor="time-picker" className="flex items-center gap-2">
+                            <Label htmlFor="end-time-picker" className="flex items-center gap-2">
                                 <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                                Giờ <span className="text-destructive">*</span>
+                                Giờ kết thúc <span className="text-destructive">*</span>
                             </Label>
                             <Input
-                                id="time-picker"
+                                id="end-time-picker"
                                 type="time"
-                                value={selectedTime}
+                                value={endTime}
                                 onChange={(e) =>
-                                    setValue("selectedTime", e.target.value, { shouldValidate: true })
+                                    setValue("endTime", e.target.value, { shouldValidate: true })
                                 }
                                 className={cn(
                                     "w-full",
-                                    errors.selectedTime && "border-destructive"
+                                    errors.endTime && "border-destructive"
                                 )}
                             />
-                            {errors.selectedTime && (
+                            {errors.endTime && (
                                 <p className="text-xs text-destructive">
-                                    {errors.selectedTime.message}
+                                    {errors.endTime.message}
                                 </p>
                             )}
                         </div>

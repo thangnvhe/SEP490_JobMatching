@@ -79,19 +79,11 @@ export function CandidateDetailDialog({
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString || dateString === "0001-01-01T00:00:00") return null;
+    if (!dateString || dateString === "0001-01-01T00:00:00" || dateString === "0001-01-01") return null;
     return new Date(dateString).toLocaleDateString("vi-VN", {
       year: "numeric",
       month: "long",
       day: "numeric",
-    });
-  };
-
-  const formatDateTime = (dateString: string | null) => {
-    if (!dateString) return null;
-    return new Date(dateString).toLocaleString("vi-VN", {
-      dateStyle: "medium",
-      timeStyle: "short",
     });
   };
 
@@ -166,11 +158,18 @@ export function CandidateDetailDialog({
               Thông tin lịch hẹn
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {candidate.scheduleTime && (
+              {candidate.interviewDate && candidate.interviewDate !== "0001-01-01" && (
+                <InfoItem
+                  icon={Calendar}
+                  label="Ngày phỏng vấn"
+                  value={formatDate(candidate.interviewDate) || "Chưa có"}
+                />
+              )}
+              {candidate.interviewStartTime && candidate.interviewStartTime !== "00:00:00" && (
                 <InfoItem
                   icon={Calendar}
                   label="Thời gian"
-                  value={formatDateTime(candidate.scheduleTime) || "Chưa có"}
+                  value={`${candidate.interviewStartTime.slice(0, 5)}${candidate.interviewEndTime && candidate.interviewEndTime !== "00:00:00" ? ` - ${candidate.interviewEndTime.slice(0, 5)}` : ""}`}
                 />
               )}
               {candidate.interviewLocation && (
@@ -198,7 +197,7 @@ export function CandidateDetailDialog({
                 </div>
               )}
             </div>
-            {!candidate.scheduleTime &&
+            {(!candidate.interviewDate || candidate.interviewDate === "0001-01-01") &&
               !candidate.interviewLocation &&
               !candidate.googleMeetLink && (
                 <p className="text-sm text-muted-foreground italic">
