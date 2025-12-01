@@ -29,6 +29,8 @@ namespace JobMatchingSystem.API.Models
 
         public int? SaveCVCount { get; set; } = 100;
 
+        public int? PositionId { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
 
@@ -52,8 +54,10 @@ namespace JobMatchingSystem.API.Models
         public virtual ICollection<CandidateTaxonomy> CandidateTaxonomies { get; set; } = new List<CandidateTaxonomy>();
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
         public virtual JobQuota? JobQuota { get; set; }
-
         public virtual ICollection<HighlightJob> HighlightJobs { get; set; } = new List<HighlightJob>();
         public virtual ICollection<ExtensionJob> ExtensionJobs { get; set; } = new List<ExtensionJob>();
+
+        [ForeignKey("PositionId")]
+        public virtual Position? Position { get; set; }
     }
 }
