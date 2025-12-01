@@ -12,6 +12,6 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task<CandidateStageDetailResponse?> GetDetailById(int id);
         Task<PagedResult<CandidateStageDetailResponse>> GetCandidatesForHiringManagerAsync(
             int hiringManagerId, int page = 1, int size = 5, string search = "", 
-            string sortBy = "", bool isDecending = false, string status = "");
+            string sortBy = "", bool isDecending = false, string status = "", bool isHistory = false);
     }
 }
