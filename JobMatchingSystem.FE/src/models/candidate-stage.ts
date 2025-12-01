@@ -6,11 +6,13 @@ export interface CandidateStage {
     candidateJobId: number;
     jobStageId: number;
     status: string;
-    scheduleTime: string;
+    interviewDate: string;
+    interviewStartTime: string;
+    interviewEndTime: string;
     interviewLocation: string;
     googleMeetLink: string;
     hiringManagerFeedback: string;
     jobStageTitle: string;
-    user: User;
-    cv: CV;
+    user: Pick<User, 'fullName' | 'email' | 'phoneNumber' | 'address' | 'avatarUrl' | 'birthday' | 'gender'>;
+    cv: Pick<CV, 'id' | 'name' | 'fileUrl'>;
 }

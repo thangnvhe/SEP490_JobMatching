@@ -7,13 +7,29 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { CheckCircle, XCircle, Loader2, ArrowRightLeft, MessageSquare } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import {
+    CheckCircle,
+    XCircle,
+    Loader2,
+    MessageSquare,
+    Calendar,
+    Clock,
+    MapPin,
+    Video,
+    Mail,
+    Phone,
+    FileText,
+    User,
+    ExternalLink,
+} from "lucide-react";
 import { toast } from "sonner";
 import { CandidateStageServices } from "@/services/candidate-stage.service";
 import { CandidateStage } from "@/models/candidate-stage";
@@ -34,25 +50,29 @@ const updateResultFormSchema = z.object({
 
 type UpdateResultFormData = z.infer<typeof updateResultFormSchema>;
 
-interface UpdateResultDialogProps {
+// Status badge mapping
+const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+    "Pending": { label: "Chờ phỏng vấn", variant: "secondary" },
+    "Pass": { label: "Đạt", variant: "default" },
+    "Fail": { label: "Không đạt", variant: "destructive" },
+    "Scheduled": { label: "Đã lên lịch", variant: "outline" },
+};
+
+interface InterviewScheduleDetailDialogProps {
     candidate: CandidateStage | null;
-    toStageId: number | null;
-    toStageName?: string;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onUpdateSuccess?: () => void;
     onCancel?: () => void;
 }
 
-export function UpdateResultDialog({
+export function InterviewScheduleDetailDialog({
     candidate,
-    toStageId,
-    toStageName,
     open,
     onOpenChange,
     onUpdateSuccess,
     onCancel,
-}: UpdateResultDialogProps) {
+}: InterviewScheduleDetailDialogProps) {
     const [isLoading, setIsLoading] = useState(false);
 
     const {
@@ -74,7 +94,6 @@ export function UpdateResultDialog({
 
     const handleOpenChange = (newOpen: boolean) => {
         if (!newOpen) {
-            // Reset form when closing
             reset({
                 result: undefined,
                 hiringManagerFeedback: "",
@@ -85,7 +104,7 @@ export function UpdateResultDialog({
     };
 
     const onSubmit = async (data: UpdateResultFormData) => {
-        if (!candidate || !toStageId) return;
+        if (!candidate) return;
 
         try {
             setIsLoading(true);
@@ -94,23 +113,17 @@ export function UpdateResultDialog({
                 candidate.id,
                 data.result,
                 data.hiringManagerFeedback.trim(),
-                toStageId
             );
 
             if (!response.isSuccess) {
-                // Close popup and revert drag/drop position
                 reset();
                 onOpenChange(false);
                 onCancel?.();
-                console.log(response);
-
-                // Show error messages
                 const errorMessage = response.errorMessages?.join(", ") || "Có lỗi xảy ra khi cập nhật kết quả";
                 toast.error(errorMessage);
                 return;
             }
 
-            // Success case
             toast.success(
                 data.result === "Pass"
                     ? "Ứng viên đã đạt vòng này!"
@@ -137,32 +150,192 @@ export function UpdateResultDialog({
         }
     };
 
+    // Format date helper
+    const formatDate = (dateStr: string) => {
+        if (!dateStr) return "Chưa có";
+        const date = new Date(dateStr);
+        return date.toLocaleDateString("vi-VN", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
+    };
+
+    // Format time helper
+    const formatTime = (timeStr: string) => {
+        if (!timeStr) return "";
+        return timeStr.substring(0, 5); // HH:mm
+    };
+
     if (!candidate) return null;
 
     const user = candidate.user;
+    const cv = candidate.cv;
+    const status = statusConfig[candidate.status] || { label: candidate.status, variant: "outline" as const };
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogContent className="sm:max-w-[520px]">
+            <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <ArrowRightLeft className="h-5 w-5 text-primary" />
-                        Cập nhật kết quả ứng viên
+                        <Calendar className="h-5 w-5 text-primary" />
+                        Chi tiết buổi phỏng vấn
                     </DialogTitle>
-                    <DialogDescription>
-                        Đánh giá ứng viên{" "}
-                        <span className="font-medium text-foreground">
-                            {user?.fullName || "Không có tên"}
-                        </span>
-                        {toStageName && (
-                            <>
-                                {" "}chuyển sang vòng tiếp theo
-                            </>
-                        )}
-                    </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 mt-2">
+                {/* Candidate Info Section */}
+                <div className="space-y-4">
+                    {/* Header with Avatar and Basic Info */}
+                    <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
+                        <Avatar className="h-16 w-16 border-2 border-background shadow">
+                            <AvatarImage src={user?.avatarUrl || ""} alt={user?.fullName || ""} />
+                            <AvatarFallback className="text-lg bg-primary text-primary-foreground">
+                                {user?.fullName?.charAt(0) || "U"}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="text-lg font-semibold truncate">
+                                    {user?.fullName || "Không có tên"}
+                                </h3>
+                            </div>
+                            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground flex-wrap">
+                                {user?.email && (
+                                    <span className="flex items-center gap-1">
+                                        <Mail className="h-3.5 w-3.5" />
+                                        {user.email}
+                                    </span>
+                                )}
+                                {user?.phoneNumber && (
+                                    <span className="flex items-center gap-1">
+                                        <Phone className="h-3.5 w-3.5" />
+                                        {user.phoneNumber}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Interview Details */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Date & Time */}
+                        <div className="space-y-3">
+                            <h4 className="font-medium flex items-center gap-2 text-sm">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                Thời gian phỏng vấn
+                            </h4>
+                            <div className="pl-6 space-y-1">
+                                <p className="text-sm">
+                                    {formatDate(candidate.interviewDate)}
+                                </p>
+                                {(candidate.interviewStartTime || candidate.interviewEndTime) && (
+                                    <p className="text-sm flex items-center gap-1 text-muted-foreground">
+                                        <Clock className="h-3.5 w-3.5" />
+                                        {formatTime(candidate.interviewStartTime)}
+                                        {candidate.interviewEndTime && ` - ${formatTime(candidate.interviewEndTime)}`}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Location */}
+                        <div className="space-y-3">
+                            <h4 className="font-medium flex items-center gap-2 text-sm">
+                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                Địa điểm
+                            </h4>
+                            <div className="pl-6">
+                                <p className="text-sm">
+                                    {candidate.interviewLocation || "Chưa có thông tin"}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Google Meet Link */}
+                        {candidate.googleMeetLink && (
+                            <div className="space-y-3">
+                                <h4 className="font-medium flex items-center gap-2 text-sm">
+                                    <Video className="h-4 w-4 text-muted-foreground" />
+                                    Google Meet
+                                </h4>
+                                <div className="pl-6">
+                                    <a
+                                        href={candidate.googleMeetLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm text-primary hover:underline flex items-center gap-1"
+                                    >
+                                        Tham gia cuộc họp
+                                        <ExternalLink className="h-3.5 w-3.5" />
+                                    </a>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* CV */}
+                        {cv && (
+                            <div className="space-y-3">
+                                <h4 className="font-medium flex items-center gap-2 text-sm">
+                                    <FileText className="h-4 w-4 text-muted-foreground" />
+                                    CV ứng viên
+                                </h4>
+                                <div className="pl-6">
+                                    {cv.fileUrl ? (
+                                        <a
+                                            href={cv.fileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-sm text-primary hover:underline flex items-center gap-1"
+                                        >
+                                            {cv.name || "Xem CV"}
+                                            <ExternalLink className="h-3.5 w-3.5" />
+                                        </a>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground">
+                                            {cv.name || "Chưa có CV"}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Additional User Info */}
+                        {user?.address && (
+                            <div className="space-y-3 sm:col-span-2">
+                                <h4 className="font-medium flex items-center gap-2 text-sm">
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    Địa chỉ ứng viên
+                                </h4>
+                                <div className="pl-6">
+                                    <p className="text-sm">{user.address}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Previous Feedback */}
+                    {candidate.hiringManagerFeedback && (
+                        <div className="space-y-2">
+                            <h4 className="font-medium flex items-center gap-2 text-sm">
+                                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                                Nhận xét trước đó
+                            </h4>
+                            <div className="pl-6 p-3 bg-muted/50 rounded-lg">
+                                <p className="text-sm whitespace-pre-wrap">
+                                    {candidate.hiringManagerFeedback}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <Separator className="my-4" />
+
+                {/* Update Result Form */}
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                    <h4 className="font-semibold text-base">Cập nhật kết quả phỏng vấn</h4>
+
                     {/* Result Selection */}
                     <div className="space-y-3">
                         <Label className="flex items-center gap-2">
@@ -290,7 +463,7 @@ export function UpdateResultDialog({
                             onClick={() => handleOpenChange(false)}
                             disabled={isLoading}
                         >
-                            Hủy
+                            Đóng
                         </Button>
                         <Button
                             type="submit"
@@ -312,7 +485,7 @@ export function UpdateResultDialog({
                                     ) : selectedResult === "Fail" ? (
                                         <XCircle className="h-4 w-4 mr-2" />
                                     ) : null}
-                                    Xác nhận
+                                    Cập nhật kết quả
                                 </>
                             )}
                         </Button>
