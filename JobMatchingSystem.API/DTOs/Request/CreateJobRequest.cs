@@ -45,6 +45,8 @@ namespace JobMatchingSystem.API.DTOs.Request
         [StringLength(50, ErrorMessage = "Job type must not exceed 50 characters")]
         public string JobType { get; set; }
 
+        public int? PositionId { get; set; }
+
         // Ngày mở đăng tuyển
         [Required(ErrorMessage = "Opened at date is required")]
         public DateTime? OpenedAt { get; set; }

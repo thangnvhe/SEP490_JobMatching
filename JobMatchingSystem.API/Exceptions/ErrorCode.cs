@@ -61,5 +61,6 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error InvalidCandidateStageStatus(string customMessage) => new(customMessage, HttpStatusCode.BadRequest);
         public static Error NotFoundHighlightJob() => new("Not Found HighlightJob", HttpStatusCode.NotFound);
         public static Error NotFoundExtensionJob() => new("Not Found ExtensionJob", HttpStatusCode.NotFound);
+        public static Error NotFoundPosition() => new("Not Found Position", HttpStatusCode.NotFound);
     }
 }
