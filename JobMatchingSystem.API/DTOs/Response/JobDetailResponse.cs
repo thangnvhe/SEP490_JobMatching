@@ -13,6 +13,7 @@
         public int? ExperienceYear { get; set; }
         public string JobType { get; set; }
         public string Status { get; set; }
+        public int? PositionId { get; set; }
         public int ViewsCount { get; set; }
         public int CompanyId { get; set; }
         public int RecuiterId { get; set; }

@@ -20,6 +20,7 @@ namespace JobMatchingSystem.API.Models
         public int? ExperienceYear { get; set; }
         public string JobType { get; set; }
         public JobStatus Status { get; set; } = JobStatus.Draft;
+        public int? PositionId { get; set; }
         public int ViewsCount { get; set; } = 0;
         public int CompanyId { get; set; }
         public int RecuiterId { get; set; }
@@ -47,5 +48,7 @@ namespace JobMatchingSystem.API.Models
         public virtual ICollection<JobStage> JobStages { get; set; } = new List<JobStage>();
         public virtual ICollection<JobTaxonomy> JobTaxonomies { get; set; } = new List<JobTaxonomy>();
 
+        [ForeignKey("PositionId")]
+        public virtual Position? Position { get; set; }
     }
 }

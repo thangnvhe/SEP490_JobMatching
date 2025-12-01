@@ -94,6 +94,8 @@ namespace JobMatchingSystem.API.Repositories.Implementations
 
             if (request.status.HasValue)
                 query = query.Where(j => j.Status == request.status.Value);
+            if (request.positionId.HasValue)
+                query = query.Where(j => j.PositionId == request.positionId.Value);
 
             // Thay đổi logic experience filtering
             if (request.experienceYearMin.HasValue && request.experienceYearMax.HasValue &&
