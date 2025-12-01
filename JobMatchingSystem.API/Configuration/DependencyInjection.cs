@@ -38,6 +38,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IHighlightJobRepository, HighlightJobRepository>();
             services.AddScoped<IExtensionJobRepository, ExtensionJobRepository>();
+            services.AddScoped<IPositionRepository, PositionRepository>();
             return services;
         }
 
@@ -86,6 +87,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IBlobStorageService, BlobStorageService>();
             services.AddScoped<IHighlightJobService, HighlightJobService>();
             services.AddScoped<IExtensionJobService, ExtensionJobService>();
+            services.AddScoped<IPositionService, PositionService>();
             return services;
         }
 

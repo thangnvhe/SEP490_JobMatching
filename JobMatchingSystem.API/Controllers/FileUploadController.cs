@@ -168,6 +168,8 @@ namespace JobMatchingSystem.API.Controllers
                 "company-logos" => new[] { ".jpg", ".jpeg", ".png", ".gif", ".svg" },
                 "cvs" => new[] { ".pdf", ".doc", ".docx" },
                 "licenses" => new[] { ".pdf", ".jpg", ".jpeg", ".png" },
+                "template-cvs" => new[] { ".html", ".htm" },
+                "template-cv-images" => new[] { ".jpg", ".jpeg", ".png", ".gif" },
                 _ => new string[] { }
             };
         }

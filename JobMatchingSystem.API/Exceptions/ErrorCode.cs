@@ -58,7 +58,9 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error CannotMoveToPreviousStage() => new("Không thể chuyển ứng viên về giai đoạn trước đó", HttpStatusCode.BadRequest);
         public static Error JobStageNotBelongToJob() => new("Giai đoạn được chỉ định không thuộc về công việc này", HttpStatusCode.BadRequest);
         public static Error InvalidCandidateStageStatus() => new("Ứng viên chưa được lên lịch hẹn. Cần lên lịch trước khi cập nhật kết quả", HttpStatusCode.BadRequest);
+        public static Error InvalidCandidateStageStatus(string customMessage) => new(customMessage, HttpStatusCode.BadRequest);
         public static Error NotFoundHighlightJob() => new("Not Found HighlightJob", HttpStatusCode.NotFound);
         public static Error NotFoundExtensionJob() => new("Not Found ExtensionJob", HttpStatusCode.NotFound);
+        public static Error NotFoundPosition() => new("Not Found Position", HttpStatusCode.NotFound);
     }
 }
