@@ -16,12 +16,15 @@ namespace JobMatchingSystem.API.Repositories.Implementations
 
         public async Task<CVEducation?> GetByIdAsync(int id)
         {
-            return await _context.CVEducations.FirstOrDefaultAsync(e => e.Id == id);
+            return await _context.CVEducations
+                                 .Include(e => e.EducationLevel)
+                                 .FirstOrDefaultAsync(e => e.Id == id);
         }
 
         public async Task<List<CVEducation>> GetByUserIdAsync(int userId)
         {
             return await _context.CVEducations
+                                 .Include(e => e.EducationLevel)
                                  .Where(e => e.UserId == userId)
                                  .ToListAsync();
         }

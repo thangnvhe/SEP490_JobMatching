@@ -21,6 +21,7 @@ namespace JobMatchingSystem.API.Models
         public string JobType { get; set; }
         public JobStatus Status { get; set; } = JobStatus.Draft;
         public int? PositionId { get; set; }
+        public int? EducationLevelId { get; set; }  // Yêu cầu bằng cấp tối thiểu
         public int ViewsCount { get; set; } = 0;
         public int CompanyId { get; set; }
         public int RecuiterId { get; set; }
@@ -42,13 +43,14 @@ namespace JobMatchingSystem.API.Models
         public virtual ApplicationUser? Recruiter { get; set; }
         [ForeignKey("VerifiedBy")]
         public virtual ApplicationUser? Admin { get; set; }
+        [ForeignKey("PositionId")]
+        public virtual Position? Position { get; set; }
+        [ForeignKey("EducationLevelId")]
+        public virtual EducationLevel? RequiredEducationLevel { get; set; }
         public virtual ICollection<CandidateJob> CandidateJobs { get; set; } = new List<CandidateJob>();
         public virtual ICollection<SavedJob> SavedJobs { get; set; } = new List<SavedJob>();
         public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
         public virtual ICollection<JobStage> JobStages { get; set; } = new List<JobStage>();
         public virtual ICollection<JobTaxonomy> JobTaxonomies { get; set; } = new List<JobTaxonomy>();
-
-        [ForeignKey("PositionId")]
-        public virtual Position? Position { get; set; }
     }
 }

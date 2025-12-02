@@ -41,6 +41,7 @@ namespace JobMatchingSystem.API.Data
         public DbSet<HighlightJob> HighlightJobs { get; set; }
         public DbSet<ExtensionJob> ExtensionJobs { get; set; }
         public DbSet<Position> Positions { get; set; }
+        public DbSet<EducationLevel> EducationLevels { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -205,6 +206,11 @@ namespace JobMatchingSystem.API.Data
                       .WithMany(e => e.AdminJobs)
                       .HasForeignKey(e => e.VerifiedBy)
                       .OnDelete(DeleteBehavior.NoAction);
+                      
+                entity.HasOne(e => e.RequiredEducationLevel)
+                      .WithMany(e => e.Jobs)
+                      .HasForeignKey(e => e.EducationLevelId)
+                      .OnDelete(DeleteBehavior.SetNull);
             });
 
             // ApplyJob
@@ -306,6 +312,11 @@ namespace JobMatchingSystem.API.Data
                       .WithMany(e=>e.CVEducations)
                       .HasForeignKey(e => e.UserId)
                       .OnDelete(DeleteBehavior.NoAction);
+                      
+                entity.HasOne(e => e.EducationLevel)
+                      .WithMany(e => e.CVEducations)
+                      .HasForeignKey(e => e.EducationLevelId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<CVProject>(entity =>
@@ -378,6 +389,16 @@ namespace JobMatchingSystem.API.Data
                         .HasForeignKey(e => e.JobStageId)
                         .OnDelete(DeleteBehavior.NoAction);
             });
+            
+            // Seed data cho EducationLevels
+            builder.Entity<EducationLevel>().HasData(
+                new EducationLevel { Id = 1, LevelName = "Cao đẳng", RankScore = 1, IsActive = true },
+                new EducationLevel { Id = 2, LevelName = "Đại học", RankScore = 2, IsActive = true },
+                new EducationLevel { Id = 3, LevelName = "Kỹ sư", RankScore = 2, IsActive = true },
+                new EducationLevel { Id = 4, LevelName = "Cử nhân", RankScore = 2, IsActive = true },
+                new EducationLevel { Id = 5, LevelName = "Thạc sĩ", RankScore = 3, IsActive = true },
+                new EducationLevel { Id = 6, LevelName = "Tiến sĩ", RankScore = 4, IsActive = true }
+            );
         }
     }
 }

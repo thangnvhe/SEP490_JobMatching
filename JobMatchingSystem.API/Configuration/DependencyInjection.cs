@@ -88,6 +88,8 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IHighlightJobService, HighlightJobService>();
             services.AddScoped<IExtensionJobService, ExtensionJobService>();
             services.AddScoped<IPositionService, PositionService>();
+            services.AddScoped<IEducationLevelService, EducationLevelService>();
+            services.AddScoped<IJobMatchingService, JobMatchingService>();
             return services;
         }
 
