@@ -286,15 +286,24 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<PagedResult<CandidateStageDetailResponse>> GetCandidatesForHiringManagerAsync(
             int hiringManagerId, int page = 1, int size = 5, string search = "", 
-            string sortBy = "", bool isDecending = false, string status = "")
+            string sortBy = "", bool isDecending = false, string status = "", bool isHistory = false)
         {
             // Get all candidate stages for this hiring manager (all statuses)
             var candidateStages = await _unitOfWork.CandidateStageRepository.GetAllAsync();
             
-            // Filter by hiring manager only
+            // Filter by hiring manager
             var filteredCandidates = candidateStages
                 .Where(cs => cs.JobStage != null && cs.JobStage.HiringManagerId == hiringManagerId)
                 .ToList();
+
+            // If isHistory is true, only get candidates with Passed or Failed status
+            if (isHistory)
+            {
+                filteredCandidates = filteredCandidates
+                    .Where(cs => cs.Status == Enums.CandidateStageStatus.Passed || 
+                                cs.Status == Enums.CandidateStageStatus.Failed)
+                    .ToList();
+            }
 
             var candidateResponses = new List<CandidateStageDetailResponse>();
 

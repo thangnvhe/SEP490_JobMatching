@@ -111,7 +111,8 @@ namespace JobMatchingSystem.API.Controllers
             [FromQuery] string search = "",
             [FromQuery] string sortBy = "",
             [FromQuery] bool isDecending = false,
-            [FromQuery] string status = "")
+            [FromQuery] string status = "",
+            [FromQuery] bool isHistory = false)
         {
             // Get current user ID from JWT claims
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -126,7 +127,7 @@ namespace JobMatchingSystem.API.Controllers
             }
             
             var candidates = await _candidateStageService.GetCandidatesForHiringManagerAsync(
-                hiringManagerId, page, size, search, sortBy, isDecending, status);
+                hiringManagerId, page, size, search, sortBy, isDecending, status, isHistory);
             
             return Ok(APIResponse<PagedResult<CandidateStageDetailResponse>>.Builder()
                 .WithResult(candidates)
