@@ -43,7 +43,9 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 Id = e.Id,
                 SchoolName = e.SchoolName,
-                Degree = e.Degree,
+                EducationLevelId = e.EducationLevelId,
+                EducationLevelName = e.EducationLevel?.LevelName ?? "Không xác định",
+                RankScore = e.EducationLevel?.RankScore ?? 0,
                 Major = e.Major,
                 StartDate = e.StartDate,
                 EndDate = e.EndDate,
@@ -57,7 +59,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 UserId = userId,
                 SchoolName = request.SchoolName,
-                Degree = request.Degree,
+                EducationLevelId = request.EducationLevelId,
                 Major = request.Major,
                 StartDate = request.StartDate,
                 EndDate = request.EndDate,
@@ -80,7 +82,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.NotFoundCVEducation());
 
             education.SchoolName = request.SchoolName;
-            education.Degree = request.Degree;
+            education.EducationLevelId = request.EducationLevelId;
             education.Major = request.Major;
             education.StartDate = request.StartDate;
             education.EndDate = request.EndDate;
