@@ -2,6 +2,7 @@ using JobMatchingSystem.API.Models;
 
 namespace JobMatchingSystem.API.DTOs.Response
 {
+    // Internal DTO for job matching calculations
     public class JobMatchingResult
     {
         public int JobId { get; set; }
