@@ -86,6 +86,12 @@ export function ClientHeader() {
             >
               Danh Sách Công Ty
             </Link>
+            <Link
+              to="/pricing"
+              className="text-sm font-medium transition-colors hover:text-green-600 outline-none focus:outline-none focus-visible:outline-none"
+            >
+              Bảng Giá
+            </Link>
             {!isAuthenticated && (
               <Link
                 to="/contact-recruiter"
@@ -163,6 +169,9 @@ export function ClientHeader() {
               <Link to="/companies" className="text-sm font-medium transition-colors hover:text-primary">
                 Danh Sách Công Ty
               </Link>
+              <Link to="/pricing" className="text-sm font-medium transition-colors hover:text-primary">
+                Bảng Giá
+              </Link>
               {!isAuthenticated && (
                 <Link to="/contact-recruiter" className="text-sm font-medium transition-colors hover:text-primary">
                   Nhà tuyển dụng
@@ -232,5 +241,3 @@ export function ClientHeader() {
     </header>
   );
 }
-
-
