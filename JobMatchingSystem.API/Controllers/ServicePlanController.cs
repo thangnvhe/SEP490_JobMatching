@@ -20,6 +20,18 @@ namespace JobMatchingSystem.API.Controllers
             _servicePlanService = servicePlanService;
         }
 
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllNoPaging()
+        {
+            var result = await _servicePlanService.GetAllAsync();
+            
+            return Ok(APIResponse<List<ServicePlanResponse>>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(result)
+                .Build());
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10, 
             [FromQuery] string sortBy = "", [FromQuery] bool isDescending = false, [FromQuery] string search = "")
