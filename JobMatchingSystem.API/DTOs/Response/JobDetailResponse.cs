@@ -13,7 +13,6 @@
         public int? ExperienceYear { get; set; }
         public string JobType { get; set; }
         public string Status { get; set; }
-        public int? PositionId { get; set; }
         public int ViewsCount { get; set; }
         public int CompanyId { get; set; }
         public int RecuiterId { get; set; }
@@ -29,5 +28,6 @@
         public bool IsApply { get; set; } = false;
         public bool IsSave { get; set; } = false;
         public int ApplyCount { get; set; } = 0;
+        public int? PositionId { get; set; }
     }
 }

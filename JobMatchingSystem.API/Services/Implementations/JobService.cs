@@ -401,15 +401,68 @@ namespace JobMatchingSystem.API.Services.Implementations
             var job = await _context.Jobs
                 .Include(j => j.JobTaxonomies)
                 .ThenInclude(jt => jt.Taxonomy)
+                .Include(j => j.Company)
+                .Include(j => j.Position)
                 .FirstOrDefaultAsync(j => j.JobId == jobId);
 
             if (job == null)
                 throw new AppException(ErrorCode.NotFoundJob());
 
+            // Optimize: Load all related data first before updating view count
+            var applyCount = await _context.CandidateJobs.CountAsync(cj => cj.JobId == jobId);
+            
+            bool isApply = false, isSave = false, isReport = false;
+            
+            if (userId.HasValue)
+            {
+                // Execute user-specific queries sequentially to avoid concurrency issues
+                isApply = await _context.CandidateJobs
+                    .Include(cj => cj.CVUpload)
+                    .AnyAsync(cj => cj.JobId == jobId && cj.CVUpload != null && cj.CVUpload.UserId == userId.Value);
+
+                isSave = await _context.SavedJobs
+                    .AnyAsync(sj => sj.JobId == jobId && sj.UserId == userId.Value);
+
+                isReport = await _context.Reports
+                    .AnyAsync(jr => jr.JobId == jobId && jr.ReporterId == userId.Value);
+            }
+
+            // Only increment view count after all read operations are completed
             job.ViewsCount += 1;
             await _context.SaveChangesAsync();
 
-            return await CreateJobDetailResponseAsync(job, userId);
+            return new JobDetailResponse
+            {
+                JobId = job.JobId,
+                Title = job.Title,
+                Description = job.Description,
+                Requirements = job.Requirements,
+                Benefits = job.Benefits,
+                SalaryMin = job.SalaryMin,
+                SalaryMax = job.SalaryMax,
+                Location = job.Location,
+                ExperienceYear = job.ExperienceYear,
+                JobType = job.JobType,
+                Status = job.Status.ToString(),
+                PositionId = job.PositionId,
+                ViewsCount = job.ViewsCount,
+                CompanyId = job.CompanyId,
+                RecuiterId = job.RecuiterId,
+                VerifiedBy = job.VerifiedBy,
+                CreatedAt = job.CreatedAt,
+                OpenedAt = job.OpenedAt,
+                ExpiredAt = job.ExpiredAt,
+                IsDeleted = job.IsDeleted,
+                Taxonomies = job.JobTaxonomies.Select(t => new TaxonomyResponse
+                {
+                    Id = t.TaxonomyId,
+                    Name = t.Taxonomy?.Name ?? ""
+                }).ToList(),
+                ApplyCount = applyCount,
+                IsApply = isApply,
+                IsSave = isSave,
+                IsReport = isReport
+            };
         }
 
         public async Task DeleteJobAsync(int jobId, int userId)
@@ -431,7 +484,7 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<PagedResult<JobDetailResponse>> GetJobsPagedAsync(GetJobPagedRequest request)
         {
-            var jobs = await _jobRepository.GetAllJobsPaged(request);
+            var (jobs, totalCount) = await _jobRepository.GetAllJobsPagedWithCount(request);
 
             if (jobs == null || !jobs.Any())
             {
@@ -442,29 +495,59 @@ namespace JobMatchingSystem.API.Services.Implementations
                 };
             }
 
-            var pagedJobs = jobs
-                .Skip((request.page - 1) * request.size)
-                .Take(request.size)
-                .ToList();
-
-            var jobDtos = new List<JobDetailResponse>();
+            // Batch load all related data to avoid N+1 queries
+            var jobIds = jobs.Select(j => j.JobId).ToList();
             
-            foreach (var job in pagedJobs)
+            // Batch load apply counts
+            var applyCounts = await _context.CandidateJobs
+                .Where(cj => jobIds.Contains(cj.JobId))
+                .GroupBy(cj => cj.JobId)
+                .Select(g => new { JobId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.JobId, x => x.Count);
+
+            var jobDtos = jobs.Select(job => new JobDetailResponse
             {
-                var dto = await CreateJobDetailResponseAsync(job, null);
-                jobDtos.Add(dto);
-            }
+                JobId = job.JobId,
+                Title = job.Title,
+                Description = job.Description,
+                Requirements = job.Requirements,
+                Benefits = job.Benefits,
+                SalaryMin = job.SalaryMin,
+                SalaryMax = job.SalaryMax,
+                Location = job.Location,
+                ExperienceYear = job.ExperienceYear,
+                JobType = job.JobType,
+                Status = job.Status.ToString(),
+                PositionId = job.PositionId,
+                ViewsCount = job.ViewsCount,
+                CompanyId = job.CompanyId,
+                RecuiterId = job.RecuiterId,
+                VerifiedBy = job.VerifiedBy,
+                CreatedAt = job.CreatedAt,
+                OpenedAt = job.OpenedAt,
+                ExpiredAt = job.ExpiredAt,
+                IsDeleted = job.IsDeleted,
+                Taxonomies = job.JobTaxonomies.Select(t => new TaxonomyResponse
+                {
+                    Id = t.TaxonomyId,
+                    Name = t.Taxonomy?.Name ?? ""
+                }).ToList(),
+                ApplyCount = applyCounts.GetValueOrDefault(job.JobId, 0),
+                IsApply = false,
+                IsSave = false,
+                IsReport = false
+            }).ToList();
 
             return new PagedResult<JobDetailResponse>
             {
                 Items = jobDtos,
-                pageInfo = new PageInfo(jobs.Count, request.page, request.size, request.sortBy ?? "", request.isDescending)
+                pageInfo = new PageInfo(totalCount, request.page, request.size, request.sortBy ?? "", request.isDescending)
             };
         }
 
         public async Task<PagedResult<JobDetailResponse>> GetJobsPagedAsync(GetJobPagedRequest request, int? userId)
         {
-            var jobs = await _jobRepository.GetAllJobsPaged(request);
+            var (jobs, totalCount) = await _jobRepository.GetAllJobsPagedWithCount(request);
 
             if (jobs == null || !jobs.Any())
             {
@@ -475,23 +558,85 @@ namespace JobMatchingSystem.API.Services.Implementations
                 };
             }
 
-            var pagedJobs = jobs
-                .Skip((request.page - 1) * request.size)
-                .Take(request.size)
-                .ToList();
-
-            var jobDtos = new List<JobDetailResponse>();
+            // Batch load all related data to avoid N+1 queries
+            var jobIds = jobs.Select(j => j.JobId).ToList();
             
-            foreach (var job in pagedJobs)
+            // Batch load apply counts
+            var applyCounts = await _context.CandidateJobs
+                .Where(cj => jobIds.Contains(cj.JobId))
+                .GroupBy(cj => cj.JobId)
+                .Select(g => new { JobId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.JobId, x => x.Count);
+
+            // Batch load user-specific data if userId is provided
+            Dictionary<int, bool> userApplied = new();
+            Dictionary<int, bool> userSaved = new();
+            Dictionary<int, bool> userReported = new();
+
+            if (userId.HasValue)
             {
-                var dto = await CreateJobDetailResponseAsync(job, userId);
-                jobDtos.Add(dto);
+                // Batch check user applications
+                var appliedJobIds = await _context.CandidateJobs
+                    .Include(cj => cj.CVUpload)
+                    .Where(cj => jobIds.Contains(cj.JobId) && 
+                                cj.CVUpload != null && 
+                                cj.CVUpload.UserId == userId.Value)
+                    .Select(cj => cj.JobId)
+                    .ToListAsync();
+                userApplied = appliedJobIds.ToDictionary(id => id, _ => true);
+
+                // Batch check user saved jobs
+                var savedJobIds = await _context.SavedJobs
+                    .Where(sj => jobIds.Contains(sj.JobId) && sj.UserId == userId.Value)
+                    .Select(sj => sj.JobId)
+                    .ToListAsync();
+                userSaved = savedJobIds.ToDictionary(id => id, _ => true);
+
+                // Batch check user reports
+                var reportedJobIds = await _context.Reports
+                    .Where(r => jobIds.Contains(r.JobId) && r.ReporterId == userId.Value)
+                    .Select(r => r.JobId)
+                    .ToListAsync();
+                userReported = reportedJobIds.ToDictionary(id => id, _ => true);
             }
+
+            var jobDtos = jobs.Select(job => new JobDetailResponse
+            {
+                JobId = job.JobId,
+                Title = job.Title,
+                Description = job.Description,
+                Requirements = job.Requirements,
+                Benefits = job.Benefits,
+                SalaryMin = job.SalaryMin,
+                SalaryMax = job.SalaryMax,
+                Location = job.Location,
+                ExperienceYear = job.ExperienceYear,
+                JobType = job.JobType,
+                Status = job.Status.ToString(),
+                PositionId = job.PositionId,
+                ViewsCount = job.ViewsCount,
+                CompanyId = job.CompanyId,
+                RecuiterId = job.RecuiterId,
+                VerifiedBy = job.VerifiedBy,
+                CreatedAt = job.CreatedAt,
+                OpenedAt = job.OpenedAt,
+                ExpiredAt = job.ExpiredAt,
+                IsDeleted = job.IsDeleted,
+                Taxonomies = job.JobTaxonomies.Select(t => new TaxonomyResponse
+                {
+                    Id = t.TaxonomyId,
+                    Name = t.Taxonomy?.Name ?? ""
+                }).ToList(),
+                ApplyCount = applyCounts.GetValueOrDefault(job.JobId, 0),
+                IsApply = userId.HasValue ? userApplied.GetValueOrDefault(job.JobId, false) : false,
+                IsSave = userId.HasValue ? userSaved.GetValueOrDefault(job.JobId, false) : false,
+                IsReport = userId.HasValue ? userReported.GetValueOrDefault(job.JobId, false) : false
+            }).ToList();
 
             return new PagedResult<JobDetailResponse>
             {
                 Items = jobDtos,
-                pageInfo = new PageInfo(jobs.Count, request.page, request.size, request.sortBy ?? "", request.isDescending)
+                pageInfo = new PageInfo(totalCount, request.page, request.size, request.sortBy ?? "", request.isDescending)
             };
         }
 

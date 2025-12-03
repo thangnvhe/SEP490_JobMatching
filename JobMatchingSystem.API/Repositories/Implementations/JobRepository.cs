@@ -32,11 +32,13 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<Job>> GetAllJobsPaged(GetJobPagedRequest request)
+        public async Task<(List<Job> jobs, int totalCount)> GetAllJobsPagedWithCount(GetJobPagedRequest request)
         {
             IQueryable<Job> query = _context.Jobs
                 .Include(j => j.JobTaxonomies)
                     .ThenInclude(jt => jt.Taxonomy)
+                .Include(j => j.Company)
+                .Include(j => j.Position)
                 .AsQueryable();
 
             // Tìm kiếm tổng quát (title, description, location)
@@ -157,7 +159,22 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                            .ThenByDescending(j => j.JobId); // default descending
             }
 
-            return await query.ToListAsync();
+            // Get total count before pagination
+            var totalCount = await query.CountAsync();
+            
+            // Apply pagination
+            var jobs = await query
+                .Skip((request.page - 1) * request.size)
+                .Take(request.size)
+                .ToListAsync();
+                
+            return (jobs, totalCount);
+        }
+
+        public async Task<List<Job>> GetAllJobsPaged(GetJobPagedRequest request)
+        {
+            var (jobs, _) = await GetAllJobsPagedWithCount(request);
+            return jobs;
         }
     }
 }

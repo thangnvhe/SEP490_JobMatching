@@ -7,7 +7,8 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
     {
         Task CreateAsync(Job job);
         Task<Job?> GetById(int id);
-        Task<List<Job>> GetAllJobsPaged(GetJobPagedRequest request);
         Task UpdateAsync(Job job);
+        Task<List<Job>> GetAllJobsPaged(GetJobPagedRequest request);
+        Task<(List<Job> jobs, int totalCount)> GetAllJobsPagedWithCount(GetJobPagedRequest request);
     }
 }
