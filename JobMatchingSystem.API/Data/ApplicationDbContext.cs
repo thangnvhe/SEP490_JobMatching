@@ -198,6 +198,32 @@ namespace JobMatchingSystem.API.Data
                       .WithMany(e => e.Jobs)
                       .HasForeignKey(e => e.CompanyId)
                       .OnDelete(DeleteBehavior.NoAction);
+
+                // Performance indexes for Job queries
+                entity.HasIndex(e => e.Status)
+                      .HasDatabaseName("IX_Jobs_Status");
+                entity.HasIndex(e => e.CompanyId)
+                      .HasDatabaseName("IX_Jobs_CompanyId");
+                entity.HasIndex(e => e.RecuiterId)
+                      .HasDatabaseName("IX_Jobs_RecuiterId");
+                entity.HasIndex(e => e.PositionId)
+                      .HasDatabaseName("IX_Jobs_PositionId");
+                entity.HasIndex(e => e.IsDeleted)
+                      .HasDatabaseName("IX_Jobs_IsDeleted");
+                entity.HasIndex(e => e.CreatedAt)
+                      .HasDatabaseName("IX_Jobs_CreatedAt");
+                entity.HasIndex(e => e.IsHighlighted)
+                      .HasDatabaseName("IX_Jobs_IsHighlighted");
+                entity.HasIndex(e => new { e.Status, e.IsDeleted, e.IsHighlighted })
+                      .HasDatabaseName("IX_Jobs_Status_IsDeleted_IsHighlighted");
+                entity.HasIndex(e => new { e.SalaryMin, e.SalaryMax })
+                      .HasDatabaseName("IX_Jobs_Salary_Range");
+                entity.HasIndex(e => e.Title)
+                      .HasDatabaseName("IX_Jobs_Title");
+                entity.HasIndex(e => e.Location)
+                      .HasDatabaseName("IX_Jobs_Location");
+                entity.HasIndex(e => e.ExperienceYear)
+                      .HasDatabaseName("IX_Jobs_ExperienceYear");
                 entity.HasOne(e => e.Recruiter)
                       .WithMany(e => e.CreatedJobs)
                       .HasForeignKey(e => e.RecuiterId)
@@ -222,9 +248,15 @@ namespace JobMatchingSystem.API.Data
                       .HasForeignKey(e => e.JobId)
                       .OnDelete(DeleteBehavior.NoAction);
                 entity.HasOne(e => e.CVUpload)
-                        .WithMany(e => e.CandidateJobs)
-                        .HasForeignKey(e => e.CVId)
-                        .OnDelete(DeleteBehavior.Cascade);
+                      .WithMany(e => e.CandidateJobs)
+                      .HasForeignKey(e => e.CVId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                // Performance indexes for CandidateJob queries
+                entity.HasIndex(e => e.JobId)
+                      .HasDatabaseName("IX_CandidateJobs_JobId");
+                entity.HasIndex(e => e.CVId)
+                      .HasDatabaseName("IX_CandidateJobs_CVId");
             });
 
             // SavedJob
@@ -239,6 +271,12 @@ namespace JobMatchingSystem.API.Data
                       .WithMany(e => e.SavedJobs)
                       .HasForeignKey(e => e.JobId)
                       .OnDelete(DeleteBehavior.NoAction);
+                      
+                // Additional performance indexes
+                entity.HasIndex(e => e.UserId)
+                      .HasDatabaseName("IX_SavedJobs_UserId");
+                entity.HasIndex(e => e.JobId)
+                      .HasDatabaseName("IX_SavedJobs_JobId");
             });
 
             // SavedCV
@@ -368,6 +406,14 @@ namespace JobMatchingSystem.API.Data
                         .WithMany(e => e.VerifiedReports)
                         .HasForeignKey(e => e.VerifiedId)
                         .OnDelete(DeleteBehavior.NoAction);
+                        
+                // Performance indexes for Report queries
+                entity.HasIndex(e => e.JobId)
+                      .HasDatabaseName("IX_Reports_JobId");
+                entity.HasIndex(e => e.ReporterId)
+                      .HasDatabaseName("IX_Reports_ReporterId");
+                entity.HasIndex(e => new { e.JobId, e.ReporterId })
+                      .HasDatabaseName("IX_Reports_JobId_ReporterId");
             });
 
             builder.Entity<JobStage>(entity =>
