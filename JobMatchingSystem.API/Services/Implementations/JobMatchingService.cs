@@ -18,72 +18,6 @@ namespace JobMatchingSystem.API.Services.Implementations
         {
             _context = context;
         }
-
-        public async Task<List<JobMatchingResult>> FindMatchingJobsAsync(int candidateId, int limit = 10)
-        {
-            var candidate = await GetCandidateWithDetailsAsync(candidateId);
-            if (candidate == null) return new List<JobMatchingResult>();
-
-            var activeJobs = await _context.Jobs
-                .Include(j => j.Company)
-                .Include(j => j.Position)
-                .Include(j => j.RequiredEducationLevel)
-                .Include(j => j.JobTaxonomies)
-                    .ThenInclude(jt => jt.Taxonomy)
-                .Where(j => j.Status == Enums.JobStatus.Opened && !j.IsDeleted)
-                .ToListAsync();
-
-            var matchingResults = new List<JobMatchingResult>();
-
-            foreach (var job in activeJobs)
-            {
-                var matchingResult = await CalculateMatchingScoreInternalAsync(candidate, job);
-                if (matchingResult != null)
-                {
-                    matchingResults.Add(matchingResult);
-                }
-            }
-
-            return matchingResults
-                .OrderByDescending(r => r.TotalScore)
-                .Take(limit)
-                .ToList();
-        }
-
-        public async Task<List<JobMatchingResult>> FindMatchingCandidatesAsync(int jobId, int limit = 10)
-        {
-            var job = await GetJobWithDetailsAsync(jobId);
-            if (job == null) return new List<JobMatchingResult>();
-
-            var activeCandidates = await _context.Users
-                .Include(u => u.Position)
-                .Include(u => u.CVEducations)
-                    .ThenInclude(e => e.EducationLevel)
-                .Include(u => u.CandidateTaxonomies)
-                    .ThenInclude(ct => ct.Taxonomy)
-                .Include(u => u.CVExperiences)
-                .Include(u => u.CVCertificates)
-                .Include(u => u.CVAchievements)
-                .Where(u => u.IsActive)
-                .ToListAsync();
-
-            var matchingResults = new List<JobMatchingResult>();
-
-            foreach (var candidate in activeCandidates)
-            {
-                var matchingResult = await CalculateMatchingScoreInternalAsync(candidate, job);
-                if (matchingResult != null)
-                {
-                    matchingResults.Add(matchingResult);
-                }
-            }
-
-            return matchingResults
-                .OrderByDescending(r => r.TotalScore)
-                .Take(limit)
-                .ToList();
-        }
-
         public async Task<JobMatchingResult?> CalculateMatchingScoreAsync(int candidateId, int jobId)
         {
             var candidate = await GetCandidateWithDetailsAsync(candidateId);
@@ -153,7 +87,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 .ToList();
         }
 
-        public async Task<List<JobMatchingResult>> SearchCandidatesWithMatchingAsync(int jobId, 
+        public async Task<List<CandidateMatchingResult>> SearchCandidatesWithMatchingAsync(int jobId, 
             int? minExperience = null, 
             int? maxExperience = null, 
             List<int>? requiredSkills = null, 
@@ -162,48 +96,69 @@ namespace JobMatchingSystem.API.Services.Implementations
             int size = 10)
         {
             var job = await GetJobWithDetailsAsync(jobId);
-            if (job == null) return new List<JobMatchingResult>();
+            if (job == null) return new List<CandidateMatchingResult>();
 
-            var query = _context.Users
-                .Include(u => u.Position)
-                .Include(u => u.CVEducations)
-                    .ThenInclude(e => e.EducationLevel)
-                .Include(u => u.CandidateTaxonomies)
-                    .ThenInclude(ct => ct.Taxonomy)
-                .Include(u => u.CVExperiences)
-                .Include(u => u.CVCertificates)
-                .Include(u => u.CVAchievements)
-                .Where(u => u.IsActive);
+            // Get candidates with CV and apply filters
+            var candidatesWithCV = await _context.CVUploads
+                .Include(cv => cv.User)
+                    .ThenInclude(u => u.CandidateTaxonomies)
+                        .ThenInclude(ct => ct.Taxonomy)
+                .Include(cv => cv.User.Position)
+                .Where(cv => cv.IsPrimary == true && cv.User.IsActive)
+                .Select(cv => cv.User)
+                .Distinct()
+                .ToListAsync();
 
-            // Apply filters
-            if (minExperience.HasValue)
+            // Apply experience filter
+            if (minExperience.HasValue || maxExperience.HasValue)
             {
-                query = query.Where(u => u.CVExperiences.Any(e => 
-                    EF.Functions.DateDiffYear(e.StartDate, e.EndDate ?? DateTime.Now) >= minExperience.Value));
+                var filteredByExperience = new List<ApplicationUser>();
+                foreach (var candidate in candidatesWithCV)
+                {
+                    var experiences = await _context.CVExperiences
+                        .Where(exp => exp.UserId == candidate.Id)
+                        .ToListAsync();
+
+                    if (experiences.Any(exp =>
+                        (!minExperience.HasValue || CalculateYearsOfExperience(exp.StartDate, exp.EndDate) >= minExperience.Value) &&
+                        (!maxExperience.HasValue || CalculateYearsOfExperience(exp.StartDate, exp.EndDate) <= maxExperience.Value)))
+                    {
+                        filteredByExperience.Add(candidate);
+                    }
+                }
+                candidatesWithCV = filteredByExperience;
             }
 
-            if (maxExperience.HasValue)
+            // Apply skills filter
+            if (requiredSkills != null && requiredSkills.Any())
             {
-                query = query.Where(u => u.CVExperiences.Sum(e => 
-                    EF.Functions.DateDiffYear(e.StartDate, e.EndDate ?? DateTime.Now)) <= maxExperience.Value);
+                candidatesWithCV = candidatesWithCV
+                    .Where(c => c.CandidateTaxonomies.Any(ct => requiredSkills.Contains(ct.TaxonomyId)))
+                    .ToList();
             }
 
-            if (requiredSkills?.Any() == true)
-            {
-                query = query.Where(u => u.CandidateTaxonomies.Any(ct => requiredSkills.Contains(ct.TaxonomyId)));
-            }
-
+            // Apply education filter
             if (educationLevelId.HasValue)
             {
-                query = query.Where(u => u.CVEducations.Any(e => e.EducationLevelId == educationLevelId.Value));
+                var filteredByEducation = new List<ApplicationUser>();
+                foreach (var candidate in candidatesWithCV)
+                {
+                    var hasEducation = await _context.CVEducations
+                        .AnyAsync(ed => ed.UserId == candidate.Id && ed.EducationLevelId == educationLevelId.Value);
+                    
+                    if (hasEducation)
+                    {
+                        filteredByEducation.Add(candidate);
+                    }
+                }
+                candidatesWithCV = filteredByEducation;
             }
 
-            var candidates = await query.ToListAsync();
-            var matchingResults = new List<JobMatchingResult>();
+            var matchingResults = new List<CandidateMatchingResult>();
 
-            foreach (var candidate in candidates)
+            foreach (var candidate in candidatesWithCV)
             {
-                var matchingResult = await CalculateMatchingScoreInternalAsync(candidate, job);
+                var matchingResult = await CalculateMatchingScoreForCandidateAsync(candidate, job);
                 if (matchingResult != null)
                 {
                     matchingResults.Add(matchingResult);
@@ -219,15 +174,13 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         private async Task<ApplicationUser?> GetCandidateWithDetailsAsync(int candidateId)
         {
-            return await _context.Users
+            return await _context.ApplicationUsers
                 .Include(u => u.Position)
                 .Include(u => u.CVEducations)
                     .ThenInclude(e => e.EducationLevel)
                 .Include(u => u.CandidateTaxonomies)
                     .ThenInclude(ct => ct.Taxonomy)
                 .Include(u => u.CVExperiences)
-                .Include(u => u.CVCertificates)
-                .Include(u => u.CVAchievements)
                 .FirstOrDefaultAsync(u => u.Id == candidateId && u.IsActive);
         }
 
@@ -577,6 +530,232 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
 
             return details;
+        }
+
+        public async Task<List<JobDetailResponse>> SearchJobsWithMatchingDetailAsync(int candidateId, 
+            string? location = null, 
+            int? minSalary = null, 
+            int? maxSalary = null,
+            List<int>? requiredSkills = null,
+            int page = 1, 
+            int size = 10,
+            string sortBy = "",
+            bool isDescending = false)
+        {
+            var candidate = await GetCandidateWithDetailsAsync(candidateId);
+            if (candidate == null) return new List<JobDetailResponse>();
+
+            var query = _context.Jobs
+                .Include(j => j.Company)
+                .Include(j => j.Position)
+                .Include(j => j.RequiredEducationLevel)
+                .Include(j => j.JobTaxonomies)
+                    .ThenInclude(jt => jt.Taxonomy)
+                .Where(j => j.Status == Enums.JobStatus.Opened && !j.IsDeleted);
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(location))
+            {
+                query = query.Where(j => j.Location.Contains(location));
+            }
+
+            if (minSalary.HasValue)
+            {
+                query = query.Where(j => j.SalaryMin >= minSalary.Value);
+            }
+
+            if (maxSalary.HasValue)
+            {
+                query = query.Where(j => j.SalaryMax <= maxSalary.Value);
+            }
+
+            if (requiredSkills != null && requiredSkills.Any())
+            {
+                query = query.Where(j => j.JobTaxonomies.Any(jt => requiredSkills.Contains(jt.TaxonomyId)));
+            }
+
+            var filteredJobs = await query.ToListAsync();
+
+            var jobsWithScores = new List<(Job Job, double Score)>();
+
+            foreach (var job in filteredJobs)
+            {
+                var matchingResult = await CalculateMatchingScoreInternalAsync(candidate, job);
+                if (matchingResult != null)
+                {
+                    jobsWithScores.Add((job, matchingResult.TotalScore));
+                }
+            }
+
+            // Sort by score (descending) or by other criteria
+            var sortedJobs = jobsWithScores;
+            if (string.IsNullOrEmpty(sortBy) || sortBy.ToLower() == "score")
+            {
+                sortedJobs = isDescending 
+                    ? jobsWithScores.OrderBy(j => j.Score).ToList()
+                    : jobsWithScores.OrderByDescending(j => j.Score).ToList();
+            }
+            else if (sortBy.ToLower() == "title")
+            {
+                sortedJobs = isDescending 
+                    ? jobsWithScores.OrderByDescending(j => j.Job.Title).ToList()
+                    : jobsWithScores.OrderBy(j => j.Job.Title).ToList();
+            }
+            else if (sortBy.ToLower() == "createdat")
+            {
+                sortedJobs = isDescending 
+                    ? jobsWithScores.OrderByDescending(j => j.Job.CreatedAt).ToList()
+                    : jobsWithScores.OrderBy(j => j.Job.CreatedAt).ToList();
+            }
+
+            // Apply pagination
+            var paginatedJobs = sortedJobs
+                .Skip((page - 1) * size)
+                .Take(size)
+                .Select(j => j.Job)
+                .ToList();
+
+            // Convert to JobDetailResponse
+            var jobDetailResponses = new List<JobDetailResponse>();
+            foreach (var job in paginatedJobs)
+            {
+                var response = await CreateJobDetailResponseAsync(job, candidateId);
+                jobDetailResponses.Add(response);
+            }
+
+            return jobDetailResponses;
+        }
+
+        private async Task<JobDetailResponse> CreateJobDetailResponseAsync(Job job, int? userId)
+        {
+            // Calculate apply count
+            var applyCount = await _context.CandidateJobs.CountAsync(cj => cj.JobId == job.JobId);
+
+            var response = new JobDetailResponse
+            {
+                JobId = job.JobId,
+                Title = job.Title,
+                Description = job.Description,
+                Requirements = job.Requirements,
+                Benefits = job.Benefits,
+                SalaryMin = job.SalaryMin,
+                SalaryMax = job.SalaryMax,
+                Location = job.Location,
+                ExperienceYear = job.ExperienceYear,
+                JobType = job.JobType,
+                Status = job.Status.ToString(),
+                PositionId = job.PositionId,
+                ViewsCount = job.ViewsCount,
+                CompanyId = job.CompanyId,
+                RecuiterId = job.RecuiterId,
+                VerifiedBy = job.VerifiedBy,
+                CreatedAt = job.CreatedAt,
+                OpenedAt = job.OpenedAt,
+                ExpiredAt = job.ExpiredAt,
+                IsDeleted = job.IsDeleted,
+                Taxonomies = job.JobTaxonomies.Select(jt => new TaxonomyResponse
+                {
+                    Id = jt.TaxonomyId,
+                    Name = jt.Taxonomy?.Name ?? ""
+                }).ToList(),
+                ApplyCount = applyCount
+            };
+
+            // Set user-specific fields if userId is provided
+            if (userId.HasValue)
+            {
+                // Check if user has applied
+                response.IsApply = await _context.CandidateJobs
+                    .Include(cj => cj.CVUpload)
+                    .AnyAsync(cj => cj.JobId == job.JobId && cj.CVUpload != null && cj.CVUpload.UserId == userId.Value);
+
+                // Check if user has saved
+                response.IsSave = await _context.SavedJobs
+                    .AnyAsync(sj => sj.JobId == job.JobId && sj.UserId == userId.Value);
+
+                // Check if user has reported
+                response.IsReport = await _context.Reports
+                    .AnyAsync(jr => jr.JobId == job.JobId && jr.ReporterId == userId.Value);
+            }
+
+            return response;
+        }
+
+        private async Task<CandidateMatchingResult?> CalculateMatchingScoreForCandidateAsync(ApplicationUser candidate, Job job)
+        {
+            // Calculate matching score using existing logic
+            var jobMatchingResult = await CalculateMatchingScoreInternalAsync(candidate, job);
+            if (jobMatchingResult == null) return null;
+
+            // Get primary CV
+            var primaryCV = await _context.CVUploads
+                .Where(cv => cv.UserId == candidate.Id && cv.IsPrimary == true)
+                .FirstOrDefaultAsync();
+
+            if (primaryCV == null) return null; // Skip candidates without primary CV
+
+            // Create CandidateMatchingResult
+            var result = new CandidateMatchingResult
+            {
+                CandidateId = candidate.Id,
+                CandidateName = candidate.FullName,
+                Birthday = candidate.Birthday,
+                Gender = candidate.Gender,
+                Email = candidate.Email ?? "",
+                PhoneNumber = candidate.PhoneNumber ?? "",
+                Address = candidate.Address ?? "",
+                Position = candidate.Position?.Name ?? "",
+                TotalScore = jobMatchingResult.TotalScore,
+                MatchedAt = DateTime.UtcNow,
+                
+                // Primary CV info
+                PrimaryCV = new CandidateCVInfo
+                {
+                    CVId = primaryCV.Id,
+                    FileName = primaryCV.FileName,
+                    FileUrl = primaryCV.FileUrl,
+                    IsPrimary = primaryCV.IsPrimary ?? false,
+                    CreatedAt = DateTime.UtcNow // Use current time as fallback
+                },
+
+                // Skills
+                Skills = candidate.CandidateTaxonomies.Select(ct => new CandidateSkillInfo
+                {
+                    TaxonomyId = ct.TaxonomyId,
+                    SkillName = ct.Taxonomy?.Name ?? "",
+                    ExperienceYear = ct.ExperienceYear ?? 0
+                }).ToList(),
+
+                // Work Experiences
+                WorkExperiences = await _context.CVExperiences
+                    .Where(exp => exp.UserId == candidate.Id)
+                    .Select(exp => new CandidateExperienceInfo
+                    {
+                        CompanyName = exp.CompanyName,
+                        Position = exp.Position,
+                        StartDate = exp.StartDate,
+                        EndDate = exp.EndDate,
+                        Description = exp.Description
+                    })
+                    .ToListAsync(),
+
+                // Education
+                Educations = await _context.CVEducations
+                    .Include(ed => ed.EducationLevel)
+                    .Where(ed => ed.UserId == candidate.Id)
+                    .Select(ed => new CandidateEducationInfo
+                    {
+                        SchoolName = ed.SchoolName,
+                        EducationLevelName = ed.EducationLevel.LevelName,
+                        RankScore = ed.EducationLevel.RankScore,
+                        Major = ed.Major,
+                        StartDate = ed.StartDate,
+                        EndDate = ed.EndDate
+                    })
+                    .ToListAsync()
+            };
+
+            return result;
         }
 
         private static int CalculateYearsOfExperience(DateTime startDate, DateTime? endDate)
