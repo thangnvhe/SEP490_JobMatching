@@ -20,7 +20,12 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendCors", policy =>
     {
-        policy.WithOrigins("http://localhost:5173") // URL frontend của bạn
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "http://14.225.19.47:5222",
+                "http://14.225.19.47:5173",
+                "http://14.225.19.47"
+            ) // URL frontend của bạn
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); // Quan trọng: cho phép gửi cookie/token
@@ -43,14 +48,11 @@ await app.AutoMigration();
 await app.SeedAdminUserAsync();
 await app.SeedAllData();
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
     app.UseSwagger();
     app.UseSwaggerUI();
-}
-app.UseHttpsRedirection();
-app.UseStaticFiles();
+// app.UseHttpsRedirection();
 app.UseCors("FrontendCors");
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseExceptionHandler();
