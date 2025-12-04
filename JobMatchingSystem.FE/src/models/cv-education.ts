@@ -1,17 +1,18 @@
-export const DegreeType = {
-  College: 1,
-  Bachelor: 2,
-  Master: 3,
-  Doctorate: 4,
-  Other: 5,
+export const EducationLevel = {
+  1: 'Cao đẳng',
+  2: 'Đại học',
+  3: 'Kỹ sư',
+  4: 'Cử nhân',
+  5: 'Thạc sĩ',
+  6: 'Tiến sĩ',
 } as const;
 
-export type DegreeType = typeof DegreeType[keyof typeof DegreeType];
+export type EducationLevel = typeof EducationLevel[keyof typeof EducationLevel];
 
 export interface CVEducation {
   id?: number;
   schoolName: string;
-  degree: DegreeType;
+  educationLevelId: number;
   major: string;
   startDate: string;
   endDate: string;

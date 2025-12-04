@@ -172,7 +172,7 @@ export function DialogCVAchievement({
               <Input
                 {...register("title")}
                 placeholder="Ví dụ: Nhân viên xuất sắc năm..."
-                className={`mt-1 ${errors.title ? "border-red-500" : ""}`}
+                className={`w-full mt-1 ${errors.title ? "border-red-500" : ""}`}
                 disabled={actionLoading}
               />
               {errors.title && (
@@ -191,7 +191,7 @@ export function DialogCVAchievement({
                 <Input
                   {...register("organization")}
                   placeholder="Tên tổ chức trao giải"
-                  className={`mt-1 ${
+                  className={`w-full mt-1 ${
                     errors.organization ? "border-red-500" : ""
                   }`}
                   disabled={actionLoading}
@@ -267,7 +267,7 @@ export function DialogCVAchievement({
               <Textarea
                 {...register("description")}
                 placeholder="Mô tả chi tiết về giải thưởng..."
-                className="mt-1 resize-none min-h-[120px]"
+                className="w-full mt-1 resize-none min-h-[120px]"
                 disabled={actionLoading}
               />
               <div className="flex justify-between mt-1">
