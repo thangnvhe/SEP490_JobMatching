@@ -12,6 +12,9 @@
         Task SendJobClosedNotificationAsync(string toEmail, string candidateName, string jobTitle, string companyName);
         Task SendCompanyClosedNotificationAsync(string toEmail, string candidateName, string jobTitle, string companyName);
         Task SendJobDeletedNotificationAsync(string toEmail, string fullName, string jobTitle, string companyName);
+        Task SendAccountSuspensionNotificationAsync(string toEmail, string fullName, string reason, bool isCompany);
+        Task SendFalseReportNotificationAsync(string toEmail, string fullName, string jobTitle, string companyName);
+        Task SendJobClosedDueToReportAsync(string toEmail, string fullName, string jobTitle, string companyName, string reason);
 
 
 

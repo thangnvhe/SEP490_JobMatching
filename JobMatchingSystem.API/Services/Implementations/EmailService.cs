@@ -245,5 +245,178 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             await SendEmailAsync(toEmail, subject, body);
         }
+
+        public async Task SendFalseReportNotificationAsync(string toEmail, string fullName, string jobTitle, string companyName)
+        {
+            var subject = "Thông báo: Báo cáo không chính xác - JobMatching System";
+
+            var body = $@"
+    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
+        <div style='background-color: #ffffff; padding: 30px; border-radius: 10px; border-left: 4px solid #dc3545;'>
+            <div style='text-align: center; margin-bottom: 30px;'>
+                <h1 style='color: #dc3545; margin: 0; font-size: 24px;'>⚠️ Thông báo về báo cáo không chính xác</h1>
+            </div>
+            
+            <div style='color: #495057; line-height: 1.6;'>
+                <p style='margin-bottom: 20px;'>Chào <strong>{WebUtility.HtmlEncode(fullName)}</strong>,</p>
+                
+                <p style='margin-bottom: 20px;'>Báo cáo của bạn về công việc <strong>'{WebUtility.HtmlEncode(jobTitle)}'</strong> tại <strong>{WebUtility.HtmlEncode(companyName)}</strong> đã được xem xét và <strong>bị từ chối</strong> do không có căn cứ.</p>
+                
+                <div style='background-color: #f8d7da; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc3545;'>
+                    <h3 style='color: #721c24; margin: 0 0 10px 0; font-size: 16px;'>Hậu quả của báo cáo sai:</h3>
+                    <ul style='margin: 10px 0; padding-left: 20px; color: #721c24;'>
+                        <li>Điểm tín nhiệm của bạn đã bị trừ do báo cáo không chính xác</li>
+                        <li>Việc báo cáo sai có thể ảnh hưởng đến uy tín tài khoản</li>
+                        <li>Nếu tiếp tục báo cáo sai, tài khoản có thể bị tạm khóa</li>
+                    </ul>
+                </div>
+                
+                <div style='background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;'>
+                    <h3 style='color: #856404; margin: 0 0 10px 0; font-size: 16px;'>💡 Lưu ý khi báo cáo:</h3>
+                    <ul style='margin: 10px 0; padding-left: 20px; color: #856404;'>
+                        <li>Chỉ báo cáo khi có bằng chứng cụ thể về vi phạm</li>
+                        <li>Đọc kỹ quy định cộng đồng trước khi báo cáo</li>
+                        <li>Báo cáo sai sẽ bị trừ điểm và có thể bị xử lý kỷ luật</li>
+                        <li>Sử dụng tính năng báo cáo một cách có trách nhiệm</li>
+                    </ul>
+                </div>
+                
+                <p style='margin-bottom: 20px;'>Chúng tôi khuyến khích việc báo cáo các vi phạm thực sự để duy trì môi trường làm việc an toàn, tuy nhiên việc báo cáo sai sẽ được xử lý nghiêm khắc.</p>
+                
+                <div style='background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;'>
+                    <p style='margin: 0; color: #1565c0; font-weight: bold;'>Hãy sử dụng tính năng báo cáo một cách có trách nhiệm!</p>
+                </div>
+            </div>
+            
+            <div style='text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;'>
+                <p style='margin: 5px 0; color: #6c757d; font-size: 14px;'>Trân trọng,</p>
+                <p style='margin: 5px 0; color: #495057; font-weight: bold;'>Đội ngũ JobMatching System</p>
+                <p style='margin: 15px 0 5px 0; color: #6c757d; font-size: 12px;'>Đây là thông báo tự động, vui lòng không trả lời email này.</p>
+            </div>
+        </div>
+    </div>";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
+
+        public async Task SendJobClosedDueToReportAsync(string toEmail, string fullName, string jobTitle, string companyName, string reason)
+        {
+            var subject = $"Thông báo: Công việc đã bị đóng do vi phạm - JobMatching System";
+
+            var body = $@"
+    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
+        <div style='background-color: #ffffff; padding: 30px; border-radius: 10px; border-left: 4px solid #dc3545;'>
+            <div style='text-align: center; margin-bottom: 30px;'>
+                <h1 style='color: #dc3545; margin: 0; font-size: 24px;'>🚫 Thông báo đóng công việc do vi phạm</h1>
+            </div>
+            
+            <div style='color: #495057; line-height: 1.6;'>
+                <p style='margin-bottom: 20px;'>Chào <strong>{WebUtility.HtmlEncode(fullName)}</strong>,</p>
+                
+                <p style='margin-bottom: 20px;'>Công việc <strong>'{WebUtility.HtmlEncode(jobTitle)}'</strong> tại <strong>{WebUtility.HtmlEncode(companyName)}</strong> đã bị đóng do vi phạm quy định của hệ thống.</p>
+                
+                <div style='background-color: #f8d7da; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc3545;'>
+                    <h3 style='color: #721c24; margin: 0 0 10px 0; font-size: 16px;'>Lý do vi phạm:</h3>
+                    <p style='margin: 0; color: #721c24; font-weight: bold;'>{WebUtility.HtmlEncode(reason)}</p>
+                </div>
+                
+                <div style='background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;'>
+                    <h3 style='color: #856404; margin: 0 0 10px 0; font-size: 16px;'>Ảnh hưởng đến bạn:</h3>
+                    <ul style='margin: 10px 0; padding-left: 20px; color: #856404;'>
+                        <li>Công việc này đã bị đóng và không còn nhận ứng tuyển</li>
+                        <li>Điểm tín nhiệm của công ty đã bị trừ</li>
+                        <li>Tất cả ứng viên đang ứng tuyển đã được thông báo</li>
+                        <li>Vui lòng tuân thủ quy định để tránh vi phạm tương tự</li>
+                    </ul>
+                </div>
+                
+                <div style='background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;'>
+                    <h3 style='color: #155724; margin: 0 0 10px 0; font-size: 16px;'>Bước tiếp theo:</h3>
+                    <ul style='margin: 10px 0; padding-left: 20px; color: #155724;'>
+                        <li>Xem xét và tuân thủ đúng quy định đăng tin tuyển dụng</li>
+                        <li>Đảm bảo thông tin công việc chính xác và trung thực</li>
+                        <li>Liên hệ hỗ trợ nếu cần làm rõ vi phạm: support@jobmatching.vn</li>
+                        <li>Tạo tin tuyển dụng mới với nội dung phù hợp</li>
+                    </ul>
+                </div>
+                
+                <p style='margin-bottom: 20px;'>Chúng tôi cam kết duy trì một môi trường tuyển dụng an toàn và minh bạch cho tất cả người dùng.</p>
+            </div>
+            
+            <div style='text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;'>
+                <p style='margin: 5px 0; color: #6c757d; font-size: 14px;'>Trân trọng,</p>
+                <p style='margin: 5px 0; color: #495057; font-weight: bold;'>Đội ngũ JobMatching System</p>
+                <p style='margin: 15px 0 5px 0; color: #6c757d; font-size: 12px;'>Đây là thông báo tự động, vui lòng không trả lời email này.</p>
+            </div>
+        </div>
+    </div>";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
+
+        public async Task SendAccountSuspensionNotificationAsync(string toEmail, string fullName, string reason, bool isCompany)
+        {
+            var accountType = isCompany ? "công ty" : "ứng viên";
+            var subject = $"Thông báo: Tạm khóa tài khoản {accountType} - JobMatching System";
+
+            var body = $@"
+    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
+        <div style='background-color: #ffffff; padding: 30px; border-radius: 10px; border-left: 4px solid #dc3545;'>
+            <div style='text-align: center; margin-bottom: 30px;'>
+                <h1 style='color: #dc3545; margin: 0; font-size: 24px;'>⚠️ Thông báo tạm khóa tài khoản</h1>
+            </div>
+            
+            <div style='color: #495057; line-height: 1.6;'>
+                <p style='margin-bottom: 20px;'>Kính chào <strong>{WebUtility.HtmlEncode(fullName)}</strong>,</p>
+                
+                <p style='margin-bottom: 20px;'>Tài khoản {accountType} của bạn đã bị tạm khóa do vi phạm các quy định của hệ thống JobMatching.</p>
+                
+                <div style='background-color: #f8d7da; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc3545;'>
+                    <h3 style='color: #721c24; margin: 0 0 10px 0; font-size: 16px;'>Lý do tạm khóa:</h3>
+                    <p style='margin: 0; color: #721c24; font-weight: bold;'>{WebUtility.HtmlEncode(reason)}</p>
+                </div>
+                
+                <div style='background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;'>
+                    <h3 style='color: #856404; margin: 0 0 10px 0; font-size: 16px;'>Hậu quả của việc tạm khóa:</h3>
+                    <ul style='margin: 10px 0; padding-left: 20px; color: #856404;'>
+                        <li>Tài khoản của bạn đã bị vô hiệu hóa tạm thời</li>
+                        <li>Bạn không thể truy cập vào hệ thống</li>
+                        <li>{(isCompany ? "Tất cả các tin tuyển dụng đã bị đóng" : "Tất cả các đơn ứng tuyển đang xử lý đã bị hủy")}</li>
+                    </ul>
+                </div>
+                
+                <div style='background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;'>
+                    <h3 style='color: #155724; margin: 0 0 10px 0; font-size: 16px;'>Cách khôi phục tài khoản:</h3>
+                    <p style='margin: 10px 0; color: #155724;'>Để khôi phục tài khoản, vui lòng liên hệ với bộ phận hỗ trợ của chúng tôi qua các kênh sau:</p>
+                    <ul style='margin: 10px 0; padding-left: 20px; color: #155724;'>
+                        <li><strong>Email hỗ trợ:</strong> support@jobmatching.vn</li>
+                        <li><strong>Hotline:</strong> 1900-xxxx (8:00 - 17:00, T2-T6)</li>
+                        <li><strong>Website:</strong> <a href='#' style='color: #007bff;'>jobmatching.vn/support</a></li>
+                    </ul>
+                    <p style='margin: 10px 0; color: #155724; font-style: italic;'>Vui lòng cung cấp thông tin tài khoản và giải trình về vấn đề vi phạm để được xem xét khôi phục.</p>
+                </div>
+                
+                <div style='background-color: #d1ecf1; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #17a2b8;'>
+                    <h3 style='color: #0c5460; margin: 0 0 10px 0; font-size: 16px;'>💡 Lưu ý quan trọng:</h3>
+                    <ul style='margin: 10px 0; padding-left: 20px; color: #0c5460;'>
+                        <li>Tài khoản có thể được khôi phục sau khi giải trình thỏa đáng</li>
+                        <li>Hãy đọc kỹ quy định sử dụng để tránh vi phạm trong tương lai</li>
+                        <li>Thời gian xử lý khiếu nại: 3-5 ngày làm việc</li>
+                    </ul>
+                </div>
+                
+                <p style='margin-bottom: 20px;'>Chúng tôi rất tiếc về sự bất tiện này và hy vọng sớm được hỗ trợ bạn khôi phục tài khoản.</p>
+            </div>
+            
+            <div style='text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;'>
+                <p style='margin: 5px 0; color: #6c757d; font-size: 14px;'>Trân trọng,</p>
+                <p style='margin: 5px 0; color: #495057; font-weight: bold;'>Đội ngũ JobMatching System</p>
+                <p style='margin: 15px 0 5px 0; color: #6c757d; font-size: 12px;'>Đây là thông báo tự động, vui lòng không trả lời email này.</p>
+            </div>
+        </div>
+    </div>";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
     }
 }
