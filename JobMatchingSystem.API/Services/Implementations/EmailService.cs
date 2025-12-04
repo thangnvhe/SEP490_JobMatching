@@ -143,5 +143,28 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             await SendEmailAsync(toEmail, subject, body);
         }
+
+        public async Task SendJobClosedNotificationAsync(string toEmail, string candidateName, string jobTitle, string companyName)
+        {
+            string subject = "Thông báo: Vị trí công việc đã bị đóng - JobMatching System";
+
+            string body = $@"
+    <h2>Chào {WebUtility.HtmlEncode(candidateName)}</h2>
+    <p>Chúng tôi rất tiếc phải thông báo rằng vị trí công việc mà bạn đã ứng tuyển đã bị đóng.</p>
+    <div style='background-color:#f8f9fa; padding:15px; border-left:4px solid #dc3545; margin:20px 0;'>
+        <h3>Chi tiết vị trí:</h3>
+        <p><strong>Tên công việc:</strong> {WebUtility.HtmlEncode(jobTitle)}</p>
+        <p><strong>Công ty:</strong> {WebUtility.HtmlEncode(companyName)}</p>
+        <p><strong>Trạng thái:</strong> Đã đóng</p>
+    </div>
+    <p>Lý do đóng: Nhà tuyển dụng phụ trách vị trí này đã ngừng hoạt động trên hệ thống.</p>
+    <p>Chúng tôi khuyến khích bạn tiếp tục tìm kiếm các cơ hội việc làm khác trên JobMatching System.</p>
+    <hr>
+    <p>Cảm ơn bạn đã sử dụng JobMatching System!</p>
+    <p>JobMatching System Team</p>
+    ";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
     }
 }
