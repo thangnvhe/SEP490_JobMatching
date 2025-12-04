@@ -35,13 +35,24 @@ namespace JobMatchingSystem.API.Controllers
         [HttpGet("me")]
         public async Task<IActionResult> GetMyExperiences()
         {
-            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var experiences = await _service.GetByCurrentUserAsync(userId);
-            return Ok(APIResponse<List<CVExperienceDto>>.Builder()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithSuccess(true)
-                .WithResult(experiences)
-                .Build());
+            try
+            {
+                int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                var experiences = await _service.GetByCurrentUserAsync(userId);
+                return Ok(APIResponse<List<CVExperienceDto>>.Builder()
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithSuccess(true)
+                    .WithResult(experiences ?? new List<CVExperienceDto>())
+                    .Build());
+            }
+            catch (Exception)
+            {
+                return Ok(APIResponse<List<CVExperienceDto>>.Builder()
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithSuccess(true)
+                    .WithResult(new List<CVExperienceDto>())
+                    .Build());
+            }
         }
 
         [HttpPost]

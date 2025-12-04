@@ -38,15 +38,26 @@ namespace JobMatchingSystem.API.Controllers
         [HttpGet("me")]
         public async Task<IActionResult> GetMyCertificates()
         {
-            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            try
+            {
+                int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-            var certificates = await _service.GetByCurrentUserAsync(userId);
+                var certificates = await _service.GetByCurrentUserAsync(userId);
 
-            return Ok(APIResponse<List<CVCertificateDto>>.Builder()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithSuccess(true)
-                .WithResult(certificates)
-                .Build());
+                return Ok(APIResponse<List<CVCertificateDto>>.Builder()
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithSuccess(true)
+                    .WithResult(certificates ?? new List<CVCertificateDto>())
+                    .Build());
+            }
+            catch (Exception)
+            {
+                return Ok(APIResponse<List<CVCertificateDto>>.Builder()
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithSuccess(true)
+                    .WithResult(new List<CVCertificateDto>())
+                    .Build());
+            }
         }
 
         // POST: api/cvcertificate
