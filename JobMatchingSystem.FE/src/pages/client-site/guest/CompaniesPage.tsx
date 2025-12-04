@@ -56,7 +56,7 @@ export default function CompaniesPage() {
   const getAllCompanies = useCallback(async (params: PaginationParamsInput) => {
     try {
       setLoading(true);
-      const response = await CompanyServices.getAllCompanies(params);
+      const response = await CompanyServices.getAllCompaniesWithPagination(params);
 
       // Filter approved companies (status === 1)
       const approvedCompanies = response.result.items?.filter((c: Company) => c.status === 1) || [];

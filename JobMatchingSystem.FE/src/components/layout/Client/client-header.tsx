@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import RoleGuard from "@/guards/RoleGuard";
 
 export function ClientHeader() {
   const dispatch = useAppDispatch();
@@ -86,20 +87,26 @@ export function ClientHeader() {
             >
               Danh Sách Công Ty
             </Link>
-            <Link
-              to="/pricing"
-              className="text-sm font-medium transition-colors hover:text-green-600 outline-none focus:outline-none focus-visible:outline-none"
-            >
-              Bảng Giá
-            </Link>
-            {!isAuthenticated && (
+
+            <RoleGuard allowedRoles={["Recruiter"]}>
+              <Link
+                to="/pricing"
+                className="text-sm font-medium transition-colors hover:text-green-600 outline-none focus:outline-none focus-visible:outline-none"
+              >
+                Bảng Giá
+              </Link>
+            </RoleGuard>
+
+
+            <RoleGuard allowedRoles="Guest">
               <Link
                 to="/contact-recruiter"
                 className="text-sm font-medium transition-colors hover:text-green-600 outline-none focus:outline-none focus-visible:outline-none"
               >
                 Nhà tuyển dụng
               </Link>
-            )}
+            </RoleGuard>
+
           </nav>
         </div>
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
@@ -116,17 +123,22 @@ export function ClientHeader() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
 
-                  <DropdownMenuItem onClick={handleDashboardNavigation}>
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    <span>Dashboard</span>
-                  </DropdownMenuItem>
 
-                  <Link to="/profile-cv">
-                    <DropdownMenuItem className="hover:bg-green-500 hover:text-white">
-                      <FileText className="mr-2 h-4 w-4" />
-                      Hồ sơ cá nhân
+                  <RoleGuard allowedRoles={["Recruiter", "Hiringmanager", "Admin"]}>
+                    <DropdownMenuItem onClick={handleDashboardNavigation}>
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      <span>Dashboard</span>
                     </DropdownMenuItem>
-                  </Link>
+                  </RoleGuard>
+
+                  <RoleGuard allowedRoles="Candidate">
+                    <Link to="/profile-cv">
+                      <DropdownMenuItem className="hover:bg-green-500 hover:text-white">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Hồ sơ cá nhân
+                      </DropdownMenuItem>
+                    </Link>
+                  </RoleGuard>
 
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} disabled={isLoading}>
@@ -169,9 +181,13 @@ export function ClientHeader() {
               <Link to="/companies" className="text-sm font-medium transition-colors hover:text-primary">
                 Danh Sách Công Ty
               </Link>
-              <Link to="/pricing" className="text-sm font-medium transition-colors hover:text-primary">
-                Bảng Giá
-              </Link>
+
+              <RoleGuard allowedRoles={["Recruiter"]}>
+                <Link to="/pricing" className="text-sm font-medium transition-colors hover:text-primary">
+                  Bảng Giá
+                </Link>
+              </RoleGuard>
+
               {!isAuthenticated && (
                 <Link to="/contact-recruiter" className="text-sm font-medium transition-colors hover:text-primary">
                   Nhà tuyển dụng
@@ -238,6 +254,6 @@ export function ClientHeader() {
           }}
         />
       </div>
-    </header>
+    </header >
   );
 }

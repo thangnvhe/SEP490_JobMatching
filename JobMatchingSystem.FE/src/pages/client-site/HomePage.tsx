@@ -48,7 +48,7 @@ const HomePage = () => {
         const [taxRes, jobRes, compRes] = await Promise.all([
           TaxonomyService.getAllTaxonomies(),
           JobServices.getAllWithPagination({ page: 1, size: 6 }),
-          CompanyServices.getAllCompanies({ page: 1, size: 8 }),
+          CompanyServices.getAllCompaniesWithPagination({ page: 1, size: 8 }),
         ]);
 
         if (taxRes.result) {

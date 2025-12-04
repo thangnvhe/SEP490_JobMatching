@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +15,6 @@ const ResetPasswordPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { token } = useParams<{ token: string }>();
   const { error, loading: isLoading } = useSelector((state: RootState) => state.authState);
 
   const [newPassword, setNewPassword] = useState('');
@@ -25,6 +24,7 @@ const ResetPasswordPage: React.FC = () => {
 
   // Get parameters from URL (these would come from the email link)
   const email = searchParams.get('email');
+  const token = searchParams.get('token');
   const decodedToken = token ? decodeURIComponent(token) : null;
 
   useEffect(() => {

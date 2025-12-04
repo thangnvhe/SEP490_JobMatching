@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/sidebar";
 import { NavUser } from "@/components/nav-user";
 import React from "react";
+import RoleGuard from "@/guards/RoleGuard";
 
 function useIsActivePath(path: string) {
   const location = useLocation();
@@ -169,31 +170,32 @@ function AdminNav() {
         </SidebarGroupContent>
       </SidebarGroup>
 
-      <SidebarSeparator className="my-2" />
-
-      <SidebarGroup>
-        <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60">
-          Cá nhân
-        </SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu className="">
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={useIsActivePath("/profile")}
-                tooltip="Personal Profile"
-                size="default"
-                className="h-9 px-3"
-              >
-                <Link to="/profile">
-                  <Settings className="size-4" />
-                  <span className="font-medium text-sm">Hồ sơ cá nhân</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
+      <RoleGuard allowedRoles="Candidate">
+        <SidebarSeparator className="my-2" />
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60">
+            Cá nhân
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={useIsActivePath("/profile")}
+                  tooltip="Personal Profile"
+                  size="default"
+                  className="h-9 px-3"
+                >
+                  <Link to="/profile">
+                    <Settings className="size-4" />
+                    <span className="font-medium text-sm">Hồ sơ cá nhân</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </RoleGuard>
     </>
   );
 }

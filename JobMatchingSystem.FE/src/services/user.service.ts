@@ -15,6 +15,6 @@ export const UserServices = {
     BaseApiServices.custom<BaseResponse<User>>("post", "/Auth/reset-password", { email, token, newPassword, confirmPassword }),
   getUserProfile: () => BaseApiServices.custom<BaseResponse<User>>("get", "/User/me"),
   editUserProfile: (payload: FormData) => BaseApiServices.custom<BaseResponse<User>>("put", "/User/me", payload),
-  verifyEmail: (token: string) => BaseApiServices.custom<BaseResponse<User>>("get", "/Auth/verify-email", { TokenLink: token }),
+  verifyEmail: (token: string) => BaseApiServices.custom<BaseResponse<User>>("post", "/Auth/verify-email", { TokenLink: token }),
   createHiringManager: (payload: CreateHiringManagerRequest) => BaseApiServices.create<User>('/User/hiring-manager', payload)
 };
