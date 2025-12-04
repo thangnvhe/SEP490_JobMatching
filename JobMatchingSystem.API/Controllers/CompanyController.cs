@@ -83,6 +83,17 @@ namespace JobMatchingSystem.API.Controllers
                 .WithStatusCode(HttpStatusCode.OK)
                 .Build());
         }
+
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllCompanies()
+        {
+            var companies = await _companyService.GetAllCompaniesAsync();
+            return Ok(APIResponse<IEnumerable<CompanyDTO>>.Builder()
+                .WithResult(companies)
+                .WithSuccess(true)
+                .WithStatusCode(HttpStatusCode.OK)
+                .Build());
+        }
         [HttpPut("{companyId}/change-status")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ChangeStatus(int companyId)

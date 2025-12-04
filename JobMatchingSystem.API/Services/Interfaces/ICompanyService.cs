@@ -12,6 +12,7 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task AcceptCompany(int id,int verifyBy);
         Task<CompanyDTO> GetDetailCompany(int companyId);
         Task<PagedResult<CompanyDTO>> GetDetailCompanyList(int page = 1, int size = 5, string search = "", string sortBy = "", bool isDecending = false,string status="");
+        Task<IEnumerable<CompanyDTO>> GetAllCompaniesAsync();
         Task ChangeStatus(int companyId);
         Task UpdateCompany(UpdateCompanyRequest request,int companyId);
         Task<CompanyDTO> GetMyCompanyAsync(int recruiterId);

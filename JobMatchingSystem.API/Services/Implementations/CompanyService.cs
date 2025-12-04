@@ -228,6 +228,27 @@ namespace JobMatchingSystem.API.Services.Implementations
             };
         }
 
+        public async Task<IEnumerable<CompanyDTO>> GetAllCompaniesAsync()
+        {
+            var companies = await _unitOfWork.CompanyRepository.GetAllAsync();
+            if (companies == null || !companies.Any())
+            {
+                return new List<CompanyDTO>();
+            }
+            
+            var companyDTOs = _mapper.Map<List<CompanyDTO>>(companies);
+            
+            // Generate secure URLs with SAS tokens for all companies
+            foreach (var companyDTO in companyDTOs)
+            {
+                var originalCompany = companies.First(c => c.Id == companyDTO.Id);
+                companyDTO.Logo = await _blobStorageService.GetSecureFileUrlAsync(originalCompany.Logo);
+                companyDTO.LicenseFile = await _blobStorageService.GetSecureFileUrlAsync(originalCompany.LicenseFile);
+            }
+            
+            return companyDTOs;
+        }
+
         public async Task ChangeStatus(int companyId)
         {
             var company= await _unitOfWork.CompanyRepository.GetByIdAsync(companyId);
