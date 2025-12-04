@@ -190,5 +190,60 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             await SendEmailAsync(toEmail, subject, body);
         }
+
+        public async Task SendJobDeletedNotificationAsync(string toEmail, string fullName, string jobTitle, string companyName)
+        {
+            string subject = "Thông báo: Vị trí tuyển dụng đã bị gỡ bỏ - JobMatching System";
+
+            string body = $@"
+    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
+        <div style='background-color: #ffffff; padding: 30px; border-radius: 10px; border-left: 4px solid #dc3545;'>
+            <div style='text-align: center; margin-bottom: 30px;'>
+                <h1 style='color: #dc3545; margin: 0; font-size: 24px;'>Thông báo cập nhật vị trí tuyển dụng</h1>
+            </div>
+            
+            <div style='color: #495057; line-height: 1.6;'>
+                <p style='margin-bottom: 20px;'>Chào <strong>{WebUtility.HtmlEncode(fullName)}</strong>,</p>
+                
+                <p style='margin-bottom: 20px;'>Chúng tôi rất tiếc phải thông báo rằng vị trí tuyển dụng <strong>'{WebUtility.HtmlEncode(jobTitle)}'</strong> tại <strong>{WebUtility.HtmlEncode(companyName)}</strong> đã bị gỡ bỏ khỏi hệ thống.</p>
+                
+                <div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;'>
+                    <h3 style='color: #856404; margin: 0 0 10px 0; font-size: 16px;'>Ảnh hưởng đến đơn ứng tuyển của bạn:</h3>
+                    <ul style='margin: 10px 0; padding-left: 20px; color: #6c757d;'>
+                        <li>Trạng thái đơn ứng tuyển của bạn đã được cập nhật tương ứng</li>
+                        <li>Không có xử lý thêm nào cho vị trí cụ thể này</li>
+                        <li>Điều này không ảnh hưởng đến các đơn ứng tuyển khác hoặc tài khoản của bạn</li>
+                    </ul>
+                </div>
+                
+                <div style='background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;'>
+                    <h3 style='color: #155724; margin: 0 0 10px 0; font-size: 16px;'>Bạn có thể làm gì tiếp theo:</h3>
+                    <ul style='margin: 10px 0; padding-left: 20px; color: #155724;'>
+                        <li>Duyệt qua các cơ hội việc làm tương tự trên nền tảng của chúng tôi</li>
+                        <li>Kiểm tra các vị trí khác tại {WebUtility.HtmlEncode(companyName)}</li>
+                        <li>Cập nhật sở thích công việc để nhận được những kết quả phù hợp hơn</li>
+                        <li>Tiếp tục xây dựng hồ sơ của bạn cho các cơ hội trong tương lai</li>
+                    </ul>
+                </div>
+                
+                <p style='margin-bottom: 20px;'>Chúng tôi hiểu điều này có thể khiến bạn thất vọng, và chúng tôi cam kết giúp bạn tìm được cơ hội phù hợp.</p>
+                
+                <p style='margin-bottom: 20px;'>Nếu bạn có bất kỳ câu hỏi nào về đơn ứng tuyển của mình hoặc cần hỗ trợ, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi.</p>
+                
+                <div style='background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;'>
+                    <p style='margin: 0; color: #1565c0; font-weight: bold;'>💼 Hãy tiếp tục khám phá - công việc hoàn hảo đang chờ bạn!</p>
+                </div>
+            </div>
+            
+            <div style='text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;'>
+                <p style='margin: 5px 0; color: #6c757d; font-size: 14px;'>Trân trọng,</p>
+                <p style='margin: 5px 0; color: #495057; font-weight: bold;'>Đội ngũ JobMatching System</p>
+                <p style='margin: 15px 0 5px 0; color: #6c757d; font-size: 12px;'>Đây là thông báo tự động, vui lòng không trả lời email này.</p>
+            </div>
+        </div>
+    </div>";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
     }
 }

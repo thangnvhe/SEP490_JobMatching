@@ -97,6 +97,9 @@ namespace JobMatchingSystem.API.Repositories.Implementations
         {
             return await _context.CandidateJobs
                 .Include(cj => cj.CVUpload)
+                    .ThenInclude(cv => cv.User)
+                .Include(cj => cj.Job)
+                    .ThenInclude(j => j.Company)
                 .Where(cj => cj.JobId == jobId)
                 .ToListAsync();
         }

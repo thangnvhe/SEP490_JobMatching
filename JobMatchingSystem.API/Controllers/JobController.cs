@@ -101,7 +101,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
-                .WithResult("Job deleted successfully")
+                .WithResult("Job deleted successfully. All candidate applications have been processed and notifications sent.")
                 .Build());
         }
 

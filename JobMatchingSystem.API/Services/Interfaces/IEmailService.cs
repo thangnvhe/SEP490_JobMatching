@@ -11,6 +11,7 @@
         Task SendHmPasswordEmailAsync(string toEmail, string fullName, string password);
         Task SendJobClosedNotificationAsync(string toEmail, string candidateName, string jobTitle, string companyName);
         Task SendCompanyClosedNotificationAsync(string toEmail, string candidateName, string jobTitle, string companyName);
+        Task SendJobDeletedNotificationAsync(string toEmail, string fullName, string jobTitle, string companyName);
 
 
 
