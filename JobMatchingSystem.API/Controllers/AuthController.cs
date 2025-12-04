@@ -82,7 +82,7 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
         [HttpPost("verify-email")]
-        public async Task<IActionResult> VerifyEmail([FromQuery] string TokenLink)
+        public async Task<IActionResult> VerifyEmail([FromBody] string TokenLink)
         {
             if (string.IsNullOrEmpty(TokenLink))
             {
