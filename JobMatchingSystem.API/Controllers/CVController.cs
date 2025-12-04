@@ -73,6 +73,30 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
+        [HttpGet("all")]
+        [Authorize]
+        public async Task<IActionResult> GetAllCVs()
+        {
+            try
+            {
+                var cvs = await _cvService.GetAllCVsAsync();
+
+                return Ok(APIResponse<List<CVDetailResponse>>.Builder()
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithSuccess(true)
+                    .WithResult(cvs)
+                    .Build());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, APIResponse<string>.Builder()
+                    .WithStatusCode(HttpStatusCode.InternalServerError)
+                    .WithSuccess(false)
+                    .WithResult($"Lỗi server khi lấy danh sách CV: {ex.Message}")
+                    .Build());
+            }
+        }
+
         [HttpGet("me")]
         [Authorize]
         public async Task<IActionResult> GetMyCVs()

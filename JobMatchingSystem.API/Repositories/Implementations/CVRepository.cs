@@ -49,5 +49,20 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<CVUpload?> GetCVByIdWithUserAsync(int id)
+        {
+            return await _context.CVUploads
+                .Include(c => c.User)
+                .FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public async Task<List<CVUpload>> GetAllCVsWithUsersAsync()
+        {
+            return await _context.CVUploads
+                .Include(c => c.User)
+                .OrderByDescending(c => c.Id)
+                .ToListAsync();
+        }
     }
 }

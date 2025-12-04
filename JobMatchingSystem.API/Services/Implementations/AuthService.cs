@@ -38,6 +38,12 @@ namespace JobMatchingSystem.API.Services.Implementations
             var user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null)
                 throw new AppException(ErrorCode.EmailNotExist());
+            
+            // Check if email is confirmed
+            var isEmailConfirmed = await _userManager.IsEmailConfirmedAsync(user);
+            if (!isEmailConfirmed)
+                throw new AppException(new Error("Email chưa được xác nhận. Vui lòng xác nhận email trước khi reset password.", System.Net.HttpStatusCode.BadRequest));
+            
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var encodedToken = HttpUtility.UrlEncode(token);
             await _emailService.SendResetPasswordEmailAsync(user.Email, encodedToken);
