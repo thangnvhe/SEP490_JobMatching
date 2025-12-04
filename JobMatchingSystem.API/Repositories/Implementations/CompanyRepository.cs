@@ -84,6 +84,14 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             return await _context.Companies.FirstOrDefaultAsync(x => x.TaxCode == taxCode && x.IsActive);
         }
 
+        public async Task<IEnumerable<Company>> GetAllAsync()
+        {
+            return await _context.Companies
+                .Where(c => c.IsActive && c.Status == CompanyStatus.Approved)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+        }
+
         public Task Update(Company company)
         {
             _context.Companies.Update(company);
