@@ -2,6 +2,7 @@
 using Azure.Core;
 using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
+using JobMatchingSystem.API.Enums;
 using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Extensions;
 using JobMatchingSystem.API.Helpers;
@@ -251,14 +252,24 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task ChangeStatus(int companyId)
         {
-            var company= await _unitOfWork.CompanyRepository.GetByIdAsync(companyId);
+            var company = await _unitOfWork.CompanyRepository.GetByIdAsync(companyId);
             if (company == null)
             {
                 throw new AppException(ErrorCode.NotFoundCompany());
             }
-            await _unitOfWork.CompanyRepository.ChangeStatus(company);
-            await _unitOfWork.SaveAsync();
 
+            // Check if company is being deactivated
+            bool wasActive = company.IsActive;
+            
+            await _unitOfWork.CompanyRepository.ChangeStatus(company);
+
+            // If company is being deactivated, handle its users, jobs and candidates
+            if (wasActive && !company.IsActive)
+            {
+                await HandleCompanyDeactivationAsync(companyId);
+            }
+
+            await _unitOfWork.SaveAsync();
         }
 
         public async Task UpdateCompany(UpdateCompanyRequest request, int companyId)
@@ -305,6 +316,85 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.NotFoundCompany());
 
             return _mapper.Map<CompanyDTO>(company);
+        }
+
+        /// <summary>
+        /// Xử lý khi công ty bị deactivate - disable users, close jobs, notify candidates
+        /// </summary>
+        /// <param name="companyId">ID của công ty bị deactivate</param>
+        private async Task HandleCompanyDeactivationAsync(int companyId)
+        {
+            // 1. Deactivate tất cả users thuộc công ty (Recruiters & Hiring Managers)
+            var companyUsers = await _unitOfWork.AuthRepository.GetUsersByCompanyIdAsync(companyId);
+            if (companyUsers != null && companyUsers.Any())
+            {
+                foreach (var user in companyUsers)
+                {
+                    if (user.IsActive)
+                    {
+                        user.IsActive = false;
+                        await _unitOfWork.AuthRepository.UpdateUserAsync(user);
+                    }
+                }
+            }
+
+            // 2. Lấy tất cả jobs của công ty và đóng chúng
+            var companyJobs = await _unitOfWork.JobRepository.GetJobsByCompanyIdAsync(companyId);
+            if (companyJobs != null && companyJobs.Any())
+            {
+                foreach (var job in companyJobs)
+                {
+                    // Chỉ đóng những job đang mở (Draft, Moderated, Opened)
+                    if (job.Status == JobStatus.Draft || 
+                        job.Status == JobStatus.Moderated || 
+                        job.Status == JobStatus.Opened)
+                    {
+                        // Đóng job
+                        job.Status = JobStatus.Closed;
+                        job.IsDeleted = true; // Soft delete
+                        
+                        await _unitOfWork.JobRepository.UpdateAsync(job);
+
+                        // 3. Xử lý tất cả candidates đang ứng tuyển job này
+                        var candidateJobs = await _unitOfWork.CandidateJobRepository.GetCandidateJobsByJobIdAsync(job.JobId);
+                        
+                        if (candidateJobs != null && candidateJobs.Any())
+                        {
+                            foreach (var candidateJob in candidateJobs)
+                            {
+                                // Chỉ cập nhật những ứng viên đang Pending hoặc Processing
+                                if (candidateJob.Status == CandidateJobStatus.Pending || 
+                                    candidateJob.Status == CandidateJobStatus.Processing)
+                                {
+                                    // Đánh dấu application là Failed do công ty ngừng hoạt động
+                                    candidateJob.Status = CandidateJobStatus.Fail;
+                                    await _unitOfWork.CandidateJobRepository.UpdateAsync(candidateJob);
+
+                                    // 4. Gửi email thông báo cho candidate
+                                    try
+                                    {
+                                        var candidate = await _unitOfWork.AuthRepository.GetUserById(candidateJob.CVUpload?.UserId ?? 0);
+                                        if (candidate != null && !string.IsNullOrEmpty(candidate.Email))
+                                        {
+                                            await _emailService.SendCompanyClosedNotificationAsync(
+                                                candidate.Email,
+                                                candidate.FullName,
+                                                job.Title,
+                                                job.Company?.Name ?? "Công ty"
+                                            );
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        // Log error but don't break the flow
+                                        Console.WriteLine($"Failed to send company closure email notification: {ex.Message}");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         

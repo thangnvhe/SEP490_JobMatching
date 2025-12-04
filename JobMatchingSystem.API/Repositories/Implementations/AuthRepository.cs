@@ -139,5 +139,12 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                 .Include(u => u.CompanyRecruiter)
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
+
+        public async Task<List<ApplicationUser>> GetUsersByCompanyIdAsync(int companyId)
+        {
+            return await _context.ApplicationUsers
+                .Where(u => u.CompanyId == companyId && u.IsActive)
+                .ToListAsync();
+        }
     }
 }

@@ -10,6 +10,7 @@
         Task SendCompanyRejectedEmailAsync(string toEmail, string fullName, string companyName, string rejectReason);
         Task SendHmPasswordEmailAsync(string toEmail, string fullName, string password);
         Task SendJobClosedNotificationAsync(string toEmail, string candidateName, string jobTitle, string companyName);
+        Task SendCompanyClosedNotificationAsync(string toEmail, string candidateName, string jobTitle, string companyName);
 
 
 

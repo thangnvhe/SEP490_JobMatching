@@ -186,5 +186,15 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                 .Where(j => j.RecuiterId == recruiterId && !j.IsDeleted)
                 .ToListAsync();
         }
+
+        public async Task<List<Job>> GetJobsByCompanyIdAsync(int companyId)
+        {
+            return await _context.Jobs
+                .Include(j => j.Company)
+                .Include(j => j.CandidateJobs)
+                    .ThenInclude(cj => cj.CVUpload)
+                .Where(j => j.CompanyId == companyId && !j.IsDeleted)
+                .ToListAsync();
+        }
     }
 }

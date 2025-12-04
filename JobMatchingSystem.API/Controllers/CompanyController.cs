@@ -101,7 +101,7 @@ namespace JobMatchingSystem.API.Controllers
             await _companyService.ChangeStatus(companyId);
 
             return Ok(APIResponse<string>.Builder()
-                .WithResult("Change company status success")
+                .WithResult("Company status changed successfully. All associated users, jobs, and candidate applications have been processed accordingly.")
                 .WithSuccess(true)
                 .WithStatusCode(HttpStatusCode.OK)
                 .Build());
