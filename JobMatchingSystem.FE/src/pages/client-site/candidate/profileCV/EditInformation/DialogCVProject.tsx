@@ -176,7 +176,7 @@ export function DialogCVProject({
               <Input
                 {...register("projectName")}
                 placeholder="Ví dụ: Website bán hàng..."
-                className={`mt-1 ${errors.projectName ? "border-red-500" : ""}`}
+                className={`w-full mt-1 ${errors.projectName ? "border-red-500" : ""}`}
                 disabled={actionLoading}
               />
               {errors.projectName && (
@@ -308,7 +308,7 @@ export function DialogCVProject({
               <Textarea
                 {...register("description")}
                 placeholder="Mô tả chi tiết về dự án, vai trò, công nghệ sử dụng..."
-                className="mt-1 resize-none min-h-[120px]"
+                className="w-full mt-1 resize-none min-h-[120px]"
                 disabled={actionLoading}
               />
               <div className="flex justify-between mt-1">

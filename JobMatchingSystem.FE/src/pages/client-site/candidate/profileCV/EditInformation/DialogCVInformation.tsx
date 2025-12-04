@@ -227,7 +227,7 @@ export function DialogCVInformation({
                 <Input
                   {...register("fullName")}
                   placeholder="Nhập họ và tên"
-                  className={`mt-1 ${errors.fullName ? "border-red-500" : ""}`}
+                  className={`w-full mt-1 ${errors.fullName ? "border-red-500" : ""}`}
                   disabled={actionLoading}
                 />
                 {errors.fullName && (
@@ -245,7 +245,7 @@ export function DialogCVInformation({
                 <Input
                   {...register("email")}
                   disabled={true}
-                  className="mt-1 bg-gray-100 text-gray-500"
+                  className="w-full mt-1 bg-gray-100 text-gray-500"
                 />
               </div>
 
@@ -257,7 +257,7 @@ export function DialogCVInformation({
                 <Input
                   {...register("phoneNumber")}
                   placeholder="Nhập số điện thoại"
-                  className="mt-1"
+                  className="w-full mt-1"
                   disabled={actionLoading}
                 />
               </div>
@@ -276,7 +276,7 @@ export function DialogCVInformation({
                       onValueChange={(value) => field.onChange(value === "true")}
                       disabled={actionLoading}
                     >
-                      <SelectTrigger className={`mt-1 ${errors.gender ? "border-red-500" : ""}`}>
+                      <SelectTrigger className={`w-full mt-1 ${errors.gender ? "border-red-500" : ""}`}>
                         <SelectValue placeholder="Chọn giới tính" />
                       </SelectTrigger>
                       <SelectContent>
@@ -358,7 +358,7 @@ export function DialogCVInformation({
                 <Input
                   {...register("address")}
                   placeholder="Nhập địa chỉ"
-                  className="mt-1"
+                  className="w-full mt-1"
                   disabled={actionLoading}
                 />
               </div>

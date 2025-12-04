@@ -177,7 +177,7 @@ export function DialogCVCertificate({
               <Input
                 {...register("name")}
                 placeholder="Ví dụ: Chứng chỉ AWS..."
-                className={`mt-1 ${errors.name ? "border-red-500" : ""}`}
+                className={`w-full mt-1 ${errors.name ? "border-red-500" : ""}`}
                 disabled={actionLoading}
               />
               {errors.name && (
@@ -196,7 +196,7 @@ export function DialogCVCertificate({
                 <Input
                   {...register("organization")}
                   placeholder="Tên tổ chức cấp"
-                  className={`mt-1 ${
+                  className={`w-full mt-1 ${
                     errors.organization ? "border-red-500" : ""
                   }`}
                   disabled={actionLoading}
@@ -274,7 +274,7 @@ export function DialogCVCertificate({
               <Input
                 {...register("link")}
                 placeholder="https://..."
-                className={`mt-1 ${errors.link ? "border-red-500" : ""}`}
+                className={`w-full mt-1 ${errors.link ? "border-red-500" : ""}`}
                 disabled={actionLoading}
               />
               {errors.link && (
@@ -290,7 +290,7 @@ export function DialogCVCertificate({
               <Textarea
                 {...register("description")}
                 placeholder="Mô tả chi tiết về chứng chỉ..."
-                className="mt-1 resize-none min-h-[120px]"
+                className="w-full mt-1 resize-none min-h-[120px]"
                 disabled={actionLoading}
               />
               <div className="flex justify-between mt-1">

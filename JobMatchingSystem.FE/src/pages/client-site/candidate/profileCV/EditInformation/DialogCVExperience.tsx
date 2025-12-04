@@ -180,7 +180,7 @@ export function DialogCVExperience({
               <Input
                 {...register("companyName")}
                 placeholder="Ví dụ: Công ty ABC..."
-                className={`mt-1 ${errors.companyName ? "border-red-500" : ""}`}
+                className={`w-full mt-1 ${errors.companyName ? "border-red-500" : ""}`}
                 disabled={actionLoading}
               />
               {errors.companyName && (
@@ -198,7 +198,7 @@ export function DialogCVExperience({
               <Input
                 {...register("position")}
                 placeholder="Ví dụ: Lập trình viên Frontend..."
-                className={`mt-1 ${errors.position ? "border-red-500" : ""}`}
+                className={`w-full mt-1 ${errors.position ? "border-red-500" : ""}`}
                 disabled={actionLoading}
               />
               {errors.position && (
@@ -330,7 +330,7 @@ export function DialogCVExperience({
               <Textarea
                 {...register("description")}
                 placeholder="Mô tả chi tiết về công việc, thành tựu..."
-                className="mt-1 resize-none min-h-[120px]"
+                className="w-full mt-1 resize-none min-h-[120px]"
                 disabled={actionLoading}
               />
               <div className="flex justify-between mt-1">

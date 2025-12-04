@@ -61,27 +61,14 @@ import { DialogCVInformation } from "./EditInformation/DialogCVInformation";
 import { User } from "@/models/user";
 import { CVAchievement } from "@/models/cv-achievement";
 import { CVCertificate } from "@/models/cv-certificate";
-import { CVEducation, DegreeType } from "@/models/cv-education";
+import { CVEducation, EducationLevel as EducationLevelMap } from "@/models/cv-education";
 import { CVExperience } from "@/models/cv-experience";
 import { CVProject } from "@/models/cv-project";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-const getDegreeLabel = (degree: DegreeType): string => {
-    switch (degree) {
-        case DegreeType.College:
-            return "Cao đẳng";
-        case DegreeType.Bachelor:
-            return "Cử nhân";
-        case DegreeType.Master:
-            return "Thạc sĩ";
-        case DegreeType.Doctorate:
-            return "Tiến sĩ";
-        case DegreeType.Other:
-            return "Khác";
-        default:
-            return "Khác";
-    }
+const getEducationLevelLabel = (educationLevelId: number): string => {
+    return EducationLevelMap[educationLevelId as keyof typeof EducationLevelMap] || "Khác";
 };
 
 const ProfileCvPage = () => {
@@ -597,7 +584,7 @@ const ProfileCvPage = () => {
                                             {education.schoolName}
                                         </h4>
                                         <p className="text-base text-gray-800">
-                                            {education.major} - {getDegreeLabel(education.degree)}
+                                            {education.major} - {getEducationLevelLabel(education.educationLevelId)}
                                         </p>
                                         <p className="text-base text-gray-900 mt-1">
                                             {education.startDate
