@@ -8,7 +8,6 @@ import ContactRecruiterPage from './pages/client-site/guest/ContactRecruiterPage
 import { ClientLayout } from './components/layout/Client/ClientLayout';
 import { ManageCompanyPage } from './pages/admin-site/ManageCompany/ViewCompanyList';
 import ViewJobList from './pages/admin-site/ManageJob/ViewJobList';
-import { CreateEditUserPage } from './pages/admin-site/ManageUser/CreateEditUser';
 import RecruiterDashboard from './pages/client-site/recruiter/Dashboard';
 import RecruiterViewJobList from './pages/client-site/recruiter/Jobs/ViewJobList';
 import CreateJobPage from './pages/client-site/recruiter/Jobs/CreateJobPage';
@@ -33,6 +32,8 @@ import ViewReportList from './pages/admin-site/ManageReport/ViewReportList';
 import { StageBoardDemo } from './components/Stage/StageBoardDemo';
 import InterviewSchedule from './pages/client-site/interview-schedule/interview-schedule';
 import EvaluationHistory from './pages/client-site/evaluation-history/evaluation-history';
+import PricingPage from './pages/client-site/pricing/pricing';
+import OrderPage from './pages/client-site/order/order';
 
 const AppRouter: React.FC = () => {
   return (
@@ -44,7 +45,7 @@ const AppRouter: React.FC = () => {
       <Route path="/confirm-email" element={<ConfirmEmailPage />} />
 
       <Route path="profile-cv/cv-templates" element={<PreviewDownloadCV />} />
-
+    
       {/* Client routes with ClientLayout */}
       <Route path="/" element={<App />}>
         <Route element={<ClientLayout />}>
@@ -54,6 +55,8 @@ const AppRouter: React.FC = () => {
           <Route path="jobs/:id" element={<JobDetailPage />} />
           <Route path="companies" element={<CompaniesPage />} />
           <Route path="companies/:id" element={<CompanyDetailPage />} />
+          <Route path="pricing" element={<PricingPage />} />
+          <Route path="order/:id" element={<OrderPage />} />
           <Route path="contact-recruiter" element={<ContactRecruiterPage />} />
           <Route path="profile-cv" element={<ProfileCvPage />} />
 
@@ -69,8 +72,6 @@ const AppRouter: React.FC = () => {
         <Route path="manage-report" element={<ViewReportList />} />
         <Route path="manage-template-cv" element={<ViewTemplateCvList />} />
         <Route path="manage-service-plan" element={<ViewServicePlanList />} />
-        <Route path="manage-user/create" element={<CreateEditUserPage />} />
-        <Route path="manage-user/edit/:id" element={<CreateEditUserPage />} />
       </Route>
 
       {/* Recruiter routes - Protected */}
