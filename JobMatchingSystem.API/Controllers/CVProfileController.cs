@@ -103,6 +103,14 @@ namespace JobMatchingSystem.API.Controllers
             try
             {
                 int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                if (userId == 0)
+                {
+                    return BadRequest(APIResponse<object>.Builder()
+                        .WithStatusCode(HttpStatusCode.BadRequest)
+                        .WithSuccess(false)
+                        .WithMessage("Invalid user authentication")
+                        .Build());
+                }
                 
                 var cvProfile = await _cvProfileService.CreateAsync(request, userId);
                 
@@ -134,6 +142,14 @@ namespace JobMatchingSystem.API.Controllers
             try
             {
                 int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                if (userId == 0)
+                {
+                    return BadRequest(APIResponse<object>.Builder()
+                        .WithStatusCode(HttpStatusCode.BadRequest)
+                        .WithSuccess(false)
+                        .WithMessage("Invalid user authentication")
+                        .Build());
+                }
                 
                 var updatedProfile = await _cvProfileService.UpdateAsync(id, request, userId);
                 
@@ -227,7 +243,6 @@ namespace JobMatchingSystem.API.Controllers
                     // Create new profile if it doesn't exist
                     var createRequest = new CVProfileRequest
                     {
-                        UserId = userId,
                         PositionId = request.PositionId,
                         AboutMe = null
                     };
@@ -238,7 +253,6 @@ namespace JobMatchingSystem.API.Controllers
                     // Update existing profile's position
                     var updateRequest = new CVProfileRequest
                     {
-                        UserId = userId,
                         PositionId = request.PositionId,
                         AboutMe = existingProfile.AboutMe
                     };

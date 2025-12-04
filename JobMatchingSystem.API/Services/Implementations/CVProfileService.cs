@@ -26,15 +26,9 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<CVProfile> CreateAsync(CVProfileRequest request, int userId)
         {
-            // Ensure the request userId matches the authorized user
-            if (request.UserId != userId)
-            {
-                throw new UnauthorizedAccessException("Cannot create CV profile for another user");
-            }
-
             var cvProfile = new CVProfile
             {
-                UserId = request.UserId,
+                UserId = userId,
                 PositionId = request.PositionId,
                 AboutMe = request.AboutMe
             };
