@@ -62,36 +62,43 @@ namespace JobMatchingSystem.API.Controllers
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
                 if (userId == 0)
                 {
-                    return Ok(APIResponse<object>.Builder()
+                    return Ok(APIResponse<CVProfileDto>.Builder()
                         .WithStatusCode(HttpStatusCode.OK)
                         .WithSuccess(true)
-                        .WithResult(new object())
+                        .WithResult(new CVProfileDto())
                         .Build());
                 }
 
                 var profile = await _cvProfileService.GetByUserIdAsync(userId);
                 if (profile == null)
                 {
-                    return Ok(APIResponse<object>.Builder()
+                    return Ok(APIResponse<CVProfileDto>.Builder()
                         .WithStatusCode(HttpStatusCode.OK)
                         .WithSuccess(true)
-                        .WithResult(new object())
+                        .WithResult(new CVProfileDto())
                         .Build());
                 }
 
-                return Ok(APIResponse<object>.Builder()
+                var profileDto = new CVProfileDto
+                {
+                    PositionId = profile.PositionId,
+                    AboutMe = profile.AboutMe,
+                    PositionName = profile.Position?.Name
+                };
+
+                return Ok(APIResponse<CVProfileDto>.Builder()
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
-                    .WithResult(profile)
+                    .WithResult(profileDto)
                     .WithMessage("CV Profile retrieved successfully")
                     .Build());
             }
             catch (Exception)
             {
-                return Ok(APIResponse<object>.Builder()
+                return Ok(APIResponse<CVProfileDto>.Builder()
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
-                    .WithResult(new object())
+                    .WithResult(new CVProfileDto())
                     .Build());
             }
         }
@@ -118,7 +125,6 @@ namespace JobMatchingSystem.API.Controllers
                     .WithStatusCode(HttpStatusCode.Created)
                     .WithSuccess(true)
                     .WithResult(cvProfile)
-                    .WithMessage("CV Profile created successfully")
                     .Build());
             }
             catch (UnauthorizedAccessException ex)
