@@ -40,7 +40,6 @@ namespace JobMatchingSystem.API.Controllers
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
                     .WithResult(cvProfile)
-                    .WithMessage("CV Profile retrieved successfully")
                     .Build());
             }
             catch (Exception ex)
@@ -90,7 +89,6 @@ namespace JobMatchingSystem.API.Controllers
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
                     .WithResult(profileDto)
-                    .WithMessage("CV Profile retrieved successfully")
                     .Build());
             }
             catch (Exception)
@@ -163,7 +161,6 @@ namespace JobMatchingSystem.API.Controllers
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
                     .WithResult(updatedProfile)
-                    .WithMessage("CV Profile updated successfully")
                     .Build());
             }
             catch (KeyNotFoundException)
@@ -201,7 +198,6 @@ namespace JobMatchingSystem.API.Controllers
                 return Ok(APIResponse<object>.Builder()
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
-                    .WithMessage("CV Profile deleted successfully")
                     .Build());
             }
             catch (KeyNotFoundException)
@@ -268,7 +264,6 @@ namespace JobMatchingSystem.API.Controllers
                 return Ok(APIResponse<object>.Builder()
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
-                    .WithMessage("Position updated successfully")
                     .Build());
             }
             catch (Exception ex)
@@ -303,7 +298,6 @@ namespace JobMatchingSystem.API.Controllers
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
                     .WithResult(updatedProfile)
-                    .WithMessage("About me updated successfully")
                     .Build());
             }
             catch (KeyNotFoundException)
