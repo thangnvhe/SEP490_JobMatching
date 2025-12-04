@@ -126,10 +126,10 @@ namespace JobMatchingSystem.API.Data
                       .IsRequired()
                       .HasMaxLength(100);
 
-                // 1 Position - nhiều Users
-                entity.HasMany(e => e.Candidates)
-                      .WithOne(u => u.Position)
-                      .HasForeignKey(u => u.PositionId)
+                // 1 Position - nhiều CVProfiles
+                entity.HasMany(e => e.CVProfiles)
+                      .WithOne(cv => cv.Position)
+                      .HasForeignKey(cv => cv.PositionId)
                       .OnDelete(DeleteBehavior.SetNull);
 
                 // 1 Position - nhiều Jobs

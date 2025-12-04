@@ -103,7 +103,8 @@ namespace JobMatchingSystem.API.Services.Implementations
                 .Include(cv => cv.User)
                     .ThenInclude(u => u.CandidateTaxonomies)
                         .ThenInclude(ct => ct.Taxonomy)
-                .Include(cv => cv.User.Position)
+                .Include(cv => cv.User.CVProfile)
+                    .ThenInclude(cvp => cvp.Position)
                 .Where(cv => cv.IsPrimary == true && cv.User.IsActive)
                 .Select(cv => cv.User)
                 .Distinct()
@@ -175,7 +176,8 @@ namespace JobMatchingSystem.API.Services.Implementations
         private async Task<ApplicationUser?> GetCandidateWithDetailsAsync(int candidateId)
         {
             return await _context.ApplicationUsers
-                .Include(u => u.Position)
+                .Include(u => u.CVProfile)
+                    .ThenInclude(cvp => cvp.Position)
                 .Include(u => u.CVEducations)
                     .ThenInclude(e => e.EducationLevel)
                 .Include(u => u.CandidateTaxonomies)
@@ -424,7 +426,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             var details = new PositionMatchingDetails
             {
                 RequiredPosition = job.Position?.Name ?? "",
-                CandidatePosition = candidate.Position?.Name ?? ""
+                CandidatePosition = candidate.CVProfile?.Position?.Name ?? ""
             };
 
             if (string.IsNullOrEmpty(details.RequiredPosition))
@@ -705,7 +707,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 Email = candidate.Email ?? "",
                 PhoneNumber = candidate.PhoneNumber ?? "",
                 Address = candidate.Address ?? "",
-                Position = candidate.Position?.Name ?? "",
+                Position = candidate.CVProfile?.Position?.Name ?? "",
                 TotalScore = jobMatchingResult.TotalScore,
                 MatchedAt = DateTime.UtcNow,
                 
