@@ -315,6 +315,166 @@ namespace JobMatchingSystem.API.Services.Implementations
             return updatedUserDTO;
         }
 
+        public async Task<UserDetailResponseDTO> UpdateUserByAdmin(int userId, UpdateUserByAdminRequest request)
+        {
+            var user = await _unitOfWork.AuthRepository.GetUserById(userId);
+            if (user == null)
+            {
+                throw new AppException(ErrorCode.NotFoundUser());
+            }
+
+            // Handle avatar file upload if provided
+            if (request.AvatarFile != null && request.AvatarFile.Length > 0)
+            {
+                // Validate file type
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+                var fileExtension = Path.GetExtension(request.AvatarFile.FileName).ToLowerInvariant();
+                
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    throw new AppException(ErrorCode.InvalidFileType());
+                }
+
+                // Validate file size (max 5MB)
+                if (request.AvatarFile.Length > 5 * 1024 * 1024)
+                {
+                    throw new AppException(ErrorCode.FileSizeExceeded());
+                }
+
+                // Delete old avatar from Azure Blob Storage if exists
+                if (!string.IsNullOrEmpty(user.AvatarUrl))
+                {
+                    await _blobStorageService.DeleteFileAsync(user.AvatarUrl);
+                }
+
+                // Generate unique filename for avatar
+                var fileName = $"avatar_{user.Id}_{DateTime.Now:yyyyMMddHHmmss}{fileExtension}";
+                
+                // Upload new avatar to Azure Blob Storage
+                var avatarFileUrl = await _blobStorageService.UploadFileAsync(request.AvatarFile, "avartars", fileName);
+                
+                // Update avatar URL
+                user.AvatarUrl = avatarFileUrl;
+            }
+
+            // Update user properties only if they are provided (partial update)
+            if (!string.IsNullOrWhiteSpace(request.FullName))
+            {
+                user.FullName = request.FullName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Email))
+            {
+                // Check if email already exists (exclude current user)
+                var existingUser = await _userManager.FindByEmailAsync(request.Email);
+                if (existingUser != null && existingUser.Id != user.Id)
+                {
+                    throw new AppException(ErrorCode.EmailAlreadyExists());
+                }
+                user.Email = request.Email;
+                user.UserName = request.Email; // Username is usually email
+                user.NormalizedEmail = request.Email.ToUpper();
+                user.NormalizedUserName = request.Email.ToUpper();
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
+            {
+                user.PhoneNumber = request.PhoneNumber;
+            }
+
+            if (request.Address != null)
+            {
+                user.Address = request.Address;
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Gender))
+            {
+                if (bool.TryParse(request.Gender, out var gender))
+                {
+                    user.Gender = gender;
+                }
+                else if (request.Gender.Equals("Male", StringComparison.OrdinalIgnoreCase))
+                {
+                    user.Gender = true; // true = Male
+                }
+                else if (request.Gender.Equals("Female", StringComparison.OrdinalIgnoreCase))
+                {
+                    user.Gender = false; // false = Female
+                }
+            }
+
+            if (request.Birthday.HasValue)
+            {
+                user.Birthday = request.Birthday.Value;
+            }
+
+            if (request.IsActive.HasValue)
+            {
+                user.IsActive = request.IsActive.Value;
+            }
+
+            if (request.CompanyId.HasValue)
+            {
+                user.CompanyId = request.CompanyId.Value;
+            }
+
+            // Handle role update if provided
+            if (!string.IsNullOrWhiteSpace(request.Role))
+            {
+                var currentRoles = await _userManager.GetRolesAsync(user);
+                if (currentRoles.Any())
+                {
+                    await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                }
+
+                // Check if role exists
+                var roleExists = await _roleManager.RoleExistsAsync(request.Role);
+                if (!roleExists)
+                {
+                    throw new AppException(ErrorCode.RoleNotFound());
+                }
+
+                await _userManager.AddToRoleAsync(user, request.Role);
+            }
+
+            // Update user in database
+            await _unitOfWork.AuthRepository.UpdateUserAsync(user);
+            await _unitOfWork.SaveAsync();
+
+            // Get user roles for the response
+            var roles = await _unitOfWork.AuthRepository.GetRolesAsync(user);
+
+            // Get updated user with company information
+            var updatedUser = await _unitOfWork.AuthRepository.GetUserById(user.Id);
+            if (updatedUser == null)
+            {
+                throw new AppException(ErrorCode.NotFoundUser());
+            }
+
+            // Generate secure URL with SAS token for avatar access
+            var secureAvatarUrl = await _blobStorageService.GetSecureFileUrlAsync(updatedUser.AvatarUrl);
+
+            var updatedUserDTO = new UserDetailResponseDTO
+            {
+                Id = updatedUser.Id,
+                FullName = updatedUser.FullName ?? string.Empty,
+                Email = updatedUser.Email ?? string.Empty,
+                UserName = updatedUser.UserName ?? string.Empty,
+                PhoneNumber = updatedUser.PhoneNumber ?? string.Empty,
+                Address = updatedUser.Address ?? string.Empty,
+                AvatarUrl = secureAvatarUrl,
+                Gender = updatedUser.Gender,
+                Birthday = updatedUser.Birthday,
+                IsActive = updatedUser.IsActive,
+                Score = updatedUser.Score,
+                CompanyId = updatedUser.CompanyId,
+                Role = roles.FirstOrDefault(),
+                CreatedAt = updatedUser.CreatedAt
+            };
+
+            return updatedUserDTO;
+        }
+
         public async Task<UserDetailResponseDTO> CreateHiringManager(CreateHiringManagerRequest request)
         {
             try
