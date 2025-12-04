@@ -28,6 +28,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import React from "react";
+import RoleGuard from "@/guards/RoleGuard";
 function useIsActivePath(path: string) {
   const location = useLocation();
   return location.pathname.startsWith(path);
@@ -314,29 +315,32 @@ function CandidateNav() {
 
       <SidebarSeparator className="my-2" />
 
-      <SidebarGroup>
-        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
-          Cá nhân
-        </SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu className="">
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={useIsActivePath("/profile")}
-                tooltip="Profile"
-                size="default"
-                className="h-9 px-3"
-              >
-                <Link to="/profile-cv">
-                  <Settings className="size-4" />
-                  <span className="font-medium text-sm">Hồ sơ cá nhân</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
+      <RoleGuard allowedRoles="Candidate">
+        <SidebarGroup>
+          <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
+            Cá nhân
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={useIsActivePath("/profile")}
+                  tooltip="Profile"
+                  size="default"
+                  className="h-9 px-3"
+                >
+                  <Link to="/profile-cv">
+                    <Settings className="size-4" />
+                    <span className="font-medium text-sm">Hồ sơ cá nhân</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </RoleGuard>
+
     </>
   );
 }

@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import type { RootState } from "@/store";
 
 // UI Components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Icons
 import {
@@ -24,416 +24,83 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  CheckCircle2,
 } from "lucide-react";
 
 // Services
-import { UserServices } from "@/services/user.service";
 import { CompanyServices } from "@/services/company.service";
+
 // Types
 import type { Company } from "@/models/company";
-import type { User } from "@/models/user";
+
 // Components
 import { EditCompanyDialog } from "@/components/dialogs/EditCompanyDialog";
-
-
-const getCompanyStatusBadge = (status: number | string) => {
-  // Convert to number if string
-  const statusNum = typeof status === 'string' ? parseInt(status) : status;
-
-  switch (statusNum) {
-    case 0:
-      return (
-        <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-          <AlertTriangle className="w-3 h-3 mr-1" />
-          Đang chờ duyệt
-        </Badge>
-      );
-    case 1:
-      return (
-        <Badge className="bg-green-100 text-green-800 border-green-200">
-          <CheckCircle className="w-3 h-3 mr-1" />
-          Đã duyệt
-        </Badge>
-      );
-    case 2:
-      return (
-        <Badge className="bg-red-100 text-red-800 border-red-200">
-          <XCircle className="w-3 h-3 mr-1" />
-          Bị từ chối
-        </Badge>
-      );
-    default:
-      return (
-        <Badge variant="outline">
-          Không xác định
-        </Badge>
-      );
-  }
-};
-
-// ===================== COMPONENTS =====================
-
-interface CompanyHeaderProps {
-  company: Company;
-  onEdit: () => void;
-}
-
-const CompanyHeader: React.FC<CompanyHeaderProps> = ({ company, onEdit }) => {
-  return (
-    <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-none shadow-sm">
-      <CardContent className="p-8">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-          {/* Left Section - Company Info */}
-          <div className="flex-1">
-            <div className="flex items-start space-x-6 mb-6">
-              {/* Company Logo */}
-              <div className="relative flex-shrink-0">
-                <div className="w-24 h-24 rounded-2xl overflow-hidden border-4 border-white shadow-lg bg-white">
-                  {company.logo ? (
-                    <img
-                      src={company.logo}
-                      alt={company.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                      <span className="text-white font-bold text-2xl">
-                        {company.name?.charAt(0)?.toUpperCase() || 'C'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <button className="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center transition-colors">
-                  <Camera className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Company Details */}
-              <div className="flex-1">
-                <div className="flex items-start justify-between mb-3">
-                  <h1 className="text-3xl font-bold text-gray-900 leading-tight">
-                    {company.name}
-                  </h1>
-                  {getCompanyStatusBadge(company.status || 0)}
-                </div>
-
-                <div className="space-y-2 text-gray-600">
-                  {company.address && (
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm">{company.address}</span>
-                    </div>
-                  )}
-
-                  {company.phoneContact && (
-                    <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm">{company.phoneContact}</span>
-                    </div>
-                  )}
-
-                  {company.email && (
-                    <div className="flex items-center space-x-2">
-                      <Mail className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm">{company.email}</span>
-                    </div>
-                  )}
-
-                  {company.website && (
-                    <div className="flex items-center space-x-2">
-                      <Globe className="w-4 h-4 text-gray-500" />
-                      <a
-                        href={company.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                      >
-                        {company.website}
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Company Description */}
-            {company.description && (
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-2">Giới thiệu công ty</h3>
-                <p className="text-gray-700 leading-relaxed text-sm">
-                  {company.description}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Right Section - Edit Button */}
-          <div className="lg:w-48 flex-shrink-0">
-            <Button
-              onClick={onEdit}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white h-11"
-              size="lg"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Chỉnh sửa thông tin
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-interface CompanyStatsProps {
-  company: Company;
-}
-
-const CompanyStats: React.FC<CompanyStatsProps> = ({ company: _company }) => {
-  const navigate = useNavigate();
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Briefcase className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Tin tuyển dụng</p>
-              <p className="text-2xl font-bold text-gray-900">0</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card
-        className="cursor-pointer hover:shadow-lg transition-shadow"
-        onClick={() => navigate('/recruiter/company/members')}
-      >
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Users className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Thành viên</p>
-              <p className="text-2xl font-bold text-gray-900">6</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Đã tuyển</p>
-              <p className="text-2xl font-bold text-gray-900">0</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-interface CompanyInfoDetailProps {
-  company: Company;
-}
-
-const CompanyInfoDetail: React.FC<CompanyInfoDetailProps> = ({ company }) => {
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Company Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 flex items-center">
-            <Building2 className="w-5 h-5 text-blue-600 mr-2" />
-            Thông tin công ty
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-500">Tên công ty</label>
-            <p className="text-gray-900 font-medium">{company.name}</p>
-          </div>
-
-          <Separator />
-
-          <div>
-            <label className="text-sm font-medium text-gray-500">Địa chỉ</label>
-            <p className="text-gray-900">{company.address || "Chưa cập nhật"}</p>
-          </div>
-
-          <Separator />
-
-          <div>
-            <label className="text-sm font-medium text-gray-500">Trạng thái</label>
-            <div className="mt-1">
-              {getCompanyStatusBadge(company.status || 0)}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Contact Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 flex items-center">
-            <Phone className="w-5 h-5 text-green-600 mr-2" />
-            Thông tin liên hệ
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-500">Số điện thoại</label>
-            <p className="text-gray-900">{company.phoneContact || "Chưa cập nhật"}</p>
-          </div>
-
-          <Separator />
-
-          <div>
-            <label className="text-sm font-medium text-gray-500">Email liên hệ</label>
-            <p className="text-gray-900">{company.email || "Chưa cập nhật"}</p>
-          </div>
-
-          <Separator />
-
-          <div>
-            <label className="text-sm font-medium text-gray-500">Website</label>
-            {company.website ? (
-              <a
-                href={company.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 hover:underline block"
-              >
-                {company.website}
-              </a>
-            ) : (
-              <p className="text-gray-900">Chưa cập nhật</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
+import { API_BASE_URL } from "../../../../../env";
 
 // ===================== MAIN COMPONENT =====================
 
-const CompanyProfile: React.FC = () => {
-  // Redux state
-  const authState = useSelector((state: RootState) => state.authState);
+const CompanyProfile = () => {
+  const navigate = useNavigate();
 
   // State management
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
-
-  // Dialog states
   const [showEditDialog, setShowEditDialog] = useState(false);
 
-  // Load company profile data
+
+  // ===================== DATA FETCHING =====================
+
+  const loadCompanyProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await CompanyServices.getCompanyMe();
+      setCompany(response.result);
+    } catch (err) {
+      console.error("Error loading company profile:", err);
+      setError("Có lỗi xảy ra khi tải thông tin công ty");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadCompanyProfile = async () => {
-      if (!authState.isAuthenticated) {
-        setError("Vui lòng đăng nhập để xem thông tin công ty");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        // 1. Get current user info to get companyId
-        const userResponse = await UserServices.getUserProfile();
-
-        if (!userResponse.isSuccess || !userResponse.result) {
-          setError("Không thể tải thông tin người dùng");
-          setLoading(false);
-          return;
-        }
-
-        const userData = userResponse.result as User;
-
-        // Check if user has companyId
-        if (!userData.companyId) {
-          setError("Tài khoản chưa được liên kết với công ty nào");
-          setLoading(false);
-          return;
-        }
-
-        // 2. Get company details using companyId
-        const companyResponse = await CompanyServices.getCompanyById(userData.companyId.toString());
-
-        if (!companyResponse.isSuccess || !companyResponse.result) {
-          setError("Không thể tải thông tin công ty");
-          setLoading(false);
-          return;
-        }
-
-        setCompany(companyResponse.result);
-        setLoading(false);
-
-      } catch (error) {
-        console.error("Error loading company profile:", error);
-        setError("Có lỗi xảy ra khi tải thông tin công ty");
-        setLoading(false);
-      }
-    };
-
     loadCompanyProfile();
-  }, [authState.isAuthenticated]);
+  }, []);
 
-  // Handle edit company
+  // ===================== EVENT HANDLERS =====================
+
   const handleEditCompany = () => {
     setShowEditDialog(true);
   };
 
-  // Handle update company success
   const handleUpdateSuccess = (updatedCompany: Company) => {
     setCompany(updatedCompany);
     setShowEditDialog(false);
     toast.success("Cập nhật thông tin công ty thành công!");
   };
 
-  // Loading state
+  const handleNavigateToMembers = () => {
+    navigate("/recruiter/company/members");
+  };
+
+  const handleReload = () => {
+    window.location.reload();
+  };
+
+  // ===================== RENDER: LOADING STATE =====================
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="space-y-6">
-            {/* Header skeleton */}
-            <div className="bg-white rounded-xl p-8 shadow-sm">
-              <div className="animate-pulse">
-                <div className="flex space-x-6">
-                  <div className="w-24 h-24 bg-gray-200 rounded-2xl"></div>
-                  <div className="flex-1 space-y-3">
-                    <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Content skeleton */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-white rounded-xl p-6 shadow-sm">
-                  <div className="animate-pulse space-y-3">
-                    <div className="h-12 w-12 bg-gray-200 rounded-lg"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                    <div className="h-6 bg-gray-200 rounded w-1/3"></div>
-                  </div>
-                </div>
-              ))}
+      <div className="min-h-screen bg-gray-50/30 pb-20">
+        <div className="h-48 bg-gray-200 animate-pulse" />
+        <div className="container mx-auto px-4 -mt-20 relative">
+          <div className="flex flex-col gap-6">
+            <div className="w-32 h-32 rounded-2xl bg-gray-200 border-4 border-white animate-pulse" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-96" />
             </div>
           </div>
         </div>
@@ -441,22 +108,23 @@ const CompanyProfile: React.FC = () => {
     );
   }
 
-  // Error state
+  // ===================== RENDER: ERROR STATE =====================
+
   if (error || !company) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
-            <Building2 className="w-12 h-12 text-gray-400" />
+      <div className="min-h-[80vh] flex flex-col items-center justify-center bg-gray-50 p-4">
+        <div className="text-center max-w-md w-full">
+          <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+            <Building2 className="w-10 h-10 text-gray-400" />
           </div>
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-            Không thể tải thông tin công ty
+            Không thể tải thông tin
           </h2>
           <p className="text-gray-600 mb-6">
             {error || "Thông tin công ty không tồn tại hoặc đã bị xóa."}
           </p>
           <Button
-            onClick={() => window.location.reload()}
+            onClick={handleReload}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             Thử lại
@@ -466,44 +134,247 @@ const CompanyProfile: React.FC = () => {
     );
   }
 
-  // Main render
+  // ===================== RENDER: MAIN CONTENT =====================
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="space-y-8">
-          {/* Page Title */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Hồ sơ công ty</h1>
-              <p className="text-gray-600 mt-2">
-                Quản lý và cập nhật thông tin công ty của bạn
-              </p>
+    <div className="min-h-screen bg-gray-50/30 pb-20 font-sans">
+      {/* Banner Section */}
+      <div className="h-48 md:h-60 w-full bg-slate-900 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        {/* You could add a cover image feature here in the future */}
+        <div className="absolute bottom-4 right-4 z-10">
+           {/* Placeholder for Cover Edit Button if needed */}
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 max-w-6xl">
+        {/* Header Info - Overlapping Banner */}
+        <div className="relative -mt-20 mb-8 flex flex-col md:flex-row gap-6 items-end">
+          {/* Logo Box */}
+          <div className="relative group">
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl border-4 border-white bg-white shadow-md shrink-0 overflow-hidden flex items-center justify-center relative z-10">
+              <Avatar className="w-full h-full rounded-none">
+                <AvatarImage
+                  src={company.logo}
+                  alt={company.name}
+                  className="object-contain p-2 w-full h-full"
+                />
+                <AvatarFallback className="rounded-none bg-white">
+                  <Building2 className="w-16 h-16 text-gray-300" />
+                </AvatarFallback>
+              </Avatar>
             </div>
+             {/* Camera Icon for Logo Edit Hint */}
+             <div className="absolute -bottom-2 -right-2 z-20 bg-blue-600 text-white p-1.5 rounded-full shadow-sm cursor-pointer hover:bg-blue-700 transition-colors" onClick={handleEditCompany}>
+                 <Camera className="w-4 h-4" />
+             </div>
           </div>
 
-          {/* Company Header */}
-          <CompanyHeader
-            company={company}
-            onEdit={handleEditCompany}
-          />
+          {/* Main Info */}
+          <div className="flex-1 pb-2 min-w-0 space-y-2">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 tracking-tight truncate leading-tight mb-2">
+                  {company.name}
+                </h1>
+                <div className="flex flex-wrap items-center gap-3 text-gray-600">
+                  
+                  {company.website && (
+                    <>
+                         <a
+                            href={company.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm hover:text-blue-600 hover:underline flex items-center gap-1"
+                          >
+                            <Globe className="w-3.5 h-3.5" />
+                            {new URL(company.website).hostname}
+                          </a>
+                    </>
+                  )}
+                </div>
+              </div>
 
-          {/* Company Stats */}
-          <CompanyStats company={company} />
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <Button
+                  onClick={handleEditCompany}
+                  className="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Chỉnh sửa
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-          {/* Company Details */}
-          <CompanyInfoDetail company={company} />
+        {/* Dashboard Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+           <Card className="bg-white border-none shadow-sm hover:shadow-md transition-all duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Tin tuyển dụng</p>
+                    <p className="text-2xl font-bold text-gray-900 mt-1">0</p>
+                  </div>
+                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <Briefcase className="w-5 h-5 text-blue-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+                className="bg-white border-none shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
+                onClick={handleNavigateToMembers}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 group-hover:text-blue-600 transition-colors">Thành viên</p>
+                    <p className="text-2xl font-bold text-gray-900 mt-1">6</p>
+                  </div>
+                  <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                    <Users className="w-5 h-5 text-indigo-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white border-none shadow-sm hover:shadow-md transition-all duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Đã tuyển</p>
+                    <p className="text-2xl font-bold text-gray-900 mt-1">0</p>
+                  </div>
+                  <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - About */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="border-none shadow-sm bg-white overflow-hidden h-full">
+                <CardHeader className="border-b bg-gray-50/50 px-6 py-4">
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2 text-gray-900">
+                        <Building2 className="w-5 h-5 text-blue-600" />
+                        Giới thiệu chung
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                    <div className="prose prose-stone max-w-none text-gray-600 leading-relaxed whitespace-pre-wrap text-sm">
+                        {company.description ? (
+                            company.description
+                        ) : (
+                            <div className="text-center py-12 flex flex-col items-center justify-center bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                                    <Edit className="w-5 h-5 text-gray-400" />
+                                </div>
+                                <p className="text-gray-500 font-medium">Chưa có mô tả về công ty</p>
+                                <p className="text-gray-400 text-sm mb-4">Hãy thêm mô tả để ứng viên hiểu rõ hơn về bạn</p>
+                                <Button variant="outline" onClick={handleEditCompany} size="sm">Thêm mô tả</Button>
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Contact & Info */}
+          <div className="space-y-6">
+            <Card className="border-none shadow-sm bg-white sticky top-6">
+                <CardHeader className="border-b bg-gray-50/50 px-6 py-4">
+                    <CardTitle className="text-base font-semibold text-gray-900">Thông tin liên hệ</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                     {/* Address */}
+                    <div className="flex gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
+                            <MapPin className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <div className="overflow-hidden">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Địa chỉ</p>
+                            <p className="text-sm text-gray-900 leading-relaxed">
+                                {company.address || "Chưa cập nhật"}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <Separator className="bg-gray-100" />
+
+                    {/* Website */}
+                    <div className="flex gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0 mt-0.5">
+                            <Globe className="w-4 h-4 text-indigo-600" />
+                        </div>
+                        <div className="overflow-hidden">
+                             <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Website</p>
+                            <p className="text-sm text-gray-900 truncate">
+                                {company.website ? (
+                                    <a href={company.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                                        {new URL(company.website).hostname}
+                                    </a>
+                                ) : "Chưa cập nhật"}
+                            </p>
+                        </div>
+                    </div>
+
+                    <Separator className="bg-gray-100" />
+
+                    {/* Email */}
+                    <div className="flex gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-orange-50 flex items-center justify-center shrink-0 mt-0.5">
+                            <Mail className="w-4 h-4 text-orange-600" />
+                        </div>
+                        <div className="overflow-hidden">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Email</p>
+                            <p className="text-sm text-gray-900 truncate">
+                                {company.email || "Chưa cập nhật"}
+                            </p>
+                        </div>
+                    </div>
+
+                     <Separator className="bg-gray-100" />
+
+                    {/* Phone */}
+                    <div className="flex gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center shrink-0 mt-0.5">
+                            <Phone className="w-4 h-4 text-green-600" />
+                        </div>
+                        <div className="overflow-hidden">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Điện thoại</p>
+                            <p className="text-sm text-gray-900">
+                                {company.phoneContact || "Chưa cập nhật"}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="pt-4 mt-2">
+                        <Button variant="outline" className="w-full" onClick={handleNavigateToMembers}>
+                            <Users className="w-4 h-4 mr-2 text-gray-500" />
+                            Quản lý thành viên
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 
       {/* Edit Company Dialog */}
-      {company && (
-        <EditCompanyDialog
-          isOpen={showEditDialog}
-          onOpenChange={setShowEditDialog}
-          company={company}
-          onUpdateSuccess={handleUpdateSuccess}
-        />
-      )}
+      <EditCompanyDialog
+        isOpen={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        company={company}
+        onUpdateSuccess={handleUpdateSuccess}
+      />
     </div>
   );
 };
