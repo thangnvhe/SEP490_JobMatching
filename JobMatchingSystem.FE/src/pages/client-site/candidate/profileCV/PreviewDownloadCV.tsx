@@ -28,7 +28,6 @@ import { CVAchievementServices } from "@/services/cv-achievement.service";
 import { TemplateCv } from "@/models/template-cv";
 
 // Helper
-import { API_BASE_URL } from "../../../../../env";
 import { generateCVHtml, CVDataCollection } from "@/lib/utils/cv-template-helper";
 
 // Mock Colors data (Client-side UI only for now)
@@ -41,9 +40,7 @@ const COLORS = [
 
 // Helper function to get the full URL for the template HTML
 const getTemplateUrl = (pathUrl: string) => {
-    if (!pathUrl) return "";
-    const baseUrl = API_BASE_URL.replace('/api/', '');
-    return `${baseUrl}${pathUrl}`;
+    return pathUrl || "";
 };
 
 export default function PreviewDownloadCV() {
@@ -106,6 +103,7 @@ export default function PreviewDownloadCV() {
         const response = await TemplateCvServices.getAllWithPagination({ page: 1, size: 20 });
         if (response.result.items && response.result.items.length > 0) {
           setTemplates(response.result.items);
+          console.log(response.result.items);
           setSelectedTemplate(response.result.items[0]); // Select first by default
         }
       } catch (error) {
@@ -215,15 +213,24 @@ export default function PreviewDownloadCV() {
                         : "border-transparent hover:border-gray-200 hover:shadow-sm bg-gray-50"
                     )}
                     >
-                    {/* Thumbnail Preview Placeholder */}
+                    {/* Thumbnail Preview */}
                     <div className={cn("w-full aspect-[210/297] p-2 transition-colors bg-white")}>
-                         <div className="h-full w-full border border-dashed border-gray-300/60 rounded-sm flex flex-col gap-1 p-1 opacity-60 bg-gray-50 overflow-hidden pointer-events-none select-none">
-                             <div className="w-full h-2 bg-gray-200 rounded-sm mb-1"></div>
-                             <div className="flex gap-1 h-full">
-                                 <div className="w-1/3 bg-gray-200 h-full rounded-sm"></div>
-                                 <div className="w-2/3 bg-gray-100 h-full rounded-sm"></div>
+                         {template.imageUrl ? (
+                             <img 
+                                 src={template.imageUrl} 
+                                 alt={template.name} 
+                                 className="h-full w-full object-cover rounded-sm border border-gray-200"
+                                 loading="lazy"
+                             />
+                         ) : (
+                             <div className="h-full w-full border border-dashed border-gray-300/60 rounded-sm flex flex-col gap-1 p-1 opacity-60 bg-gray-50 overflow-hidden pointer-events-none select-none">
+                                 <div className="w-full h-2 bg-gray-200 rounded-sm mb-1"></div>
+                                 <div className="flex gap-1 h-full">
+                                     <div className="w-1/3 bg-gray-200 h-full rounded-sm"></div>
+                                     <div className="w-2/3 bg-gray-100 h-full rounded-sm"></div>
+                                 </div>
                              </div>
-                         </div>
+                         )}
                     </div>
 
                     <div className="absolute inset-x-0 bottom-0 bg-white/90 backdrop-blur-sm p-2 border-t border-gray-100 flex items-center justify-between">
