@@ -18,16 +18,19 @@ namespace JobMatchingSystem.API.Services.Implementations
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
+        private readonly ICandidateJobRepository _candidateJobRepository;
 
         public JobService(IJobRepository jobRepository,
                           UserManager<ApplicationUser> userManager,
                           ApplicationDbContext context,
-                          IEmailService emailService)
+                          IEmailService emailService,
+                          ICandidateJobRepository candidateJobRepository)
         {
             _jobRepository = jobRepository;
             _userManager = userManager;
             _context = context;
             _emailService = emailService;
+            _candidateJobRepository = candidateJobRepository;
         }
 
         public async Task CreateJobAsync(CreateJobRequest request, int userId)
@@ -469,6 +472,7 @@ namespace JobMatchingSystem.API.Services.Implementations
         public async Task DeleteJobAsync(int jobId, int userId)
         {
             var job = await _context.Jobs
+                .Include(j => j.Company)
                 .FirstOrDefaultAsync(j => j.JobId == jobId);
 
             if (job == null)
@@ -476,11 +480,52 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             // Chỉ Admin mới được xóa mềm job (không cần check RecuiterId)
             // Authorization đã được xử lý ở Controller level với [Authorize(Roles = "Admin")]
+            
+            // Handle cascade effects when job is deleted
+            await HandleJobDeletionAsync(jobId, job.Title, job.Company?.Name ?? "Unknown Company");
+            
             job.IsDeleted = true;
 
             // Sử dụng _context.SaveChangesAsync() thay vì _jobRepository.UpdateAsync() để tránh double save
             _context.Jobs.Update(job);
             await _context.SaveChangesAsync();
+        }
+
+        private async Task HandleJobDeletionAsync(int jobId, string jobTitle, string companyName)
+        {
+            // Get all candidate applications for this job
+            var candidateApplications = await _candidateJobRepository.GetCandidateJobsByJobIdAsync(jobId);
+
+            // Update candidate application statuses and send notifications
+            foreach (var application in candidateApplications)
+            {
+                // Only update applications that are in pending/processing states
+                if (application.Status == CandidateJobStatus.Pending || 
+                    application.Status == CandidateJobStatus.Processing)
+                {
+                    application.Status = CandidateJobStatus.Fail;
+                    await _candidateJobRepository.UpdateAsync(application);
+
+                    // Send notification email to candidate
+                    if (application.CVUpload?.User != null && !string.IsNullOrEmpty(application.CVUpload.User.Email))
+                    {
+                        try
+                        {
+                            await _emailService.SendJobDeletedNotificationAsync(
+                                application.CVUpload.User.Email,
+                                application.CVUpload.User.FullName ?? "Candidate",
+                                jobTitle,
+                                companyName);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log email sending error but don't throw to avoid disrupting the main process
+                            // In a production environment, you would log this properly
+                            Console.WriteLine($"Failed to send job deletion notification to {application.CVUpload.User.Email}: {ex.Message}");
+                        }
+                    }
+                }
+            }
         }
 
         public async Task<PagedResult<JobDetailResponse>> GetJobsPagedAsync(GetJobPagedRequest request)
