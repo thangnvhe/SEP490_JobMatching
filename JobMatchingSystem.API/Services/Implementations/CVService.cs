@@ -82,7 +82,7 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<CVUpload> GetCVByIdAsync(int id)
         {
-            var cv = await _cvRepository.GetByIdAsync(id);
+            var cv = await _cvRepository.GetCVByIdWithUserAsync(id);
             if (cv == null)
                 throw new AppException(ErrorCode.NotFoundCV());
             
@@ -105,6 +105,36 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
             
             return cvs;
+        }
+
+        public async Task<List<CVDetailResponse>> GetAllCVsAsync()
+        {
+            var cvs = await _cvRepository.GetAllCVsWithUsersAsync();
+            var result = new List<CVDetailResponse>();
+            
+            foreach (var cv in cvs)
+            {
+                // Generate secure URL with SAS token for file access
+                var secureUrl = await _blobStorageService.GetSecureFileUrlAsync(cv.FileUrl) ?? cv.FileUrl;
+                
+                result.Add(new CVDetailResponse
+                {
+                    Id = cv.Id,
+                    Name = cv.Name,
+                    IsPrimary = cv.IsPrimary,
+                    FileName = cv.FileName,
+                    FileUrl = secureUrl,
+                    User = new UserInfoResponse
+                    {
+                        Id = cv.User.Id,
+                        FullName = cv.User.FullName ?? "",
+                        Email = cv.User.Email ?? "",
+                        PhoneNumber = cv.User.PhoneNumber ?? ""
+                    }
+                });
+            }
+            
+            return result;
         }
 
         public async Task DeleteCVAsync(int cvId, int userId)
