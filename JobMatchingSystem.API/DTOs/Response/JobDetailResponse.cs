@@ -29,5 +29,7 @@
         public bool IsSave { get; set; } = false;
         public int ApplyCount { get; set; } = 0;
         public int? PositionId { get; set; }
+        public bool IsHighlight { get; set; } = false;
+        
     }
 }

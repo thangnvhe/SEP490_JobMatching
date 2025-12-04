@@ -24,5 +24,12 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             return await _context.Positions
                                  .FirstOrDefaultAsync(x => x.PositionId == id);
         }
+
+        public async Task<Position> CreateAsync(Position position)
+        {
+            await _context.Positions.AddAsync(position);
+            await _context.SaveChangesAsync();
+            return position;
+        }
     }
 }

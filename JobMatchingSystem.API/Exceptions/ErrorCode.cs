@@ -62,5 +62,6 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundHighlightJob() => new("Not Found HighlightJob", HttpStatusCode.NotFound);
         public static Error NotFoundExtensionJob() => new("Not Found ExtensionJob", HttpStatusCode.NotFound);
         public static Error NotFoundPosition() => new("Not Found Position", HttpStatusCode.NotFound);
+        public static Error DuplicatePosition() => new("Position with this name already exists", HttpStatusCode.BadRequest);
     }
 }
