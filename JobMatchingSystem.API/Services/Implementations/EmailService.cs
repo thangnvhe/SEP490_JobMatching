@@ -166,5 +166,29 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             await SendEmailAsync(toEmail, subject, body);
         }
+
+        public async Task SendCompanyClosedNotificationAsync(string toEmail, string candidateName, string jobTitle, string companyName)
+        {
+            string subject = "Thông báo: Công ty ngừng hoạt động - JobMatching System";
+
+            string body = $@"
+    <h2>Chào {WebUtility.HtmlEncode(candidateName)}</h2>
+    <p>Chúng tôi rất tiếc phải thông báo rằng công ty mà bạn đã ứng tuyển đã ngừng hoạt động trên hệ thống.</p>
+    <div style='background-color:#f8f9fa; padding:15px; border-left:4px solid:#dc3545; margin:20px 0;'>
+        <h3>Chi tiết:</h3>
+        <p><strong>Tên công việc:</strong> {WebUtility.HtmlEncode(jobTitle)}</p>
+        <p><strong>Công ty:</strong> {WebUtility.HtmlEncode(companyName)}</p>
+        <p><strong>Trạng thái:</strong> Công ty ngừng hoạt động</p>
+    </div>
+    <p>Do công ty này đã ngừng hoạt động trên hệ thống JobMatching, tất cả các vị trí tuyển dụng của họ đã được đóng.</p>
+    <p>Chúng tôi khuyến khích bạn tiếp tục tìm kiếm các cơ hội việc làm khác từ những công ty đang hoạt động trên JobMatching System.</p>
+    <p style='color:#28a745; font-weight:bold;'>💼 Hãy khám phá thêm nhiều cơ hội việc làm tuyệt vời khác trên hệ thống của chúng tôi!</p>
+    <hr>
+    <p>Cảm ơn bạn đã sử dụng JobMatching System!</p>
+    <p>JobMatching System Team</p>
+    ";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
     }
 }

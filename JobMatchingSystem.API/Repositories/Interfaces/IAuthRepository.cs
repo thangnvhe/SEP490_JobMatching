@@ -14,5 +14,6 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
         Task<List<ApplicationUser>> GetAllAsync(string search, string sortBy, bool IsDecending);
         Task ChangeStatus(ApplicationUser user);
         Task<ApplicationUser?> FindUserByCompanyId(int companyId);
+        Task<List<ApplicationUser>> GetUsersByCompanyIdAsync(int companyId);
     }
 }
