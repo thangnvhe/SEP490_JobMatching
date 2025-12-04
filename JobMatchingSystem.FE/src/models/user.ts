@@ -18,10 +18,10 @@ export interface User {
 }
 
 export type UserRole =
-  | "admin"
-  | "recruiter"
-  | "candidate"
-  | "hiringmanager";
+  | "Admin"
+  | "Recruiter"
+  | "Candidate"
+  | "Hiringmanager";
 
 export interface CreateHiringManagerRequest {
   fullName: string;

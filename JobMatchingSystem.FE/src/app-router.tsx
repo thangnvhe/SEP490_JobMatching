@@ -39,7 +39,7 @@ const AppRouter: React.FC = () => {
   return (
     <Routes>
       {/* Reset password route - Public */}
-      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Confirm email route - Public */}
       <Route path="/confirm-email" element={<ConfirmEmailPage />} />

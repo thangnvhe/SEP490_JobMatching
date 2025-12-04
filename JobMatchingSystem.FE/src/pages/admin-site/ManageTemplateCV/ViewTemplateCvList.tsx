@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { DataTable } from "@/components/ui/data-table";
 import CreateTemplateCvDialog from "@/components/template-cv/CreateTemplateCvDialog";
@@ -19,8 +18,23 @@ import {
   Download,
   Image as ImageIcon,
   AlertTriangle,
-  FileText
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 export default function ViewTemplateCvList() {
   // State management
@@ -29,7 +43,9 @@ export default function ViewTemplateCvList() {
   const [templates, setTemplates] = useState<TemplateCv[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [keyword, setKeyword] = useState('');
-  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateCv | null>(null);
   const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
     currentPage: 1,
     pageSize: 10,
@@ -45,12 +61,11 @@ export default function ViewTemplateCvList() {
     size: 10,
     search: '',
     sortBy: '',
-    isDescending: false,
+    isDecending: false,
   });
 
   const pageSizeOptions = [5, 10, 20, 50];
   const debouncedKeyword = useDebounce(keyword, 700);
-  const { toast } = useToast();
 
   // API calls
   const getAllWithPagination = useCallback(async (params: PaginationParamsInput) => {
@@ -76,17 +91,17 @@ export default function ViewTemplateCvList() {
   }, [getAllWithPagination, debouncedKeyword, paginationInput]);
 
   // Handler functions
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = () => {
     getAllWithPagination(paginationInput);
-  }, [getAllWithPagination, paginationInput]);
+  };
 
-  const handleView = useCallback((template: TemplateCv) => {
+  const handleView = (template: TemplateCv) => {
     if (template.pathUrl) {
       window.open(template.pathUrl, '_blank');
     }
-  }, []);
+  };
 
-  const handleDownload = useCallback((template: TemplateCv) => {
+  const handleDownload = (template: TemplateCv) => {
     if (template.pathUrl) {
       const link = document.createElement('a');
       link.href = template.pathUrl;
@@ -96,41 +111,46 @@ export default function ViewTemplateCvList() {
       link.click();
       document.body.removeChild(link);
     }
-  }, []);
+  };
 
-  const handleDeleteTemplate = useCallback(async (template: TemplateCv) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa template "${template.name}"?`)) {
-      return;
-    }
+  const handleDelete = (template: TemplateCv) => {
+    setSelectedTemplate(template);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedTemplate) return;
 
     try {
-      setDeleteLoading(template.id.toString());
-      await TemplateCvServices.delete(template.id.toString());
-      toast({
-        title: "Thành công",
-        description: "Xóa template CV thành công",
-      });
-      handleRefresh();
-    } catch (error: any) {
-      toast({
-        title: "Lỗi",
-        description: error.response?.data?.message || "Có lỗi xảy ra khi xóa template CV",
-        variant: "destructive",
-      });
+      setDeleteLoading(true);
+      await TemplateCvServices.delete(selectedTemplate.id.toString());
+      toast.success("Xóa template CV thành công");
+      setIsDeleteDialogOpen(false);
+      setSelectedTemplate(null);
+      getAllWithPagination(paginationInput);
+    } catch (err: any) {
+      toast.error(
+        err.response?.data?.message || "Có lỗi xảy ra khi xóa template CV"
+      );
     } finally {
-      setDeleteLoading(null);
+      setDeleteLoading(false);
     }
-  }, [toast, handleRefresh]);
+  };
 
-  const handleSortingChange = useCallback((updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
-    const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(sorting) : updaterOrValue;
+  const handleSortingChange = (
+    updaterOrValue: SortingState | ((old: SortingState) => SortingState)
+  ) => {
+    const newSorting =
+      typeof updaterOrValue === "function"
+        ? updaterOrValue(sorting)
+        : updaterOrValue;
     setSorting(newSorting);
-    setPaginationInput(prev => {
+    setPaginationInput((prev) => {
       if (!newSorting.length) {
         return {
           ...prev,
           sortBy: undefined,
-          isDescending: undefined,
+          isDecending: undefined,
         };
       }
 
@@ -138,18 +158,18 @@ export default function ViewTemplateCvList() {
       return {
         ...prev,
         sortBy: sort.id,
-        isDescending: !!sort.desc,
+        isDecending: !!sort.desc,
       };
     });
-  }, [sorting]);
+  };
 
-  const handlePageChange = useCallback((page: number) => {
-    setPaginationInput(prev => ({ ...prev, page }));
-  }, []);
+  const handlePageChange = (page: number) => {
+    setPaginationInput((prev) => ({ ...prev, page }));
+  };
 
-  const handlePageSizeChange = useCallback((size: string) => {
-    setPaginationInput(prev => ({ ...prev, size: parseInt(size), page: 1 }));
-  }, []);
+  const handlePageSizeChange = (size: string) => {
+    setPaginationInput((prev) => ({ ...prev, size: parseInt(size), page: 1 }));
+  };
 
   // Columns definition
   const columns = useMemo<ColumnDef<TemplateCv>[]>(() => [
@@ -184,10 +204,14 @@ export default function ViewTemplateCvList() {
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
-                target.nextElementSibling?.classList.remove('hidden');
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) {
+                  fallback.classList.remove('hidden');
+                  fallback.classList.add('flex');
+                }
               }}
             />
-            <div className="hidden flex items-center justify-center w-full h-full bg-gray-100">
+            <div className="hidden items-center justify-center w-full h-full bg-gray-100">
               <ImageIcon className="h-4 w-4 text-gray-400" />
             </div>
           </div>
@@ -221,8 +245,6 @@ export default function ViewTemplateCvList() {
       header: "Thao tác",
       cell: ({ row }) => {
         const template = row.original;
-        const isDeleting = deleteLoading === template.id.toString();
-        
         return (
           <div className="flex items-center space-x-2">
             <Button
@@ -230,7 +252,6 @@ export default function ViewTemplateCvList() {
               variant="outline"
               size="sm"
               title="Xem trước"
-              disabled={isDeleting}
             >
               <Eye className="h-4 w-4" />
             </Button>
@@ -239,30 +260,24 @@ export default function ViewTemplateCvList() {
               variant="outline"
               size="sm"
               title="Tải xuống"
-              disabled={isDeleting}
             >
               <Download className="h-4 w-4" />
             </Button>
             <Button
-              onClick={() => handleDeleteTemplate(template)}
+              onClick={() => handleDelete(template)}
               variant="outline"
               size="sm"
               className="text-red-600 hover:text-red-700"
               title="Xóa template"
-              disabled={isDeleting}
             >
-              {isDeleting ? (
-                <RefreshCcw className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
+              <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         );
       },
       enableSorting: false,
     },
-  ], [paginationInfo, deleteLoading, handleView, handleDownload, handleDeleteTemplate]);
+  ], [paginationInfo]);
 
   return (
     <div className="p-6 space-y-6">
@@ -323,7 +338,14 @@ export default function ViewTemplateCvList() {
           {!error && paginationInfo && (
             <div className="flex items-center justify-between mt-4 gap-6">
               <div className="text-sm text-muted-foreground">
-                Hiển thị {(paginationInfo.currentPage - 1) * paginationInfo.pageSize + 1} - {Math.min(paginationInfo.currentPage * paginationInfo.pageSize, paginationInfo.totalItem)} của {paginationInfo.totalItem} kết quả
+                Hiển thị{" "}
+                {(paginationInfo.currentPage - 1) * paginationInfo.pageSize + 1}{" "}
+                -{" "}
+                {Math.min(
+                  paginationInfo.currentPage * paginationInfo.pageSize,
+                  paginationInfo.totalItem
+                )}{" "}
+                của {paginationInfo.totalItem} kết quả
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-3">
@@ -332,12 +354,14 @@ export default function ViewTemplateCvList() {
                     value={paginationInfo.pageSize.toString()}
                     onValueChange={handlePageSizeChange}
                   >
-                    <SelectTrigger className="w-20">
+                    <SelectTrigger className="h-8 w-[70px]">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      {pageSizeOptions.map(size => (
-                        <SelectItem key={size} value={size.toString()}>{size}</SelectItem>
+                    <SelectContent side="top">
+                      {pageSizeOptions.map((size) => (
+                        <SelectItem key={size} value={size.toString()}>
+                          {size}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -345,40 +369,55 @@ export default function ViewTemplateCvList() {
 
                 <div className="flex items-center gap-3">
                   <div className="text-sm font-medium">
-                    Trang {paginationInfo.currentPage} trên {paginationInfo.totalPage}
+                    Trang {paginationInfo.currentPage} trên{" "}
+                    {paginationInfo.totalPage}
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(1)}
-                      disabled={!paginationInfo.hasPreviousPage}
+                      disabled={paginationInfo.currentPage === 1 || loading}
+                      className="h-8 w-8 p-0"
                     >
-                      Đầu
+                      <ChevronsLeft />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handlePageChange(paginationInfo.currentPage - 1)}
-                      disabled={!paginationInfo.hasPreviousPage}
+                      onClick={() =>
+                        handlePageChange(paginationInfo.currentPage - 1)
+                      }
+                      disabled={paginationInfo.currentPage === 1 || loading}
+                      className="h-8 w-8 p-0"
                     >
-                      Trước
+                      <ChevronLeft />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handlePageChange(paginationInfo.currentPage + 1)}
-                      disabled={!paginationInfo.hasNextPage}
+                      onClick={() =>
+                        handlePageChange(paginationInfo.currentPage + 1)
+                      }
+                      disabled={
+                        paginationInfo.currentPage >=
+                          paginationInfo.totalPage || loading
+                      }
+                      className="h-8 w-8 p-0"
                     >
-                      Sau
+                      <ChevronRight />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(paginationInfo.totalPage)}
-                      disabled={!paginationInfo.hasNextPage}
+                      disabled={
+                        paginationInfo.currentPage >=
+                          paginationInfo.totalPage || loading
+                      }
+                      className="h-8 w-8 p-0"
                     >
-                      Cuối
+                      <ChevronsRight />
                     </Button>
                   </div>
                 </div>
@@ -387,6 +426,39 @@ export default function ViewTemplateCvList() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa template CV?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này sẽ xóa template "{selectedTemplate?.name}".
+              Bạn không thể hoàn tác hành động này.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDelete();
+              }}
+              disabled={deleteLoading}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {deleteLoading ? (
+                <>
+                  <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                "Xóa"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

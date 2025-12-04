@@ -13,10 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 // Icons
-import { Upload, X, Building2, Save, Loader2 } from "lucide-react";
+import { Upload, Building2, Save, Loader2, ImagePlus } from "lucide-react";
 
 // Services
 import { CompanyServices } from "@/services/company.service";
@@ -88,6 +88,8 @@ export const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
   // State management
   const [loading, setLoading] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   // Form data
   const [formData, setFormData] = useState<CompanyFormData>({
@@ -104,11 +106,8 @@ export const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Handle logo upload
-  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  // Common function to process file
+  const processFile = (file: File) => {
     // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error("Vui lòng chọn file ảnh hợp lệ");
@@ -131,10 +130,29 @@ export const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
     reader.readAsDataURL(file);
   };
 
-  // Remove logo
-  const handleRemoveLogo = () => {
-    setFormData(prev => ({ ...prev, logo: undefined }));
-    setLogoPreview(null);
+  // Handle file selection via input
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) processFile(file);
+  };
+
+  // Handle drag events
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
   };
 
   // Handle form submit
@@ -210,160 +228,93 @@ export const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Logo Upload Section */}
-          <Card>
-            <CardContent className="p-6">
-              <Label className="text-sm font-medium text-gray-900 mb-3 block">
-                Logo công ty
-              </Label>
-              
-              <div className="flex items-center space-x-4">
-                {/* Current/Preview Logo */}
-                <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-gray-200 bg-gray-50 flex items-center justify-center">
-                  {logoPreview ? (
-                    <img
-                      src={logoPreview}
-                      alt="Logo preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : company.logo ? (
-                    <img
-                      src={getLogoUrl(company.logo)}
-                      alt="Company logo"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Building2 className="w-8 h-8 text-gray-400" />
-                  )}
-                </div>
 
-                {/* Upload Controls */}
-                <div className="flex-1">
-                  <div className="flex space-x-2">
-                    <Label htmlFor="logo-upload" className="cursor-pointer">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="border-dashed"
-                        asChild
-                      >
-                        <span>
-                          <Upload className="w-4 h-4 mr-2" />
-                          Chọn logo
-                        </span>
-                      </Button>
-                    </Label>
-                    
-                    {(logoPreview || company.logo) && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleRemoveLogo}
-                        className="text-red-600 border-red-200 hover:bg-red-50"
-                      >
-                        <X className="w-4 h-4 mr-1" />
-                        Xóa
-                      </Button>
-                    )}
-                  </div>
-                  
-                  <input
-                    id="logo-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoUpload}
-                    className="hidden"
+        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+          {/* Logo Upload Section */}
+          <div className="col-span-2">
+            <Label className="text-sm font-medium text-gray-900 mb-3 block">
+              Logo công ty
+            </Label>
+            
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={cn(
+                "relative group cursor-pointer flex flex-col items-center justify-center w-full h-48 rounded-xl border-2 border-dashed transition-all duration-200 ease-in-out",
+                isDragging 
+                  ? "border-blue-500 bg-blue-50" 
+                  : "border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300",
+                (logoPreview || company.logo) && "border-solid border-gray-200 bg-white p-2"
+              )}
+            >
+              {logoPreview || company.logo ? (
+                <div className="relative w-full h-full rounded-lg overflow-hidden group-hover:opacity-90 transition-opacity">
+                  <img
+                    src={logoPreview || getLogoUrl(company.logo)}
+                    alt="Logo preview"
+                    className="w-full h-full object-contain"
                   />
                   
-                  <p className="text-xs text-gray-500 mt-1">
-                    JPG, PNG tối đa 5MB. Kích thước khuyến nghị: 400x400px
+                  {/* Overlay Actions */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white text-gray-700 shadow-lg transform hover:scale-110 transition-transform">
+                      <Upload className="w-5 h-5" />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
+                  <div className={cn(
+                    "w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors",
+                    isDragging ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-400 group-hover:bg-white group-hover:shadow-sm"
+                  )}>
+                    {isDragging ? (
+                      <Upload className="w-6 h-6 animate-bounce" />
+                    ) : (
+                      <ImagePlus className="w-6 h-6" />
+                    )}
+                  </div>
+                  <p className="mb-1 text-sm text-gray-700 font-medium">
+                    <span className="font-semibold text-blue-600">Nhấn để tải lên</span> hoặc kéo thả vào đây
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    SVG, PNG, JPG hoặc GIF (tối đa 5MB)
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Kích thước khuyến nghị: 400x400px
                   </p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              )}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleLogoUpload}
+              />
+            </div>
+          </div>
 
           {/* Basic Information */}
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <Label htmlFor="company-name" className="text-sm font-medium text-gray-900">
-                Tên công ty <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="company-name"
-                type="text"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder="Nhập tên công ty"
-                className="mt-1"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="company-description" className="text-sm font-medium text-gray-900">
-                Mô tả công ty
-              </Label>
-              <Textarea
-                id="company-description"
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Giới thiệu về công ty, văn hóa, giá trị cốt lõi..."
-                className="mt-1 min-h-[100px]"
-                rows={4}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="company-address" className="text-sm font-medium text-gray-900">
-                Địa chỉ công ty
-              </Label>
-              <Textarea
-                id="company-address"
-                value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder="Nhập địa chỉ đầy đủ của công ty"
-                className="mt-1"
-                rows={2}
-              />
-            </div>
+          <div className="col-span-1">
+            <Label htmlFor="company-name" className="text-sm font-medium text-gray-900">
+              Tên công ty <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="company-name"
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
+              placeholder="Nhập tên công ty"
+              className="mt-1"
+              required
+            />
           </div>
 
-          {/* Contact Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="company-phone" className="text-sm font-medium text-gray-900">
-                Số điện thoại liên hệ
-              </Label>
-              <Input
-                id="company-phone"
-                type="tel"
-                value={formData.phoneContact}
-                onChange={(e) => handleInputChange('phoneContact', e.target.value)}
-                placeholder="0123 456 789"
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="company-email" className="text-sm font-medium text-gray-900">
-                Email liên hệ
-              </Label>
-              <Input
-                id="company-email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="contact@company.com"
-                className="mt-1"
-              />
-            </div>
-          </div>
-
-          <div>
+          <div className="col-span-1">
             <Label htmlFor="company-website" className="text-sm font-medium text-gray-900">
               Website công ty
             </Label>
@@ -377,8 +328,65 @@ export const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
             />
           </div>
 
+          {/* Contact Information */}
+          <div className="col-span-1">
+            <Label htmlFor="company-email" className="text-sm font-medium text-gray-900">
+              Email liên hệ
+            </Label>
+            <Input
+              id="company-email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              placeholder="contact@company.com"
+              className="mt-1"
+            />
+          </div>
+
+          <div className="col-span-1">
+            <Label htmlFor="company-phone" className="text-sm font-medium text-gray-900">
+              Số điện thoại liên hệ
+            </Label>
+            <Input
+              id="company-phone"
+              type="tel"
+              value={formData.phoneContact}
+              onChange={(e) => handleInputChange('phoneContact', e.target.value)}
+              placeholder="0123 456 789"
+              className="mt-1"
+            />
+          </div>
+
+          <div className="col-span-2">
+            <Label htmlFor="company-address" className="text-sm font-medium text-gray-900">
+              Địa chỉ công ty
+            </Label>
+            <Textarea
+              id="company-address"
+              value={formData.address}
+              onChange={(e) => handleInputChange('address', e.target.value)}
+              placeholder="Nhập địa chỉ đầy đủ của công ty"
+              className="mt-1"
+              rows={2}
+            />
+          </div>
+
+          <div className="col-span-2">
+            <Label htmlFor="company-description" className="text-sm font-medium text-gray-900">
+              Mô tả công ty
+            </Label>
+            <Textarea
+              id="company-description"
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              placeholder="Giới thiệu về công ty, văn hóa, giá trị cốt lõi..."
+              className="mt-1 min-h-[100px]"
+              rows={4}
+            />
+          </div>
+
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 pt-6 border-t">
+          <div className="col-span-2 flex justify-end space-x-3 pt-2 border-t">
             <Button
               type="button"
               variant="outline"
