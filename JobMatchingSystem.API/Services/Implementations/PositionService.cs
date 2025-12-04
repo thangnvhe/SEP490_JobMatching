@@ -6,6 +6,8 @@ using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using JobMatchingSystem.API.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace JobMatchingSystem.API.Services.Implementations
 {
@@ -13,11 +15,13 @@ namespace JobMatchingSystem.API.Services.Implementations
     {
         private readonly IPositionRepository _positionRepository;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ApplicationDbContext _context;
 
-        public PositionService(IPositionRepository positionRepository, UserManager<ApplicationUser> userManager)
+        public PositionService(IPositionRepository positionRepository, UserManager<ApplicationUser> userManager, ApplicationDbContext context)
         {
             _positionRepository = positionRepository;
             _userManager = userManager;
+            _context = context;
         }
 
         public async Task<IEnumerable<PositionResponse>> GetAllAsync()
@@ -74,14 +78,27 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (candidate == null)
                 throw new AppException(ErrorCode.NotFoundUser());
 
-            // Update candidate's position
-            candidate.PositionId = positionId;
+            // Get or create CV Profile for the candidate
+            var cvProfile = await _context.CVProfiles.FirstOrDefaultAsync(cp => cp.UserId == candidateId);
             
-            var result = await _userManager.UpdateAsync(candidate);
-            if (!result.Succeeded)
+            if (cvProfile == null)
             {
-                throw new AppException(new Error("Failed to update candidate position", System.Net.HttpStatusCode.BadRequest));
+                // Create new CV Profile if not exists
+                cvProfile = new CVProfile
+                {
+                    UserId = candidateId,
+                    PositionId = positionId
+                };
+                _context.CVProfiles.Add(cvProfile);
             }
+            else
+            {
+                // Update existing CV Profile
+                cvProfile.PositionId = positionId;
+                _context.CVProfiles.Update(cvProfile);
+            }
+            
+            await _context.SaveChangesAsync();
         }
     }
 }
