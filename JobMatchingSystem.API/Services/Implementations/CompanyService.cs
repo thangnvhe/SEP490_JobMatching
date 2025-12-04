@@ -263,6 +263,29 @@ namespace JobMatchingSystem.API.Services.Implementations
             await _unitOfWork.SaveAsync();
         }
 
+        public async Task<CompanyDTO> GetMyCompanyAsync(int recruiterId)
+        {
+            // Find the user first
+            var recruiter = await _userManager.FindByIdAsync(recruiterId.ToString());
+            if (recruiter == null)
+                throw new AppException(ErrorCode.NotFoundUser());
+
+            // Check if user has Recruiter role
+            var isRecruiter = await _userManager.IsInRoleAsync(recruiter, "Recruiter");
+            if (!isRecruiter)
+                throw new AppException(new Error("User is not a recruiter", System.Net.HttpStatusCode.Forbidden));
+
+            // Get company by recruiter's CompanyId
+            if (recruiter.CompanyId == null)
+                throw new AppException(new Error("Recruiter is not associated with any company", System.Net.HttpStatusCode.NotFound));
+
+            var company = await _unitOfWork.CompanyRepository.GetByIdAsync(recruiter.CompanyId.Value);
+            if (company == null)
+                throw new AppException(ErrorCode.NotFoundCompany());
+
+            return _mapper.Map<CompanyDTO>(company);
+        }
+
         
     }
 }

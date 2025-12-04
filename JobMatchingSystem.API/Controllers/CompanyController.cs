@@ -106,6 +106,28 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
+        [HttpGet("me")]
+        [Authorize(Roles = "Recruiter")]
+        public async Task<IActionResult> GetMyCompany()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            if (userId == 0)
+            {
+                return BadRequest(APIResponse<object>.Builder()
+                    .WithStatusCode(HttpStatusCode.BadRequest)
+                    .WithSuccess(false)
+                    .WithMessage("Invalid user authentication")
+                    .Build());
+            }
+
+            var company = await _companyService.GetMyCompanyAsync(userId);
+            return Ok(APIResponse<CompanyDTO>.Builder()
+                .WithResult(company)
+                .WithSuccess(true)
+                .WithStatusCode(HttpStatusCode.OK)
+                .Build());
+        }
+
     }
 }
 
