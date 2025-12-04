@@ -145,9 +145,9 @@ namespace JobMatchingSystem.API.Controllers
             try
             {
                 // Validate avatar file if provided
-                if (request.AvatarFile != null)
+                if (request.avatarFile != null)
                 {
-                    var validationError = ValidateAvatarFile(request.AvatarFile);
+                    var validationError = ValidateAvatarFile(request.avatarFile);
                     if (!string.IsNullOrEmpty(validationError))
                     {
                         return BadRequest(APIResponse<string>.Builder()
