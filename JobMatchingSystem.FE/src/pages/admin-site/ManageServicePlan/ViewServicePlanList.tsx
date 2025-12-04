@@ -4,22 +4,41 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import { DataTable } from "@/components/ui/data-table";
-import CreateServicePlanDialog from "@/components/service-plan/CreateServicePlanDialog";
-import type { ColumnDef, SortingState } from "@tanstack/react-table";
-import type { ServicePlan } from "@/models/service-plan";
-import type { PageInfo, PaginationParamsInput } from "@/models/base";
+import CreateEditServicePlanDialog from "@/pages/admin-site/ManageServicePlan/CreateEditServicePlan";
+import { ColumnDef, SortingState } from "@tanstack/react-table";
+import { ServicePlan } from "@/models/service-plan";
+import { PageInfo, PaginationParamsInput } from "@/models/base";
 import { ServicePlanServices } from "@/services/service-plan.service";
-import { 
-  RefreshCcw, 
-  Eye, 
-  Trash2, 
+import {
+  RefreshCcw,
+  Eye,
+  Trash2,
   Edit,
-  DollarSign,
   AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 export default function ViewServicePlanList() {
   // State management
@@ -29,6 +48,12 @@ export default function ViewServicePlanList() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [keyword, setKeyword] = useState('');
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [servicePlanToDelete, setServicePlanToDelete] = useState<ServicePlan | null>(null);
+  
+  // Edit dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedServicePlan, setSelectedServicePlan] = useState<ServicePlan | null>(null);
   const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
     currentPage: 1,
     pageSize: 10,
@@ -49,83 +74,17 @@ export default function ViewServicePlanList() {
 
   const pageSizeOptions = [5, 10, 20, 50];
   const debouncedKeyword = useDebounce(keyword, 700);
-  const { toast } = useToast();
 
   // API calls
   const getAllWithPagination = useCallback(async (params: PaginationParamsInput) => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Calling API with params:', params);
-      
-      // Try pagination first
-      try {
-        const response = await ServicePlanServices.getAllWithPagination(params);
-        console.log('Pagination API response:', response);
-        
-        // Check if response has the expected structure
-        if (response && response.result && Array.isArray(response.result.items)) {
-          setServicePlans(response.result.items);
-          setPaginationInfo(response.result.pageInfo);
-          return;
-        }
-      } catch (paginationError) {
-        console.warn('Pagination API failed, trying getAll:', paginationError);
-      }
-
-      // Fallback to getAll if pagination fails
-      try {
-        const fallbackResponse = await ServicePlanServices.getAll();
-        console.log('Fallback getAll response:', fallbackResponse);
-        
-        if (fallbackResponse && Array.isArray(fallbackResponse.result)) {
-          const allItems = fallbackResponse.result;
-          
-          // Client-side filtering if search exists
-          const filteredItems = params.search 
-            ? allItems.filter(item => 
-                item.name?.toLowerCase().includes(params.search!.toLowerCase()) ||
-                item.description?.toLowerCase().includes(params.search!.toLowerCase())
-              )
-            : allItems;
-            
-          // Client-side pagination
-          const startIndex = (params.page - 1) * params.size;
-          const endIndex = startIndex + params.size;
-          const pageItems = filteredItems.slice(startIndex, endIndex);
-          
-          setServicePlans(pageItems);
-          setPaginationInfo({
-            currentPage: params.page,
-            pageSize: params.size,
-            totalItem: filteredItems.length,
-            totalPage: Math.ceil(filteredItems.length / params.size),
-            hasPreviousPage: params.page > 1,
-            hasNextPage: endIndex < filteredItems.length,
-            sortBy: params.sortBy || '',
-            isDecending: params.isDescending || false,
-          });
-        } else {
-          setServicePlans([]);
-          setPaginationInfo({
-            currentPage: 1,
-            pageSize: 10,
-            totalItem: 0,
-            totalPage: 0,
-            hasPreviousPage: false,
-            hasNextPage: false,
-            sortBy: '',
-            isDecending: false,
-          });
-        }
-      } catch (fallbackError) {
-        console.error('Both pagination and getAll failed:', fallbackError);
-        throw fallbackError;
-      }
+      const response = await ServicePlanServices.getAllWithPagination(params);
+      setServicePlans(response.result.items);
+      setPaginationInfo(response.result.pageInfo);
     } catch (err: any) {
-      console.error('API error:', err);
       setError(err.response?.data?.message || "Lỗi khi tải dữ liệu gói dịch vụ");
-      setServicePlans([]);
     } finally {
       setLoading(false);
     }
@@ -140,45 +99,43 @@ export default function ViewServicePlanList() {
   }, [getAllWithPagination, debouncedKeyword, paginationInput]);
 
   // Handler functions
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = () => {
     getAllWithPagination(paginationInput);
-  }, [getAllWithPagination, paginationInput]);
+  };
 
-  const handleView = useCallback((servicePlan: ServicePlan) => {
-    console.log('Viewing service plan:', servicePlan);
+  const handleView = (servicePlan: ServicePlan) => {
     // TODO: Implement view details modal
-  }, []);
+    console.log('Viewing service plan:', servicePlan);
+  };
 
-  const handleEdit = useCallback((servicePlan: ServicePlan) => {
-    console.log('Editing service plan:', servicePlan);
-    // TODO: Implement edit dialog
-  }, []);
+  const handleEdit = (servicePlan: ServicePlan) => {
+    setSelectedServicePlan(servicePlan);
+    setEditDialogOpen(true);
+  };
 
-  const handleDeleteServicePlan = useCallback(async (servicePlan: ServicePlan) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa gói dịch vụ "${servicePlan.name}"?`)) {
-      return;
-    }
+  const handleDeleteServicePlan = (servicePlan: ServicePlan) => {
+    setServicePlanToDelete(servicePlan);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!servicePlanToDelete) return;
 
     try {
-      setDeleteLoading(servicePlan.id.toString());
-      await ServicePlanServices.delete(servicePlan.id.toString());
-      toast({
-        title: "Thành công",
-        description: "Xóa gói dịch vụ thành công",
-      });
+      setDeleteLoading(servicePlanToDelete.id.toString());
+      await ServicePlanServices.delete(servicePlanToDelete.id.toString());
+      toast.success("Xóa gói dịch vụ thành công");
       handleRefresh();
     } catch (error: any) {
-      toast({
-        title: "Lỗi",
-        description: error.response?.data?.message || "Có lỗi xảy ra khi xóa gói dịch vụ",
-        variant: "destructive",
-      });
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi xóa gói dịch vụ");
     } finally {
       setDeleteLoading(null);
+      setDeleteDialogOpen(false);
+      setServicePlanToDelete(null);
     }
-  }, [toast, handleRefresh]);
+  };
 
-  const handleSortingChange = useCallback((updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
+  const handleSortingChange = (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
     const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(sorting) : updaterOrValue;
     setSorting(newSorting);
     setPaginationInput(prev => {
@@ -197,15 +154,15 @@ export default function ViewServicePlanList() {
         isDescending: !!sort.desc,
       };
     });
-  }, [sorting]);
+  };
 
-  const handlePageChange = useCallback((page: number) => {
+  const handlePageChange = (page: number) => {
     setPaginationInput(prev => ({ ...prev, page }));
-  }, []);
+  };
 
-  const handlePageSizeChange = useCallback((size: string) => {
+  const handlePageSizeChange = (size: string) => {
     setPaginationInput(prev => ({ ...prev, size: parseInt(size), page: 1 }));
-  }, []);
+  };
 
   // Format price
   const formatPrice = (price: number) => {
@@ -254,10 +211,9 @@ export default function ViewServicePlanList() {
       cell: ({ row }) => {
         const price = row.getValue("price") as number;
         return (
-          <Badge variant="outline" className="flex items-center gap-1 w-fit font-semibold text-green-700 bg-green-50">
-            <DollarSign className="h-3 w-3" />
+          <div className="font-medium">
             {formatPrice(price)}
-          </Badge>
+          </div>
         );
       },
       enableSorting: true,
@@ -267,25 +223,49 @@ export default function ViewServicePlanList() {
       header: "Tính năng",
       cell: ({ row }) => {
         const servicePlan = row.original;
-        const features = [
-          servicePlan.jobPostAdditional && `${servicePlan.jobPostAdditional} bài đăng thêm`,
-          servicePlan.highlightJobDays && `Nổi bật ${servicePlan.highlightJobDays} ngày`,
-          servicePlan.extensionJobDays && `Gia hạn ${servicePlan.extensionJobDays} ngày`,
-          servicePlan.cvSaveAdditional && `${servicePlan.cvSaveAdditional} CV thêm`,
-        ].filter(Boolean);
         
+        const featureList = [
+          servicePlan.jobPostAdditional && {
+            label: `${servicePlan.jobPostAdditional} bài đăng`,
+            color: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",
+            tooltip: "Số lượng bài đăng tin tuyển dụng"
+          },
+          servicePlan.highlightJobDays && {
+            label: `Nổi bật ${servicePlan.highlightJobDays} ngày`,
+            color: "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100",
+            tooltip: "Thời gian hiển thị tin nổi bật"
+          },
+          servicePlan.extensionJobDays && {
+            label: `Gia hạn ${servicePlan.extensionJobDays} ngày`,
+            color: "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100",
+            tooltip: "Thời gian gia hạn tin đăng"
+          },
+          servicePlan.cvSaveAdditional && {
+            label: `${servicePlan.cvSaveAdditional} CV`,
+            color: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
+            tooltip: "Số lượng CV được phép xem"
+          },
+        ].filter(Boolean) as { label: string; color: string; tooltip: string }[];
+
         return (
-          <div className="flex flex-wrap gap-1 max-w-xs">
-            {features.slice(0, 2).map((feature, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
-                {feature}
-              </Badge>
+          <div className="flex flex-wrap gap-2 max-w-[300px]">
+            {featureList.map((item, index) => (
+              <TooltipProvider key={index}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge 
+                      variant="outline" 
+                      className={`flex items-center px-2.5 py-0.5 border ${item.color} transition-colors cursor-help`}
+                    >
+                      <span className="font-medium">{item.label}</span>
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{item.tooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             ))}
-            {features.length > 2 && (
-              <Badge variant="secondary" className="text-xs">
-                +{features.length - 2} khác
-              </Badge>
-            )}
           </div>
         );
       },
@@ -297,7 +277,7 @@ export default function ViewServicePlanList() {
       cell: ({ row }) => {
         const servicePlan = row.original;
         const isDeleting = deleteLoading === servicePlan.id.toString();
-        
+
         return (
           <div className="flex items-center space-x-2">
             <Button
@@ -337,7 +317,7 @@ export default function ViewServicePlanList() {
       },
       enableSorting: false,
     },
-  ], [paginationInfo, deleteLoading, handleView, handleEdit, handleDeleteServicePlan, formatPrice]);
+  ], [paginationInfo, deleteLoading]);
 
   return (
     <div className="p-6 space-y-6">
@@ -359,7 +339,7 @@ export default function ViewServicePlanList() {
               />
             </div>
             <div className="flex space-x-2">
-              <CreateServicePlanDialog onSuccess={handleRefresh} />
+              <CreateEditServicePlanDialog onSuccess={handleRefresh} />
               <Button
                 onClick={handleRefresh}
                 variant="outline"
@@ -389,7 +369,7 @@ export default function ViewServicePlanList() {
           ) : (
             <DataTable
               columns={columns}
-              data={servicePlans || []}
+              data={servicePlans}
               loading={loading}
               sorting={sorting}
               onSortingChange={handleSortingChange}
@@ -407,12 +387,14 @@ export default function ViewServicePlanList() {
                     value={paginationInfo.pageSize.toString()}
                     onValueChange={handlePageSizeChange}
                   >
-                    <SelectTrigger className="w-20">
+                    <SelectTrigger className="h-8 w-[70px]">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      {pageSizeOptions.map(size => (
-                        <SelectItem key={size} value={size.toString()}>{size}</SelectItem>
+                    <SelectContent side="top">
+                      {pageSizeOptions.map((size) => (
+                        <SelectItem key={size} value={size.toString()}>
+                          {size}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -422,38 +404,42 @@ export default function ViewServicePlanList() {
                   <div className="text-sm font-medium">
                     Trang {paginationInfo.currentPage} trên {paginationInfo.totalPage}
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(1)}
-                      disabled={!paginationInfo.hasPreviousPage}
+                      disabled={paginationInfo.currentPage === 1 || loading}
+                      className="h-8 w-8 p-0"
                     >
-                      Đầu
+                      <ChevronsLeft />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(paginationInfo.currentPage - 1)}
-                      disabled={!paginationInfo.hasPreviousPage}
+                      disabled={paginationInfo.currentPage === 1 || loading}
+                      className="h-8 w-8 p-0"
                     >
-                      Trước
+                      <ChevronLeft />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(paginationInfo.currentPage + 1)}
-                      disabled={!paginationInfo.hasNextPage}
+                      disabled={paginationInfo.currentPage >= paginationInfo.totalPage || loading}
+                      className="h-8 w-8 p-0"
                     >
-                      Sau
+                      <ChevronRight />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(paginationInfo.totalPage)}
-                      disabled={!paginationInfo.hasNextPage}
+                      disabled={paginationInfo.currentPage >= paginationInfo.totalPage || loading}
+                      className="h-8 w-8 p-0"
                     >
-                      Cuối
+                      <ChevronsRight />
                     </Button>
                   </div>
                 </div>
@@ -462,6 +448,48 @@ export default function ViewServicePlanList() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <CreateEditServicePlanDialog
+        servicePlan={selectedServicePlan}
+        isOpen={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSuccess={handleRefresh}
+        mode="edit"
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này sẽ xóa vĩnh viễn gói dịch vụ "{servicePlanToDelete?.name}". 
+              Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!deleteLoading}>Hủy</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDelete();
+              }}
+              disabled={!!deleteLoading}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {deleteLoading ? (
+                <>
+                  <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
+                  Đang xóa...
+                </>
+              ) : (
+                "Xóa gói dịch vụ"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

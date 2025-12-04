@@ -198,6 +198,7 @@ export default function ViewUserList() {
                 const user = row.original
                 return (
                     <div className="flex items-center space-x-2">
+                            <Button variant="outline">Button</Button>
                         <Button
                             onClick={() => handleView(user)}
                             variant="outline"
