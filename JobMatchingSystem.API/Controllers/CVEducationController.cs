@@ -35,13 +35,24 @@ namespace JobMatchingSystem.API.Controllers
         [HttpGet("me")]
         public async Task<IActionResult> GetMyEducations()
         {
-            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var educations = await _service.GetByCurrentUserAsync(userId);
-            return Ok(APIResponse<List<CVEducationDto>>.Builder()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithSuccess(true)
-                .WithResult(educations)
-                .Build());
+            try
+            {
+                int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                var educations = await _service.GetByCurrentUserAsync(userId);
+                return Ok(APIResponse<List<CVEducationDto>>.Builder()
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithSuccess(true)
+                    .WithResult(educations ?? new List<CVEducationDto>())
+                    .Build());
+            }
+            catch (Exception)
+            {
+                return Ok(APIResponse<List<CVEducationDto>>.Builder()
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithSuccess(true)
+                    .WithResult(new List<CVEducationDto>())
+                    .Build());
+            }
         }
 
         [HttpPost]
