@@ -11,6 +11,8 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
         Task Update(CandidateJob candidateJob);
         Task<List<CandidateJob>> GetByCandidateIdAsync(int candidateid);
         Task<bool> isApplyJob(int jobid, int cvid);
+        Task<List<CandidateJob>> GetCandidateJobsByJobIdAsync(int jobId);
+        Task UpdateAsync(CandidateJob candidateJob);
 
     }
 }

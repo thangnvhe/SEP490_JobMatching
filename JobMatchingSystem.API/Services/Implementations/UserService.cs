@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
+using JobMatchingSystem.API.Enums;
 using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Extensions;
 using JobMatchingSystem.API.Helpers;
@@ -41,7 +42,20 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 throw new AppException(ErrorCode.NotFoundUser());
             }
+
+            // Check if user is being deactivated and is a recruiter
+            var userRoles = await _unitOfWork.AuthRepository.GetRolesAsync(user);
+            bool isRecruiter = userRoles.Contains("Recruiter");
+            bool wasActive = user.IsActive;
+
             await _unitOfWork.AuthRepository.ChangeStatus(user);
+
+            // If recruiter is being deactivated, handle their jobs and candidates
+            if (isRecruiter && wasActive && !user.IsActive)
+            {
+                await HandleRecruiterDeactivationAsync(user.Id);
+            }
+
             await _unitOfWork.SaveAsync();
         }
 
@@ -410,7 +424,19 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             if (request.isActive.HasValue)
             {
+                // Check if user is being deactivated and is a recruiter
+                var userRoles = await _unitOfWork.AuthRepository.GetRolesAsync(user);
+                bool isRecruiter = userRoles.Contains("Recruiter");
+                bool wasActive = user.IsActive;
+                bool willBeDeactivated = !request.isActive.Value;
+
                 user.IsActive = request.isActive.Value;
+
+                // If recruiter is being deactivated, handle their jobs and candidates
+                if (isRecruiter && wasActive && willBeDeactivated)
+                {
+                    await HandleRecruiterDeactivationAsync(user.Id);
+                }
             }
 
             if (request.companyId.HasValue)
@@ -605,6 +631,72 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 // Log error but don't throw - file cleanup shouldn't break the main flow
                 // You might want to add proper logging here
+            }
+        }
+
+        /// <summary>
+        /// Xử lý các job và candidate applications khi recruiter bị deactivate
+        /// </summary>
+        /// <param name="recruiterId">ID của recruiter bị deactivate</param>
+        private async Task HandleRecruiterDeactivationAsync(int recruiterId)
+        {
+            // Lấy tất cả jobs đang mở (Active/Opened) của recruiter này
+            var activeJobs = await _unitOfWork.JobRepository.GetJobsByRecruiterIdAsync(recruiterId);
+            
+            if (activeJobs != null && activeJobs.Any())
+            {
+                foreach (var job in activeJobs)
+                {
+                    // Chỉ đóng những job đang mở (Draft, Moderated, Opened)
+                    if (job.Status == JobStatus.Draft || 
+                        job.Status == JobStatus.Moderated || 
+                        job.Status == JobStatus.Opened)
+                    {
+                        // Đóng job
+                        job.Status = JobStatus.Closed;
+                        job.IsDeleted = true; // Soft delete
+                        
+                        await _unitOfWork.JobRepository.UpdateAsync(job);
+
+                        // Lấy tất cả candidates đang ứng tuyển job này
+                        var candidateJobs = await _unitOfWork.CandidateJobRepository.GetCandidateJobsByJobIdAsync(job.JobId);
+                        
+                        if (candidateJobs != null && candidateJobs.Any())
+                        {
+                            foreach (var candidateJob in candidateJobs)
+                            {
+                                // Chỉ cập nhật những ứng viên đang Pending hoặc Processing
+                                if (candidateJob.Status == CandidateJobStatus.Pending || 
+                                    candidateJob.Status == CandidateJobStatus.Processing)
+                                {
+                                    // Đánh dấu application là Failed do job bị đóng
+                                    candidateJob.Status = CandidateJobStatus.Fail;
+                                    await _unitOfWork.CandidateJobRepository.UpdateAsync(candidateJob);
+
+                                    // Gửi email thông báo cho candidate (optional)
+                                    try
+                                    {
+                                        var candidate = await _unitOfWork.AuthRepository.GetUserById(candidateJob.CVUpload?.UserId ?? 0);
+                                        if (candidate != null && !string.IsNullOrEmpty(candidate.Email))
+                                        {
+                                            await _emailService.SendJobClosedNotificationAsync(
+                                                candidate.Email,
+                                                candidate.FullName,
+                                                job.Title,
+                                                job.Company?.Name ?? "Công ty"
+                                            );
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        // Log error but don't break the flow
+                                        Console.WriteLine($"Failed to send email notification: {ex.Message}");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

@@ -176,5 +176,15 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             var (jobs, _) = await GetAllJobsPagedWithCount(request);
             return jobs;
         }
+
+        public async Task<List<Job>> GetJobsByRecruiterIdAsync(int recruiterId)
+        {
+            return await _context.Jobs
+                .Include(j => j.Company)
+                .Include(j => j.CandidateJobs)
+                    .ThenInclude(cj => cj.CVUpload)
+                .Where(j => j.RecuiterId == recruiterId && !j.IsDeleted)
+                .ToListAsync();
+        }
     }
 }

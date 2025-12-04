@@ -92,5 +92,19 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             return await _context.CandidateJobs
             .AnyAsync(x => x.JobId == jobid && x.CVId == cvid);
         }
+
+        public async Task<List<CandidateJob>> GetCandidateJobsByJobIdAsync(int jobId)
+        {
+            return await _context.CandidateJobs
+                .Include(cj => cj.CVUpload)
+                .Where(cj => cj.JobId == jobId)
+                .ToListAsync();
+        }
+
+        public Task UpdateAsync(CandidateJob candidateJob)
+        {
+            _context.CandidateJobs.Update(candidateJob);
+            return Task.CompletedTask;
+        }
     }
 }
