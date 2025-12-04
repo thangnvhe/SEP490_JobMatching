@@ -453,6 +453,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 OpenedAt = job.OpenedAt,
                 ExpiredAt = job.ExpiredAt,
                 IsDeleted = job.IsDeleted,
+                IsHighlight = job.IsHighlighted,
                 Taxonomies = job.JobTaxonomies.Select(t => new TaxonomyResponse
                 {
                     Id = t.TaxonomyId,
@@ -527,6 +528,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 OpenedAt = job.OpenedAt,
                 ExpiredAt = job.ExpiredAt,
                 IsDeleted = job.IsDeleted,
+                IsHighlight = job.IsHighlighted,
                 Taxonomies = job.JobTaxonomies.Select(t => new TaxonomyResponse
                 {
                     Id = t.TaxonomyId,
@@ -622,6 +624,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 OpenedAt = job.OpenedAt,
                 ExpiredAt = job.ExpiredAt,
                 IsDeleted = job.IsDeleted,
+                IsHighlight = job.IsHighlighted,
                 Taxonomies = job.JobTaxonomies.Select(t => new TaxonomyResponse
                 {
                     Id = t.TaxonomyId,
@@ -668,6 +671,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 OpenedAt = job.OpenedAt,
                 ExpiredAt = job.ExpiredAt,
                 IsDeleted = job.IsDeleted,
+                IsHighlight = job.IsHighlighted,
                 Taxonomies = job.JobTaxonomies.Select(t => new TaxonomyResponse
                 {
                     Id = t.TaxonomyId,

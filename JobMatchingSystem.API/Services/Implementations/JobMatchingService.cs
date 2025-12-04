@@ -653,6 +653,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 OpenedAt = job.OpenedAt,
                 ExpiredAt = job.ExpiredAt,
                 IsDeleted = job.IsDeleted,
+                IsHighlight = job.IsHighlighted,
                 Taxonomies = job.JobTaxonomies.Select(jt => new TaxonomyResponse
                 {
                     Id = jt.TaxonomyId,
