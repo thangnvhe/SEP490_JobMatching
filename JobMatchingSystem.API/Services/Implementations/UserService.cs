@@ -324,11 +324,11 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
 
             // Handle avatar file upload if provided
-            if (request.AvatarFile != null && request.AvatarFile.Length > 0)
+            if (request.avatarFile != null && request.avatarFile.Length > 0)
             {
                 // Validate file type
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
-                var fileExtension = Path.GetExtension(request.AvatarFile.FileName).ToLowerInvariant();
+                var fileExtension = Path.GetExtension(request.avatarFile.FileName).ToLowerInvariant();
                 
                 if (!allowedExtensions.Contains(fileExtension))
                 {
@@ -336,7 +336,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 }
 
                 // Validate file size (max 5MB)
-                if (request.AvatarFile.Length > 5 * 1024 * 1024)
+                if (request.avatarFile.Length > 5 * 1024 * 1024)
                 {
                     throw new AppException(ErrorCode.FileSizeExceeded());
                 }
@@ -351,75 +351,75 @@ namespace JobMatchingSystem.API.Services.Implementations
                 var fileName = $"avatar_{user.Id}_{DateTime.Now:yyyyMMddHHmmss}{fileExtension}";
                 
                 // Upload new avatar to Azure Blob Storage
-                var avatarFileUrl = await _blobStorageService.UploadFileAsync(request.AvatarFile, "avartars", fileName);
+                var avatarFileUrl = await _blobStorageService.UploadFileAsync(request.avatarFile, "avartars", fileName);
                 
                 // Update avatar URL
                 user.AvatarUrl = avatarFileUrl;
             }
 
             // Update user properties only if they are provided (partial update)
-            if (!string.IsNullOrWhiteSpace(request.FullName))
+            if (!string.IsNullOrWhiteSpace(request.fullName))
             {
-                user.FullName = request.FullName;
+                user.FullName = request.fullName;
             }
 
-            if (!string.IsNullOrWhiteSpace(request.Email))
+            if (!string.IsNullOrWhiteSpace(request.email))
             {
                 // Check if email already exists (exclude current user)
-                var existingUser = await _userManager.FindByEmailAsync(request.Email);
+                var existingUser = await _userManager.FindByEmailAsync(request.email);
                 if (existingUser != null && existingUser.Id != user.Id)
                 {
                     throw new AppException(ErrorCode.EmailAlreadyExists());
                 }
-                user.Email = request.Email;
-                user.UserName = request.Email; // Username is usually email
-                user.NormalizedEmail = request.Email.ToUpper();
-                user.NormalizedUserName = request.Email.ToUpper();
+                user.Email = request.email;
+                user.UserName = request.email; // Username is usually email
+                user.NormalizedEmail = request.email.ToUpper();
+                user.NormalizedUserName = request.email.ToUpper();
             }
 
-            if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
+            if (!string.IsNullOrWhiteSpace(request.phoneNumber))
             {
-                user.PhoneNumber = request.PhoneNumber;
+                user.PhoneNumber = request.phoneNumber;
             }
 
-            if (request.Address != null)
+            if (request.address != null)
             {
-                user.Address = request.Address;
+                user.Address = request.address;
             }
 
-            if (!string.IsNullOrWhiteSpace(request.Gender))
+            if (!string.IsNullOrWhiteSpace(request.gender))
             {
-                if (bool.TryParse(request.Gender, out var gender))
+                if (bool.TryParse(request.gender, out var gender))
                 {
                     user.Gender = gender;
                 }
-                else if (request.Gender.Equals("Male", StringComparison.OrdinalIgnoreCase))
+                else if (request.gender.Equals("Male", StringComparison.OrdinalIgnoreCase))
                 {
                     user.Gender = true; // true = Male
                 }
-                else if (request.Gender.Equals("Female", StringComparison.OrdinalIgnoreCase))
+                else if (request.gender.Equals("Female", StringComparison.OrdinalIgnoreCase))
                 {
                     user.Gender = false; // false = Female
                 }
             }
 
-            if (request.Birthday.HasValue)
+            if (request.birthday.HasValue)
             {
-                user.Birthday = request.Birthday.Value;
+                user.Birthday = request.birthday.Value;
             }
 
-            if (request.IsActive.HasValue)
+            if (request.isActive.HasValue)
             {
-                user.IsActive = request.IsActive.Value;
+                user.IsActive = request.isActive.Value;
             }
 
-            if (request.CompanyId.HasValue)
+            if (request.companyId.HasValue)
             {
-                user.CompanyId = request.CompanyId.Value;
+                user.CompanyId = request.companyId.Value;
             }
 
             // Handle role update if provided
-            if (!string.IsNullOrWhiteSpace(request.Role))
+            if (!string.IsNullOrWhiteSpace(request.role))
             {
                 var currentRoles = await _userManager.GetRolesAsync(user);
                 if (currentRoles.Any())
@@ -428,13 +428,13 @@ namespace JobMatchingSystem.API.Services.Implementations
                 }
 
                 // Check if role exists
-                var roleExists = await _roleManager.RoleExistsAsync(request.Role);
+                var roleExists = await _roleManager.RoleExistsAsync(request.role);
                 if (!roleExists)
                 {
                     throw new AppException(ErrorCode.RoleNotFound());
                 }
 
-                await _userManager.AddToRoleAsync(user, request.Role);
+                await _userManager.AddToRoleAsync(user, request.role);
             }
 
             // Update user in database
