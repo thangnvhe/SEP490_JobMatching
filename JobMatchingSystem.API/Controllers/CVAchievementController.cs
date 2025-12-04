@@ -37,15 +37,26 @@ namespace JobMatchingSystem.API.Controllers
         [HttpGet("me")]
         public async Task<IActionResult> GetMyAchievements()
         {
-            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            try
+            {
+                int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-            var achievements = await _service.GetByCurrentUserAsync(userId);
+                var achievements = await _service.GetByCurrentUserAsync(userId);
 
-            return Ok(APIResponse<List<CVAchievementDto>>.Builder()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithSuccess(true)
-                .WithResult(achievements)
-                .Build());
+                return Ok(APIResponse<List<CVAchievementDto>>.Builder()
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithSuccess(true)
+                    .WithResult(achievements ?? new List<CVAchievementDto>())
+                    .Build());
+            }
+            catch (Exception)
+            {
+                return Ok(APIResponse<List<CVAchievementDto>>.Builder()
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithSuccess(true)
+                    .WithResult(new List<CVAchievementDto>())
+                    .Build());
+            }
         }
 
         [HttpPost]
