@@ -1,11 +1,10 @@
 import { format } from "date-fns";
 import { User } from "@/models/user";
-import { CVEducation, DegreeType } from "@/models/cv-education";
+import { CVEducation, EducationLevel as EducationLevelMap } from "@/models/cv-education";
 import { CVExperience } from "@/models/cv-experience";
 import { CVProject } from "@/models/cv-project";
 import { CVCertificate } from "@/models/cv-certificate";
 import { CVAchievement } from "@/models/cv-achievement";
-import { API_BASE_URL } from "../../../env";
 
 // ==========================================
 // INTERFACES
@@ -33,15 +32,9 @@ const formatDate = (dateString?: string | Date | null, formatStr: string = "dd/M
     }
 };
 
-// 2. Get Degree Label Helper
-const getDegreeLabel = (degree: DegreeType): string => {
-    switch (degree) {
-        case DegreeType.College: return "Cao đẳng";
-        case DegreeType.Bachelor: return "Cử nhân";
-        case DegreeType.Master: return "Thạc sĩ";
-        case DegreeType.Doctorate: return "Tiến sĩ";
-        default: return "Khác";
-    }
+// 2. Get Education Level Label Helper
+const getEducationLevelLabel = (educationLevelId: number): string => {
+    return EducationLevelMap[educationLevelId as keyof typeof EducationLevelMap] || "Khác";
 };
 
 // ==========================================
@@ -67,7 +60,7 @@ export const generateCVHtml = (rawHtml: string, data: CVDataCollection): string 
         "{{FULL_NAME}}": userProfile.fullName || "Your Name",
         // Nếu User model chưa có trường title/jobTitle, ta dùng tạm role hoặc chuỗi rỗng. 
         // Khuyến nghị: Nên thêm trường 'title' (Chức danh mong muốn) vào User model.
-        "{{JOB_TITLE}}": (userProfile as any).title || (userProfile.role === "candidate" ? "Ứng viên" : userProfile.role) || "",
+        "{{JOB_TITLE}}": "FULL STACK DEVELOPER",
         "{{EMAIL}}": userProfile.email || "",
         "{{PHONE}}": userProfile.phoneNumber || "",
         "{{ADDRESS}}": userProfile.address || "",
@@ -79,10 +72,7 @@ export const generateCVHtml = (rawHtml: string, data: CVDataCollection): string 
     // Logic: Nếu có avatar -> render thẻ IMG. Nếu không -> render Placeholder (chữ cái đầu).
     let avatarHtml = `<div class="cv-avatar-placeholder">${userProfile.fullName?.charAt(0).toUpperCase() || "U"}</div>`;
     if (userProfile.avatarUrl) {
-        // Xử lý đường dẫn ảnh (nếu là relative path thì nối thêm domain)
-        const avatarSrc = userProfile.avatarUrl.startsWith("http") 
-            ? userProfile.avatarUrl 
-            : `${API_BASE_URL.replace('/api/', '')}${userProfile.avatarUrl}`;
+        const avatarSrc = userProfile.avatarUrl;
         
         // Thêm crossorigin="anonymous" để tránh lỗi CORS khi in ấn/canvas nếu cần
         avatarHtml = `<img src="${avatarSrc}" class="cv-avatar" alt="Avatar" crossorigin="anonymous" />`;
@@ -134,7 +124,7 @@ export const generateCVHtml = (rawHtml: string, data: CVDataCollection): string 
     const educationsHtml = educations.length > 0 ? educations.map(edu => `
         <div class="cv-education-item">
             <div class="cv-education-school">${edu.schoolName}</div>
-            <div class="cv-education-degree">${getDegreeLabel(edu.degree)} - ${edu.major}</div>
+            <div class="cv-education-degree">${getEducationLevelLabel(edu.educationLevelId)} - ${edu.major}</div>
             <div class="cv-date">${formatDate(edu.startDate)} - ${formatDate(edu.endDate)}</div>
             ${edu.description ? `<div class="cv-description" style="font-size: 12px; margin-top: 2px;">${edu.description}</div>` : ''}
         </div>

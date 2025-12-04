@@ -5,24 +5,14 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { CVEducationServices } from "@/services/cv-education.service";
-import { type CVEducation, DegreeType } from "@/models/cv-education";
+import { type CVEducation } from "@/models/cv-education";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { CalendarIcon, X, GraduationCap, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
@@ -32,9 +22,9 @@ import { useDisableBodyScroll } from "@/hooks/useDisableBodyScroll";
 // Zod schema definition
 const formSchema = z.object({
   schoolName: z.string().min(1, "Vui lòng nhập tên trường"),
-  degree: z.nativeEnum(DegreeType, {
-    required_error: "Vui lòng chọn bằng cấp",
-  }),
+  educationLevelId: z.number({
+    required_error: "Vui lòng chọn trình độ học vấn",
+  }).min(1).max(6),
   major: z.string().min(1, "Vui lòng nhập chuyên ngành"),
   startDate: z.date({ required_error: "Vui lòng nhập ngày bắt đầu" }),
   endDate: z.date({ required_error: "Vui lòng nhập ngày kết thúc" }),
@@ -53,12 +43,13 @@ interface DialogCVEducationProps {
   educationToEdit?: CVEducation | null;
 }
 
-const DEGREE_OPTIONS: { value: DegreeType; label: string }[] = [
-  { value: DegreeType.College, label: "Cao đẳng" },
-  { value: DegreeType.Bachelor, label: "Cử nhân" },
-  { value: DegreeType.Master, label: "Thạc sĩ" },
-  { value: DegreeType.Doctorate, label: "Tiến sĩ" },
-  { value: DegreeType.Other, label: "Khác" },
+const EDUCATION_LEVEL_OPTIONS: { value: number; label: string }[] = [
+  { value: 1, label: "Cao đẳng" },
+  { value: 2, label: "Đại học" },
+  { value: 3, label: "Kỹ sư" },
+  { value: 4, label: "Cử nhân" },
+  { value: 5, label: "Thạc sĩ" },
+  { value: 6, label: "Tiến sĩ" },
 ];
 
 export function DialogCVEducation({
@@ -77,7 +68,7 @@ export function DialogCVEducation({
     resolver: zodResolver(formSchema),
     defaultValues: {
       schoolName: "",
-      degree: DegreeType.Bachelor,
+      educationLevelId: 2, // Đại học
       major: "",
       description: "",
     },
@@ -102,7 +93,7 @@ export function DialogCVEducation({
       if (educationToEdit) {
         reset({
           schoolName: educationToEdit.schoolName,
-          degree: educationToEdit.degree,
+          educationLevelId: educationToEdit.educationLevelId || 2,
           major: educationToEdit.major,
           description: educationToEdit.description || "",
           startDate: new Date(educationToEdit.startDate),
@@ -111,7 +102,7 @@ export function DialogCVEducation({
       } else {
         reset({
           schoolName: "",
-          degree: DegreeType.Bachelor,
+          educationLevelId: 2, // Đại học
           major: "",
           description: "",
           startDate: undefined,
@@ -205,7 +196,7 @@ export function DialogCVEducation({
               <Input
                 {...register("schoolName")}
                 placeholder="Ví dụ: Đại học FPT..."
-                className={`mt-1 ${errors.schoolName ? "border-red-500" : ""}`}
+                className={`w-full mt-1 ${errors.schoolName ? "border-red-500" : ""}`}
                 disabled={actionLoading}
               />
               {errors.schoolName && (
@@ -216,14 +207,14 @@ export function DialogCVEducation({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               {/* Degree field */}
+               {/* Education Level field */}
                <div>
                 <Label className="text-sm font-medium">
-                  Bằng cấp <span className="text-red-500">*</span>
+                  Trình độ học vấn <span className="text-red-500">*</span>
                 </Label>
                 <Controller
                   control={control}
-                  name="degree"
+                  name="educationLevelId"
                   render={({ field }) => {
                     const selectValue = field.value !== undefined && field.value !== null 
                       ? field.value.toString() 
@@ -241,7 +232,7 @@ export function DialogCVEducation({
                           // Chỉ update nếu giá trị không rỗng và hợp lệ
                           if (value && value.trim() !== "") {
                             const numValue = Number(value);
-                            const isValidValue = DEGREE_OPTIONS.some(opt => opt.value === numValue);
+                            const isValidValue = EDUCATION_LEVEL_OPTIONS.some(opt => opt.value === numValue);
                             if (isValidValue) {
                               field.onChange(numValue);
                             }
@@ -249,11 +240,11 @@ export function DialogCVEducation({
                         }}
                         disabled={actionLoading}
                       >
-                        <SelectTrigger className={`mt-1 ${errors.degree ? "border-red-500" : ""}`}>
-                          <SelectValue placeholder="Chọn bằng cấp" />
+                        <SelectTrigger className={`w-full mt-1 ${errors.educationLevelId ? "border-red-500" : ""}`}>
+                          <SelectValue placeholder="Chọn trình độ học vấn" />
                         </SelectTrigger>
                         <SelectContent>
-                          {DEGREE_OPTIONS.map((option) => (
+                          {EDUCATION_LEVEL_OPTIONS.map((option) => (
                             <SelectItem key={option.value} value={option.value.toString()}>
                               {option.label}
                             </SelectItem>
@@ -263,9 +254,9 @@ export function DialogCVEducation({
                     );
                   }}
                 />
-                {errors.degree && (
+                {errors.educationLevelId && (
                   <p className="text-sm text-red-500 mt-1">
-                    {errors.degree.message}
+                    {errors.educationLevelId.message}
                   </p>
                 )}
               </div>
@@ -278,7 +269,7 @@ export function DialogCVEducation({
                 <Input
                   {...register("major")}
                   placeholder="Ví dụ: Công nghệ thông tin..."
-                  className={`mt-1 ${errors.major ? "border-red-500" : ""}`}
+                  className={`w-full mt-1 ${errors.major ? "border-red-500" : ""}`}
                   disabled={actionLoading}
                 />
                 {errors.major && (
@@ -411,7 +402,7 @@ export function DialogCVEducation({
               <Textarea
                 {...register("description")}
                 placeholder="Mô tả chi tiết quá trình học, thành tích..."
-                className="mt-1 resize-none min-h-[120px]"
+                className="w-full mt-1 resize-none min-h-[120px]"
                 disabled={actionLoading}
               />
               <div className="flex justify-between mt-1">
