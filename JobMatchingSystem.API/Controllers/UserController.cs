@@ -126,6 +126,7 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
         [HttpPut("{id}/status")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ChangeStatus(int id)
         {
             await _userService.ChangeStatus(id);
@@ -135,6 +136,45 @@ namespace JobMatchingSystem.API.Controllers
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
                 .Build());
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateUserByAdmin(int id, [FromForm] UpdateUserByAdminRequest request)
+        {
+            try
+            {
+                // Validate avatar file if provided
+                if (request.AvatarFile != null)
+                {
+                    var validationError = ValidateAvatarFile(request.AvatarFile);
+                    if (!string.IsNullOrEmpty(validationError))
+                    {
+                        return BadRequest(APIResponse<string>.Builder()
+                            .WithStatusCode(HttpStatusCode.BadRequest)
+                            .WithSuccess(false)
+                            .WithMessage(validationError)
+                            .Build());
+                    }
+                }
+
+                var updatedUser = await _userService.UpdateUserByAdmin(id, request);
+
+                return Ok(APIResponse<UserDetailResponseDTO>.Builder()
+                    .WithResult(updatedUser)
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithSuccess(true)
+                    .WithMessage("Cập nhật thông tin user thành công")
+                    .Build());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, APIResponse<string>.Builder()
+                    .WithStatusCode(HttpStatusCode.InternalServerError)
+                    .WithSuccess(false)
+                    .WithMessage($"Cập nhật user thất bại: {ex.Message}")
+                    .Build());
+            }
         }
 
         [HttpPost("hiring-manager")]
