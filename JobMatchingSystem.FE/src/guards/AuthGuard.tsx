@@ -4,6 +4,14 @@ import { useAppSelector } from '@/store';
 import type { UserRole } from '@/models/user';
 import Cookies from 'js-cookie';
 
+/**
+ * Chuẩn hóa role thành viết hoa chữ cái đầu
+ */
+const capitalizeRole = (role: string): string => {
+  if (!role) return '';
+  return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+};
+
 interface AuthGuardProps {
   children: React.ReactNode;
   requiredRoles?: UserRole[];
@@ -25,7 +33,10 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
 
   // Check role permissions if required
   if (requiredRoles && requiredRoles.length > 0) {
-    if (!Cookies.get('role') || !requiredRoles.includes(Cookies.get('role') as UserRole)) {
+    const currentRole = capitalizeRole(Cookies.get('role') || '');
+    const normalizedRequiredRoles = requiredRoles.map(r => capitalizeRole(r));
+    
+    if (!currentRole || !normalizedRequiredRoles.includes(currentRole as UserRole)) {
       return <Navigate to="/unauthorized" replace />;
     }
   }
@@ -35,15 +46,15 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
 
 // Specific role guards
 export const AdminGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <AuthGuard requiredRoles={['admin']}>{children}</AuthGuard>
+  <AuthGuard requiredRoles={['Admin']}>{children}</AuthGuard>
 );
 
 export const RecruiterGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <AuthGuard requiredRoles={['recruiter']}>{children}</AuthGuard>
+  <AuthGuard requiredRoles={['Recruiter']}>{children}</AuthGuard>
 );
 
 export const CandidateGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <AuthGuard requiredRoles={['candidate']}>{children}</AuthGuard>
+  <AuthGuard requiredRoles={['Candidate']}>{children}</AuthGuard>
 );
 
 // Guest guard (redirect authenticated users)
@@ -55,18 +66,21 @@ export const GuestGuard: React.FC<{
   
   if (isAuthenticated || Cookies.get('accessToken')) {
     // Redirect based on user role
-    const userRole = Cookies.get('role');
+    const userRole = capitalizeRole(Cookies.get('role') || '');
     let defaultRedirect = redirectTo;
     
     switch (userRole) {
-      case 'admin':
+      case 'Admin':
         defaultRedirect = '/admin';
         break;
-      case 'recruiter':
+      case 'Recruiter':
         defaultRedirect = '/recruiter';
         break;
-      case 'candidate':
+      case 'Candidate':
         defaultRedirect = '/candidate';
+        break;
+      case 'Hiringmanager':
+        defaultRedirect = '/recruiter'; // HiringManager uses same dashboard as Recruiter
         break;
       default:
         defaultRedirect = redirectTo;
