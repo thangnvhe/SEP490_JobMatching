@@ -1,5 +1,6 @@
 ﻿using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
+using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 
 namespace JobMatchingSystem.API.Services.Interfaces
@@ -7,6 +8,7 @@ namespace JobMatchingSystem.API.Services.Interfaces
     public interface ITaxonomyService
     {
         Task<List<TaxonomyTreeResponse>> GetAllTaxonomiesAsync();
+        Task<PagedResult<object>> GetAllPagedAsync(int page, int pageSize, string sortBy, bool isDescending, string search);
         Task<List<TaxonomyTreeResponse>> GetTaxonomyTreeAsync();
         Task<List<TaxonomyFlatResponse>> GetTaxonomyFlatListAsync();
         Task<List<TaxonomyTreeResponse>> GetChildrenByParentIdAsync(int parentId);

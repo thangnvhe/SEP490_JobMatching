@@ -21,6 +21,11 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                 .ToListAsync();
         }
 
+        public IQueryable<Taxonomy> GetQueryable()
+        {
+            return _context.Taxonomies.Include(t => t.Parent).AsQueryable();
+        }
+
         public async Task<List<Taxonomy>> GetAllWithChildrenAsync()
         {
             return await _context.Taxonomies
