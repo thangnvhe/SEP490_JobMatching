@@ -10,5 +10,10 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
         Task<List<Taxonomy>> GetChildrenByParentIdAsync(int parentId);
         Task<Taxonomy?> GetByIdAsync(int id);
         Task<List<Taxonomy>> GetRootTaxonomiesAsync();
+        
+        // CRUD operations
+        Task<Taxonomy> CreateAsync(Taxonomy taxonomy);
+        Task<Taxonomy> UpdateAsync(Taxonomy taxonomy);
+        Task DeleteAsync(int id);
     }
 }

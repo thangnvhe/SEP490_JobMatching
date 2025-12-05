@@ -1,4 +1,7 @@
-﻿using JobMatchingSystem.API.DTOs.Response;
+﻿using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
+using JobMatchingSystem.API.Exceptions;
+using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
@@ -50,6 +53,77 @@ namespace JobMatchingSystem.API.Services.Implementations
         {
             return await _taxonomyRepository.GetRootTaxonomiesAsync().ContinueWith(t => 
                 t.Result.Select(MapToTaxonomyResponse).ToList());
+        }
+
+        public async Task<Taxonomy> CreateTaxonomyAsync(CreateTaxonomyRequest request)
+        {
+            // Validate parent exists if ParentId is provided
+            if (request.ParentId.HasValue)
+            {
+                var parent = await _taxonomyRepository.GetByIdAsync(request.ParentId.Value);
+                if (parent == null)
+                    throw new AppException(ErrorCode.NotFoundTaxonomy());
+            }
+
+            var taxonomy = new Taxonomy
+            {
+                Name = request.Name,
+                ParentId = request.ParentId
+            };
+
+            return await _taxonomyRepository.CreateAsync(taxonomy);
+        }
+
+        public async Task<Taxonomy> UpdateTaxonomyAsync(int id, UpdateTaxonomyRequest request)
+        {
+            var existingTaxonomy = await _taxonomyRepository.GetByIdAsync(id);
+            if (existingTaxonomy == null)
+                throw new AppException(ErrorCode.NotFoundTaxonomy());
+
+            // Validate parent exists if ParentId is provided and prevent circular reference
+            if (request.ParentId.HasValue)
+            {
+                if (request.ParentId.Value == id)
+                    throw new AppException(ErrorCode.CantUpdate());
+
+                var parent = await _taxonomyRepository.GetByIdAsync(request.ParentId.Value);
+                if (parent == null)
+                    throw new AppException(ErrorCode.NotFoundTaxonomy());
+
+                // Check for circular reference (prevent setting parent to a descendant)
+                if (await IsDescendant(id, request.ParentId.Value))
+                    throw new AppException(ErrorCode.CantUpdate());
+            }
+
+            existingTaxonomy.Name = request.Name;
+            existingTaxonomy.ParentId = request.ParentId;
+
+            return await _taxonomyRepository.UpdateAsync(existingTaxonomy);
+        }
+
+        public async Task DeleteTaxonomyAsync(int id)
+        {
+            var existingTaxonomy = await _taxonomyRepository.GetByIdAsync(id);
+            if (existingTaxonomy == null)
+                throw new AppException(ErrorCode.NotFoundTaxonomy());
+
+            await _taxonomyRepository.DeleteAsync(id);
+        }
+
+        private async Task<bool> IsDescendant(int ancestorId, int potentialDescendantId)
+        {
+            var children = await _taxonomyRepository.GetChildrenByParentIdAsync(ancestorId);
+            
+            foreach (var child in children)
+            {
+                if (child.Id == potentialDescendantId)
+                    return true;
+                
+                if (await IsDescendant(child.Id, potentialDescendantId))
+                    return true;
+            }
+            
+            return false;
         }
 
         private static TaxonomyTreeResponse MapToTaxonomyResponse(Taxonomy taxonomy)
