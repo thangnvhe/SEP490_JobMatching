@@ -48,7 +48,6 @@ namespace JobMatchingSystem.API.Controllers
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
                     .WithResult(profileDto)
-                    .WithMessage("CV Profile retrieved successfully")
                     .Build());
             }
             catch (Exception ex)
@@ -141,7 +140,6 @@ namespace JobMatchingSystem.API.Controllers
                     .WithStatusCode(HttpStatusCode.Created)
                     .WithSuccess(true)
                     .WithResult(profileDto)
-                    .WithMessage("CV Profile created successfully")
                     .Build());
             }
             catch (UnauthorizedAccessException ex)
@@ -188,7 +186,6 @@ namespace JobMatchingSystem.API.Controllers
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
                     .WithResult(profileDto)
-                    .WithMessage("CV Profile updated successfully")
                     .Build());
             }
             catch (KeyNotFoundException)
@@ -334,7 +331,6 @@ namespace JobMatchingSystem.API.Controllers
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
                     .WithResult(profileDto)
-                    .WithMessage("About me updated successfully")
                     .Build());
             }
             catch (KeyNotFoundException)
