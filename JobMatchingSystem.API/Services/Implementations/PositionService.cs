@@ -100,5 +100,37 @@ namespace JobMatchingSystem.API.Services.Implementations
             
             await _context.SaveChangesAsync();
         }
+        
+        public async Task<Position> CreatePositionAsync(CreatePositionRequest request)
+        {
+            var position = new Position
+            {
+                Name = request.Name,
+            };
+
+            var createdPosition = await _positionRepository.CreateAsync(position);
+            return createdPosition;
+        }
+
+        public async Task<Position> UpdatePositionAsync(int id, UpdatePositionRequest request)
+        {
+            var existingPosition = await _positionRepository.GetByIdAsync(id);
+            if (existingPosition == null)
+                throw new AppException(ErrorCode.NotFoundPosition());
+
+            existingPosition.Name = request.Name;
+
+            var updatedPosition = await _positionRepository.UpdateAsync(existingPosition);
+            return updatedPosition;
+        }
+
+        public async Task DeletePositionAsync(int id)
+        {
+            var existingPosition = await _positionRepository.GetByIdAsync(id);
+            if (existingPosition == null)
+                throw new AppException(ErrorCode.NotFoundPosition());
+
+            await _positionRepository.DeleteAsync(id);
+        }
     }
 }
