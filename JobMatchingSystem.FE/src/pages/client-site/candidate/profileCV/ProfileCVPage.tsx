@@ -58,7 +58,10 @@ import { CVExperienceServices } from "@/services/cv-experience.service";
 import { CVProjectServices } from "@/services/cv-project.service";
 import { UserServices } from "@/services/user.service";
 import { DialogCVInformation } from "./EditInformation/DialogCVInformation";
+import { DialogCVProfile } from "./EditInformation/DialogCVProfile";
 import { User } from "@/models/user";
+import { CVProfile } from "@/models/cv-profile";
+import { CVProfileService } from "@/services/cv-profile.service";
 import { CVAchievement } from "@/models/cv-achievement";
 import { CVCertificate } from "@/models/cv-certificate";
 import { CVEducation, EducationLevel as EducationLevelMap } from "@/models/cv-education";
@@ -95,6 +98,9 @@ const ProfileCvPage = () => {
     const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
     const [userProfile, setUserProfile] = useState<User | null>(null);
 
+    const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+    const [cvProfile, setCvProfile] = useState<CVProfile | null>(null);
+
 
     // Alert Dialog state for delete confirmation
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -109,12 +115,16 @@ const ProfileCvPage = () => {
         let totalScore = 0;
         let maxScore = 0;
 
-        // Điểm cho thông tin cơ bản (Contact Details) - 20 điểm
-        // Giả sử contactDetails sẽ được fetch từ user profile
-        // Hiện tại tạm thời coi là đã có đầy đủ
-        const contactScore = 20; // Tạm thời cố định, sau này có thể kiểm tra thực tế
+        // Điểm cho thông tin cơ bản (Contact Details) - 15 điểm
+        const contactScore = 15;
         totalScore += contactScore;
-        maxScore += 20;
+        maxScore += 15;
+
+        // Điểm cho Hồ sơ ứng tuyển (CV Profile) - 15 điểm
+        if (cvProfile && cvProfile.aboutMe) {
+            totalScore += 15;
+        }
+        maxScore += 15;
 
         // Điểm cho Học vấn (Education) - 20 điểm
         if (educations.length > 0) {
@@ -122,11 +132,11 @@ const ProfileCvPage = () => {
         }
         maxScore += 20;
 
-        // Điểm cho Kinh nghiệm làm việc (Experience) - 25 điểm
+        // Điểm cho Kinh nghiệm làm việc (Experience) - 20 điểm
         if (experiences.length > 0) {
-            totalScore += 25;
+            totalScore += 20;
         }
-        maxScore += 25;
+        maxScore += 20;
 
         // Điểm cho Dự án (Projects) - 15 điểm
         if (projects.length > 0) {
@@ -140,15 +150,15 @@ const ProfileCvPage = () => {
         }
         maxScore += 10;
 
-        // Điểm cho Giải thưởng (Achievements) - 10 điểm
+        // Điểm cho Giải thưởng (Achievements) - 5 điểm
         if (achievements.length > 0) {
-            totalScore += 10;
+            totalScore += 5;
         }
-        maxScore += 10;
+        maxScore += 5;
 
         // Tính phần trăm hoàn thành
         return Math.round((totalScore / maxScore) * 100);
-    }, [educations, experiences, projects, certificates, achievements]);
+    }, [cvProfile, educations, experiences, projects, certificates, achievements]);
 
     const fetchAchievements = async () => {
         try {
@@ -205,6 +215,15 @@ const ProfileCvPage = () => {
         }
     };
 
+    const fetchCVProfile = async () => {
+        try {
+            const response = await CVProfileService.getMyProfile();
+            setCvProfile(response.result);
+        } catch (error) {
+            console.error("Failed to fetch CV profile", error);
+        }
+    };
+
     useEffect(() => {
         fetchAchievements();
         fetchCertificates();
@@ -212,6 +231,7 @@ const ProfileCvPage = () => {
         fetchExperiences();
         fetchProjects();
         fetchUserProfile();
+        fetchCVProfile();
     }, []);
 
     // Achievement handlers
@@ -463,6 +483,19 @@ const ProfileCvPage = () => {
     const improvementSuggestions = useMemo(() => {
         const suggestions: { text: string; completed: boolean }[] = [];
 
+        // Kiểm tra CVProfile
+        if (!cvProfile || !cvProfile.aboutMe) {
+            suggestions.push({
+                text: "Thêm hồ sơ ứng tuyển và giới thiệu bản thân",
+                completed: false,
+            });
+        } else {
+            suggestions.push({
+                text: "Đã thêm hồ sơ ứng tuyển",
+                completed: true,
+            });
+        }
+
         // Kiểm tra từng phần và thêm gợi ý nếu chưa hoàn thành
         if (educations.length === 0) {
             suggestions.push({
@@ -526,7 +559,7 @@ const ProfileCvPage = () => {
 
         // Sắp xếp: chưa hoàn thành lên trên, đã hoàn thành xuống dưới
         return suggestions.sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
-    }, [educations, experiences, projects, certificates, achievements]);
+    }, [cvProfile, educations, experiences, projects, certificates, achievements]);
 
     // Calculate circular progress for the visual widget if needed,
     // but we will focus on the linear bar as requested.
@@ -561,6 +594,36 @@ const ProfileCvPage = () => {
     ];
 
     const profileSections: SectionCardConfig[] = [
+        {
+            title: "Hồ sơ ứng tuyển",
+            description: "Vị trí mong muốn và giới thiệu bản thân",
+            icon: UserIcon,
+            action: cvProfile ? "Chỉnh sửa" : "Thêm mới",
+            onActionClick: () => {
+                setIsProfileDialogOpen(true);
+            },
+            ...(cvProfile && {
+                children: (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                   
+                            <div>
+                                <p className="text-sm text-gray-500">Vị trí ứng tuyển</p>
+                                <p className="text-base font-semibold text-gray-900">
+                                    {cvProfile.positionName || "Chưa cập nhật"}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="border-t border-gray-100 pt-4">
+                            <p className="text-sm font-medium text-gray-500 mb-2">Giới thiệu bản thân</p>
+                            <p className="text-base text-gray-700 whitespace-pre-line leading-relaxed">
+                                {cvProfile.aboutMe || "Chưa có thông tin giới thiệu"}
+                            </p>
+                        </div>
+                    </div>
+                ),
+            }),
+        },
         {
             title: "Học vấn",
             description: "Chia sẻ quá trình học tập và bằng cấp",
@@ -1106,6 +1169,13 @@ const ProfileCvPage = () => {
                 onOpenChange={setIsInfoDialogOpen}
                 onSuccess={fetchUserProfile}
                 userProfileToEdit={userProfile}
+            />
+
+            <DialogCVProfile
+                open={isProfileDialogOpen}
+                onOpenChange={setIsProfileDialogOpen}
+                onSuccess={fetchCVProfile}
+                profileToEdit={cvProfile}
             />
 
             {/* Delete Confirmation Alert Dialog */}

@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { CVProfile } from "@/models/cv-profile";
 import { User } from "@/models/user";
 import { CVEducation, EducationLevel as EducationLevelMap } from "@/models/cv-education";
 import { CVExperience } from "@/models/cv-experience";
@@ -11,6 +12,7 @@ import { CVAchievement } from "@/models/cv-achievement";
 // ==========================================
 export interface CVDataCollection {
     userProfile: User;
+    cvProfile: CVProfile | null;
     educations: CVEducation[];
     experiences: CVExperience[];
     projects: CVProject[];
@@ -51,16 +53,15 @@ const getEducationLevelLabel = (educationLevelId: number): string => {
  */
 export const generateCVHtml = (rawHtml: string, data: CVDataCollection): string => {
     let html = rawHtml;
-    const { userProfile, educations, experiences, projects, certificates, achievements } = data;
+    const { userProfile, cvProfile, educations, experiences, projects, certificates, achievements } = data;
 
     // ---------------------------------------------------------
     // A. THAY THẾ THÔNG TIN CÁ NHÂN (BASIC INFO)
     // ---------------------------------------------------------
     const basicInfoReplacements: Record<string, string> = {
         "{{FULL_NAME}}": userProfile.fullName || "Your Name",
-        // Nếu User model chưa có trường title/jobTitle, ta dùng tạm role hoặc chuỗi rỗng. 
-        // Khuyến nghị: Nên thêm trường 'title' (Chức danh mong muốn) vào User model.
-        "{{JOB_TITLE}}": "FULL STACK DEVELOPER",
+        // Sử dụng positionName từ CVProfile làm tiêu đề/vị trí ứng tuyển
+        "{{USER_POSITION}}": cvProfile?.positionName?.toUpperCase() || "",
         "{{EMAIL}}": userProfile.email || "",
         "{{PHONE}}": userProfile.phoneNumber || "",
         "{{ADDRESS}}": userProfile.address || "",
@@ -78,6 +79,11 @@ export const generateCVHtml = (rawHtml: string, data: CVDataCollection): string 
         avatarHtml = `<img src="${avatarSrc}" class="cv-avatar" alt="Avatar" crossorigin="anonymous" />`;
     }
     html = html.replace("{{AVATAR_HTML}}", avatarHtml);
+
+    // Replace About Me / Introduction
+    // Không cần replace \n thành <br/> vì class .cv-description đã có white-space: pre-line
+    const aboutMeHtml = cvProfile?.aboutMe || "";
+    html = html.replace("{{ABOUT_ME}}", aboutMeHtml);
 
     // Thực hiện replace các trường text cơ bản
     Object.entries(basicInfoReplacements).forEach(([key, value]) => {
@@ -139,7 +145,7 @@ export const generateCVHtml = (rawHtml: string, data: CVDataCollection): string 
             <div class="cv-certificate-name">${cert.name}</div>
             <div class="cv-certificate-org">${cert.organization}</div>
             <div class="cv-date">${formatDate(cert.certificateAt)}</div>
-            ${cert.link ? `<a href="${cert.link}" target="_blank" class="cv-link">Xem chứng chỉ</a>` : ''}
+            ${cert.link ? `<a href="${cert.link}" target="_blank" class="cv-link" style="word-break: break-all;">${cert.link}</a>` : ''}
             ${cert.description ? `<div class="cv-description" style="font-size: 12px;">${cert.description}</div>` : ''}
         </div>
     `).join("") : "";

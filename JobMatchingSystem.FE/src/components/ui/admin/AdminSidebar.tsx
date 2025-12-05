@@ -8,6 +8,8 @@ import {
   Settings,
   Package,
   FileText,
+  Award,
+  MapPin,
 } from "lucide-react";
 import {
   Sidebar,
@@ -66,6 +68,36 @@ function AdminNav() {
         </SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu className="">
+
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/admin/manage-taxonomies")}
+                tooltip="Manage Taxonomies"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/admin/manage-taxonomies"> <Award className="size-4" />
+                  <span className="font-medium text-sm">Quản lý kỹ năng</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/admin/manage-position")}
+                tooltip="Manage Position"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/admin/manage-position">
+                  <MapPin className="size-4" />
+                  <span className="font-medium text-sm">Quản lý vị trí</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
