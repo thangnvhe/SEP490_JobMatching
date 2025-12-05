@@ -36,10 +36,19 @@ namespace JobMatchingSystem.API.Controllers
                         .Build());
                 }
 
-                return Ok(APIResponse<object>.Builder()
+                var profileDto = new CVProfileDto
+                {
+                    Id = cvProfile.Id,
+                    PositionId = cvProfile.PositionId,
+                    AboutMe = cvProfile.AboutMe,
+                    PositionName = cvProfile.Position?.Name
+                };
+
+                return Ok(APIResponse<CVProfileDto>.Builder()
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
-                    .WithResult(cvProfile)
+                    .WithResult(profileDto)
+                    .WithMessage("CV Profile retrieved successfully")
                     .Build());
             }
             catch (Exception ex)
@@ -80,6 +89,7 @@ namespace JobMatchingSystem.API.Controllers
 
                 var profileDto = new CVProfileDto
                 {
+                    Id = profile.Id,
                     PositionId = profile.PositionId,
                     AboutMe = profile.AboutMe,
                     PositionName = profile.Position?.Name
@@ -119,10 +129,19 @@ namespace JobMatchingSystem.API.Controllers
                 
                 var cvProfile = await _cvProfileService.CreateAsync(request, userId);
                 
-                return Ok(APIResponse<CVProfile>.Builder()
+                var profileDto = new CVProfileDto
+                {
+                    Id = cvProfile.Id,
+                    PositionId = cvProfile.PositionId,
+                    AboutMe = cvProfile.AboutMe,
+                    PositionName = cvProfile.Position?.Name
+                };
+                
+                return Ok(APIResponse<CVProfileDto>.Builder()
                     .WithStatusCode(HttpStatusCode.Created)
                     .WithSuccess(true)
-                    .WithResult(cvProfile)
+                    .WithResult(profileDto)
+                    .WithMessage("CV Profile created successfully")
                     .Build());
             }
             catch (UnauthorizedAccessException ex)
@@ -157,10 +176,19 @@ namespace JobMatchingSystem.API.Controllers
                 
                 var updatedProfile = await _cvProfileService.UpdateAsync(id, request, userId);
                 
-                return Ok(APIResponse<CVProfile>.Builder()
+                var profileDto = new CVProfileDto
+                {
+                    Id = updatedProfile.Id,
+                    PositionId = updatedProfile.PositionId,
+                    AboutMe = updatedProfile.AboutMe,
+                    PositionName = updatedProfile.Position?.Name
+                };
+                
+                return Ok(APIResponse<CVProfileDto>.Builder()
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
-                    .WithResult(updatedProfile)
+                    .WithResult(profileDto)
+                    .WithMessage("CV Profile updated successfully")
                     .Build());
             }
             catch (KeyNotFoundException)
@@ -294,10 +322,19 @@ namespace JobMatchingSystem.API.Controllers
 
                 var updatedProfile = await _cvProfileService.UpdateAboutMeAsync(userId, aboutMe);
 
-                return Ok(APIResponse<CVProfile>.Builder()
+                var profileDto = new CVProfileDto
+                {
+                    Id = updatedProfile.Id,
+                    PositionId = updatedProfile.PositionId,
+                    AboutMe = updatedProfile.AboutMe,
+                    PositionName = updatedProfile.Position?.Name
+                };
+
+                return Ok(APIResponse<CVProfileDto>.Builder()
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
-                    .WithResult(updatedProfile)
+                    .WithResult(profileDto)
+                    .WithMessage("About me updated successfully")
                     .Build());
             }
             catch (KeyNotFoundException)
