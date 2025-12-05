@@ -35,6 +35,67 @@ namespace JobMatchingSystem.API.Services.Implementations
             });
         }
 
+        public async Task<PagedResult<PositionResponse>> GetAllPagedAsync(int page = 1, int pageSize = 10, string sortBy = "", bool isDescending = false, string search = "")
+        {
+            try
+            {
+                var query = _context.Positions.AsQueryable();
+
+                // Apply search filter
+                if (!string.IsNullOrEmpty(search))
+                {
+                    query = query.Where(p => p.Name.Contains(search));
+                }
+
+                // Apply sorting
+                if (!string.IsNullOrEmpty(sortBy))
+                {
+                    switch (sortBy.ToLower())
+                    {
+                        case "name":
+                            query = isDescending ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name);
+                            break;
+                        case "id":
+                            query = isDescending ? query.OrderByDescending(p => p.PositionId) : query.OrderBy(p => p.PositionId);
+                            break;
+                        default:
+                            query = query.OrderBy(p => p.Name);
+                            break;
+                    }
+                }
+                else
+                {
+                    query = query.OrderBy(p => p.Name);
+                }
+
+                var totalCount = await query.CountAsync();
+                var positions = await query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                var positionResponses = positions.Select(p => new PositionResponse
+                {
+                    PositionId = p.PositionId,
+                    Name = p.Name
+                }).ToList();
+
+                return new PagedResult<PositionResponse>
+                {
+                    Items = positionResponses,
+                    pageInfo = new PageInfo(totalCount, page, pageSize, sortBy, isDescending)
+                };
+            }
+            catch (Exception)
+            {
+                return new PagedResult<PositionResponse>
+                {
+                    Items = new List<PositionResponse>(),
+                    pageInfo = new PageInfo(0, page, pageSize, sortBy, isDescending)
+                };
+            }
+        }
+
         public async Task<PositionResponse> GetByIdAsync(int id)
         {
             var position = await _positionRepository.GetByIdAsync(id);
@@ -99,6 +160,38 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
             
             await _context.SaveChangesAsync();
+        }
+        
+        public async Task<Position> CreatePositionAsync(CreatePositionRequest request)
+        {
+            var position = new Position
+            {
+                Name = request.Name,
+            };
+
+            var createdPosition = await _positionRepository.CreateAsync(position);
+            return createdPosition;
+        }
+
+        public async Task<Position> UpdatePositionAsync(int id, UpdatePositionRequest request)
+        {
+            var existingPosition = await _positionRepository.GetByIdAsync(id);
+            if (existingPosition == null)
+                throw new AppException(ErrorCode.NotFoundPosition());
+
+            existingPosition.Name = request.Name;
+
+            var updatedPosition = await _positionRepository.UpdateAsync(existingPosition);
+            return updatedPosition;
+        }
+
+        public async Task DeletePositionAsync(int id)
+        {
+            var existingPosition = await _positionRepository.GetByIdAsync(id);
+            if (existingPosition == null)
+                throw new AppException(ErrorCode.NotFoundPosition());
+
+            await _positionRepository.DeleteAsync(id);
         }
     }
 }

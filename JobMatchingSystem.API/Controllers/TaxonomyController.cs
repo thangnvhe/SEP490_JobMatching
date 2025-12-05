@@ -1,5 +1,8 @@
 ﻿using JobMatchingSystem.API.DTOs;
+using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -114,6 +117,100 @@ namespace JobMatchingSystem.API.Controllers
                 .WithSuccess(true)
                 .WithResult(roots)
                 .Build());
+        }
+
+        /// <summary>
+        /// Create a new taxonomy
+        /// </summary>
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Create([FromBody] CreateTaxonomyRequest request)
+        {
+            try
+            {
+                var taxonomy = await _taxonomyService.CreateTaxonomyAsync(request);
+                
+                var response = new
+                {
+                    Id = taxonomy.Id,
+                    Name = taxonomy.Name,
+                    ParentId = taxonomy.ParentId
+                };
+
+                return Ok(APIResponse<object>.Builder()
+                    .WithStatusCode(HttpStatusCode.Created)
+                    .WithSuccess(true)
+                    .WithResult(response)
+                    .Build());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(APIResponse<object>.Builder()
+                    .WithStatusCode(HttpStatusCode.BadRequest)
+                    .WithSuccess(false)
+                    .WithMessage(ex.Message)
+                    .Build());
+            }
+        }
+
+        /// <summary>
+        /// Update an existing taxonomy
+        /// </summary>
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateTaxonomyRequest request)
+        {
+            try
+            {
+                var taxonomy = await _taxonomyService.UpdateTaxonomyAsync(id, request);
+                
+                var response = new
+                {
+                    Id = taxonomy.Id,
+                    Name = taxonomy.Name,
+                    ParentId = taxonomy.ParentId
+                };
+
+                return Ok(APIResponse<object>.Builder()
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithSuccess(true)
+                    .WithResult(response)
+                    .Build());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(APIResponse<object>.Builder()
+                    .WithStatusCode(HttpStatusCode.BadRequest)
+                    .WithSuccess(false)
+                    .WithMessage(ex.Message)
+                    .Build());
+            }
+        }
+
+        /// <summary>
+        /// Delete a taxonomy
+        /// </summary>
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                await _taxonomyService.DeleteTaxonomyAsync(id);
+
+                return Ok(APIResponse<object>.Builder()
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithSuccess(true)
+                    .Build());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(APIResponse<object>.Builder()
+                    .WithStatusCode(HttpStatusCode.BadRequest)
+                    .WithSuccess(false)
+                    .WithMessage(ex.Message)
+                    .Build());
+            }
         }
     }
 }
