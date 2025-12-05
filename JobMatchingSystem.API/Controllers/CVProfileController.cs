@@ -264,6 +264,7 @@ namespace JobMatchingSystem.API.Controllers
                 }
 
                 // Get existing profile or create a new one
+                CVProfile resultProfile;
                 var existingProfile = await _cvProfileService.GetByUserIdAsync(userId);
                 if (existingProfile == null)
                 {
@@ -273,7 +274,7 @@ namespace JobMatchingSystem.API.Controllers
                         PositionId = request.PositionId,
                         AboutMe = null
                     };
-                    await _cvProfileService.CreateAsync(createRequest, userId);
+                    resultProfile = await _cvProfileService.CreateAsync(createRequest, userId);
                 }
                 else
                 {
@@ -283,12 +284,21 @@ namespace JobMatchingSystem.API.Controllers
                         PositionId = request.PositionId,
                         AboutMe = existingProfile.AboutMe
                     };
-                    await _cvProfileService.UpdateAsync(existingProfile.Id, updateRequest, userId);
+                    resultProfile = await _cvProfileService.UpdateAsync(existingProfile.Id, updateRequest, userId);
                 }
 
-                return Ok(APIResponse<object>.Builder()
+                var profileDto = new CVProfileDto
+                {
+                    Id = resultProfile.Id,
+                    PositionId = resultProfile.PositionId,
+                    AboutMe = resultProfile.AboutMe,
+                    PositionName = resultProfile.Position?.Name
+                };
+
+                return Ok(APIResponse<CVProfileDto>.Builder()
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
+                    .WithResult(profileDto)
                     .Build());
             }
             catch (Exception ex)
