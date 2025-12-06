@@ -24,7 +24,8 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 Id = t.Id,
                 Name = t.Name,
-                ChildrenIds = t.Children.Select(c => c.Id).ToArray()
+                ChildrenIds = t.Children.Select(c => c.Id).ToArray(),
+                HasChildren = t.Children.Any()
             }).ToList();
         }
 
@@ -80,7 +81,8 @@ namespace JobMatchingSystem.API.Services.Implementations
                     {
                         Id = t.Id,
                         Name = t.Name,
-                        ChildrenIds = t.Children.Select(c => c.Id).ToArray()
+                        ChildrenIds = t.Children.Select(c => c.Id).ToArray(),
+                        HasChildren = t.Children.Any()
                     })
                     .ToList();
 
@@ -109,7 +111,8 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 Id = taxonomy.Id,
                 Name = taxonomy.Name,
-                ChildrenIds = taxonomy.Children.Select(c => c.Id).ToArray()
+                ChildrenIds = taxonomy.Children.Select(c => c.Id).ToArray(),
+                HasChildren = taxonomy.Children.Any()
             };
         }
 
@@ -125,7 +128,8 @@ namespace JobMatchingSystem.API.Services.Implementations
                 Name = t.Name,
                 ChildrenIds = childrenDict.ContainsKey(t.Id) 
                     ? childrenDict[t.Id].Children.Select(c => c.Id).ToArray() 
-                    : Array.Empty<int>()
+                    : Array.Empty<int>(),
+                HasChildren = childrenDict.ContainsKey(t.Id) && childrenDict[t.Id].Children.Any()
             }).ToList();
         }
 
