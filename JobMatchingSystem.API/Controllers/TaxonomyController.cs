@@ -106,7 +106,7 @@ namespace JobMatchingSystem.API.Controllers
                 {
                     Id = taxonomy.Id,
                     Name = taxonomy.Name,
-                    ParentId = taxonomy.ParentId
+                    ChildrenIds = Array.Empty<int>()
                 };
 
                 return Ok(APIResponse<TaxonomyResponse>.Builder()
@@ -136,11 +136,13 @@ namespace JobMatchingSystem.API.Controllers
             {
                 var taxonomy = await _taxonomyService.UpdateTaxonomyAsync(id, request);
                 
-                var response = new TaxonomyResponse
+                // Reload to get children
+                var updatedTaxonomy = await _taxonomyService.GetByIdAsync(id);
+                var response = updatedTaxonomy ?? new TaxonomyResponse
                 {
                     Id = taxonomy.Id,
                     Name = taxonomy.Name,
-                    ParentId = taxonomy.ParentId
+                    ChildrenIds = Array.Empty<int>()
                 };
 
                 return Ok(APIResponse<TaxonomyResponse>.Builder()
