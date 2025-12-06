@@ -17,7 +17,7 @@ namespace JobMatchingSystem.API.Repositories.Implementations
         public async Task<List<Taxonomy>> GetAllAsync()
         {
             return await _context.Taxonomies
-                .OrderBy(t => t.Name)
+                .OrderBy(t => t.Id)
                 .ToListAsync();
         }
 
@@ -39,7 +39,7 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             return await _context.Taxonomies
                 .Include(t => t.Parent)
                 .Include(t => t.Children)
-                .OrderBy(t => t.Name)
+                .OrderBy(t => t.Id)
                 .ToListAsync();
         }
 
