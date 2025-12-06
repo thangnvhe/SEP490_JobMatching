@@ -19,12 +19,12 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<IEnumerable<TaxonomyResponse>> GetAllTaxonomiesAsync()
         {
-            var taxonomies = await _taxonomyRepository.GetAllAsync();
+            var taxonomies = await _taxonomyRepository.GetAllWithChildrenAsync();
             return taxonomies.Select(t => new TaxonomyResponse
             {
                 Id = t.Id,
                 Name = t.Name,
-                ParentId = t.ParentId
+                ChildrenIds = t.Children.Select(c => c.Id).ToArray()
             }).ToList();
         }
 
@@ -80,7 +80,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                     {
                         Id = t.Id,
                         Name = t.Name,
-                        ParentId = t.ParentId
+                        ChildrenIds = t.Children.Select(c => c.Id).ToArray()
                     })
                     .ToList();
 
@@ -109,18 +109,23 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 Id = taxonomy.Id,
                 Name = taxonomy.Name,
-                ParentId = taxonomy.ParentId
+                ChildrenIds = taxonomy.Children.Select(c => c.Id).ToArray()
             };
         }
 
         public async Task<IEnumerable<TaxonomyResponse>> GetChildrenByParentIdAsync(int parentId)
         {
             var children = await _taxonomyRepository.GetChildrenByParentIdAsync(parentId);
+            var childrenWithGrandchildren = await _taxonomyRepository.GetAllWithChildrenAsync();
+            var childrenDict = childrenWithGrandchildren.ToDictionary(t => t.Id);
+            
             return children.Select(t => new TaxonomyResponse
             {
                 Id = t.Id,
                 Name = t.Name,
-                ParentId = t.ParentId
+                ChildrenIds = childrenDict.ContainsKey(t.Id) 
+                    ? childrenDict[t.Id].Children.Select(c => c.Id).ToArray() 
+                    : Array.Empty<int>()
             }).ToList();
         }
 

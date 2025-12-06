@@ -4,6 +4,6 @@
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public int? ParentId { get; set; }
+        public int[] ChildrenIds { get; set; } = Array.Empty<int>();
     }
 }
