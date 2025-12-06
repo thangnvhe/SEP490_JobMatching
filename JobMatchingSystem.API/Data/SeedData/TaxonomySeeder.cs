@@ -11,11 +11,8 @@ namespace JobMatchingSystem.API.Data.SeedData
 
             if (context.Taxonomies.Any()) return; // tránh seed trùng
 
-            var taxonomies = new List<Taxonomy>();
-            var taxonomyId = 1;
-
             // =========================
-            // 🔹 Root Technologies (Level 0)
+            // 🔹 Level 0: Root Technologies (ParentId = null)
             // =========================
             var rootTechnologies = new[]
             {
@@ -29,16 +26,16 @@ namespace JobMatchingSystem.API.Data.SeedData
             {
                 var taxonomy = new Taxonomy
                 {
-                    Id = taxonomyId++,
                     Name = tech,
                     ParentId = null
                 };
-                taxonomies.Add(taxonomy);
+                await context.Taxonomies.AddAsync(taxonomy);
                 rootTaxonomies[tech] = taxonomy;
             }
+            await context.SaveChangesAsync(); // Save để có Id cho root taxonomies
 
             // =========================
-            // 🔹 Categories (Level 1)
+            // 🔹 Level 1: Categories (ParentId = Root Id)
             // =========================
             var categories = new Dictionary<string, List<string>>
             {
@@ -55,23 +52,23 @@ namespace JobMatchingSystem.API.Data.SeedData
             
             foreach (var (rootName, cats) in categories)
             {
-                var parentId = rootTaxonomies[rootName].Id;
+                var parent = rootTaxonomies[rootName];
                 
                 foreach (var catName in cats)
                 {
                     var taxonomy = new Taxonomy
                     {
-                        Id = taxonomyId++,
                         Name = catName,
-                        ParentId = parentId
+                        ParentId = parent.Id
                     };
-                    taxonomies.Add(taxonomy);
+                    await context.Taxonomies.AddAsync(taxonomy);
                     categoryTaxonomies[$"{rootName}:{catName}"] = taxonomy;
                 }
             }
+            await context.SaveChangesAsync(); // Save để có Id cho categories
 
             // =========================
-            // 🔹 Subcategories (Level 2)
+            // 🔹 Level 2: Subcategories (ParentId = Category Id)
             // =========================
             var subcategories = new Dictionary<string, List<string>>
             {
@@ -91,18 +88,18 @@ namespace JobMatchingSystem.API.Data.SeedData
                     {
                         var taxonomy = new Taxonomy
                         {
-                            Id = taxonomyId++,
                             Name = subcatName,
                             ParentId = parentCategory.Id
                         };
-                        taxonomies.Add(taxonomy);
+                        await context.Taxonomies.AddAsync(taxonomy);
                         subcategoryTaxonomies[$"{categoryKey}:{subcatName}"] = taxonomy;
                     }
                 }
             }
+            await context.SaveChangesAsync(); // Save để có Id cho subcategories
 
             // =========================
-            // 🔹 Specific Skills (Level 3)
+            // 🔹 Level 3: Specific Skills (ParentId = Subcategory Id hoặc Category Id)
             // =========================
             var skills = new Dictionary<string, List<string>>
             {
@@ -176,9 +173,10 @@ namespace JobMatchingSystem.API.Data.SeedData
                 }
             };
 
+            var skillCount = 0;
             foreach (var (subcategoryKey, skillList) in skills)
             {
-                // Try to find parent in subcategories first, then categories
+                // Tìm parent trong subcategories trước, sau đó trong categories
                 Taxonomy? parentTaxonomy = null;
                 
                 if (subcategoryTaxonomies.TryGetValue(subcategoryKey, out parentTaxonomy) ||
@@ -188,28 +186,25 @@ namespace JobMatchingSystem.API.Data.SeedData
                     {
                         var taxonomy = new Taxonomy
                         {
-                            Id = taxonomyId++,
                             Name = skillName,
                             ParentId = parentTaxonomy.Id
                         };
-                        taxonomies.Add(taxonomy);
+                        await context.Taxonomies.AddAsync(taxonomy);
+                        skillCount++;
                     }
                 }
             }
+            await context.SaveChangesAsync(); // Save skills
 
-            await context.Taxonomies.AddRangeAsync(taxonomies);
-            await context.SaveChangesAsync();
-
-            Console.WriteLine($"✅ Seeded {taxonomies.Count} skills in hierarchical structure!");
-            var rootCount = rootTechnologies.Length;
-            var categoryCount = categories.SelectMany(c => c.Value).Count();
-            var subcategoryCount = subcategories.SelectMany(c => c.Value).Count();
-            var skillCount = skills.SelectMany(s => s.Value).Count();
-            
-            Console.WriteLine($"  - Root Technologies: {rootCount}");
-            Console.WriteLine($"  - Categories: {categoryCount}");
-            Console.WriteLine($"  - Subcategories: {subcategoryCount}");
-            Console.WriteLine($"  - Skills: {skillCount}");
+            // =========================
+            // 🔹 Summary
+            // =========================
+            var totalCount = context.Taxonomies.Count();
+            Console.WriteLine($"✅ Seeded {totalCount} taxonomies in hierarchical structure!");
+            Console.WriteLine($"  - Root Technologies (Level 0): {rootTechnologies.Length}");
+            Console.WriteLine($"  - Categories (Level 1): {categories.SelectMany(c => c.Value).Count()}");
+            Console.WriteLine($"  - Subcategories (Level 2): {subcategories.SelectMany(c => c.Value).Count()}");
+            Console.WriteLine($"  - Skills (Level 3): {skillCount}");
         }
     }
 }
