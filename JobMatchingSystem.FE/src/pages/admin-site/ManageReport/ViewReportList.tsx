@@ -452,7 +452,7 @@ export default function ViewReportList() {
                 onClick={() => handleApprove(report.id)}
                 variant="outline"
                 size="sm"
-                className="text-green-600 hover:text-green-700"
+                className="text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600"
                 title="Chấp nhận"
               >
                 <Check className="h-4 w-4" />

@@ -348,7 +348,7 @@ export function ManageCompanyPage() {
                       }}
                       variant="outline"
                       size="sm"
-                      className="text-green-600 hover:text-white hover:bg-green-600"
+                      className="text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600"
                       title="Duyệt công ty"
                     >
                       <CheckCircle className="h-4 w-4" />
@@ -360,7 +360,7 @@ export function ManageCompanyPage() {
                       }}
                       variant="outline"
                       size="sm"
-                      className="text-red-600 hover:text-white hover:bg-red-600"
+                      className="text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600"
                       title="Từ chối công ty"
                     >
                       <XCircle className="h-4 w-4" />
@@ -375,7 +375,7 @@ export function ManageCompanyPage() {
                     }}
                     variant="outline"
                     size="sm"
-                    className="text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600"
                     title="Xóa công ty"
                   >
                     <Trash2 className="h-4 w-4" />

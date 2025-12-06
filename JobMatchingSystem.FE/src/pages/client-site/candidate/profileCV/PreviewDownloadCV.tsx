@@ -155,8 +155,8 @@ export default function PreviewDownloadCV() {
   // Handle Print / Download
   const handleDownloadPdf = () => {
       if (iframeRef.current && iframeRef.current.contentWindow) {
-          // Trigger browser print dialog - users can "Save as PDF"
           iframeRef.current.contentWindow.print();
+          console.log("Printed");
       } else {
           toast.error("Chưa sẵn sàng để in. Vui lòng đợi nội dung tải xong.");
       }

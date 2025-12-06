@@ -302,7 +302,7 @@ export default function ViewServicePlanList() {
               onClick={() => handleDeleteServicePlan(servicePlan)}
               variant="outline"
               size="sm"
-              className="text-red-600 hover:text-red-700"
+              className="text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600"
               title="Xóa gói dịch vụ"
               disabled={isDeleting}
             >

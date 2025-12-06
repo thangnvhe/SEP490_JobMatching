@@ -278,7 +278,7 @@ const RecruitmentProcessManagement = () => {
                     onClick={() => handleApprove(candidateJob)}
                     variant="outline"
                     size="sm"
-                    className="text-green-600 hover:text-green-700"
+                    className="text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600"
                     title="Duyệt CV"
                   >
                     <CheckCircle className="h-4 w-4" />
@@ -287,7 +287,7 @@ const RecruitmentProcessManagement = () => {
                     onClick={() => handleReject(candidateJob)}
                     variant="outline"
                     size="sm"
-                    className="text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600"
                     title="Từ chối CV"
                   >
                     <XCircle className="h-4 w-4" />

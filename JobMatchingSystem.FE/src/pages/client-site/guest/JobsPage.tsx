@@ -67,9 +67,7 @@ export default function JobsPage() {
   const getAllWithPagination = useCallback(async (params: PaginationParamsInput) => {
     try {
       setLoading(true);
-      console.log("🔍 API Params:", params); // Debug log
       const response = await JobServices.getAllWithPagination(params);
-      console.log("📊 API Response:", response.result); // Debug log
       setJobs(response.result.items);
       setPaginationInfo(response.result.pageInfo);
     } catch (err: any) {
@@ -92,39 +90,25 @@ export default function JobsPage() {
     getProvinces();
   }, [getProvinces]);
 
-  // Fetch companies for displayed jobs
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      if (jobs.length === 0) return;
-
-      // Filter unique company IDs that are not yet in the state
-      const uniqueCompanyIds = [...new Set(jobs.map(job => job.companyId))];
-      const idsToFetch = uniqueCompanyIds.filter(id => !companies[id]);
-
-      if (idsToFetch.length === 0) return;
-
-      try {
-        // Fetch all missing companies in parallel
-        const responses = await Promise.all(
-          idsToFetch.map(id => CompanyServices.getCompanyById(id.toString()).catch(() => null))
-        );
-
-        setCompanies(prev => {
-          const newCompanies = { ...prev };
-          responses.forEach((res) => {
-            if (res && res.result) {
-              newCompanies[res.result.id] = res.result;
-            }
-          });
-          return newCompanies;
+  const getAllCompanies = useCallback(async () => {
+    try {
+      const response = await CompanyServices.getAll();
+      // Chuyển đổi array companies thành Record<number, Company> để mapping với companyId
+      const companiesMap: Record<number, Company> = {};
+      if (response.result && Array.isArray(response.result)) {
+        response.result.forEach((company) => {
+          companiesMap[company.id] = company;
         });
-      } catch (error) {
-        console.error("Error fetching companies info", error);
       }
-    };
+      setCompanies(companiesMap);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Lỗi khi tải dữ liệu công ty");
+    }
+  }, []);
 
-    fetchCompanies();
-  }, [jobs]);
+  useEffect(() => {
+    getAllCompanies();
+  }, [getAllCompanies]);
 
   useEffect(() => {
     const params = {

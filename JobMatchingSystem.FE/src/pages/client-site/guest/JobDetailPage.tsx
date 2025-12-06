@@ -161,7 +161,7 @@ export default function JobDetailPage() {
       {/* Top Breadcrumb Area */}
       <div className="bg-slate-50 border-b">
         <div className="container mx-auto px-4 py-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/jobs')} className="text-gray-500 hover:bg-transparent hover:text-emerald-600 pl-0">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/jobs')} className="text-emerald-600 hover:bg-emerald-600 hover:text-white pl-0">
             <ArrowLeft className="w-4 h-4 mr-1" /> Quay lại tìm việc
           </Button>
         </div>
@@ -216,7 +216,7 @@ export default function JobDetailPage() {
 
                 <Button
                   variant="outline"
-                  className="flex-1 border-red-200 bg-white text-red-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700 text-base font-semibold transition-all shadow-sm h-10"
+                  className="flex-1 border-red-200 bg-white text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 text-base font-semibold transition-all shadow-sm h-10"
                   onClick={() => setReportDialogOpen(true)}
                 >
                   <Flag className="mr-1.5 h-4 w-4" /> Báo cáo
@@ -398,7 +398,7 @@ export default function JobDetailPage() {
                     )}
                   </div>
 
-                  <Button variant="outline" className="w-full mt-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800" onClick={() => window.open(company.website, '_blank')}>
+                  <Button variant="outline" className="w-full mt-2 border-emerald-200 text-emerald-600 hover:bg-emerald-600 hover:text-white hover:border-emerald-600" onClick={() => window.open(company.website, '_blank')}>
                     Xem trang công ty <ChevronRight className="ml-1 h-4 w-4" />
                   </Button>
                 </div>

@@ -24,6 +24,7 @@ import ViewUserList from './pages/admin-site/ManageUser/ViewUserList';
 import ViewPositionList from './pages/admin-site/ManagePosition/ViewPositionList';
 import ViewTemplateCvList from './pages/admin-site/ManageTemplateCV/ViewTemplateCvList';
 import ViewServicePlanList from './pages/admin-site/ManageServicePlan/ViewServicePlanList';
+import ViewTaxonomyList from './pages/admin-site/ManageTaxonomy/ViewTaxonomyList';
 import ResetPasswordPage from './pages/client-site/auth/ResetPasswordPage';
 import CompaniesPage from './pages/client-site/guest/CompaniesPage';
 import CompanyDetailPage from './pages/client-site/guest/CompanyDetailPage';
@@ -74,6 +75,7 @@ const AppRouter: React.FC = () => {
         <Route path="manage-template-cv" element={<ViewTemplateCvList />} />
         <Route path="manage-service-plan" element={<ViewServicePlanList />} />
         <Route path="manage-position" element={<ViewPositionList />} />
+        <Route path="manage-taxonomies" element={<ViewTaxonomyList />} />
       </Route>
 
       {/* Recruiter routes - Protected */}
