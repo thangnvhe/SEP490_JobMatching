@@ -41,9 +41,9 @@ namespace JobMatchingSystem.API.Controllers
         /// Get paginated taxonomies with search and sorting
         /// </summary>
         [HttpGet("paged")]
-        public async Task<IActionResult> GetAllPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string sortBy = "", [FromQuery] bool isDescending = false, [FromQuery] string search = "")
+        public async Task<IActionResult> GetAllPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string sortBy = "", [FromQuery] bool isDescending = false, [FromQuery] string search = "", [FromQuery] bool? hasParent = null)
         {
-            var pagedResult = await _taxonomyService.GetAllPagedAsync(page, pageSize, sortBy, isDescending, search);
+            var pagedResult = await _taxonomyService.GetAllPagedAsync(page, pageSize, sortBy, isDescending, search, hasParent);
 
             return Ok(APIResponse<PagedResult<TaxonomyResponse>>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)

@@ -8,7 +8,7 @@ namespace JobMatchingSystem.API.Services.Interfaces
     public interface ITaxonomyService
     {
         Task<IEnumerable<TaxonomyResponse>> GetAllTaxonomiesAsync();
-        Task<PagedResult<TaxonomyResponse>> GetAllPagedAsync(int page, int pageSize, string sortBy, bool isDescending, string search);
+        Task<PagedResult<TaxonomyResponse>> GetAllPagedAsync(int page, int pageSize, string sortBy, bool isDescending, string search, bool? hasParent = null);
         Task<TaxonomyResponse?> GetByIdAsync(int id);
         Task<IEnumerable<TaxonomyResponse>> GetChildrenByParentIdAsync(int parentId);
         

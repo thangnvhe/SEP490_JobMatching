@@ -28,7 +28,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             }).ToList();
         }
 
-        public Task<PagedResult<TaxonomyResponse>> GetAllPagedAsync(int page, int pageSize, string sortBy, bool isDescending, string search)
+        public Task<PagedResult<TaxonomyResponse>> GetAllPagedAsync(int page, int pageSize, string sortBy, bool isDescending, string search, bool? hasParent = null)
         {
             try
             {
@@ -38,6 +38,14 @@ namespace JobMatchingSystem.API.Services.Implementations
                 if (!string.IsNullOrEmpty(search))
                 {
                     query = query.Where(t => t.Name.ToLower().Contains(search.ToLower()));
+                }
+
+                // Apply parent filter
+                if (hasParent.HasValue)
+                {
+                    query = hasParent.Value 
+                        ? query.Where(t => t.ParentId != null)  // Has parent
+                        : query.Where(t => t.ParentId == null); // No parent (root)
                 }
 
                 // Apply sorting
