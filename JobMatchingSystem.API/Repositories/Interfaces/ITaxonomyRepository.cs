@@ -5,6 +5,7 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
     public interface ITaxonomyRepository
     {
         Task<List<Taxonomy>> GetAllAsync();
+        IQueryable<Taxonomy> GetQueryable();
         Task<List<Taxonomy>> GetAllWithChildrenAsync();
         Task<List<Taxonomy>> GetAllWithParentAsync();
         Task<List<Taxonomy>> GetChildrenByParentIdAsync(int parentId);
