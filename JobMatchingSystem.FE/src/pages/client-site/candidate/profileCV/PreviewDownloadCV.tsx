@@ -23,6 +23,7 @@ import { CVExperienceServices } from "@/services/cv-experience.service";
 import { CVProjectServices } from "@/services/cv-project.service";
 import { CVCertificateServices } from "@/services/cv-certificate.service";
 import { CVAchievementServices } from "@/services/cv-achievement.service";
+import { CVProfileService } from "@/services/cv-profile.service";
 
 // Models
 import { TemplateCv } from "@/models/template-cv";
@@ -67,13 +68,14 @@ export default function PreviewDownloadCV() {
       const fetchUserData = async () => {
           try {
               setIsDataLoading(true);
-              const [userRes, eduRes, expRes, projRes, certRes, achRes] = await Promise.all([
+              const [userRes, eduRes, expRes, projRes, certRes, achRes, profileRes] = await Promise.all([
                   UserServices.getUserProfile(),
                   CVEducationServices.getMyEducations(),
                   CVExperienceServices.getMyExperiences(),
                   CVProjectServices.getMyProjects(),
                   CVCertificateServices.getMyCertificates(),
                   CVAchievementServices.getMyAchievements(),
+                  CVProfileService.getMyProfile(),
               ]);
 
               setCvData({
@@ -82,7 +84,8 @@ export default function PreviewDownloadCV() {
                   experiences: expRes.result,
                   projects: projRes.result,
                   certificates: certRes.result,
-                  achievements: achRes.result
+                  achievements: achRes.result,
+                  cvProfile: profileRes.result,
               });
           } catch (error) {
               console.error("Failed to fetch user CV data:", error);
@@ -348,3 +351,4 @@ export default function PreviewDownloadCV() {
     </div>
   );
 }
+
