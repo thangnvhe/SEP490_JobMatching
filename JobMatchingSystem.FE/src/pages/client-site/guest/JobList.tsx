@@ -23,7 +23,6 @@ import { IconBookmark } from "@tabler/icons-react";
 import { Job } from "@/models/job";
 import { Company } from "@/models/company";
 import { Skeleton } from "@/components/ui/skeleton";
-import { API_BASE_URL } from "../../../../env";
 import { cn } from "@/lib/utils";
 
 interface JobListProps {
@@ -48,14 +47,6 @@ const JobCard = ({ job, company, onJobDetails, onSaveJob }: {
     onJobDetails: (jobId: number) => void;
     onSaveJob: (jobId: number) => void;
 }) => {
-
-    const getLogoUrl = (logoPath?: string) => {
-        if (!logoPath) return "https://placehold.co/100x100?text=Logo";
-        if (logoPath.startsWith("http")) return logoPath;
-        const baseUrl = API_BASE_URL.replace(/\/api\/?$/, '/images');
-        const path = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
-        return `${baseUrl}${path}`;
-    };
 
     const formatSalary = () => {
         const toMillions = (value?: number | null) => {
@@ -103,21 +94,36 @@ const JobCard = ({ job, company, onJobDetails, onSaveJob }: {
     };
 
 
+    const isHighlight = job.isHighlight;
+
     return (
         <Card
-            className="group relative p-5 hover:shadow-lg hover:shadow-emerald-500/10 hover:border-emerald-200 transition-all duration-300 cursor-pointer bg-white border border-gray-100 overflow-hidden"
+            className={cn(
+                "group relative p-5 hover:shadow-lg transition-all duration-300 cursor-pointer border overflow-hidden",
+                isHighlight 
+                    ? "bg-amber-50/50 border-amber-200 hover:shadow-amber-500/10 hover:border-amber-300" 
+                    : "bg-white border-gray-100 hover:shadow-emerald-500/10 hover:border-emerald-200"
+            )}
             onClick={() => onJobDetails(job.jobId)}
         >
             {/* Hover indicator line */}
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top" />
+            <div className={cn(
+                "absolute left-0 top-0 bottom-0 w-1 scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top",
+                isHighlight ? "bg-amber-400" : "bg-emerald-500"
+            )} />
 
             <div className="flex gap-5 items-start">
                 {/* Company Logo */}
                 <div className="shrink-0">
-                    <div className="w-20 h-20 border border-gray-100 rounded-xl flex items-center justify-center bg-white shadow-xs overflow-hidden group-hover:border-emerald-100 transition-colors">
+                    <div className={cn(
+                        "w-20 h-20 border rounded-xl flex items-center justify-center bg-white shadow-xs overflow-hidden transition-colors",
+                        isHighlight 
+                            ? "border-amber-100 group-hover:border-amber-200" 
+                            : "border-gray-100 group-hover:border-emerald-100"
+                    )}>
                         <img
-                            src={getLogoUrl(company?.logo)}
-                            alt={`${company?.name || 'Company'} logo`}
+                            src={company?.logo}
+                            alt={`${company?.name}`}
                             className="w-full h-full object-contain "
                             onError={(e) => {
                                 (e.target as HTMLImageElement).src = "https://placehold.co/100x100?text=Logo";
@@ -130,7 +136,10 @@ const JobCard = ({ job, company, onJobDetails, onSaveJob }: {
                 <div className="flex-1 min-w-0 flex flex-col h-full">
                     <div className="flex justify-between items-start gap-2">
                         <div className="space-y-1">
-                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-600 transition-colors line-clamp-2 leading-tight">
+                            <h3 className={cn(
+                                "text-lg font-bold text-gray-900 transition-colors line-clamp-2 leading-tight",
+                                isHighlight ? "group-hover:text-amber-700" : "group-hover:text-emerald-600"
+                            )}>
                                 {job.title}
                             </h3>
                             <div className="flex items-center gap-2 text-gray-500 text-sm font-medium">
@@ -140,7 +149,12 @@ const JobCard = ({ job, company, onJobDetails, onSaveJob }: {
                         </div>
 
                         <div className="flex flex-col items-end gap-2">
-                            <span className="text-emerald-600 font-bold text-base whitespace-nowrap bg-emerald-50 px-3 py-1 rounded-full">
+                            <span className={cn(
+                                "font-bold text-base whitespace-nowrap px-3 py-1 rounded-full",
+                                isHighlight 
+                                    ? "text-amber-700 bg-white shadow-sm border border-amber-100" 
+                                    : "text-emerald-600 bg-emerald-50"
+                            )}>
                                 {formatSalary() === "Thoả thuận" ? (
                                     <span className="flex items-center gap-1">
                                         <DollarSign className="w-3.5 h-3.5" /> Thoả thuận
@@ -153,21 +167,36 @@ const JobCard = ({ job, company, onJobDetails, onSaveJob }: {
                     </div>
 
                     <div className="flex flex-wrap gap-1 mt-2">
-                        <Badge variant="outline" className="font-normal text-gray-600 border-gray-200 bg-gray-50/50 group-hover:bg-white group-hover:border-emerald-100 transition-colors">
+                        <Badge variant="outline" className={cn(
+                            "font-normal text-gray-600 transition-colors",
+                            isHighlight
+                                ? "bg-white border-amber-100 group-hover:border-amber-200"
+                                : "bg-gray-50/50 border-gray-200 group-hover:bg-white group-hover:border-emerald-100"
+                        )}>
                             <MapPin className="w-3 h-3 mr-1.5 text-gray-400" />
                             {formatLocation(job.location || '') || 'Toàn quốc'}
                         </Badge>
-                        <Badge variant="outline" className="font-normal text-gray-600 border-gray-200 bg-gray-50/50 group-hover:bg-white group-hover:border-emerald-100 transition-colors">
+                        <Badge variant="outline" className={cn(
+                            "font-normal text-gray-600 transition-colors",
+                            isHighlight
+                                ? "bg-white border-amber-100 group-hover:border-amber-200"
+                                : "bg-gray-50/50 border-gray-200 group-hover:bg-white group-hover:border-emerald-100"
+                        )}>
                             <Clock className="w-3 h-3 mr-1.5 text-gray-400" />
                             {job.experienceYear ? `${job.experienceYear} năm` : 'Không yêu cầu'}
                         </Badge>
-                        <Badge variant="outline" className="font-normal text-gray-600 border-gray-200 bg-gray-50/50 group-hover:bg-white group-hover:border-emerald-100 transition-colors">
+                        <Badge variant="outline" className={cn(
+                            "font-normal text-gray-600 transition-colors",
+                            isHighlight
+                                ? "bg-white border-amber-100 group-hover:border-amber-200"
+                                : "bg-gray-50/50 border-gray-200 group-hover:bg-white group-hover:border-emerald-100"
+                        )}>
                             <Briefcase className="w-3 h-3 mr-1.5 text-gray-400" />
                             {job.jobType || 'Full-time'}
                         </Badge>
                     </div>
 
-                    <div className="mt-auto pt-2 flex justify-between items-end border-t border-gray-50 border-dashed">
+                    <div className="mt-auto pt-2 flex justify-between items-end ">
                         <div className="flex items-center gap-2 text-xs text-gray-400">
                             <span>Đăng {formatDate(job.createdAt)}</span>
                             <span>•</span>
@@ -180,7 +209,12 @@ const JobCard = ({ job, company, onJobDetails, onSaveJob }: {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-9 w-9 rounded-full text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50"
+                                className={cn(
+                                    "h-9 w-9 rounded-full text-muted-foreground",
+                                    isHighlight 
+                                        ? "hover:text-amber-600 hover:bg-amber-100" 
+                                        : "hover:text-emerald-600 hover:bg-emerald-50"
+                                )}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onSaveJob(job.jobId);
@@ -192,7 +226,12 @@ const JobCard = ({ job, company, onJobDetails, onSaveJob }: {
                             <Button
                                 size="sm"
                                 variant="ghost"
-                                className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-medium group/btn"
+                                className={cn(
+                                    "font-medium group/btn",
+                                    isHighlight
+                                        ? "text-amber-700 hover:text-amber-800 hover:bg-amber-100"
+                                        : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                )}
                             >
                                 Chi tiết <ChevronRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
                             </Button>
@@ -244,16 +283,7 @@ const JobList: React.FC<JobListProps> = ({
 }) => {
     // Safety filter để chỉ hiển thị jobs có status = "Opened" 
     const openedJobs = jobs.filter(job => job.status === 'Opened');
-    
-    // Debug logs
-    console.log("📊 Total jobs from API:", total);
-    console.log("📋 Jobs received in current page:", jobs.length);
-    console.log("📋 Jobs with status 'Opened' in current page:", openedJobs.length);
-    console.log("📋 Jobs status breakdown:", jobs.reduce((acc, job) => {
-        acc[job.status] = (acc[job.status] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>));
-    
+
     const generatePageNumbers = () => {
         const pages: (number | string)[] = [];
         const maxVisible = 5;

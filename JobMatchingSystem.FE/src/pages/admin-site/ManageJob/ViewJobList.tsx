@@ -423,7 +423,7 @@ export default function ViewJobList() {
                     onClick={() => handleApprove(job.jobId)}
                     variant="outline"
                     size="sm"
-                    className="text-green-600 hover:text-green-700"
+                    className="text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600"
                     title="Duyệt công việc"
                   >
                     <CheckCircle className="h-4 w-4" />
@@ -436,7 +436,7 @@ export default function ViewJobList() {
                     onClick={() => handleSoftDelete(job)}
                     variant="outline"
                     size="sm"
-                    className="text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600"
                     title="Xóa mềm"
                   >
                     <Trash2 className="h-4 w-4" />

@@ -133,7 +133,7 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({
                   Vui lòng chọn CV phù hợp nhất để nhà tuyển dụng ấn tượng ngay từ vòng đầu.
                 </p>
               </div>
-              <Button variant="secondary" onClick={handleUploadClick} className="bg-white text-emerald-700 hover:bg-emerald-100">
+              <Button variant="secondary" onClick={handleUploadClick} className="bg-white text-emerald-600 hover:bg-emerald-600 hover:text-white">
                 <Upload className="h-4 w-4 mr-1.5" />
                 Upload CV
               </Button>

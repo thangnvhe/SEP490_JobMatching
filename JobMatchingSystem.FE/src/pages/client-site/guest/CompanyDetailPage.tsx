@@ -491,7 +491,7 @@ export default function CompanyDetailPage() {
                     
                     {/* Share Button Section - Optional */}
                     <CardFooter className="bg-gray-50/30 p-4 border-t">
-                         <Button variant="outline" className="w-full gap-2 text-gray-600 hover:text-emerald-600 hover:border-emerald-200" onClick={() => {
+                         <Button variant="outline" className="w-full gap-2 text-emerald-600 hover:bg-emerald-600 hover:text-white hover:border-emerald-600" onClick={() => {
                              navigator.clipboard.writeText(window.location.href);
                              // Use a toast here if available
                          }}>

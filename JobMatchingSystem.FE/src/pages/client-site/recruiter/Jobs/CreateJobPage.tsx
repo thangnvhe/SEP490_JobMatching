@@ -695,7 +695,7 @@ export default function CreateJobPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => removeJobStage(stage.stageNumber)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-500 hover:bg-red-500 hover:text-white"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

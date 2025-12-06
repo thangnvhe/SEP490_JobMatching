@@ -309,7 +309,7 @@ export default function ViewUserList() {
                 onClick={() => handleDelete(user)}
                 variant="outline"
                 size="sm"
-                className="text-orange-600 hover:text-orange-700"
+                className="text-orange-600 hover:bg-orange-600 hover:text-white hover:border-orange-600"
                 title="Vô hiệu hóa người dùng"
               >
                 <Trash2 className="h-4 w-4" />

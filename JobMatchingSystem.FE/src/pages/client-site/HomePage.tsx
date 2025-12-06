@@ -186,7 +186,7 @@ const HomePage = () => {
                 Tìm vị trí phù hợp dựa trên chuyên môn của bạn
               </p>
             </div>
-            <Button variant="outline" className="hidden md:flex hover:text-emerald-600 hover:border-emerald-200">Xem Tất Cả Danh Mục</Button>
+            <Button variant="outline" className="hidden md:flex text-emerald-600 hover:bg-emerald-600 hover:text-white hover:border-emerald-600">Xem Tất Cả Danh Mục</Button>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">

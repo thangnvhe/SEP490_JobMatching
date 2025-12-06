@@ -267,7 +267,7 @@ export default function ViewTemplateCvList() {
               onClick={() => handleDelete(template)}
               variant="outline"
               size="sm"
-              className="text-red-600 hover:text-red-700"
+              className="text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600"
               title="Xóa template"
             >
               <Trash2 className="h-4 w-4" />
