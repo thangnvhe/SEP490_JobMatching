@@ -1,5 +1,6 @@
 ﻿using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Services.Interfaces;
@@ -22,14 +23,14 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         /// <summary>
-        /// Get all taxonomies as flat list
+        /// Get all taxonomies
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             var taxonomies = await _taxonomyService.GetAllTaxonomiesAsync();
 
-            return Ok(APIResponse<object>.Builder()
+            return Ok(APIResponse<IEnumerable<TaxonomyResponse>>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
                 .WithResult(taxonomies)
@@ -44,7 +45,7 @@ namespace JobMatchingSystem.API.Controllers
         {
             var pagedResult = await _taxonomyService.GetAllPagedAsync(page, pageSize, sortBy, isDescending, search);
 
-            return Ok(APIResponse<PagedResult<object>>.Builder()
+            return Ok(APIResponse<PagedResult<TaxonomyResponse>>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
                 .WithResult(pagedResult)
@@ -52,32 +53,26 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         /// <summary>
-        /// Get taxonomies as hierarchical tree structure
+        /// Get specific taxonomy by ID
         /// </summary>
-        [HttpGet("tree")]
-        public async Task<IActionResult> GetTaxonomyTree()
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            var taxonomyTree = await _taxonomyService.GetTaxonomyTreeAsync();
+            var taxonomy = await _taxonomyService.GetByIdAsync(id);
 
-            return Ok(APIResponse<object>.Builder()
+            if (taxonomy == null)
+            {
+                return NotFound(APIResponse<string>.Builder()
+                    .WithStatusCode(HttpStatusCode.NotFound)
+                    .WithSuccess(false)
+                    .WithResult("Taxonomy not found")
+                    .Build());
+            }
+
+            return Ok(APIResponse<TaxonomyResponse>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
-                .WithResult(taxonomyTree)
-                .Build());
-        }
-
-        /// <summary>
-        /// Get taxonomies as flat list with parent information
-        /// </summary>
-        [HttpGet("flat")]
-        public async Task<IActionResult> GetTaxonomyFlatList()
-        {
-            var taxonomies = await _taxonomyService.GetTaxonomyFlatListAsync();
-
-            return Ok(APIResponse<object>.Builder()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithSuccess(true)
-                .WithResult(taxonomies)
+                .WithResult(taxonomy)
                 .Build());
         }
 
@@ -89,49 +84,10 @@ namespace JobMatchingSystem.API.Controllers
         {
             var children = await _taxonomyService.GetChildrenByParentIdAsync(parentId);
 
-            return Ok(APIResponse<object>.Builder()
+            return Ok(APIResponse<IEnumerable<TaxonomyResponse>>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
                 .WithResult(children)
-                .Build());
-        }
-
-        /// <summary>
-        /// Get specific taxonomy by ID
-        /// </summary>
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetTaxonomyById(int id)
-        {
-            var taxonomy = await _taxonomyService.GetTaxonomyByIdAsync(id);
-
-            if (taxonomy == null)
-            {
-                return NotFound(APIResponse<string>.Builder()
-                    .WithStatusCode(HttpStatusCode.NotFound)
-                    .WithSuccess(false)
-                    .WithResult("Taxonomy not found")
-                    .Build());
-            }
-
-            return Ok(APIResponse<object>.Builder()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithSuccess(true)
-                .WithResult(taxonomy)
-                .Build());
-        }
-
-        /// <summary>
-        /// Get root technologies
-        /// </summary>
-        [HttpGet("roots")]
-        public async Task<IActionResult> GetRootTaxonomies()
-        {
-            var roots = await _taxonomyService.GetRootTaxonomiesAsync();
-
-            return Ok(APIResponse<object>.Builder()
-                .WithStatusCode(HttpStatusCode.OK)
-                .WithSuccess(true)
-                .WithResult(roots)
                 .Build());
         }
 
@@ -146,14 +102,14 @@ namespace JobMatchingSystem.API.Controllers
             {
                 var taxonomy = await _taxonomyService.CreateTaxonomyAsync(request);
                 
-                var response = new
+                var response = new TaxonomyResponse
                 {
                     Id = taxonomy.Id,
                     Name = taxonomy.Name,
                     ParentId = taxonomy.ParentId
                 };
 
-                return Ok(APIResponse<object>.Builder()
+                return Ok(APIResponse<TaxonomyResponse>.Builder()
                     .WithStatusCode(HttpStatusCode.Created)
                     .WithSuccess(true)
                     .WithResult(response)
@@ -180,14 +136,14 @@ namespace JobMatchingSystem.API.Controllers
             {
                 var taxonomy = await _taxonomyService.UpdateTaxonomyAsync(id, request);
                 
-                var response = new
+                var response = new TaxonomyResponse
                 {
                     Id = taxonomy.Id,
                     Name = taxonomy.Name,
                     ParentId = taxonomy.ParentId
                 };
 
-                return Ok(APIResponse<object>.Builder()
+                return Ok(APIResponse<TaxonomyResponse>.Builder()
                     .WithStatusCode(HttpStatusCode.OK)
                     .WithSuccess(true)
                     .WithResult(response)
