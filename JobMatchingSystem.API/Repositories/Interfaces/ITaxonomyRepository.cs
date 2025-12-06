@@ -11,6 +11,7 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
         Task<List<Taxonomy>> GetChildrenByParentIdAsync(int parentId);
         Task<Taxonomy?> GetByIdAsync(int id);
         Task<List<Taxonomy>> GetRootTaxonomiesAsync();
+        Task<bool> ExistsByNameAndParentAsync(string name, int? parentId, int? excludeId = null);
         
         // CRUD operations
         Task<Taxonomy> CreateAsync(Taxonomy taxonomy);
