@@ -7,13 +7,10 @@ namespace JobMatchingSystem.API.Services.Interfaces
 {
     public interface ITaxonomyService
     {
-        Task<List<TaxonomyTreeResponse>> GetAllTaxonomiesAsync();
-        Task<PagedResult<object>> GetAllPagedAsync(int page, int pageSize, string sortBy, bool isDescending, string search);
-        Task<List<TaxonomyTreeResponse>> GetTaxonomyTreeAsync();
-        Task<List<TaxonomyFlatResponse>> GetTaxonomyFlatListAsync();
-        Task<List<TaxonomyTreeResponse>> GetChildrenByParentIdAsync(int parentId);
-        Task<TaxonomyTreeResponse?> GetTaxonomyByIdAsync(int id);
-        Task<List<TaxonomyTreeResponse>> GetRootTaxonomiesAsync();
+        Task<IEnumerable<TaxonomyResponse>> GetAllTaxonomiesAsync();
+        Task<PagedResult<TaxonomyResponse>> GetAllPagedAsync(int page, int pageSize, string sortBy, bool isDescending, string search);
+        Task<TaxonomyResponse?> GetByIdAsync(int id);
+        Task<IEnumerable<TaxonomyResponse>> GetChildrenByParentIdAsync(int parentId);
         
         // CRUD operations for Taxonomy management
         Task<Taxonomy> CreateTaxonomyAsync(CreateTaxonomyRequest request);

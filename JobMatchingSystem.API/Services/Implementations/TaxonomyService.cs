@@ -17,13 +17,18 @@ namespace JobMatchingSystem.API.Services.Implementations
             _taxonomyRepository = taxonomyRepository;
         }
 
-        public async Task<List<TaxonomyTreeResponse>> GetAllTaxonomiesAsync()
+        public async Task<IEnumerable<TaxonomyResponse>> GetAllTaxonomiesAsync()
         {
             var taxonomies = await _taxonomyRepository.GetAllAsync();
-            return taxonomies.Select(MapToTaxonomyResponse).ToList();
+            return taxonomies.Select(t => new TaxonomyResponse
+            {
+                Id = t.Id,
+                Name = t.Name,
+                ParentId = t.ParentId
+            }).ToList();
         }
 
-        public Task<PagedResult<object>> GetAllPagedAsync(int page, int pageSize, string sortBy, bool isDescending, string search)
+        public Task<PagedResult<TaxonomyResponse>> GetAllPagedAsync(int page, int pageSize, string sortBy, bool isDescending, string search)
         {
             try
             {
@@ -63,64 +68,55 @@ namespace JobMatchingSystem.API.Services.Implementations
                 var taxonomies = query
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
-                    .Select(t => new TaxonomyFlatResponse
+                    .Select(t => new TaxonomyResponse
                     {
                         Id = t.Id,
                         Name = t.Name,
-                        ParentId = t.ParentId,
-                        ParentName = t.ParentId.HasValue && t.Parent != null ? t.Parent.Name : null
+                        ParentId = t.ParentId
                     })
                     .ToList();
 
-                var items = taxonomies.Cast<object>().ToList();
-
-                return Task.FromResult(new PagedResult<object>
+                return Task.FromResult(new PagedResult<TaxonomyResponse>
                 {
-                    Items = items,
+                    Items = taxonomies,
                     pageInfo = new PageInfo(totalCount, page, pageSize, sortBy, isDescending)
                 });
             }
             catch (Exception)
             {
-                return Task.FromResult(new PagedResult<object>
+                return Task.FromResult(new PagedResult<TaxonomyResponse>
                 {
-                    Items = new List<object>(),
+                    Items = new List<TaxonomyResponse>(),
                     pageInfo = new PageInfo(0, page, pageSize, sortBy, isDescending)
                 });
             }
         }
 
-        public async Task<List<TaxonomyTreeResponse>> GetTaxonomyTreeAsync()
-        {
-            var allTaxonomies = await _taxonomyRepository.GetAllWithChildrenAsync();
-            var rootTaxonomies = allTaxonomies.Where(t => t.ParentId == null).ToList();
-            
-            return rootTaxonomies.Select(t => MapToTaxonomyTreeResponse(t, allTaxonomies)).ToList();
-        }
-
-        public async Task<List<TaxonomyFlatResponse>> GetTaxonomyFlatListAsync()
-        {
-            var taxonomies = await _taxonomyRepository.GetAllWithParentAsync();
-            return taxonomies.Select(MapToTaxonomyFlatResponse).ToList();
-        }
-
-        public async Task<List<TaxonomyTreeResponse>> GetChildrenByParentIdAsync(int parentId)
-        {
-            var children = await _taxonomyRepository.GetChildrenByParentIdAsync(parentId);
-            return children.Select(MapToTaxonomyResponse).ToList();
-        }
-
-        public async Task<TaxonomyTreeResponse?> GetTaxonomyByIdAsync(int id)
+        public async Task<TaxonomyResponse?> GetByIdAsync(int id)
         {
             var taxonomy = await _taxonomyRepository.GetByIdAsync(id);
-            return taxonomy != null ? MapToTaxonomyResponse(taxonomy) : null;
+            if (taxonomy == null) return null;
+
+            return new TaxonomyResponse
+            {
+                Id = taxonomy.Id,
+                Name = taxonomy.Name,
+                ParentId = taxonomy.ParentId
+            };
         }
 
-        public async Task<List<TaxonomyTreeResponse>> GetRootTaxonomiesAsync()
+        public async Task<IEnumerable<TaxonomyResponse>> GetChildrenByParentIdAsync(int parentId)
         {
-            return await _taxonomyRepository.GetRootTaxonomiesAsync().ContinueWith(t => 
-                t.Result.Select(MapToTaxonomyResponse).ToList());
+            var children = await _taxonomyRepository.GetChildrenByParentIdAsync(parentId);
+            return children.Select(t => new TaxonomyResponse
+            {
+                Id = t.Id,
+                Name = t.Name,
+                ParentId = t.ParentId
+            }).ToList();
         }
+
+
 
         public async Task<Taxonomy> CreateTaxonomyAsync(CreateTaxonomyRequest request)
         {
@@ -193,37 +189,6 @@ namespace JobMatchingSystem.API.Services.Implementations
             return false;
         }
 
-        private static TaxonomyTreeResponse MapToTaxonomyResponse(Taxonomy taxonomy)
-        {
-            return new TaxonomyTreeResponse
-            {
-                Id = taxonomy.Id,
-                Name = taxonomy.Name,
-                ParentId = taxonomy.ParentId,
-                Children = new List<TaxonomyTreeResponse>()
-            };
-        }
 
-        private static TaxonomyTreeResponse MapToTaxonomyTreeResponse(Taxonomy taxonomy, List<Taxonomy> allTaxonomies)
-        {
-            var response = MapToTaxonomyResponse(taxonomy);
-            
-            var children = allTaxonomies.Where(t => t.ParentId == taxonomy.Id).ToList();
-            response.Children = children.Select(c => MapToTaxonomyTreeResponse(c, allTaxonomies)).ToList();
-            
-            return response;
-        }
-
-        private static TaxonomyFlatResponse MapToTaxonomyFlatResponse(Taxonomy taxonomy)
-        {
-            return new TaxonomyFlatResponse
-            {
-                Id = taxonomy.Id,
-                Name = taxonomy.Name,
-                ParentId = taxonomy.ParentId,
-                ParentName = taxonomy.Parent?.Name,
-                HasChildren = taxonomy.Children?.Any() == true
-            };
-        }
     }
 }
