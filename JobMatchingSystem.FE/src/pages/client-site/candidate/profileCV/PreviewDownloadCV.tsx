@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import {
   ChevronLeft,
+  Download,
   CheckCircle2,
   Palette,
   Languages,
-  Loader2,
-  Download
+  Loader2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import axios from "axios";
-import html2pdf from "html2pdf.js";
 
 // Services
 import { TemplateCvServices } from "@/services/template-cv.service";
@@ -153,89 +152,13 @@ export default function PreviewDownloadCV() {
   }, [selectedTemplate, cvData, selectedColor, language]); // Re-run when template or data changes
 
 
-  // State for PDF download loading
-  const [isPdfDownloading, setIsPdfDownloading] = useState(false);
-
-  // Helper: Apply computed styles inline to element (converts oklch to rgb)
-  const applyComputedStyles = (element: HTMLElement) => {
-      const computed = window.getComputedStyle(element);
-      const colorProps = ['color', 'background-color', 'border-color', 'border-top-color', 
-                          'border-right-color', 'border-bottom-color', 'border-left-color',
-                          'outline-color', 'text-decoration-color', 'fill', 'stroke'];
-      
-      colorProps.forEach(prop => {
-          const value = computed.getPropertyValue(prop);
-          if (value && value !== 'rgba(0, 0, 0, 0)' && value !== 'transparent') {
-              element.style.setProperty(prop, value, 'important');
-          }
-      });
-
-      // Recursively apply to children
-      Array.from(element.children).forEach(child => {
-          if (child instanceof HTMLElement) {
-              applyComputedStyles(child);
-          }
-      });
-  };
-
-  // Handle Download PDF - Auto download without print dialog
-  const handleDownloadPdf = async () => {
-      if (!htmlContent) {
-          toast.error("Chưa sẵn sàng để tải. Vui lòng đợi nội dung tải xong.");
-          return;
-      }
-
-      setIsPdfDownloading(true);
-      
-      try {
-          // Create a hidden container to render HTML
-          const container = document.createElement('div');
-          container.innerHTML = htmlContent;
-          container.style.position = 'absolute';
-          container.style.left = '-9999px';
-          container.style.top = '0';
-          container.style.width = '210mm';
-          container.style.background = 'white';
-          document.body.appendChild(container);
-
-          // Wait for images and fonts to load
-          await new Promise(resolve => setTimeout(resolve, 500));
-
-          // Apply computed styles (browser converts oklch to rgb)
-          applyComputedStyles(container);
-
-          // PDF options for A4 format
-          const options = {
-              margin: 0,
-              filename: `CV_${cvData?.userProfile?.fullName?.replace(/\s+/g, '_') || 'Resume'}_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.pdf`,
-              image: { type: 'jpeg' as const, quality: 0.98 },
-              html2canvas: { 
-                  scale: 2,
-                  useCORS: true,
-                  logging: false,
-                  letterRendering: true,
-                  backgroundColor: '#ffffff'
-              },
-              jsPDF: { 
-                  unit: 'mm' as const, 
-                  format: 'a4' as const, 
-                  orientation: 'portrait' as const
-              },
-              pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-          };
-
-          // Generate and download PDF
-          await html2pdf().set(options).from(container).save();
-
-          // Clean up
-          document.body.removeChild(container);
-          
-          toast.success("Tải CV thành công!");
-      } catch (error) {
-          console.error("Failed to download PDF:", error);
-          toast.error("Đã xảy ra lỗi khi tải PDF. Vui lòng thử lại.");
-      } finally {
-          setIsPdfDownloading(false);
+  // Handle Print / Download
+  const handleDownloadPdf = () => {
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+          // Trigger browser print dialog - users can "Save as PDF"
+          iframeRef.current.contentWindow.print();
+      } else {
+          toast.error("Chưa sẵn sàng để in. Vui lòng đợi nội dung tải xong.");
       }
   };
 
@@ -417,14 +340,15 @@ export default function PreviewDownloadCV() {
 
           <Button 
             onClick={handleDownloadPdf}
-            disabled={!htmlContent || isHtmlGenerating || isPdfDownloading}
+            disabled={!htmlContent || isHtmlGenerating}
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 px-8 rounded-full shadow-lg shadow-emerald-100 hover:shadow-emerald-200 transition-all"
           >
-            {(isHtmlGenerating || isPdfDownloading) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            {isPdfDownloading ? "Đang tải..." : "Tải PDF"}
+            {isHtmlGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Download PDF
           </Button>
         </div>
       </div>
     </div>
   );
 }
+
