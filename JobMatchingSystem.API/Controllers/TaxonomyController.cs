@@ -106,7 +106,8 @@ namespace JobMatchingSystem.API.Controllers
                 {
                     Id = taxonomy.Id,
                     Name = taxonomy.Name,
-                    ChildrenIds = Array.Empty<int>()
+                    ChildrenIds = Array.Empty<int>(),
+                    HasChildren = false
                 };
 
                 return Ok(APIResponse<TaxonomyResponse>.Builder()
@@ -142,7 +143,8 @@ namespace JobMatchingSystem.API.Controllers
                 {
                     Id = taxonomy.Id,
                     Name = taxonomy.Name,
-                    ChildrenIds = Array.Empty<int>()
+                    ChildrenIds = Array.Empty<int>(),
+                    HasChildren = false
                 };
 
                 return Ok(APIResponse<TaxonomyResponse>.Builder()
