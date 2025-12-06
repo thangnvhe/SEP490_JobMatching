@@ -1,5 +1,6 @@
 ﻿using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -32,6 +33,21 @@ namespace JobMatchingSystem.API.Controllers
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
                 .WithResult(taxonomies)
+                .Build());
+        }
+
+        /// <summary>
+        /// Get paginated taxonomies with search and sorting
+        /// </summary>
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetAllPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string sortBy = "", [FromQuery] bool isDescending = false, [FromQuery] string search = "")
+        {
+            var pagedResult = await _taxonomyService.GetAllPagedAsync(page, pageSize, sortBy, isDescending, search);
+
+            return Ok(APIResponse<PagedResult<object>>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(pagedResult)
                 .Build());
         }
 

@@ -23,6 +23,73 @@ namespace JobMatchingSystem.API.Services.Implementations
             return taxonomies.Select(MapToTaxonomyResponse).ToList();
         }
 
+        public Task<PagedResult<object>> GetAllPagedAsync(int page, int pageSize, string sortBy, bool isDescending, string search)
+        {
+            try
+            {
+                var query = _taxonomyRepository.GetQueryable();
+
+                // Apply search filter
+                if (!string.IsNullOrEmpty(search))
+                {
+                    query = query.Where(t => t.Name.ToLower().Contains(search.ToLower()));
+                }
+
+                // Apply sorting
+                if (!string.IsNullOrEmpty(sortBy))
+                {
+                    switch (sortBy.ToLower())
+                    {
+                        case "name":
+                            query = isDescending ? query.OrderByDescending(t => t.Name) : query.OrderBy(t => t.Name);
+                            break;
+                        case "id":
+                            query = isDescending ? query.OrderByDescending(t => t.Id) : query.OrderBy(t => t.Id);
+                            break;
+                        case "parentid":
+                            query = isDescending ? query.OrderByDescending(t => t.ParentId) : query.OrderBy(t => t.ParentId);
+                            break;
+                        default:
+                            query = query.OrderBy(t => t.Name);
+                            break;
+                    }
+                }
+                else
+                {
+                    query = query.OrderBy(t => t.Name);
+                }
+
+                var totalCount = query.Count();
+                var taxonomies = query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(t => new TaxonomyFlatResponse
+                    {
+                        Id = t.Id,
+                        Name = t.Name,
+                        ParentId = t.ParentId,
+                        ParentName = t.ParentId.HasValue && t.Parent != null ? t.Parent.Name : null
+                    })
+                    .ToList();
+
+                var items = taxonomies.Cast<object>().ToList();
+
+                return Task.FromResult(new PagedResult<object>
+                {
+                    Items = items,
+                    pageInfo = new PageInfo(totalCount, page, pageSize, sortBy, isDescending)
+                });
+            }
+            catch (Exception)
+            {
+                return Task.FromResult(new PagedResult<object>
+                {
+                    Items = new List<object>(),
+                    pageInfo = new PageInfo(0, page, pageSize, sortBy, isDescending)
+                });
+            }
+        }
+
         public async Task<List<TaxonomyTreeResponse>> GetTaxonomyTreeAsync()
         {
             var allTaxonomies = await _taxonomyRepository.GetAllWithChildrenAsync();
