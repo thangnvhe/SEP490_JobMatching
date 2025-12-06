@@ -67,6 +67,19 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                 .ToListAsync();
         }
 
+        public async Task<bool> ExistsByNameAndParentAsync(string name, int? parentId, int? excludeId = null)
+        {
+            var query = _context.Taxonomies
+                .Where(t => t.Name.ToLower() == name.ToLower() && t.ParentId == parentId);
+            
+            if (excludeId.HasValue)
+            {
+                query = query.Where(t => t.Id != excludeId.Value);
+            }
+            
+            return await query.AnyAsync();
+        }
+
         public async Task<Taxonomy> CreateAsync(Taxonomy taxonomy)
         {
             await _context.Taxonomies.AddAsync(taxonomy);

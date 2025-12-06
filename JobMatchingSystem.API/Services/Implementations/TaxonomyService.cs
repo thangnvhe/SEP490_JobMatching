@@ -128,6 +128,11 @@ namespace JobMatchingSystem.API.Services.Implementations
                     throw new AppException(ErrorCode.NotFoundTaxonomy());
             }
 
+            // Check for duplicate name in the same level (same ParentId)
+            var isDuplicate = await _taxonomyRepository.ExistsByNameAndParentAsync(request.Name, request.ParentId);
+            if (isDuplicate)
+                throw new AppException(ErrorCode.AlreadyExists());
+
             var taxonomy = new Taxonomy
             {
                 Name = request.Name,
@@ -157,6 +162,11 @@ namespace JobMatchingSystem.API.Services.Implementations
                 if (await IsDescendant(id, request.ParentId.Value))
                     throw new AppException(ErrorCode.CantUpdate());
             }
+
+            // Check for duplicate name in the same level (same ParentId), excluding current taxonomy
+            var isDuplicate = await _taxonomyRepository.ExistsByNameAndParentAsync(request.Name, request.ParentId, id);
+            if (isDuplicate)
+                throw new AppException(ErrorCode.AlreadyExists());
 
             existingTaxonomy.Name = request.Name;
             existingTaxonomy.ParentId = request.ParentId;
