@@ -17,7 +17,7 @@ namespace JobMatchingSystem.API.Repositories.Implementations
         public async Task<List<Taxonomy>> GetAllAsync()
         {
             return await _context.Taxonomies
-                .OrderBy(t => t.Name)
+                .OrderBy(t => t.Id)
                 .ToListAsync();
         }
 
@@ -39,7 +39,7 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             return await _context.Taxonomies
                 .Include(t => t.Parent)
                 .Include(t => t.Children)
-                .OrderBy(t => t.Name)
+                .OrderBy(t => t.Id)
                 .ToListAsync();
         }
 
@@ -65,6 +65,19 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                 .Where(t => t.ParentId == null)
                 .OrderBy(t => t.Name)
                 .ToListAsync();
+        }
+
+        public async Task<bool> ExistsByNameAndParentAsync(string name, int? parentId, int? excludeId = null)
+        {
+            var query = _context.Taxonomies
+                .Where(t => t.Name.ToLower() == name.ToLower() && t.ParentId == parentId);
+            
+            if (excludeId.HasValue)
+            {
+                query = query.Where(t => t.Id != excludeId.Value);
+            }
+            
+            return await query.AnyAsync();
         }
 
         public async Task<Taxonomy> CreateAsync(Taxonomy taxonomy)

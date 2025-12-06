@@ -17,13 +17,19 @@ namespace JobMatchingSystem.API.Services.Implementations
             _taxonomyRepository = taxonomyRepository;
         }
 
-        public async Task<List<TaxonomyTreeResponse>> GetAllTaxonomiesAsync()
+        public async Task<IEnumerable<TaxonomyResponse>> GetAllTaxonomiesAsync()
         {
-            var taxonomies = await _taxonomyRepository.GetAllAsync();
-            return taxonomies.Select(MapToTaxonomyResponse).ToList();
+            var taxonomies = await _taxonomyRepository.GetAllWithChildrenAsync();
+            return taxonomies.Select(t => new TaxonomyResponse
+            {
+                Id = t.Id,
+                Name = t.Name,
+                ChildrenIds = t.Children.Select(c => c.Id).ToArray(),
+                HasChildren = t.Children.Any()
+            }).ToList();
         }
 
-        public Task<PagedResult<object>> GetAllPagedAsync(int page, int pageSize, string sortBy, bool isDescending, string search)
+        public Task<PagedResult<TaxonomyResponse>> GetAllPagedAsync(int page, int pageSize, string sortBy, bool isDescending, string search, bool? hasParent = null)
         {
             try
             {
@@ -33,6 +39,14 @@ namespace JobMatchingSystem.API.Services.Implementations
                 if (!string.IsNullOrEmpty(search))
                 {
                     query = query.Where(t => t.Name.ToLower().Contains(search.ToLower()));
+                }
+
+                // Apply parent filter
+                if (hasParent.HasValue)
+                {
+                    query = hasParent.Value 
+                        ? query.Where(t => t.ParentId != null)  // Has parent
+                        : query.Where(t => t.ParentId == null); // No parent (root)
                 }
 
                 // Apply sorting
@@ -63,64 +77,63 @@ namespace JobMatchingSystem.API.Services.Implementations
                 var taxonomies = query
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
-                    .Select(t => new TaxonomyFlatResponse
+                    .Select(t => new TaxonomyResponse
                     {
                         Id = t.Id,
                         Name = t.Name,
-                        ParentId = t.ParentId,
-                        ParentName = t.ParentId.HasValue && t.Parent != null ? t.Parent.Name : null
+                        ChildrenIds = t.Children.Select(c => c.Id).ToArray(),
+                        HasChildren = t.Children.Any()
                     })
                     .ToList();
 
-                var items = taxonomies.Cast<object>().ToList();
-
-                return Task.FromResult(new PagedResult<object>
+                return Task.FromResult(new PagedResult<TaxonomyResponse>
                 {
-                    Items = items,
+                    Items = taxonomies,
                     pageInfo = new PageInfo(totalCount, page, pageSize, sortBy, isDescending)
                 });
             }
             catch (Exception)
             {
-                return Task.FromResult(new PagedResult<object>
+                return Task.FromResult(new PagedResult<TaxonomyResponse>
                 {
-                    Items = new List<object>(),
+                    Items = new List<TaxonomyResponse>(),
                     pageInfo = new PageInfo(0, page, pageSize, sortBy, isDescending)
                 });
             }
         }
 
-        public async Task<List<TaxonomyTreeResponse>> GetTaxonomyTreeAsync()
-        {
-            var allTaxonomies = await _taxonomyRepository.GetAllWithChildrenAsync();
-            var rootTaxonomies = allTaxonomies.Where(t => t.ParentId == null).ToList();
-            
-            return rootTaxonomies.Select(t => MapToTaxonomyTreeResponse(t, allTaxonomies)).ToList();
-        }
-
-        public async Task<List<TaxonomyFlatResponse>> GetTaxonomyFlatListAsync()
-        {
-            var taxonomies = await _taxonomyRepository.GetAllWithParentAsync();
-            return taxonomies.Select(MapToTaxonomyFlatResponse).ToList();
-        }
-
-        public async Task<List<TaxonomyTreeResponse>> GetChildrenByParentIdAsync(int parentId)
-        {
-            var children = await _taxonomyRepository.GetChildrenByParentIdAsync(parentId);
-            return children.Select(MapToTaxonomyResponse).ToList();
-        }
-
-        public async Task<TaxonomyTreeResponse?> GetTaxonomyByIdAsync(int id)
+        public async Task<TaxonomyResponse?> GetByIdAsync(int id)
         {
             var taxonomy = await _taxonomyRepository.GetByIdAsync(id);
-            return taxonomy != null ? MapToTaxonomyResponse(taxonomy) : null;
+            if (taxonomy == null) return null;
+
+            return new TaxonomyResponse
+            {
+                Id = taxonomy.Id,
+                Name = taxonomy.Name,
+                ChildrenIds = taxonomy.Children.Select(c => c.Id).ToArray(),
+                HasChildren = taxonomy.Children.Any()
+            };
         }
 
-        public async Task<List<TaxonomyTreeResponse>> GetRootTaxonomiesAsync()
+        public async Task<IEnumerable<TaxonomyResponse>> GetChildrenByParentIdAsync(int parentId)
         {
-            return await _taxonomyRepository.GetRootTaxonomiesAsync().ContinueWith(t => 
-                t.Result.Select(MapToTaxonomyResponse).ToList());
+            var children = await _taxonomyRepository.GetChildrenByParentIdAsync(parentId);
+            var childrenWithGrandchildren = await _taxonomyRepository.GetAllWithChildrenAsync();
+            var childrenDict = childrenWithGrandchildren.ToDictionary(t => t.Id);
+            
+            return children.Select(t => new TaxonomyResponse
+            {
+                Id = t.Id,
+                Name = t.Name,
+                ChildrenIds = childrenDict.ContainsKey(t.Id) 
+                    ? childrenDict[t.Id].Children.Select(c => c.Id).ToArray() 
+                    : Array.Empty<int>(),
+                HasChildren = childrenDict.ContainsKey(t.Id) && childrenDict[t.Id].Children.Any()
+            }).ToList();
         }
+
+
 
         public async Task<Taxonomy> CreateTaxonomyAsync(CreateTaxonomyRequest request)
         {
@@ -131,6 +144,11 @@ namespace JobMatchingSystem.API.Services.Implementations
                 if (parent == null)
                     throw new AppException(ErrorCode.NotFoundTaxonomy());
             }
+
+            // Check for duplicate name in the same level (same ParentId)
+            var isDuplicate = await _taxonomyRepository.ExistsByNameAndParentAsync(request.Name, request.ParentId);
+            if (isDuplicate)
+                throw new AppException(ErrorCode.AlreadyExists());
 
             var taxonomy = new Taxonomy
             {
@@ -147,23 +165,12 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (existingTaxonomy == null)
                 throw new AppException(ErrorCode.NotFoundTaxonomy());
 
-            // Validate parent exists if ParentId is provided and prevent circular reference
-            if (request.ParentId.HasValue)
-            {
-                if (request.ParentId.Value == id)
-                    throw new AppException(ErrorCode.CantUpdate());
-
-                var parent = await _taxonomyRepository.GetByIdAsync(request.ParentId.Value);
-                if (parent == null)
-                    throw new AppException(ErrorCode.NotFoundTaxonomy());
-
-                // Check for circular reference (prevent setting parent to a descendant)
-                if (await IsDescendant(id, request.ParentId.Value))
-                    throw new AppException(ErrorCode.CantUpdate());
-            }
+            // Check for duplicate name in the same level (same ParentId), excluding current taxonomy
+            var isDuplicate = await _taxonomyRepository.ExistsByNameAndParentAsync(request.Name, existingTaxonomy.ParentId, id);
+            if (isDuplicate)
+                throw new AppException(ErrorCode.AlreadyExists());
 
             existingTaxonomy.Name = request.Name;
-            existingTaxonomy.ParentId = request.ParentId;
 
             return await _taxonomyRepository.UpdateAsync(existingTaxonomy);
         }
@@ -193,37 +200,6 @@ namespace JobMatchingSystem.API.Services.Implementations
             return false;
         }
 
-        private static TaxonomyTreeResponse MapToTaxonomyResponse(Taxonomy taxonomy)
-        {
-            return new TaxonomyTreeResponse
-            {
-                Id = taxonomy.Id,
-                Name = taxonomy.Name,
-                ParentId = taxonomy.ParentId,
-                Children = new List<TaxonomyTreeResponse>()
-            };
-        }
 
-        private static TaxonomyTreeResponse MapToTaxonomyTreeResponse(Taxonomy taxonomy, List<Taxonomy> allTaxonomies)
-        {
-            var response = MapToTaxonomyResponse(taxonomy);
-            
-            var children = allTaxonomies.Where(t => t.ParentId == taxonomy.Id).ToList();
-            response.Children = children.Select(c => MapToTaxonomyTreeResponse(c, allTaxonomies)).ToList();
-            
-            return response;
-        }
-
-        private static TaxonomyFlatResponse MapToTaxonomyFlatResponse(Taxonomy taxonomy)
-        {
-            return new TaxonomyFlatResponse
-            {
-                Id = taxonomy.Id,
-                Name = taxonomy.Name,
-                ParentId = taxonomy.ParentId,
-                ParentName = taxonomy.Parent?.Name,
-                HasChildren = taxonomy.Children?.Any() == true
-            };
-        }
     }
 }

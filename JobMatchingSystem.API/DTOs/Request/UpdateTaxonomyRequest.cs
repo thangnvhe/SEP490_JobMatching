@@ -8,6 +8,5 @@ namespace JobMatchingSystem.API.DTOs.Request
         [StringLength(100, ErrorMessage = "Taxonomy name cannot exceed 100 characters")]
         public string Name { get; set; }
         
-        public int? ParentId { get; set; }
     }
 }
