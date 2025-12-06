@@ -165,28 +165,12 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (existingTaxonomy == null)
                 throw new AppException(ErrorCode.NotFoundTaxonomy());
 
-            // Validate parent exists if ParentId is provided and prevent circular reference
-            if (request.ParentId.HasValue)
-            {
-                if (request.ParentId.Value == id)
-                    throw new AppException(ErrorCode.CantUpdate());
-
-                var parent = await _taxonomyRepository.GetByIdAsync(request.ParentId.Value);
-                if (parent == null)
-                    throw new AppException(ErrorCode.NotFoundTaxonomy());
-
-                // Check for circular reference (prevent setting parent to a descendant)
-                if (await IsDescendant(id, request.ParentId.Value))
-                    throw new AppException(ErrorCode.CantUpdate());
-            }
-
             // Check for duplicate name in the same level (same ParentId), excluding current taxonomy
-            var isDuplicate = await _taxonomyRepository.ExistsByNameAndParentAsync(request.Name, request.ParentId, id);
+            var isDuplicate = await _taxonomyRepository.ExistsByNameAndParentAsync(request.Name, existingTaxonomy.ParentId, id);
             if (isDuplicate)
                 throw new AppException(ErrorCode.AlreadyExists());
 
             existingTaxonomy.Name = request.Name;
-            existingTaxonomy.ParentId = request.ParentId;
 
             return await _taxonomyRepository.UpdateAsync(existingTaxonomy);
         }
