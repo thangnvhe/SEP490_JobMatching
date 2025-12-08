@@ -1,6 +1,8 @@
-﻿using JobMatchingSystem.API.Services.Interfaces;
+﻿using JobMatchingSystem.API.DTOs;
+using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace JobMatchingSystem.API.Controllers
 {
@@ -24,7 +26,12 @@ namespace JobMatchingSystem.API.Controllers
             if (month <= 0 || month > 12) month = now.Month;
             
             var result = await _dashboardService.GetDashboardDataAsync(month, year);
-            return Ok(result);
+            
+            return Ok(APIResponse<object>.Builder()
+                .WithResult(result)
+                .WithSuccess(true)
+                .WithStatusCode(HttpStatusCode.OK)
+                .Build());
         }
     }
 }
