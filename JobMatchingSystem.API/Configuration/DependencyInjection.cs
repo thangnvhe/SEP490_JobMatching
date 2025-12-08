@@ -92,6 +92,9 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IPositionService, PositionService>();
             services.AddScoped<IEducationLevelService, EducationLevelService>();
             services.AddScoped<IJobMatchingService, JobMatchingService>();
+            services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+            services.AddScoped<IRecruiterDashboardService, RecruiterDashboardService>();
+            services.AddScoped<ICandidateDashboardService, CandidateDashboardService>();
             return services;
         }
 
