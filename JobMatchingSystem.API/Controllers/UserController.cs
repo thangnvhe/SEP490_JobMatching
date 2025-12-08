@@ -24,6 +24,7 @@ namespace JobMatchingSystem.API.Controllers
             _logger = logger;
         }
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<PagedResult<UserDetailResponseDTO>>> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int size = 5,
@@ -178,6 +179,7 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpPost("hiring-manager")]
+        [Authorize(Roles = "Recruiter")]
         public async Task<IActionResult> CreateHiringManager([FromBody] CreateHiringManagerRequest request)
         {
             try
