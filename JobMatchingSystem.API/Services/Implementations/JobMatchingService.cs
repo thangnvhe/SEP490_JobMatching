@@ -155,15 +155,23 @@ namespace JobMatchingSystem.API.Services.Implementations
                 candidatesWithCV = filteredByEducation;
             }
 
+            // Only return candidates with matching score >= 30%
+            const double MIN_MATCHING_SCORE = 30.0;
             var matchingResults = new List<CandidateMatchingResult>();
 
             foreach (var candidate in candidatesWithCV)
             {
                 var matchingResult = await CalculateMatchingScoreForCandidateAsync(candidate, job);
-                if (matchingResult != null)
+                if (matchingResult != null && matchingResult.TotalScore >= MIN_MATCHING_SCORE)
                 {
                     matchingResults.Add(matchingResult);
                 }
+            }
+
+            // If no matching candidates found, return empty list
+            if (!matchingResults.Any())
+            {
+                return new List<CandidateMatchingResult>();
             }
 
             return matchingResults
@@ -578,15 +586,23 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             var filteredJobs = await query.ToListAsync();
 
+            // Only return jobs with matching score >= 30%
+            const double MIN_MATCHING_SCORE = 30.0;
             var jobsWithScores = new List<(Job Job, double Score)>();
 
             foreach (var job in filteredJobs)
             {
                 var matchingResult = await CalculateMatchingScoreInternalAsync(candidate, job);
-                if (matchingResult != null)
+                if (matchingResult != null && matchingResult.TotalScore >= MIN_MATCHING_SCORE)
                 {
                     jobsWithScores.Add((job, matchingResult.TotalScore));
                 }
+            }
+
+            // If no matching jobs found, return empty list
+            if (!jobsWithScores.Any())
+            {
+                return new List<JobDetailResponse>();
             }
 
             // Sort by score (descending) or by other criteria
