@@ -95,6 +95,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IAdminDashboardService, AdminDashboardService>();
             services.AddScoped<IRecruiterDashboardService, RecruiterDashboardService>();
             services.AddScoped<ICandidateDashboardService, CandidateDashboardService>();
+            services.AddScoped<IHiringManagerDashboardService, HiringManagerDashboardService>();
             return services;
         }
 
