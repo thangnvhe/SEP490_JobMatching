@@ -38,17 +38,23 @@ public class CandidateDashboardService : ICandidateDashboardService
             .ToListAsync();
 
         // ===== 3. Upcoming candidate stages within 7 days =====
+        var today = DateOnly.FromDateTime(now);
+        var next7DaysDate = DateOnly.FromDateTime(next7Days);
+        
         var stages = await _context.CandidateStages
             .Where(cs => cs.CandidateJob.CVUpload.UserId == candidateId &&
-                         cs.ScheduleTime != null &&
-                         cs.ScheduleTime >= now &&
-                         cs.ScheduleTime <= next7Days)
-            .OrderBy(cs => cs.ScheduleTime)
+                         cs.InterviewDate != null &&
+                         cs.InterviewDate >= today &&
+                         cs.InterviewDate <= next7DaysDate)
+            .OrderBy(cs => cs.InterviewDate)
+            .ThenBy(cs => cs.InterviewStartTime)
             .Select(cs => new UpcomingStageDto
             {
                 JobTitle = cs.CandidateJob.Job.Title,
                 StageName = cs.JobStage.Name,
-                ScheduleTime = cs.ScheduleTime
+                ScheduleTime = cs.InterviewDate.HasValue && cs.InterviewStartTime.HasValue
+                    ? cs.InterviewDate.Value.ToDateTime(cs.InterviewStartTime.Value)
+                    : (DateTime?)null
             })
             .ToListAsync();
 
