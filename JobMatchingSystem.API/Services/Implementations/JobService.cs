@@ -52,7 +52,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             int extensionDays = 0;
 
             // XỬ LÝ EXTENSION JOB
-            if (request.ExtensionJobId.HasValue)
+            if (request.ExtensionJobId.HasValue && request.ExtensionJobId.Value > 0)
             {
                 var extension = await _context.ExtensionJobs
                     .FirstOrDefaultAsync(e => e.Id == request.ExtensionJobId.Value);
@@ -139,7 +139,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             };
 
             // XỬ LÝ HIGHLIGHT JOB
-            if (request.HighlightJobId.HasValue)
+            if (request.HighlightJobId.HasValue && request.HighlightJobId.Value > 0)
             {
                 var highlight = await _context.HighlightJobs
                     .FirstOrDefaultAsync(h => h.Id == request.HighlightJobId);
