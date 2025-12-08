@@ -32,9 +32,10 @@ namespace JobMatchingSystem.API.Controllers
         [FromQuery] string sortBy = "",
         [FromQuery] bool isDecending = false,
         [FromQuery] int? companyId = null,
-        [FromQuery] string? role = null)
+        [FromQuery] string? role = null,
+        [FromQuery] bool? status = null)
         {
-            var result = await _userService.GetAllUser(page, size, search, sortBy, isDecending, companyId, role);
+            var result = await _userService.GetAllUser(page, size, search, sortBy, isDecending, companyId, role, status);
          return Ok(APIResponse<PagedResult<UserDetailResponseDTO>>.Builder()
         .WithResult(result)
         .WithStatusCode(HttpStatusCode.OK)
