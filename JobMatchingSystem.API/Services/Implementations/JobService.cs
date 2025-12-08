@@ -530,6 +530,12 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<PagedResult<JobDetailResponse>> GetJobsPagedAsync(GetJobPagedRequest request)
         {
+            // Expand taxonomy IDs with hierarchy before filtering
+            if (request.taxonomyIds != null && request.taxonomyIds.Any())
+            {
+                request.taxonomyIds = await ExpandTaxonomyIdsWithHierarchy(request.taxonomyIds);
+            }
+
             var (jobs, totalCount) = await _jobRepository.GetAllJobsPagedWithCount(request);
 
             if (jobs == null || !jobs.Any())
@@ -594,6 +600,12 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<PagedResult<JobDetailResponse>> GetJobsPagedAsync(GetJobPagedRequest request, int? userId)
         {
+            // Expand taxonomy IDs with hierarchy before filtering
+            if (request.taxonomyIds != null && request.taxonomyIds.Any())
+            {
+                request.taxonomyIds = await ExpandTaxonomyIdsWithHierarchy(request.taxonomyIds);
+            }
+
             var (jobs, totalCount) = await _jobRepository.GetAllJobsPagedWithCount(request);
 
             if (jobs == null || !jobs.Any())
@@ -745,6 +757,85 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
 
             return response;
+        }
+
+        // Taxonomy hierarchy helper methods
+        private async Task<Taxonomy?> GetTaxonomyWithHierarchyAsync(int taxonomyId)
+        {
+            return await _context.Taxonomies
+                .Include(t => t.Parent)
+                .Include(t => t.Children)
+                .FirstOrDefaultAsync(t => t.Id == taxonomyId);
+        }
+
+        private async Task<bool> IsParentOfAsync(int parentId, int childId)
+        {
+            var child = await _context.Taxonomies
+                .FirstOrDefaultAsync(t => t.Id == childId);
+            
+            while (child?.ParentId != null)
+            {
+                if (child.ParentId == parentId)
+                    return true;
+                    
+                child = await _context.Taxonomies
+                    .FirstOrDefaultAsync(t => t.Id == child.ParentId);
+            }
+            
+            return false;
+        }
+
+        private async Task<bool> AreSiblingsAsync(int taxonomyId1, int taxonomyId2)
+        {
+            var taxonomy1 = await _context.Taxonomies
+                .FirstOrDefaultAsync(t => t.Id == taxonomyId1);
+            var taxonomy2 = await _context.Taxonomies
+                .FirstOrDefaultAsync(t => t.Id == taxonomyId2);
+
+            return taxonomy1?.ParentId != null && 
+                   taxonomy2?.ParentId != null && 
+                   taxonomy1.ParentId == taxonomy2.ParentId;
+        }
+
+        public async Task<List<int>> ExpandTaxonomyIdsWithHierarchy(List<int> taxonomyIds)
+        {
+            var expandedIds = new HashSet<int>(taxonomyIds);
+            
+            foreach (var taxonomyId in taxonomyIds)
+            {
+                var taxonomy = await GetTaxonomyWithHierarchyAsync(taxonomyId);
+                if (taxonomy == null) continue;
+
+                // Add parent
+                if (taxonomy.ParentId.HasValue)
+                {
+                    expandedIds.Add(taxonomy.ParentId.Value);
+                }
+
+                // Add all children
+                if (taxonomy.Children != null)
+                {
+                    foreach (var child in taxonomy.Children)
+                    {
+                        expandedIds.Add(child.Id);
+                    }
+                }
+
+                // Add siblings (by finding parent's children)
+                if (taxonomy.ParentId.HasValue)
+                {
+                    var parentTaxonomy = await GetTaxonomyWithHierarchyAsync(taxonomy.ParentId.Value);
+                    if (parentTaxonomy?.Children != null)
+                    {
+                        foreach (var sibling in parentTaxonomy.Children)
+                        {
+                            expandedIds.Add(sibling.Id);
+                        }
+                    }
+                }
+            }
+
+            return expandedIds.ToList();
         }
     }
 }
