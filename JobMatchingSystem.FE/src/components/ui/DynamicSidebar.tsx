@@ -154,6 +154,7 @@ function RecruiterNav() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>

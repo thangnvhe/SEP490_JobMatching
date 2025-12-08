@@ -19,6 +19,10 @@ import { Input } from "@/components/ui/input";
 import { Province, ProvincesService } from "@/services/provinces.service";
 import { useNavigate } from "react-router";
 import { SaveJobServices } from "@/services/save-job.service";
+import { Position } from "@/models/position";
+import { PositionService } from "@/services/position.service";
+import { Taxonomy } from "@/models/taxonomy";
+import { TaxonomyService } from "@/services/taxonomy.service";
 
 
 export default function JobsPage() {
@@ -27,6 +31,8 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [companies, setCompanies] = useState<Record<number, Company>>({});
   const [provinces, setProvinces] = useState<Province[]>([]);
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
   // local state 
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState('');
@@ -56,18 +62,36 @@ export default function JobsPage() {
     experienceYearMin: null,
     experienceYearMax: null,
     jobType: null,
-    status: "Opened", // Chỉ hiển thị jobs có status = "Opened" (đã được mở)
+    status: "Opened",
     companyId: null,
     recruiterId: null,
     isDeleted: null,
+    positionId: null,
+    taxonomyIds: null,
   });
 
   const debouncedKeyword = useDebounce(keyword, 700);
 
+  // Chuẩn hóa params trước khi gọi API (tránh axios encode array thành taxonomyIds[])
+  const buildRequestParams = useCallback(
+    (params: PaginationParamsInput) => {
+      const { taxonomyIds, ...rest } = params;
+      return {
+        ...rest,
+        taxonomyIds:
+          taxonomyIds && Array.isArray(taxonomyIds) && taxonomyIds.length > 0
+            ? taxonomyIds.join(",")
+            : null,
+      };
+    },
+    []
+  );
+
   const getAllWithPagination = useCallback(async (params: PaginationParamsInput) => {
     try {
       setLoading(true);
-      const response = await JobServices.getAllWithPagination(params);
+      const requestParams = buildRequestParams(params);
+      const response = await JobServices.getAllWithPagination(requestParams);
       setJobs(response.result.items);
       setPaginationInfo(response.result.pageInfo);
     } catch (err: any) {
@@ -75,7 +99,7 @@ export default function JobsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [buildRequestParams]);
 
   const getProvinces = useCallback(async () => {
     try {
@@ -89,6 +113,39 @@ export default function JobsPage() {
   useEffect(() => {
     getProvinces();
   }, [getProvinces]);
+
+  const getPositions = useCallback(async () => {
+    try {
+      const response = await PositionService.getAll();
+      if (response.isSuccess && response.result) {
+        setPositions(response.result);
+      } else {
+        setPositions([]);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Lỗi khi tải dữ liệu vị trí");
+      setPositions([]);
+    }
+  }, []);
+
+  const getTaxonomies = useCallback(async () => {
+    try {
+      const response = await TaxonomyService.getAllTaxonomies();
+      if (response.isSuccess && response.result) {
+        setTaxonomies(response.result);
+      } else {
+        setTaxonomies([]);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Lỗi khi tải dữ liệu kỹ năng");
+      setTaxonomies([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    getPositions();
+    getTaxonomies();
+  }, [getPositions, getTaxonomies]);
 
   const getAllCompanies = useCallback(async () => {
     try {
@@ -235,6 +292,8 @@ export default function JobsPage() {
                   experienceYearMax: paginationInput.experienceYearMax,
                   salaryMin: paginationInput.salaryMin,
                   salaryMax: paginationInput.salaryMax,
+                  positionId: paginationInput.positionId,
+                  taxonomyIds: paginationInput.taxonomyIds,
                 }}
                 onFiltersChange={(newFilters) => {
                   setPaginationInput({
@@ -244,8 +303,12 @@ export default function JobsPage() {
                     experienceYearMax: newFilters.experienceYearMax ?? null,
                     salaryMin: newFilters.salaryMin ?? null,
                     salaryMax: newFilters.salaryMax ?? null,
+                    positionId: newFilters.positionId ?? null,
+                    taxonomyIds: newFilters.taxonomyIds ?? null,
                   });
                 }}
+                positions={positions}
+                taxonomies={taxonomies}
               />
             </div>
           </aside>
