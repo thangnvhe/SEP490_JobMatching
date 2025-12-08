@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useDebounce } from "@/hooks/useDebounce";
 
 // Import các UI components
 import { Button } from "@/components/ui/button";
@@ -52,6 +51,7 @@ import { CreateMemberDialog } from "@/components/dialogs/CreateMemberDialog";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import type { User } from "@/models/user";
 import { UserServices } from "@/services/user.service";
+import { PageInfo, PaginationParamsInput } from "@/models/base";
 
 // Helper function để format date
 const formatDate = (dateString: string) => {
@@ -73,18 +73,15 @@ const getInitials = (fullName: string) => {
   return fullName.slice(0, 2).toUpperCase();
 };
 
-export function CompanyMembersPage() {
-  // Redux state
-  const authState = useSelector((state: RootState) => state.authState);
-
+export default function CompanyMembersPage() {
   // Khai báo local state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [members, setMembers] = useState<User[]>([]);
-  const [filteredMembers, setFilteredMembers] = useState<User[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const debouncedKeyword = useDebounce(keyword, 700);
   const [companyId, setCompanyId] = useState<number | null>(null);
   
   // Dialog states
@@ -92,31 +89,49 @@ export function CompanyMembersPage() {
   const [selectedMember, setSelectedMember] = useState<User | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  
+  const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
+    currentPage: 1,
+    pageSize: 10,
+    totalItem: 0,
+    totalPage: 0,
+    hasPreviousPage: false,
+    hasNextPage: false,
+    sortBy: '',
+    isDecending: false,
+  });
+
+  const [paginationInput, setPaginationInput] = useState<PaginationParamsInput>({
+    page: 1,
+    size: 10,
+    search: '',
+    sortBy: '',
+    isDecending: false,
+  });
+
   const pageSizeOptions = [5, 10, 20, 50];
 
-  // Load members from API
-  const loadMembers = async (companyId: number) => {
+  // Load members từ API với pagination/filter giống pattern ViewJobList
+  const loadMembers = useCallback(async (params: PaginationParamsInput) => {
+    if (!companyId) return;
+
     try {
       setLoading(true);
       setError(null);
-      
-      // Gọi API lấy danh sách user theo companyId và role HiringManager với pagination
-      const response = await UserServices.getAllWithPagination({
-        page: 1,
-        size: 100, // Lấy nhiều để hiển thị tất cả
-        companyId: companyId,
-        role: 'HiringManager'
-      });
-      
+
+      const apiParams: any = {
+        ...params,
+        companyId,
+        role: 'HiringManager',
+      };
+
+      if (statusFilter !== 'all') {
+        apiParams.isActive = statusFilter === 'active';
+      }
+
+      const response = await UserServices.getAllWithPagination(apiParams);
+
       if (response.isSuccess && response.result) {
-        // response.result có structure: { items: User[], pageInfo: PageInfo }
         const userData = response.result.items || [];
-        
-        // Map dữ liệu từ API thành User format
         const users: User[] = userData.map((user: any) => ({
           id: user.id,
           userName: user.userName || user.email,
@@ -131,32 +146,29 @@ export function CompanyMembersPage() {
           phoneNumber: user.phoneNumber || user.phone || '',
           address: user.address || '',
           companyId: user.companyId,
-          role: 'hiringmanager'
+          role: user.role,
         }));
-        
+
         setMembers(users);
+        if (response.result.pageInfo) {
+          setPaginationInfo(response.result.pageInfo);
+        }
       } else {
         setMembers([]);
         setError('Không thể tải danh sách thành viên');
       }
     } catch (error: any) {
       console.error('Error loading members:', error);
-      setError(error?.message || 'Có lỗi xảy ra khi tải danh sách thành viên');
+      setError(error?.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách thành viên');
       setMembers([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId, statusFilter]);
 
   // Load company profile data để lấy companyId
   useEffect(() => {
     const loadCompanyInfo = async () => {
-      if (!authState.isAuthenticated) {
-        setError("Vui lòng đăng nhập để xem thông tin thành viên");
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
         setError(null);
@@ -179,9 +191,6 @@ export function CompanyMembersPage() {
         }
 
         setCompanyId(userData.companyId);
-        
-        // Load members from API
-        await loadMembers(userData.companyId);
 
       } catch (error) {
         console.error("Error loading company info:", error);
@@ -191,57 +200,59 @@ export function CompanyMembersPage() {
     };
 
     loadCompanyInfo();
-  }, [authState.isAuthenticated]);
+  }, []);
 
-  // Filter members based on keyword and status
+  // Load members khi companyId + filter/pagination thay đổi
   useEffect(() => {
-    let filtered = members;
+    if (!companyId) return;
 
-    // Filter by keyword
-    if (keyword.trim()) {
-      const searchTerm = keyword.toLowerCase();
-      filtered = filtered.filter(member =>
-        member.fullName.toLowerCase().includes(searchTerm) ||
-        member.email.toLowerCase().includes(searchTerm) ||
-        member.phoneNumber.includes(searchTerm)
-      );
-    }
+    const params = {
+      ...paginationInput,
+      search: debouncedKeyword,
+    };
 
-    // Filter by status
-    if (statusFilter !== 'all') {
-      const isActive = statusFilter === 'active';
-      filtered = filtered.filter(member => member.isActive === isActive);
-    }
-
-    setFilteredMembers(filtered);
-    setCurrentPage(1);
-  }, [members, keyword, statusFilter]);
+    loadMembers(params);
+  }, [companyId, debouncedKeyword, loadMembers, paginationInput]);
 
   // Handler functions
   const handleRefresh = () => {
-    if (companyId) {
-      loadMembers(companyId);
-    }
+    const params = { ...paginationInput, search: debouncedKeyword };
+    loadMembers(params);
   };
 
   const handleSortingChange = (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
     const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(sorting) : updaterOrValue;
     setSorting(newSorting);
-    setCurrentPage(1);
+
+    setPaginationInput(prev => {
+      if (!newSorting.length) {
+        return {
+          ...prev,
+          sortBy: undefined,
+          isDecending: undefined,
+        };
+      }
+
+      const sort = newSorting[0];
+      return {
+        ...prev,
+        sortBy: sort.id,
+        isDecending: !!sort.desc,
+      };
+    });
   };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    setPaginationInput(prev => ({ ...prev, page }));
   };
 
   const handlePageSizeChange = (size: string) => {
-    setPageSize(parseInt(size));
-    setCurrentPage(1);
+    setPaginationInput(prev => ({ ...prev, size: parseInt(size), page: 1 }));
   };
 
   const handleStatusFilterChange = (status: string) => {
     setStatusFilter(status);
-    setCurrentPage(1);
+    setPaginationInput(prev => ({ ...prev, page: 1 }));
   };
 
   const handleView = (member: User) => {
@@ -253,12 +264,10 @@ export function CompanyMembersPage() {
     try {
       await UserServices.changeStatus(member.id.toString(), false);
       
-      setMembers(prev => prev.map(m => 
-        m.id === member.id 
-          ? { ...m, isActive: false }
-          : m
-      ));
       toast.success("Xóa mềm thành viên thành công!");
+
+      const params = { ...paginationInput, search: debouncedKeyword };
+      loadMembers(params);
     } catch (error) {
       toast.error("Có lỗi xảy ra khi xóa thành viên");
       console.error("Error soft deleting member:", error);
@@ -270,10 +279,9 @@ export function CompanyMembersPage() {
     setIsCreateDialogOpen(false);
     
     // Reload danh sách ngay lập tức để có dữ liệu chính xác từ server
-    if (companyId) {
-      toast.success("Tạo thành viên thành công!");
-      loadMembers(companyId);
-    }
+    toast.success("Tạo thành viên thành công!");
+    const params = { ...paginationInput, search: debouncedKeyword };
+    loadMembers(params);
   };
 
   // Helper functions
@@ -293,12 +301,15 @@ export function CompanyMembersPage() {
     return isActive ? 'Hoạt động' : 'Không hoạt động';
   };
 
-  // Calculate pagination
-  const totalItems = filteredMembers.length;
-  const totalPages = Math.ceil(totalItems / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = Math.min(startIndex + pageSize, totalItems);
-  const paginatedData = filteredMembers.slice(startIndex, endIndex);
+  // Calculate start index for STT
+  const startIndex = (paginationInfo.currentPage - 1) * paginationInfo.pageSize;
+  const startItem = paginationInfo.totalItem
+    ? (paginationInfo.currentPage - 1) * paginationInfo.pageSize + 1
+    : 0;
+  const endItem = Math.min(
+    paginationInfo.currentPage * paginationInfo.pageSize,
+    paginationInfo.totalItem
+  );
 
   // Define columns
   const columns = useMemo<ColumnDef<User>[]>(() => [
@@ -364,7 +375,7 @@ export function CompanyMembersPage() {
       accessorKey: "isActive",
       header: "Trạng thái",
       cell: ({ row }) => {
-        const isActive = row.getValue("status") as boolean;
+        const isActive = row.getValue("isActive") as boolean;
         return (
           <Badge className={getStatusBadgeColor(isActive)}>
             {getStatusIcon(isActive)}
@@ -536,7 +547,7 @@ export function CompanyMembersPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {filteredMembers.length === 0 && !loading ? (
+              {members.length === 0 && !loading ? (
                 <div className="flex flex-col items-center justify-center py-12 space-y-4">
                   <div className="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center">
                     <Users className="w-8 h-8 text-gray-400" />
@@ -566,7 +577,7 @@ export function CompanyMembersPage() {
               ) : (
                 <DataTable
                   columns={columns}
-                  data={paginatedData}
+                  data={members}
                   loading={loading}
                   sorting={sorting}
                   onSortingChange={handleSortingChange}
@@ -574,17 +585,16 @@ export function CompanyMembersPage() {
               )}
 
               {/* Pagination */}
-              {totalItems > 0 && (
+              {paginationInfo.totalItem > 0 && (
                 <div className="flex items-center justify-between mt-6 gap-6">
                   <div className="text-sm text-muted-foreground">
-                    Hiển thị {startIndex + 1} - {endIndex} của {totalItems} kết
-                    quả
+                    Hiển thị {startItem} - {endItem} của {paginationInfo.totalItem} kết quả
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-3">
                       <p className="text-sm font-medium">Dòng trên trang</p>
                       <Select
-                        value={pageSize.toString()}
+                        value={paginationInfo.pageSize.toString()}
                         onValueChange={handlePageSizeChange}
                       >
                         <SelectTrigger className="h-8 w-[70px]">
@@ -602,14 +612,14 @@ export function CompanyMembersPage() {
 
                     <div className="flex items-center gap-3">
                       <div className="text-sm font-medium">
-                        Trang {currentPage} trên {totalPages}
+                        Trang {paginationInfo.currentPage} trên {paginationInfo.totalPage || 1}
                       </div>
                       <div className="flex items-center gap-1">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handlePageChange(1)}
-                          disabled={currentPage === 1}
+                          disabled={paginationInfo.currentPage === 1}
                           className="h-8 w-8 p-0"
                         >
                           <ChevronsLeft />
@@ -617,8 +627,8 @@ export function CompanyMembersPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          disabled={currentPage === 1}
+                          onClick={() => handlePageChange(paginationInfo.currentPage - 1)}
+                          disabled={paginationInfo.currentPage === 1}
                           className="h-8 w-8 p-0"
                         >
                           <ChevronLeft />
@@ -626,8 +636,8 @@ export function CompanyMembersPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          disabled={currentPage >= totalPages}
+                          onClick={() => handlePageChange(paginationInfo.currentPage + 1)}
+                          disabled={paginationInfo.currentPage >= paginationInfo.totalPage || paginationInfo.totalPage === 0}
                           className="h-8 w-8 p-0"
                         >
                           <ChevronRight />
@@ -635,8 +645,8 @@ export function CompanyMembersPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handlePageChange(totalPages)}
-                          disabled={currentPage >= totalPages}
+                          onClick={() => handlePageChange(paginationInfo.totalPage)}
+                          disabled={paginationInfo.currentPage >= paginationInfo.totalPage || paginationInfo.totalPage === 0}
                           className="h-8 w-8 p-0"
                         >
                           <ChevronsRight />
@@ -667,7 +677,7 @@ export function CompanyMembersPage() {
 
             <div className="space-y-8 py-4">
               {/* Member Header */}
-              <div className="flex items-start space-x-6 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+              <div className="flex items-start space-x-6 p-6 bg-linear-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
                 <Avatar className="h-24 w-24">
                   <AvatarImage
                     src={selectedMember.avatarUrl || ""}
@@ -768,3 +778,5 @@ export function CompanyMembersPage() {
     </div>
   );
 }
+
+export { CompanyMembersPage };

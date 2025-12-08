@@ -6,7 +6,7 @@ import { API_BASE_URL } from '../../env.ts';
 
 const axiosInstance = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 10000,
+    timeout: 100000,
     timeoutErrorMessage: "Request timeout",
     headers: {
         Accept: "*/*",

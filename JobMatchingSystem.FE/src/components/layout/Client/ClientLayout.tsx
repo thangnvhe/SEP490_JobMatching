@@ -6,10 +6,29 @@ import { ClientFooter } from "@/components/layout/Client/client-footer";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { DynamicSidebar } from "@/components/ui/DynamicSidebar";
 import { AdminSidebar } from "@/components/ui/admin/AdminSidebar";
+import { useEffect, useState, useRef } from "react";
 
 export function ClientLayout() {
   const location = useLocation();
   const authState = useSelector((state: RootState) => state.authState);
+  
+  // Key để force remount tất cả components con khi auth thay đổi
+  const [refreshKey, setRefreshKey] = useState(0);
+  const prevAuthState = useRef<boolean | null>(null);
+  
+  useEffect(() => {
+    // Bỏ qua lần mount đầu tiên
+    if (prevAuthState.current === null) {
+      prevAuthState.current = authState.isAuthenticated;
+      return;
+    }
+    
+    // Chỉ tăng key khi isAuthenticated thực sự thay đổi
+    if (prevAuthState.current !== authState.isAuthenticated) {
+      prevAuthState.current = authState.isAuthenticated;
+      setRefreshKey(prev => prev + 1);
+    }
+  }, [authState.isAuthenticated]);
   
   // Get user role from Redux store
   const userRole = authState.role?.toLowerCase() || 'guest';
@@ -42,13 +61,13 @@ export function ClientLayout() {
           <div className="flex h-full w-full overflow-hidden">
             {getSidebarComponent()}
             <SidebarInset className="flex-1 overflow-y-auto">
-              <Outlet />
+              <Outlet key={refreshKey} />
             </SidebarInset>
           </div>
         </SidebarProvider>
       ) : (
         <main className="flex-1">
-          <Outlet />
+          <Outlet key={refreshKey} />
         </main>
       )}
       {!showSidebar && <ClientFooter />}
