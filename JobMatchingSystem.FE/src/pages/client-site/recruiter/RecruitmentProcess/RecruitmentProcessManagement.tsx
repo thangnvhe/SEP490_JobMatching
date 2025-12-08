@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -38,6 +38,7 @@ import { StageBoardDemo } from "@/components/Stage/StageBoardDemo";
 const RecruitmentProcessManagement = () => {
   // URL search params
   const { jobId } = useParams();
+  const navigate = useNavigate();
 
   // State management
   const [candidateJobs, setCandidateJobs] = useState<CandidateJob[]>([]);
@@ -307,7 +308,16 @@ const RecruitmentProcessManagement = () => {
 
   return (
     <div className="p-6 space-y-6">
-
+      <div className="flex items-center justify-between">
+        <Button
+          variant="ghost"
+          className="flex items-center px-0"
+          onClick={() => navigate("/recruiter/jobs")}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span>Quay về quản lý tin tuyển dụng</span>
+        </Button>
+      </div>
 
       {/* Tabs */}
       {jobId && (

@@ -15,5 +15,5 @@ export const JobServices = {
     BaseApiServices.custom<BaseResponse<Job>>('put', `/Job/${jobId}/censor`, censorData),
 
   getAllMyJobsPagination: (params: PaginationParamsInput) => BaseApiServices.getAllWithPagination<Job>('/Job/my-jobs', params),
-
+  getAllBestJobs: (params: PaginationParamsInput) => BaseApiServices.getAllWithPagination<Job>('/JobMatching/jobs-for-me', params),
 };

@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -172,7 +171,6 @@ export function InterviewScheduleDetailDialog({
 
     const user = candidate.user;
     const cv = candidate.cv;
-    const status = statusConfig[candidate.status] || { label: candidate.status, variant: "outline" as const };
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>

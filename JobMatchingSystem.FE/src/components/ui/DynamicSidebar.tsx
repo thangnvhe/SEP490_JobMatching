@@ -11,7 +11,6 @@ import {
   Building2,
   Package,
   UserPlus,
-  GitBranch,
   Calendar,
   HistoryIcon,
 } from "lucide-react";
@@ -81,21 +80,6 @@ function RecruiterNav() {
                 <Link to="/recruiter/jobs">
                   <Briefcase className="size-4" />
                   <span className="font-medium text-sm">Danh sách tin tuyển dụng</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={useIsActivePath("/recruiter/recruitment-process")}
-                tooltip="Recruitment Process"
-                size="default"
-                className="h-9 px-3"
-              >
-                <Link to="/recruiter/recruitment-process">
-                  <GitBranch className="size-4" />
-                  <span className="font-medium text-sm">Tin tuyển dụng</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -174,31 +158,6 @@ function RecruiterNav() {
         </SidebarGroupContent>
       </SidebarGroup>
 
-      <SidebarSeparator className="my-2" />
-
-      <SidebarGroup>
-        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
-          Cá nhân
-        </SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu className="">
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={useIsActivePath("/profile")}
-                tooltip="Profile"
-                size="default"
-                className="h-9 px-3"
-              >
-                <Link to="/profile">
-                  <User className="size-4" />
-                  <span className="font-medium text-sm">Hồ sơ</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
     </>
   );
 }
