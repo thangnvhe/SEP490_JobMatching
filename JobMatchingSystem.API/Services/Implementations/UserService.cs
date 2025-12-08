@@ -59,9 +59,9 @@ namespace JobMatchingSystem.API.Services.Implementations
             await _unitOfWork.SaveAsync();
         }
 
-        public async Task<PagedResult<UserDetailResponseDTO>> GetAllUser(int page = 1, int size = 5, string search = "", string sortBy = "", bool isDecending = false, int? companyId = null, string? role = null)
+        public async Task<PagedResult<UserDetailResponseDTO>> GetAllUser(int page = 1, int size = 5, string search = "", string sortBy = "", bool isDecending = false, int? companyId = null, string? role = null, bool? status = null)
         {
-            var listUser = await _unitOfWork.AuthRepository.GetAllAsync(search, sortBy, isDecending);
+            var listUser = await _unitOfWork.AuthRepository.GetAllAsync(search, sortBy, isDecending, status);
             if (listUser == null || !listUser.Any())
             {
                 return new PagedResult<UserDetailResponseDTO>

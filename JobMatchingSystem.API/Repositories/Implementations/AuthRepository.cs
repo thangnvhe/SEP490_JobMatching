@@ -53,20 +53,28 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             return await _context.ApplicationUsers.AnyAsync(x => x.Email == email);
         }
 
-        public async Task<List<ApplicationUser>> GetAllAsync(string search, string sortBy,bool IsDescending)
+        public async Task<List<ApplicationUser>> GetAllAsync(string search, string sortBy, bool IsDescending, bool? status = null)
         {
             IQueryable<ApplicationUser> query = _context.Users;
+            
+            // Filter by status (IsActive)
+            if (status.HasValue)
+            {
+                query = query.Where(u => u.IsActive == status.Value);
+            }
+            
             if (!string.IsNullOrWhiteSpace(search))
             {
                 query = query.Where(u => u.UserName != null && u.UserName.Contains(search));
-
             }
+            
             if (!string.IsNullOrEmpty(sortBy))
             {
                 query = IsDescending
                     ? query.OrderByDescending(x => EF.Property<object>(x, sortBy))
                     : query.OrderBy(x => EF.Property<object>(x, sortBy));
             }
+            
             return await query.ToListAsync();
         }
 
