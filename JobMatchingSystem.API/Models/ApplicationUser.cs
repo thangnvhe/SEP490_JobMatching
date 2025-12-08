@@ -31,6 +31,10 @@ namespace JobMatchingSystem.API.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        // Password reset token tracking
+        public string? PasswordResetToken { get; set; }
+        public DateTime? PasswordResetTokenExpiry { get; set; }
+        public bool? PasswordResetTokenUsed { get; set; }
 
         // Navigation properties
         [ForeignKey("CompanyId")]

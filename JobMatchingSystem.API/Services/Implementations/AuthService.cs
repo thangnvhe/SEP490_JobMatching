@@ -46,6 +46,13 @@ namespace JobMatchingSystem.API.Services.Implementations
             
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var encodedToken = HttpUtility.UrlEncode(token);
+            
+            // Save token tracking info
+            user.PasswordResetToken = token;
+            user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1); // Token valid for 1 hour
+            user.PasswordResetTokenUsed = false;
+            await _userManager.UpdateAsync(user);
+            
             await _emailService.SendResetPasswordEmailAsync(user.Email, encodedToken);
         }
         public async Task ResetPasswordAsync(ResetPasswordRequest request)
@@ -54,12 +61,29 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (user == null)
                 throw new AppException(ErrorCode.InvalidCredentials());
 
+            // Check if token has been used
+            if (user.PasswordResetTokenUsed == true)
+                throw new AppException(new Error("Token đã được sử dụng. Vui lòng yêu cầu reset password mới.", System.Net.HttpStatusCode.BadRequest));
+
+            // Check if token has expired
+            if (user.PasswordResetTokenExpiry == null || user.PasswordResetTokenExpiry < DateTime.UtcNow)
+                throw new AppException(new Error("Token đã hết hạn. Vui lòng yêu cầu reset password mới.", System.Net.HttpStatusCode.BadRequest));
+
+            // Check if token matches
+            if (user.PasswordResetToken != request.Token)
+                throw new AppException(new Error("Token không hợp lệ.", System.Net.HttpStatusCode.BadRequest));
+
             var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
                 throw new Exception($"Không thể đặt lại mật khẩu: {errors}");
             }
+
+            // Mark token as used
+            user.PasswordResetTokenUsed = true;
+            user.PasswordResetToken = null; // Clear token for security
+            await _userManager.UpdateAsync(user);
         }
 
         public async Task<LoginDTO> LoginAsync(LoginRequest request)
