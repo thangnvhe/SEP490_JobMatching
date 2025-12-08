@@ -1,6 +1,8 @@
-﻿using JobMatchingSystem.API.Services.Interfaces;
+﻿using JobMatchingSystem.API.DTOs;
+using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using System.Security.Claims;
 
 namespace JobMatchingSystem.API.Controllers
@@ -21,7 +23,12 @@ namespace JobMatchingSystem.API.Controllers
         {
             int candidateId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var result = await _dashboardService.GetDashboardDataAsync(candidateId);
-            return Ok(result);
+            
+            return Ok(APIResponse<object>.Builder()
+                .WithResult(result)
+                .WithSuccess(true)
+                .WithStatusCode(HttpStatusCode.OK)
+                .Build());
         }
     }
 }
