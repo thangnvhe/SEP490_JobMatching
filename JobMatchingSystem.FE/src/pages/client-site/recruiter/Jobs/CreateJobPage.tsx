@@ -31,13 +31,25 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 
 // Import services
 import { JobServices } from "@/services/job.service";
 import { UserServices } from "@/services/user.service";
 import { TaxonomyService } from "@/services/taxonomy.service";
+import { PositionService } from "@/services/position.service";
+import { ExtensionJobServices } from "@/services/extension-job.service";
+import { HighlightJobServices } from "@/services/highlight-job.service";
 import { type Taxonomy } from "@/models/taxonomy";
+import { type Position } from "@/models/position";
 import { type User } from "@/models/user";
+import { type ExtensionJob } from "@/models/extension-job";
+import { type HighlightJob } from "@/models/highlight-job";
 
 // Types
 interface HiringManager {
@@ -64,8 +76,9 @@ const step1Schema = z.object({
   salaryMax: z.number().min(0, "Lương tối đa phải lớn hơn 0").optional().nullable(),
   experienceYear: z.number().min(0, "Số năm kinh nghiệm không được âm").max(50, "Số năm kinh nghiệm không được quá 50"),
   jobType: z.string().min(1, "Loại công việc là bắt buộc"),
-  openedAt: z.string().min(1, "Ngày mở đăng tuyển là bắt buộc"),
-  expiredAt: z.string().min(1, "Ngày hết hạn là bắt buộc"),
+  positionId: z.number().min(1, "Vị trí tuyển dụng là bắt buộc"),
+  openedAt: z.date({ required_error: "Ngày mở tuyển dụng là bắt buộc" }),
+  expiredAt: z.date({ required_error: "Ngày hết hạn là bắt buộc" }),
   taxonomyIds: z.array(z.number()).optional(), // Cho phép optional, sẽ validate bằng logic
 });
 
@@ -86,6 +99,23 @@ export default function CreateJobPage() {
   const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
   const [loadingTaxonomies, setLoadingTaxonomies] = useState(true);
   const [selectedTaxonomies, setSelectedTaxonomies] = useState<number[]>([]);
+  const [searchTaxonomy, setSearchTaxonomy] = useState("");
+  const [openTaxonomyPopover, setOpenTaxonomyPopover] = useState(false);
+  
+  // Position selection
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [loadingPositions, setLoadingPositions] = useState(true);
+  const [selectedPositionId, setSelectedPositionId] = useState<number | null>(null);
+  const [searchPosition, setSearchPosition] = useState("");
+  const [openPositionPopover, setOpenPositionPopover] = useState(false);
+  
+  // Extension and Highlight Jobs
+  const [extensionJobs, setExtensionJobs] = useState<ExtensionJob[]>([]);
+  const [highlightJobs, setHighlightJobs] = useState<HighlightJob[]>([]);
+  const [loadingExtensions, setLoadingExtensions] = useState(true);
+  const [loadingHighlights, setLoadingHighlights] = useState(true);
+  const [selectedExtensionId, setSelectedExtensionId] = useState<number | undefined>(undefined);
+  const [selectedHighlightId, setSelectedHighlightId] = useState<number | undefined>(undefined);
   
   // Step 1: Job Information
   const [jobData, setJobData] = useState<Step1FormData>({
@@ -97,9 +127,10 @@ export default function CreateJobPage() {
     salaryMin: null,
     salaryMax: null,
     experienceYear: 0,
-    jobType: "FullTime",
-    openedAt: "",
-    expiredAt: "",
+    jobType: "",
+    positionId: 0,
+    openedAt: new Date(),
+    expiredAt: new Date(new Date().setDate(new Date().getDate() + 30)),
     taxonomyIds: [],
   });
 
@@ -120,6 +151,8 @@ export default function CreateJobPage() {
     defaultValues: {
       ...jobData,
       benefits: jobData.benefits || "", // Ensure benefits is always a string
+      openedAt: new Date(),
+      expiredAt: new Date(new Date().setDate(new Date().getDate() + 30)),
       taxonomyIds: [] // Initialize with empty array
     },
     mode: "onChange",
@@ -193,15 +226,81 @@ export default function CreateJobPage() {
       }
     };
 
+    const fetchPositions = async () => {
+      try {
+        setLoadingPositions(true);
+        const response = await PositionService.getAll();
+        
+        if (response.isSuccess && response.result) {
+          setPositions(response.result);
+        } else {
+          console.warn("Could not load positions");
+          setPositions([]);
+        }
+      } catch (error) {
+        console.warn("Error loading positions:", error);
+        setPositions([]);
+      } finally {
+        setLoadingPositions(false);
+      }
+    };
+
+    const fetchExtensionJobs = async () => {
+      try {
+        setLoadingExtensions(true);
+        const response = await ExtensionJobServices.getMyExtensionJobs();
+        
+        if (response.isSuccess && response.result) {
+          setExtensionJobs(response.result);
+        } else {
+          console.warn("Could not load extension jobs");
+          setExtensionJobs([]);
+        }
+      } catch (error) {
+        console.warn("Error loading extension jobs:", error);
+        setExtensionJobs([]);
+      } finally {
+        setLoadingExtensions(false);
+      }
+    };
+
+    const fetchHighlightJobs = async () => {
+      try {
+        setLoadingHighlights(true);
+        const response = await HighlightJobServices.getMyHighlightJobs();
+        
+        if (response.isSuccess && response.result) {
+          setHighlightJobs(response.result);
+        } else {
+          console.warn("Could not load highlight jobs");
+          setHighlightJobs([]);
+        }
+      } catch (error) {
+        console.warn("Error loading highlight jobs:", error);
+        setHighlightJobs([]);
+      } finally {
+        setLoadingHighlights(false);
+      }
+    };
+
     // Only fetch if user is authenticated, otherwise just set loading to false
     if (authState.isAuthenticated) {
       fetchHiringManagers();
       fetchTaxonomies();
+      fetchPositions();
+      fetchExtensionJobs();
+      fetchHighlightJobs();
     } else {
       setLoadingHiringManagers(false);
       setLoadingTaxonomies(false);
+      setLoadingPositions(false);
+      setLoadingExtensions(false);
+      setLoadingHighlights(false);
       setHiringManagers([]);
       setTaxonomies([]);
+      setPositions([]);
+      setExtensionJobs([]);
+      setHighlightJobs([]);
     }
   }, [authState.isAuthenticated]);
 
@@ -209,6 +308,11 @@ export default function CreateJobPage() {
   useEffect(() => {
     setValueStep1("taxonomyIds", selectedTaxonomies);
   }, [selectedTaxonomies, setValueStep1]);
+
+  // Đồng bộ selectedPositionId với form positionId
+  useEffect(() => {
+    setValueStep1("positionId", selectedPositionId || 0);
+  }, [selectedPositionId, setValueStep1]);
 
   // Steps configuration
   const steps = [
@@ -230,6 +334,12 @@ export default function CreateJobPage() {
       return;
     }
 
+    // Validate position
+    if (!selectedPositionId) {
+      alert("Phải chọn vị trí tuyển dụng");
+      return;
+    }
+
     // Validate taxonomies - kiểm tra selectedTaxonomies
     if (selectedTaxonomies.length === 0) {
       alert("Phải chọn ít nhất 1 kỹ năng");
@@ -242,18 +352,26 @@ export default function CreateJobPage() {
     }
 
     // Validate dates
-    const openedDate = new Date(data.openedAt);
-    const expiredDate = new Date(data.expiredAt);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const openedDate = new Date(data.openedAt);
+    openedDate.setHours(0, 0, 0, 0);
+    const expiredDate = new Date(data.expiredAt);
+    expiredDate.setHours(0, 0, 0, 0);
 
     if (openedDate < today) {
-      alert("Ngày mở đăng tuyển phải lớn hơn hoặc bằng ngày hiện tại");
+      alert("Ngày mở tuyển dụng không được nhỏ hơn ngày hiện tại");
       return;
     }
 
     if (expiredDate <= openedDate) {
-      alert("Ngày hết hạn phải lớn hơn ngày mở đăng tuyển");
+      alert("Ngày hết hạn phải lớn hơn ngày mở tuyển dụng");
+      return;
+    }
+
+    const daysDiff = Math.ceil((expiredDate.getTime() - openedDate.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysDiff > 30) {
+      alert("Ngày hết hạn không được quá 30 ngày so với ngày mở tuyển dụng");
       return;
     }
 
@@ -335,9 +453,12 @@ export default function CreateJobPage() {
         salaryMax: isNegotiableSalary ? undefined : (jobData.salaryMax || undefined),
         experienceYear: jobData.experienceYear,
         jobType: jobData.jobType,
-        openedAt: new Date(jobData.openedAt).toISOString(),
-        expiredAt: new Date(jobData.expiredAt).toISOString(),
+        positionId: selectedPositionId || 0,
+        openedAt: jobData.openedAt instanceof Date ? jobData.openedAt.toISOString() : new Date(jobData.openedAt).toISOString(),
+        expiredAt: jobData.expiredAt instanceof Date ? jobData.expiredAt.toISOString() : new Date(jobData.expiredAt).toISOString(),
         taxonomyIds: jobData.taxonomyIds || selectedTaxonomies || [], // Fallback to selectedTaxonomies hoặc empty array
+        highlightJobId: selectedHighlightId || 0,
+        extensionJobId: selectedExtensionId || 0,
         jobStages: jobStages.map(stage => ({
           stageNumber: stage.stageNumber,
           name: stage.name,
@@ -467,59 +588,266 @@ export default function CreateJobPage() {
                       )}
                     </div>
 
-                    {/* Taxonomies/Skills */}
+                    {/* Vị trí tuyển dụng - Autocomplete */}
+                    <div className="space-y-3">
+                      <Label className="text-base font-medium text-gray-700">Vị trí tuyển dụng *</Label>
+                      
+                      {loadingPositions ? (
+                        <div className="text-sm text-gray-500">Đang tải danh sách vị trí...</div>
+                      ) : (
+                        <>
+                          {/* Direct Input Autocomplete */}
+                          <div className="relative">
+                            <Input
+                              type="text"
+                              value={selectedPositionId ? positions.find(p => p.positionId === selectedPositionId)?.name || searchPosition : searchPosition}
+                              onChange={(e) => {
+                                setSearchPosition(e.target.value);
+                                if (selectedPositionId) {
+                                  setSelectedPositionId(null);
+                                }
+                                setOpenPositionPopover(e.target.value.length > 0);
+                              }}
+                              onFocus={() => {
+                                if (!selectedPositionId && searchPosition.length > 0) {
+                                  setOpenPositionPopover(true);
+                                }
+                              }}
+                              placeholder="Nhập để tìm kiếm vị trí tuyển dụng..."
+                              className={`h-12 text-base border-2 ${
+                                !selectedPositionId ? "border-red-300" : "border-gray-300"
+                              } focus:border-green-400`}
+                            />
+                            
+                            {/* Dropdown Suggestions */}
+                            {openPositionPopover && !selectedPositionId && searchPosition.length > 0 && (
+                              <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-64 overflow-auto">
+                                {positions
+                                  .filter(position => 
+                                    position.name.toLowerCase().includes(searchPosition.toLowerCase())
+                                  )
+                                  .length > 0 ? (
+                                  positions
+                                    .filter(position => 
+                                      position.name.toLowerCase().includes(searchPosition.toLowerCase())
+                                    )
+                                    .map((position) => (
+                                      <div
+                                        key={position.positionId}
+                                        onClick={() => {
+                                          setSelectedPositionId(position.positionId);
+                                          setSearchPosition("");
+                                          setOpenPositionPopover(false);
+                                        }}
+                                        className="px-4 py-3 hover:bg-green-50 cursor-pointer flex items-center gap-2 border-b border-gray-100 last:border-b-0"
+                                      >
+                                        <span className="text-sm">{position.name}</span>
+                                      </div>
+                                    ))
+                                ) : (
+                                  <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                    Không tìm thấy vị trí phù hợp
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Selected Position Display */}
+                          {selectedPositionId && (
+                            <div className="flex items-center gap-2 p-3 border-2 border-green-200 rounded-lg bg-green-50">
+                              <Badge 
+                                variant="secondary"
+                                className="px-3 py-1.5 bg-green-100 text-green-800 hover:bg-green-200 text-sm flex items-center gap-2"
+                              >
+                                {positions.find(p => p.positionId === selectedPositionId)?.name || `ID: ${selectedPositionId}`}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedPositionId(null);
+                                    setSearchPosition("");
+                                  }}
+                                  className="ml-1 hover:bg-green-300 rounded-full p-0.5"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </Badge>
+                            </div>
+                          )}
+                          
+                          {errorsStep1.positionId && (
+                            <p className="text-sm text-red-500">{errorsStep1.positionId.message}</p>
+                          )}
+                          
+                          {!selectedPositionId && (
+                            <p className="text-sm text-red-500">Vui lòng chọn vị trí tuyển dụng</p>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {/* Taxonomies/Skills - Direct Autocomplete */}
                     <div className="space-y-3">
                       <Label className="text-base font-medium text-gray-700">Kỹ năng yêu cầu (1-5 kỹ năng) *</Label>
+                      
                       {loadingTaxonomies ? (
                         <div className="text-sm text-gray-500">Đang tải danh sách kỹ năng...</div>
                       ) : (
-                        <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto border-2 border-gray-300 rounded-lg p-3">
-                          {taxonomies.map((taxonomy) => (
-                            <label key={taxonomy.id} className="flex items-center space-x-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={selectedTaxonomies.includes(taxonomy.id)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    if (selectedTaxonomies.length < 5) {
-                                      const newTaxonomies = [...selectedTaxonomies, taxonomy.id];
-                                      setSelectedTaxonomies(newTaxonomies);
-                                      setValueStep1("taxonomyIds", newTaxonomies);
-                                    }
-                                  } else {
-                                    const newTaxonomies = selectedTaxonomies.filter(id => id !== taxonomy.id);
-                                    setSelectedTaxonomies(newTaxonomies);
-                                    setValueStep1("taxonomyIds", newTaxonomies);
-                                  }
-                                }}
-                                disabled={!selectedTaxonomies.includes(taxonomy.id) && selectedTaxonomies.length >= 5}
-                                className="rounded border-gray-300"
-                              />
-                              <span className="text-sm">{taxonomy.name}</span>
-                            </label>
-                          ))}
-                        </div>
+                        <>
+                          {/* Direct Input Autocomplete */}
+                          <div className="relative">
+                            <Input
+                              type="text"
+                              value={searchTaxonomy}
+                              onChange={(e) => {
+                                setSearchTaxonomy(e.target.value);
+                                setOpenTaxonomyPopover(e.target.value.length > 0);
+                              }}
+                              onFocus={() => {
+                                if (searchTaxonomy.length > 0) {
+                                  setOpenTaxonomyPopover(true);
+                                }
+                              }}
+                              placeholder={selectedTaxonomies.length >= 5 ? "Đã chọn tối đa 5 kỹ năng" : "Nhập để tìm kiếm kỹ năng..."}
+                              disabled={selectedTaxonomies.length >= 5}
+                              className={`h-12 text-base border-2 ${
+                                selectedTaxonomies.length === 0 ? "border-red-300" : "border-gray-300"
+                              } focus:border-green-400`}
+                            />
+                            
+                            {/* Dropdown Suggestions */}
+                            {openTaxonomyPopover && searchTaxonomy.length > 0 && (
+                              <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-64 overflow-auto">
+                                {taxonomies
+                                  .filter(taxonomy => 
+                                    !selectedTaxonomies.includes(taxonomy.id) &&
+                                    taxonomy.name.toLowerCase().includes(searchTaxonomy.toLowerCase())
+                                  )
+                                  .length > 0 ? (
+                                  taxonomies
+                                    .filter(taxonomy => 
+                                      !selectedTaxonomies.includes(taxonomy.id) &&
+                                      taxonomy.name.toLowerCase().includes(searchTaxonomy.toLowerCase())
+                                    )
+                                    .map((taxonomy) => (
+                                      <div
+                                        key={taxonomy.id}
+                                        onClick={() => {
+                                          if (selectedTaxonomies.length < 5) {
+                                            const newTaxonomies = [...selectedTaxonomies, taxonomy.id];
+                                            setSelectedTaxonomies(newTaxonomies);
+                                            setValueStep1("taxonomyIds", newTaxonomies);
+                                            setSearchTaxonomy("");
+                                            setOpenTaxonomyPopover(false);
+                                          }
+                                        }}
+                                        className="px-4 py-3 hover:bg-green-50 cursor-pointer flex items-center gap-2 border-b border-gray-100 last:border-b-0"
+                                      >
+                                        <Check className="h-4 w-4 text-green-600 opacity-0" />
+                                        <span className="text-sm">{taxonomy.name}</span>
+                                      </div>
+                                    ))
+                                ) : (
+                                  <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                    Không tìm thấy kỹ năng phù hợp
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Selected Taxonomies as Badges */}
+                          {selectedTaxonomies.length > 0 && (
+                            <div className="flex flex-wrap gap-2 p-3 border-2 border-gray-200 rounded-lg bg-gray-50">
+                              {selectedTaxonomies.map((taxonomyId) => {
+                                const taxonomy = taxonomies.find(t => t.id === taxonomyId);
+                                return (
+                                  <Badge 
+                                    key={taxonomyId} 
+                                    variant="secondary"
+                                    className="px-3 py-1.5 bg-green-100 text-green-800 hover:bg-green-200 text-sm flex items-center gap-2"
+                                  >
+                                    {taxonomy?.name || `ID: ${taxonomyId}`}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newTaxonomies = selectedTaxonomies.filter(id => id !== taxonomyId);
+                                        setSelectedTaxonomies(newTaxonomies);
+                                        setValueStep1("taxonomyIds", newTaxonomies);
+                                      }}
+                                      className="ml-1 hover:bg-green-300 rounded-full p-0.5"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </Badge>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {/* Validation Messages
+                          {selectedTaxonomies.length === 0 && (
+                            <p className="text-sm text-red-500 flex items-center gap-1">
+                              <span className="font-medium">⚠️</span> Phải chọn ít nhất 1 kỹ năng
+                            </p>
+                          )}
+                          {selectedTaxonomies.length >= 5 && (
+                            <p className="text-sm text-orange-500 flex items-center gap-1">
+                              <span className="font-medium">ℹ️</span> Đã chọn tối đa 5 kỹ năng
+                            </p>
+                          )} */}
+                          
+                          {/* Counter */}
+                          <div className="text-sm font-medium text-gray-600">
+                            Đã chọn: <span className={selectedTaxonomies.length === 0 ? "text-red-500" : "text-green-600"}>
+                              {selectedTaxonomies.length}
+                            </span>/5 kỹ năng
+                          </div>
+                        </>
                       )}
-                      {selectedTaxonomies.length === 0 && (
-                        <p className="text-sm text-red-500">Phải chọn ít nhất 1 kỹ năng</p>
-                      )}
-                      {selectedTaxonomies.length >= 5 && (
-                        <p className="text-sm text-orange-500">Đã chọn tối đa 5 kỹ năng</p>
-                      )}
-                      <div className="text-sm text-gray-500">
-                        Đã chọn: {selectedTaxonomies.length}/5 kỹ năng
-                      </div>
                     </div>
 
                     {/* Opened Date */}
                     <div className="space-y-3">
-                      <Label htmlFor="openedAt" className="text-base font-medium text-gray-700">Ngày mở đăng tuyển *</Label>
-                      <Input
-                        id="openedAt"
-                        type="date"
-                        {...registerStep1("openedAt")}
-                        className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.openedAt ? "border-red-500" : "border-gray-300"}`}
-                      />
+                      <Label className="text-base font-medium text-gray-700">Ngày mở tuyển dụng *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={`w-full h-12 justify-start text-left font-normal border-2 ${
+                              !watchStep1("openedAt") ? "text-muted-foreground" : ""
+                            } ${errorsStep1.openedAt ? "border-red-500" : "border-gray-300"}`}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {watchStep1("openedAt") ? (
+                              format(watchStep1("openedAt"), "PPP", { locale: vi })
+                            ) : (
+                              <span>Chọn ngày mở tuyển dụng</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={watchStep1("openedAt")}
+                            onSelect={(date) => {
+                              setValueStep1("openedAt", date || new Date());
+                              // Auto-set expired date to 30 days later
+                              if (date) {
+                                const expiredDate = new Date(date);
+                                expiredDate.setDate(expiredDate.getDate() + 30);
+                                setValueStep1("expiredAt", expiredDate);
+                              }
+                            }}
+                            disabled={(date) => {
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              return date < today;
+                            }}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
                       {errorsStep1.openedAt && (
                         <p className="text-sm text-red-500">{errorsStep1.openedAt.message}</p>
                       )}
@@ -527,16 +855,47 @@ export default function CreateJobPage() {
 
                     {/* Expired Date */}
                     <div className="space-y-3">
-                      <Label htmlFor="expiredAt" className="text-base font-medium text-gray-700">Ngày hết hạn ứng tuyển *</Label>
-                      <Input
-                        id="expiredAt"
-                        type="date"
-                        {...registerStep1("expiredAt")}
-                        className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.expiredAt ? "border-red-500" : "border-gray-300"}`}
-                      />
+                      <Label className="text-base font-medium text-gray-700">Ngày hết hạn *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={`w-full h-12 justify-start text-left font-normal border-2 ${
+                              !watchStep1("expiredAt") ? "text-muted-foreground" : ""
+                            } ${errorsStep1.expiredAt ? "border-red-500" : "border-gray-300"}`}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {watchStep1("expiredAt") ? (
+                              format(watchStep1("expiredAt"), "PPP", { locale: vi })
+                            ) : (
+                              <span>Chọn ngày hết hạn</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={watchStep1("expiredAt")}
+                            onSelect={(date) => setValueStep1("expiredAt", date || new Date())}
+                            disabled={(date) => {
+                              const openedDate = watchStep1("openedAt");
+                              if (!openedDate) return true;
+                              const minDate = new Date(openedDate);
+                              minDate.setDate(minDate.getDate() + 1);
+                              const maxDate = new Date(openedDate);
+                              maxDate.setDate(maxDate.getDate() + 30);
+                              return date <= openedDate || date > maxDate;
+                            }}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
                       {errorsStep1.expiredAt && (
                         <p className="text-sm text-red-500">{errorsStep1.expiredAt.message}</p>
                       )}
+                      <p className="text-xs text-gray-500">
+                        💡 Ngày hết hạn phải trong vòng 30 ngày kể từ ngày mở tuyển dụng
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -787,6 +1146,15 @@ export default function CreateJobPage() {
                     <Label className="text-base font-medium text-gray-700">Kinh nghiệm:</Label>
                     <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">{jobData.experienceYear} năm</p>
                   </div>
+                  
+                  {/* Vị trí tuyển dụng */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium text-gray-700">Vị trí tuyển dụng:</Label>
+                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">
+                      {positions.find(p => p.positionId === selectedPositionId)?.name || "Chưa chọn"}
+                    </p>
+                  </div>
+                  
                   <div className="space-y-3">
                     <Label className="text-base font-medium text-gray-700">Kỹ năng yêu cầu:</Label>
                     <div className="bg-gray-50 p-3 rounded">
@@ -818,12 +1186,49 @@ export default function CreateJobPage() {
                     </p>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-medium text-gray-700">Ngày mở:</Label>
-                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">{new Date(jobData.openedAt).toLocaleDateString('vi-VN')}</p>
+                    <Label className="text-base font-medium text-gray-700">Ngày mở tuyển dụng:</Label>
+                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">
+                      {jobData.openedAt instanceof Date ? jobData.openedAt.toLocaleDateString('vi-VN') : new Date(jobData.openedAt).toLocaleDateString('vi-VN')}
+                    </p>
                   </div>
                   <div className="space-y-3">
-                    <Label className="text-base font-medium text-gray-700">Hết hạn:</Label>
-                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">{new Date(jobData.expiredAt).toLocaleDateString('vi-VN')}</p>
+                    <Label className="text-base font-medium text-gray-700">Ngày hết hạn:</Label>
+                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">
+                      {jobData.expiredAt instanceof Date ? jobData.expiredAt.toLocaleDateString('vi-VN') : new Date(jobData.expiredAt).toLocaleDateString('vi-VN')}
+                    </p>
+                  </div>
+                  
+                  {/* Highlight and Extension Job Selection */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium text-gray-700">Gói nổi bật:</Label>
+                    <div className="bg-gray-50 p-3 rounded">
+                      {selectedHighlightId ? (
+                        <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
+                          {(() => {
+                            const pkg = highlightJobs.find(j => j.id === selectedHighlightId);
+                            return pkg ? `Gói nổi bật ${pkg.highlightJobDays} ngày` : `Gói #${selectedHighlightId}`;
+                          })()}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500 text-sm">Không chọn</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium text-gray-700">Gói gia hạn:</Label>
+                    <div className="bg-gray-50 p-3 rounded">
+                      {selectedExtensionId ? (
+                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                          {(() => {
+                            const pkg = extensionJobs.find(j => j.id === selectedExtensionId);
+                            return pkg ? `Gói gia hạn ${pkg.extensionJobDays} ngày` : `Gói #${selectedExtensionId}`;
+                          })()}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500 text-sm">Không chọn</span>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-3">
                     <Label className="text-base font-medium text-gray-700">Mô tả:</Label>
@@ -834,8 +1239,91 @@ export default function CreateJobPage() {
                 </CardContent>
               </Card>
 
-              {/* Process Review */}
+              {/* Process Review and Additional Options */}
               <div className="space-y-8">
+                {/* Highlight and Extension Job Selection */}
+                <Card className="border-green-200 shadow-lg">
+                  <CardHeader className="bg-green-50 border-b border-green-200">
+                    <CardTitle className="flex items-center space-x-2 text-green-800 text-lg">
+                      <CheckCircle className="h-6 w-6 text-green-600" />
+                      <span>Gói nâng cấp (Tùy chọn)</span>
+                    </CardTitle>
+                    <p className="text-sm text-gray-600 mt-2">Chọn gói nổi bật hoặc gia hạn cho tin tuyển dụng</p>
+                  </CardHeader>
+                  <CardContent className="space-y-6 p-6">
+                    {/* Highlight Job Selection */}
+                    <div className="space-y-3">
+                      <Label className="text-base font-medium text-gray-700">Gói nổi bật</Label>
+                      {loadingHighlights ? (
+                        <p className="text-sm text-gray-500">Đang tải...</p>
+                      ) : (
+                        <Select
+                          value={selectedHighlightId?.toString() || "none"}
+                          onValueChange={(value) => setSelectedHighlightId(value === "none" ? undefined : parseInt(value))}
+                        >
+                          <SelectTrigger className="h-12 text-base border-2 focus:border-green-400">
+                            <SelectValue placeholder="Chọn gói nổi bật" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Không chọn</SelectItem>
+                            {highlightJobs.length === 0 ? (
+                              <SelectItem value="empty" disabled>Không có gói khả dụng</SelectItem>
+                            ) : (
+                              highlightJobs.map(job => (
+                                <SelectItem 
+                                  key={job.id} 
+                                  value={job.id.toString()}
+                                  disabled={job.highlightJobDaysCount <= 0}
+                                >
+                                  Gói nổi bật {job.highlightJobDays} ngày (còn {job.highlightJobDaysCount} lượt)
+                                  {job.highlightJobDaysCount <= 0 && " - Đã hết"}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <p className="text-xs text-gray-500">💡 Giúp tin tuyển dụng nổi bật hơn</p>
+                    </div>
+
+                    {/* Extension Job Selection */}
+                    <div className="space-y-3">
+                      <Label className="text-base font-medium text-gray-700">Gói gia hạn</Label>
+                      {loadingExtensions ? (
+                        <p className="text-sm text-gray-500">Đang tải...</p>
+                      ) : (
+                        <Select
+                          value={selectedExtensionId?.toString() || "none"}
+                          onValueChange={(value) => setSelectedExtensionId(value === "none" ? undefined : parseInt(value))}
+                        >
+                          <SelectTrigger className="h-12 text-base border-2 focus:border-green-400">
+                            <SelectValue placeholder="Chọn gói gia hạn" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Không chọn</SelectItem>
+                            {extensionJobs.length === 0 ? (
+                              <SelectItem value="empty" disabled>Không có gói khả dụng</SelectItem>
+                            ) : (
+                              extensionJobs.map(job => (
+                                <SelectItem 
+                                  key={job.id} 
+                                  value={job.id.toString()}
+                                  disabled={job.extensionJobDaysCount <= 0}
+                                >
+                                  Gói gia hạn {job.extensionJobDays} ngày (còn {job.extensionJobDaysCount} lượt)
+                                  {job.extensionJobDaysCount <= 0 && " - Đã hết"}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <p className="text-xs text-gray-500">💡 Kéo dài thời gian hiển thị tin tuyển dụng</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Process Review */}
                 <Card className="border-green-200 shadow-lg">
                   <CardHeader className="bg-green-50 border-b border-green-200">
                     <CardTitle className="flex items-center space-x-2 text-green-800 text-lg">
