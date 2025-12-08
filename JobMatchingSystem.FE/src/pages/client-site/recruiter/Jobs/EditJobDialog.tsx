@@ -24,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { toast } from "sonner";
 
 // Import services và types
 import { JobServices } from "@/services/job.service";
@@ -191,7 +192,7 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
 
       // Validate salary range
       if (data.salaryMin && data.salaryMax && data.salaryMin >= data.salaryMax) {
-        alert("Lương tối thiểu phải nhỏ hơn lương tối đa");
+        toast.error("Lương tối thiểu phải nhỏ hơn lương tối đa");
         return;
       }
 
@@ -202,20 +203,29 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
       openedDate.setHours(0, 0, 0, 0);
       const expiredDate = new Date(data.expiredAt);
       expiredDate.setHours(0, 0, 0, 0);
+      
+      // Get original opened date from job
+      const originalOpenedDate = job.openedAt ? new Date(job.openedAt) : null;
+      if (originalOpenedDate) {
+        originalOpenedDate.setHours(0, 0, 0, 0);
+      }
 
-      if (openedDate < today) {
-        alert("Ngày mở tuyển dụng không được nhỏ hơn ngày hiện tại");
+      // Only validate openedAt >= today if user changed the opened date
+      // Allow keeping the original opened date even if it's in the past
+      const isOpenedDateChanged = !originalOpenedDate || openedDate.getTime() !== originalOpenedDate.getTime();
+      if (isOpenedDateChanged && openedDate < today) {
+        toast.error("Ngày mở tuyển dụng không được nhỏ hơn ngày hiện tại");
         return;
       }
 
       if (expiredDate <= openedDate) {
-        alert("Ngày hết hạn phải lớn hơn ngày mở tuyển dụng");
+        toast.error("Ngày hết hạn phải lớn hơn ngày mở tuyển dụng");
         return;
       }
 
       const daysDiff = Math.ceil((expiredDate.getTime() - openedDate.getTime()) / (1000 * 60 * 60 * 24));
       if (daysDiff > 30) {
-        alert("Ngày hết hạn không được quá 30 ngày so với ngày mở tuyển dụng");
+        toast.error("Ngày hết hạn không được quá 30 ngày so với ngày mở tuyển dụng");
         return;
       }
 
@@ -252,25 +262,44 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
       const response = await JobServices.update(job.jobId.toString(), updateRequest);
       
       if (response.isSuccess) {
+        toast.success("Cập nhật tin tuyển dụng thành công!");
         onSave(); // Refresh parent component data
         onClose(); // Close dialog
-        alert("Cập nhật tin tuyển dụng thành công!");
       } else {
-        alert("Có lỗi xảy ra khi cập nhật tin tuyển dụng");
+        const errorMsg = response.errorMessages?.length > 0 
+          ? response.errorMessages[0] 
+          : "Có lỗi xảy ra khi cập nhật tin tuyển dụng";
+        toast.error(errorMsg);
       }
     } catch (error: any) {
       console.error("Error updating job:", error);
       
-      // Handle specific error messages
+      // Handle specific error messages from API
+      let errorMessage = "Có lỗi xảy ra khi cập nhật tin tuyển dụng";
+      
       if (error.response?.data?.message) {
-        alert(`Lỗi: ${error.response.data.message}`);
-      } else if (error.message?.includes("CantUpdate")) {
-        alert("Không thể cập nhật tin tuyển dụng đã có ứng viên ứng tuyển");
-      } else if (error.message?.includes("NotFoundRecruiter")) {
-        alert("Bạn không có quyền chỉnh sửa tin tuyển dụng này");
-      } else {
-        alert("Có lỗi xảy ra khi cập nhật tin tuyển dụng. Vui lòng thử lại!");
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errorCode) {
+        // Handle specific error codes
+        switch (error.response.data.errorCode) {
+          case "CantUpdate":
+          case "CantUpdateJob":
+            errorMessage = "Không thể cập nhật tin tuyển dụng đã có ứng viên ứng tuyển";
+            break;
+          case "NotFoundRecruiter":
+            errorMessage = "Bạn không có quyền chỉnh sửa tin tuyển dụng này";
+            break;
+          case "NotFoundJob":
+            errorMessage = "Không tìm thấy tin tuyển dụng";
+            break;
+          default:
+            errorMessage = error.response.data.message || errorMessage;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
       }
+      
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

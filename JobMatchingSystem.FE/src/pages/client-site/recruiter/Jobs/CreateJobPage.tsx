@@ -50,6 +50,7 @@ import { type Position } from "@/models/position";
 import { type User } from "@/models/user";
 import { type ExtensionJob } from "@/models/extension-job";
 import { type HighlightJob } from "@/models/highlight-job";
+import { toast } from "sonner";
 
 // Types
 interface HiringManager {
@@ -330,24 +331,24 @@ export default function CreateJobPage() {
     
     // Validate salary range
     if (!isNegotiableSalary && data.salaryMin && data.salaryMax && data.salaryMin >= data.salaryMax) {
-      alert("Lương tối thiểu phải nhỏ hơn lương tối đa");
+      toast.error("Lương tối thiểu phải nhỏ hơn lương tối đa");
       return;
     }
 
     // Validate position
     if (!selectedPositionId) {
-      alert("Phải chọn vị trí tuyển dụng");
+      toast.error("Phải chọn vị trí tuyển dụng");
       return;
     }
 
     // Validate taxonomies - kiểm tra selectedTaxonomies
     if (selectedTaxonomies.length === 0) {
-      alert("Phải chọn ít nhất 1 kỹ năng");
+      toast.error("Phải chọn ít nhất 1 kỹ năng");
       return;
     }
 
     if (selectedTaxonomies.length > 5) {
-      alert("Chỉ được chọn tối đa 5 kỹ năng");
+      toast.error("Chỉ được chọn tối đa 5 kỹ năng");
       return;
     }
 
@@ -360,18 +361,18 @@ export default function CreateJobPage() {
     expiredDate.setHours(0, 0, 0, 0);
 
     if (openedDate < today) {
-      alert("Ngày mở tuyển dụng không được nhỏ hơn ngày hiện tại");
+      toast.error("Ngày mở tuyển dụng không được nhỏ hơn ngày hiện tại");
       return;
     }
 
     if (expiredDate <= openedDate) {
-      alert("Ngày hết hạn phải lớn hơn ngày mở tuyển dụng");
+      toast.error("Ngày hết hạn phải lớn hơn ngày mở tuyển dụng");
       return;
     }
 
     const daysDiff = Math.ceil((expiredDate.getTime() - openedDate.getTime()) / (1000 * 60 * 60 * 24));
     if (daysDiff > 30) {
-      alert("Ngày hết hạn không được quá 30 ngày so với ngày mở tuyển dụng");
+      toast.error("Ngày hết hạn không được quá 30 ngày so với ngày mở tuyển dụng");
       return;
     }
 
@@ -471,19 +472,48 @@ export default function CreateJobPage() {
       const response = await JobServices.create(createRequest as any);
       
       if (response.isSuccess) {
-        alert("Tạo tin tuyển dụng thành công!");
+        toast.success("Tạo tin tuyển dụng thành công!");
         navigate("/recruiter/jobs");
       } else {
-        alert("Có lỗi xảy ra khi tạo tin tuyển dụng");
+        const errorMsg = response.errorMessages?.length > 0 
+          ? response.errorMessages[0] 
+          : "Có lỗi xảy ra khi tạo tin tuyển dụng";
+        toast.error(errorMsg);
       }
     } catch (error: any) {
       console.error("Error creating job:", error);
       
+      // Handle specific error messages from API
+      let errorMessage = "Có lỗi xảy ra khi tạo tin tuyển dụng";
+      
       if (error.response?.data?.message) {
-        alert(`Lỗi: ${error.response.data.message}`);
-      } else {
-        alert("Có lỗi xảy ra khi tạo tin tuyển dụng. Vui lòng thử lại!");
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errorCode) {
+        // Handle specific error codes
+        switch (error.response.data.errorCode) {
+          case "NotFoundRecruiter":
+            errorMessage = "Bạn không có quyền tạo tin tuyển dụng";
+            break;
+          case "NotFoundPosition":
+            errorMessage = "Vị trí tuyển dụng không tồn tại";
+            break;
+          case "NotFoundTaxonomy":
+            errorMessage = "Kỹ năng không hợp lệ";
+            break;
+          case "NotFoundExtensionJob":
+            errorMessage = "Gói gia hạn không tồn tại hoặc đã hết lượt sử dụng";
+            break;
+          case "NotFoundHighlightJob":
+            errorMessage = "Gói nổi bật không tồn tại hoặc đã hết lượt sử dụng";
+            break;
+          default:
+            errorMessage = error.response.data.message || errorMessage;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
       }
+      
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

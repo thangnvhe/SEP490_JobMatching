@@ -15,6 +15,18 @@ public class AdminDashboardService : IAdminDashboardService
 
     public async Task<AdminDashboardResponse> GetDashboardDataAsync(int month, int year)
     {
+        // Ensure valid month and year
+        if (year <= 0 || year > 9999)
+        {
+            var now = DateTime.UtcNow;
+            year = now.Year;
+        }
+        if (month <= 0 || month > 12)
+        {
+            var now = DateTime.UtcNow;
+            month = now.Month;
+        }
+
         var startDate = new DateTime(year, month, 1);
         var endDate = startDate.AddMonths(1);
 
