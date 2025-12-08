@@ -71,23 +71,48 @@ namespace JobMatchingSystem.API.Services.Implementations
                 };
             }
 
+            // Apply companyId filter before batch loading
+            if (companyId.HasValue)
+            {
+                listUser = listUser.Where(u => u.CompanyId == companyId.Value).ToList();
+            }
+
+            // Batch load all user roles in one query to avoid N+1
+            var userIds = listUser.Select(u => u.Id).ToList();
+            var userRolesDictionary = await _unitOfWork.AuthRepository.GetUserRolesDictionaryAsync(userIds);
+
+            // Apply role filter after getting roles
+            if (!string.IsNullOrEmpty(role))
+            {
+                listUser = listUser.Where(u => 
+                    userRolesDictionary.ContainsKey(u.Id) && 
+                    userRolesDictionary[u.Id].Equals(role, StringComparison.OrdinalIgnoreCase)
+                ).ToList();
+            }
+
+            // Batch generate secure avatar URLs
+            var avatarUrls = listUser.Select(u => u.AvatarUrl).Distinct().Where(url => !string.IsNullOrEmpty(url)).ToList();
+            var secureUrlDictionary = new Dictionary<string, string>();
+            foreach (var url in avatarUrls)
+            {
+                if (!string.IsNullOrEmpty(url))
+                {
+                    var secureUrl = await _blobStorageService.GetSecureFileUrlAsync(url);
+                    if (!string.IsNullOrEmpty(secureUrl))
+                    {
+                        secureUrlDictionary[url] = secureUrl;
+                    }
+                }
+            }
+
             var userDetailDtos = new List<UserDetailResponseDTO>();
             
             foreach (var user in listUser)
             {
-                // Get user roles
-                var roles = await _unitOfWork.AuthRepository.GetRolesAsync(user);
-                var userRole = roles.FirstOrDefault();
-
-                // Apply filters
-                if (companyId.HasValue && user.CompanyId != companyId.Value)
-                    continue;
-
-                if (!string.IsNullOrEmpty(role) && (userRole == null || !userRole.Equals(role, StringComparison.OrdinalIgnoreCase)))
-                    continue;
-                
-                // Generate secure URL with SAS token for avatar access
-                var secureAvatarUrl = await _blobStorageService.GetSecureFileUrlAsync(user.AvatarUrl);
+                var userRole = userRolesDictionary.GetValueOrDefault(user.Id, string.Empty);
+                var secureAvatarUrl = !string.IsNullOrEmpty(user.AvatarUrl) && secureUrlDictionary.ContainsKey(user.AvatarUrl)
+                    ? secureUrlDictionary[user.AvatarUrl]
+                    : string.Empty;
                 
                 var userDetailDto = new UserDetailResponseDTO
                 {

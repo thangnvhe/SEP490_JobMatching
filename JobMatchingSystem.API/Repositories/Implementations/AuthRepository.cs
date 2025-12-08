@@ -78,6 +78,25 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             return await query.ToListAsync();
         }
 
+        public async Task<Dictionary<int, string>> GetUserRolesDictionaryAsync(List<int> userIds)
+        {
+            if (userIds == null || !userIds.Any())
+                return new Dictionary<int, string>();
+
+            // Batch load all user roles in one query
+            var userRoles = await _context.UserRoles
+                .Where(ur => userIds.Contains(ur.UserId))
+                .Join(_context.Roles,
+                    ur => ur.RoleId,
+                    r => r.Id,
+                    (ur, r) => new { ur.UserId, r.Name })
+                .ToListAsync();
+
+            return userRoles
+                .GroupBy(x => x.UserId)
+                .ToDictionary(g => g.Key, g => g.First().Name ?? string.Empty);
+        }
+
         public  Task ChangeStatus(ApplicationUser user)
         {
             user.IsActive = !user.IsActive;
