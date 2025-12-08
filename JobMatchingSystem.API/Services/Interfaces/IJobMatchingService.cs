@@ -1,4 +1,5 @@
 using JobMatchingSystem.API.DTOs.Response;
+using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 
 namespace JobMatchingSystem.API.Services.Interfaces
@@ -8,7 +9,7 @@ namespace JobMatchingSystem.API.Services.Interfaces
         /// <summary>
         /// Tìm kiếm jobs với filters, pagination và trả về JobDetailResponse
         /// </summary>
-        Task<List<JobDetailResponse>> SearchJobsWithMatchingDetailAsync(int candidateId, 
+        Task<PagedResult<JobDetailResponse>> SearchJobsWithMatchingDetailAsync(int candidateId, 
             string? location = null, 
             int? minSalary = null, 
             int? maxSalary = null,
@@ -21,7 +22,7 @@ namespace JobMatchingSystem.API.Services.Interfaces
         /// <summary>
         /// Tìm kiếm candidates với filters và sắp xếp theo matching score
         /// </summary>
-        Task<List<CandidateMatchingResult>> SearchCandidatesWithMatchingAsync(int jobId,
+        Task<PagedResult<CandidateMatchingResult>> SearchCandidatesWithMatchingAsync(int jobId,
             int? minExperience = null,
             int? maxExperience = null,
             List<int>? requiredSkills = null,

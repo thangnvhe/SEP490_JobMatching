@@ -1,5 +1,6 @@
 using JobMatchingSystem.API.Data;
 using JobMatchingSystem.API.DTOs.Response;
+using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -87,7 +88,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 .ToList();
         }
 
-        public async Task<List<CandidateMatchingResult>> SearchCandidatesWithMatchingAsync(int jobId, 
+        public async Task<PagedResult<CandidateMatchingResult>> SearchCandidatesWithMatchingAsync(int jobId, 
             int? minExperience = null, 
             int? maxExperience = null, 
             List<int>? requiredSkills = null, 
@@ -96,7 +97,14 @@ namespace JobMatchingSystem.API.Services.Implementations
             int size = 10)
         {
             var job = await GetJobWithDetailsAsync(jobId);
-            if (job == null) return new List<CandidateMatchingResult>();
+            if (job == null) 
+            {
+                return new PagedResult<CandidateMatchingResult>
+                {
+                    Items = new List<CandidateMatchingResult>(),
+                    pageInfo = new PageInfo(0, page, size, "", false)
+                };
+            }
 
             // Get candidates with CV and apply filters
             var candidatesWithCV = await _context.CVUploads
@@ -155,22 +163,43 @@ namespace JobMatchingSystem.API.Services.Implementations
                 candidatesWithCV = filteredByEducation;
             }
 
+            // Only return candidates with matching score >= 30%
+            const double MIN_MATCHING_SCORE = 30.0;
             var matchingResults = new List<CandidateMatchingResult>();
 
             foreach (var candidate in candidatesWithCV)
             {
                 var matchingResult = await CalculateMatchingScoreForCandidateAsync(candidate, job);
-                if (matchingResult != null)
+                if (matchingResult != null && matchingResult.TotalScore >= MIN_MATCHING_SCORE)
                 {
                     matchingResults.Add(matchingResult);
                 }
             }
 
-            return matchingResults
+            // If no matching candidates found, return empty result
+            if (!matchingResults.Any())
+            {
+                return new PagedResult<CandidateMatchingResult>
+                {
+                    Items = new List<CandidateMatchingResult>(),
+                    pageInfo = new PageInfo(0, page, size, "", false)
+                };
+            }
+
+            // Get total count before pagination
+            var totalCount = matchingResults.Count;
+
+            var paginatedResults = matchingResults
                 .OrderByDescending(r => r.TotalScore)
                 .Skip((page - 1) * size)
                 .Take(size)
                 .ToList();
+
+            return new PagedResult<CandidateMatchingResult>
+            {
+                Items = paginatedResults,
+                pageInfo = new PageInfo(totalCount, page, size, "score", true)
+            };
         }
 
         private async Task<ApplicationUser?> GetCandidateWithDetailsAsync(int candidateId)
@@ -534,7 +563,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             return details;
         }
 
-        public async Task<List<JobDetailResponse>> SearchJobsWithMatchingDetailAsync(int candidateId, 
+        public async Task<PagedResult<JobDetailResponse>> SearchJobsWithMatchingDetailAsync(int candidateId, 
             string? location = null, 
             int? minSalary = null, 
             int? maxSalary = null,
@@ -545,7 +574,14 @@ namespace JobMatchingSystem.API.Services.Implementations
             bool isDescending = false)
         {
             var candidate = await GetCandidateWithDetailsAsync(candidateId);
-            if (candidate == null) return new List<JobDetailResponse>();
+            if (candidate == null) 
+            {
+                return new PagedResult<JobDetailResponse>
+                {
+                    Items = new List<JobDetailResponse>(),
+                    pageInfo = new PageInfo(0, page, size, sortBy, isDescending)
+                };
+            }
 
             var query = _context.Jobs
                 .Include(j => j.Company)
@@ -578,16 +614,31 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             var filteredJobs = await query.ToListAsync();
 
+            // Only return jobs with matching score >= 30%
+            const double MIN_MATCHING_SCORE = 30.0;
             var jobsWithScores = new List<(Job Job, double Score)>();
 
             foreach (var job in filteredJobs)
             {
                 var matchingResult = await CalculateMatchingScoreInternalAsync(candidate, job);
-                if (matchingResult != null)
+                if (matchingResult != null && matchingResult.TotalScore >= MIN_MATCHING_SCORE)
                 {
                     jobsWithScores.Add((job, matchingResult.TotalScore));
                 }
             }
+
+            // If no matching jobs found, return empty result
+            if (!jobsWithScores.Any())
+            {
+                return new PagedResult<JobDetailResponse>
+                {
+                    Items = new List<JobDetailResponse>(),
+                    pageInfo = new PageInfo(0, page, size, sortBy, isDescending)
+                };
+            }
+
+            // Get total count before pagination
+            var totalCount = jobsWithScores.Count;
 
             // Sort by score (descending) or by other criteria
             var sortedJobs = jobsWithScores;
@@ -625,7 +676,11 @@ namespace JobMatchingSystem.API.Services.Implementations
                 jobDetailResponses.Add(response);
             }
 
-            return jobDetailResponses;
+            return new PagedResult<JobDetailResponse>
+            {
+                Items = jobDetailResponses,
+                pageInfo = new PageInfo(totalCount, page, size, sortBy, isDescending)
+            };
         }
 
         private async Task<JobDetailResponse> CreateJobDetailResponseAsync(Job job, int? userId)

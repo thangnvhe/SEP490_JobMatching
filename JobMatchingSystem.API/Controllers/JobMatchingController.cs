@@ -1,5 +1,6 @@
 using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.DTOs.Response;
+using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -48,7 +49,7 @@ namespace JobMatchingSystem.API.Controllers
             var matchingJobs = await _jobMatchingService.SearchJobsWithMatchingDetailAsync(
                 candidateId, location, minSalary, maxSalary, requiredSkills, page, size, sortBy, isDescending);
 
-            return Ok(APIResponse<List<JobDetailResponse>>.Builder()
+            return Ok(APIResponse<PagedResult<JobDetailResponse>>.Builder()
                 .WithResult(matchingJobs)
                 .WithSuccess(true)
                 .WithStatusCode(HttpStatusCode.OK)
@@ -72,7 +73,7 @@ namespace JobMatchingSystem.API.Controllers
             var matchingCandidates = await _jobMatchingService.SearchCandidatesWithMatchingAsync(
                 jobId, minExperience, maxExperience, requiredSkills, educationLevelId, page, size);
 
-            return Ok(APIResponse<List<CandidateMatchingResult>>.Builder()
+            return Ok(APIResponse<PagedResult<CandidateMatchingResult>>.Builder()
                 .WithResult(matchingCandidates)
                 .WithSuccess(true)
                 .WithStatusCode(HttpStatusCode.OK)

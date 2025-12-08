@@ -32,6 +32,7 @@ export interface Job {
   isSave?: boolean;
   applyCount?: number;
   isHighlight: boolean;
+  positionId?: number;
 }
 
 export interface CandidateJob {
