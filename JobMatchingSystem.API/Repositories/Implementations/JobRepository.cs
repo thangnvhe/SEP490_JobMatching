@@ -127,12 +127,11 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             }
             // Nếu không truyền isDeleted thì hiển thị tất cả (bao gồm cả đã xóa và chưa xóa)
 
+            // Taxonomy filtering with hierarchy support
+            // The taxonomyIds list is already expanded to include parent/child/sibling taxonomies from JobService
             if (request.taxonomyIds != null && request.taxonomyIds.Any())
             {
-                foreach (var taxonomyId in request.taxonomyIds)
-                {
-                    query = query.Where(j => j.JobTaxonomies.Any(jt => jt.TaxonomyId == taxonomyId));
-                }
+                query = query.Where(j => j.JobTaxonomies.Any(jt => request.taxonomyIds.Contains(jt.TaxonomyId)));
             }
 
             // Sắp xếp động

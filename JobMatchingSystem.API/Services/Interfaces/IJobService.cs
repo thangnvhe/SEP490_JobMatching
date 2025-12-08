@@ -13,5 +13,6 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task<PagedResult<JobDetailResponse>> GetJobsPagedAsync(GetJobPagedRequest request);
         Task<PagedResult<JobDetailResponse>> GetJobsPagedAsync(GetJobPagedRequest request, int? userId);
         Task DeleteJobAsync(int jobId, int userId);
+        Task<List<int>> ExpandTaxonomyIdsWithHierarchy(List<int> taxonomyIds);
     }
 }
