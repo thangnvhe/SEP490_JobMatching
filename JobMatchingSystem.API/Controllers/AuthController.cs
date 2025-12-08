@@ -82,9 +82,9 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
         [HttpPost("verify-email")]
-        public async Task<IActionResult> VerifyEmail([FromBody] string TokenLink)
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
         {
-            if (string.IsNullOrEmpty(TokenLink))
+            if (string.IsNullOrEmpty(request.TokenLink))
             {
                 return BadRequest(APIResponse<string>.Builder()
                     .WithResult("Token không hợp lệ")
@@ -93,7 +93,7 @@ namespace JobMatchingSystem.API.Controllers
                     .Build());
             }
 
-            var success = await _authService.VerifyEmailAsync(TokenLink);
+            var success = await _authService.VerifyEmailAsync(request.TokenLink);
 
             if (!success)
             {
