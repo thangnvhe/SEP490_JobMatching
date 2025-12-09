@@ -15,6 +15,30 @@ const axiosInstance = axios.create({
     withCredentials: true,
 });
 
+/**
+ * Helper: Viết hoa chữ cái đầu tiên của chuỗi
+ */
+const capitalizeFirst = (str: string): string => {
+    if (!str || typeof str !== 'string') return str;
+    return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+/**
+ * Transform params để đảm bảo sortBy luôn viết hoa chữ cái đầu
+ */
+const transformPaginationParams = (params: Record<string, any> | undefined): Record<string, any> | undefined => {
+    if (!params) return params;
+    
+    const transformed = { ...params };
+    
+    // Transform sortBy nếu có
+    if (transformed.sortBy ) {
+        transformed.sortBy = capitalizeFirst(transformed.sortBy);
+    }
+    
+    return transformed;
+};
+
 // ====== REQUEST INTERCEPTOR ======
 axiosInstance.interceptors.request.use(
     function (config) {
@@ -25,6 +49,12 @@ axiosInstance.interceptors.request.use(
                 config.headers.Authorization = `Bearer ${accessToken}`;
             }
         }
+
+        // Transform params để đảm bảo sortBy luôn viết hoa chữ cái đầu
+        if (config.params) {
+            config.params = transformPaginationParams(config.params);
+        }
+
         return config;
     },
     function (error: AxiosError) {

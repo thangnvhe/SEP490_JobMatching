@@ -197,12 +197,29 @@ const JobCard = ({ job, company, onJobDetails, onSaveJob }: {
                     </div>
 
                     <div className="mt-auto pt-2 flex justify-between items-end ">
-                        <div className="flex items-center gap-2 text-xs text-gray-400">
+                        <div className="flex items-center gap-2 text-xs text-gray-400 flex-wrap">
                             <span>Đăng {formatDate(job.createdAt)}</span>
-                            <span>•</span>
-                            <span className="truncate max-w-[200px]">
-                                {job.taxonomies.map((taxonomy) => taxonomy.name).slice(0, 3).join(', ')}
-                            </span>
+                            {job.taxonomies.length > 0 && (
+                                <>
+                                    <span>•</span>
+                                    <div className="flex items-center gap-1 flex-wrap">
+                                        {job.taxonomies.slice(0, 3).map((taxonomy) => (
+                                            <Badge
+                                                key={taxonomy.id ?? taxonomy.name}
+                                                variant="outline"
+                                                className={cn(
+                                                    "px-2 py-0.5 font-medium text-[11px] border",
+                                                    isHighlight
+                                                        ? "bg-amber-50 text-amber-700 border-amber-200"
+                                                        : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                                )}
+                                            >
+                                                {taxonomy.name}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                         <div className="flex items-center gap-2">
