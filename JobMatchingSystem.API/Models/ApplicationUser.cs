@@ -36,6 +36,10 @@ namespace JobMatchingSystem.API.Models
         public DateTime? PasswordResetTokenExpiry { get; set; }
         public bool? PasswordResetTokenUsed { get; set; }
 
+        // Email confirmation token tracking
+        public string? EmailConfirmationToken { get; set; }
+        public bool? EmailConfirmationTokenUsed { get; set; }
+
         // Navigation properties
         [ForeignKey("CompanyId")]
         public virtual Company? CompanyRecruiter { get; set; }

@@ -162,7 +162,9 @@ export function ManageCompanyPage() {
 
   const handleStatusFilterChange = (status: string) => {
     setStatusFilter(status);
-    setPaginationInput((prev) => ({ ...prev, page: 1, status }));
+    // Convert "deleted" → "-1" để backend hiểu
+    const statusValue = status === 'deleted' ? '-1' : status;
+    setPaginationInput((prev) => ({ ...prev, page: 1, status: statusValue }));
   };
 
   const handleView = (company: Company) => {
@@ -214,12 +216,12 @@ export function ManageCompanyPage() {
       enableSorting: false,
     },
     {
-      id: "companyName",
+      id: "Name",
       accessorKey: "name",
       header: "Tên công ty",
       enableSorting: true,
       cell: ({ row }) => {
-        const name = row.getValue("companyName") as string;
+        const name = row.getValue("Name") as string;
         return (
           <div title={name} className="max-w-[200px] truncate text-sm font-medium">
             {truncateText(name, 50)}
