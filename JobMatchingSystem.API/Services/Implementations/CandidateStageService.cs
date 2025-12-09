@@ -13,11 +13,13 @@ namespace JobMatchingSystem.API.Services.Implementations
     {
         protected readonly IUnitOfWork _unitOfWork;
         private readonly IBlobStorageService _blobStorageService;
+        private readonly IEmailService _emailService;
 
-        public CandidateStageService(IUnitOfWork unitOfWork, IBlobStorageService blobStorageService) 
+        public CandidateStageService(IUnitOfWork unitOfWork, IBlobStorageService blobStorageService, IEmailService emailService) 
         {
             _unitOfWork = unitOfWork;
             _blobStorageService = blobStorageService;
+            _emailService = emailService;
         }
 
         public async Task<CandidateStageDetailResponse?> UpdateResult(int id,UpdateResultCandidateStage request)
@@ -176,6 +178,72 @@ namespace JobMatchingSystem.API.Services.Implementations
             candidateStage.Status=Enums.CandidateStageStatus.Schedule;
             await _unitOfWork.CandidateStageRepository.Update(candidateStage);
             await _unitOfWork.SaveAsync();
+
+            // Send email notification to candidate
+            try
+            {
+                Console.WriteLine($"[EMAIL DEBUG] Starting to send interview schedule email for CandidateStage ID: {id}");
+                
+                // Reload with all includes to get related data
+                var candidateStageWithIncludes = await _unitOfWork.CandidateStageRepository.GetDetailById(id);
+                Console.WriteLine($"[EMAIL DEBUG] CandidateStage loaded: {candidateStageWithIncludes != null}");
+                
+                var candidateJob = candidateStageWithIncludes?.CandidateJob;
+                Console.WriteLine($"[EMAIL DEBUG] CandidateJob loaded: {candidateJob != null}");
+                
+                var cv = candidateJob?.CVUpload;
+                Console.WriteLine($"[EMAIL DEBUG] CV loaded: {cv != null}");
+                
+                var user = cv?.User;
+                Console.WriteLine($"[EMAIL DEBUG] User loaded: {user != null}, Email: {user?.Email}");
+                
+                var job = candidateJob?.Job;
+                Console.WriteLine($"[EMAIL DEBUG] Job loaded: {job != null}, Title: {job?.Title}");
+                
+                var company = job?.Company;
+                Console.WriteLine($"[EMAIL DEBUG] Company loaded: {company != null}, Name: {company?.Name}");
+
+                if (user?.Email != null && job != null && company != null)
+                {
+                    Console.WriteLine($"[EMAIL DEBUG] All conditions met. Sending email to: {user.Email}");
+                    
+                    // Convert DateOnly to DateTime for email
+                    var interviewDateTime = candidateStage.InterviewDate.HasValue 
+                        ? candidateStage.InterviewDate.Value.ToDateTime(TimeOnly.MinValue)
+                        : DateTime.UtcNow;
+
+                    await _emailService.SendInterviewScheduleNotificationAsync(
+                        user.Email,
+                        user.FullName,
+                        job.Title,
+                        company.Name,
+                        interviewDateTime,
+                        candidateStage.InterviewStartTime,
+                        candidateStage.InterviewEndTime,
+                        candidateStage.InterviewLocation,
+                        candidateStage.GoogleMeetLink,
+                        candidateStage.Id
+                    );
+                    
+                    Console.WriteLine($"[EMAIL DEBUG] Email sent successfully!");
+                    
+                    // Lưu thời điểm gửi email
+                    candidateStage.NotificationSentAt = DateTime.Now;
+                    await _unitOfWork.CandidateStageRepository.Update(candidateStage);
+                    await _unitOfWork.SaveAsync();
+                    Console.WriteLine($"[EMAIL DEBUG] NotificationSentAt saved: {candidateStage.NotificationSentAt}");
+                }
+                else
+                {
+                    Console.WriteLine($"[EMAIL DEBUG] Email NOT sent. Missing data - User Email: {user?.Email != null}, Job: {job != null}, Company: {company != null}");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log email error but don't throw to avoid disrupting the main process
+                Console.WriteLine($"[EMAIL ERROR] Failed to send interview schedule email: {ex.Message}");
+                Console.WriteLine($"[EMAIL ERROR] Stack trace: {ex.StackTrace}");
+            }
         }
 
         public async Task<List<CandidateStageDetailResponse>> GetCandidateDetailsByJobStageId(int jobStageId)
@@ -416,6 +484,77 @@ namespace JobMatchingSystem.API.Services.Implementations
                 Items = paginatedItems,
                 pageInfo = new PageInfo(totalCount, page, size, sortBy, isDecending)
             };
+        }
+
+        public async Task<bool> ConfirmInterview(int candidateStageId)
+        {
+            var candidateStage = await _unitOfWork.CandidateStageRepository.GetDetailById(candidateStageId);
+            
+            if (candidateStage == null)
+            {
+                throw new AppException(ErrorCode.NotFoundCandidateStage());
+            }
+
+            // Kiểm tra xem email đã được gửi chưa
+            if (!candidateStage.NotificationSentAt.HasValue)
+            {
+                return false; // Link không hợp lệ
+            }
+
+            // Kiểm tra link có hết hạn sau 24h không
+            if (DateTime.Now > candidateStage.NotificationSentAt.Value.AddHours(24))
+            {
+                return false; // Link đã hết hạn
+            }
+
+            // Chỉ cho phép confirm khi status là Schedule
+            if (candidateStage.Status != Enums.CandidateStageStatus.Schedule)
+            {
+                return false; // Trạng thái không hợp lệ
+            }
+
+            // Cập nhật status hoặc thêm flag để đánh dấu candidate đã confirm
+            // Có thể thêm field ConfirmedAt vào model nếu cần track
+            Console.WriteLine($"[INTERVIEW] Candidate confirmed interview for CandidateStage ID: {candidateStageId}");
+            
+            return true;
+        }
+
+        public async Task<bool> RejectInterview(int candidateStageId)
+        {
+            var candidateStage = await _unitOfWork.CandidateStageRepository.GetDetailById(candidateStageId);
+            
+            if (candidateStage == null)
+            {
+                throw new AppException(ErrorCode.NotFoundCandidateStage());
+            }
+
+            // Kiểm tra xem email đã được gửi chưa
+            if (!candidateStage.NotificationSentAt.HasValue)
+            {
+                return false; // Link không hợp lệ
+            }
+
+            // Kiểm tra link có hết hạn sau 24h không
+            if (DateTime.Now > candidateStage.NotificationSentAt.Value.AddHours(24))
+            {
+                return false; // Link đã hết hạn
+            }
+
+            // Chỉ cho phép reject khi status là Schedule
+            if (candidateStage.Status != Enums.CandidateStageStatus.Schedule)
+            {
+                return false; // Trạng thái không hợp lệ
+            }
+
+            // Cập nhật status thành Rejected hoặc Draft
+            candidateStage.Status = Enums.CandidateStageStatus.Draft;
+            await _unitOfWork.CandidateStageRepository.Update(candidateStage);
+            await _unitOfWork.SaveAsync();
+            
+            Console.WriteLine($"[INTERVIEW] Candidate rejected interview for CandidateStage ID: {candidateStageId}");
+            
+            return true;
         }
     }
 }
