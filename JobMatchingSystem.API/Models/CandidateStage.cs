@@ -25,6 +25,7 @@ namespace JobMatchingSystem.API.Models
         public string? InterviewLocation { get; set; } // Địa chỉ nơi phỏng vấn
         public string? GoogleMeetLink { get; set; } // Link Google Meet cho phỏng vấn online
         public string? HiringManagerFeedback { get; set; } // Đánh giá của Hiring Manager
+        public DateTime? NotificationSentAt { get; set; } // Thời điểm gửi email thông báo phỏng vấn
         
         // Navigation properties
         [ForeignKey("CandidateJobId")]

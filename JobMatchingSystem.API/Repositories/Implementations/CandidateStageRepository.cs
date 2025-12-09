@@ -19,12 +19,41 @@ namespace JobMatchingSystem.API.Repositories.Implementations
 
         public async Task<CandidateStage?> GetDetailById(int id)
         {
-            return await _context.CandidateStages
+            var candidateStage = await _context.CandidateStages
                 .Include(x => x.JobStage)
                 .Include(x => x.CandidateJob)
                     .ThenInclude(cj => cj!.CVUpload)
                         .ThenInclude(cv => cv!.User)
                 .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (candidateStage?.CandidateJob != null)
+            {
+                Console.WriteLine($"[REPO DEBUG] CandidateJob.JobId: {candidateStage.CandidateJob.JobId}");
+                
+                // Manually load Job and Company by querying directly
+                var job = await _context.Jobs
+                    .Include(j => j.Company)
+                    .FirstOrDefaultAsync(j => j.JobId == candidateStage.CandidateJob.JobId);
+                
+                Console.WriteLine($"[REPO DEBUG] Job query result: {job != null}, Title: {job?.Title}");
+                Console.WriteLine($"[REPO DEBUG] Company in Job: {job?.Company != null}, Name: {job?.Company?.Name}");
+                
+                if (job != null)
+                {
+                    candidateStage.CandidateJob.Job = job;
+                    Console.WriteLine($"[REPO DEBUG] Job assigned to CandidateJob. Job.Title: {candidateStage.CandidateJob.Job?.Title}");
+                }
+                else
+                {
+                    Console.WriteLine($"[REPO DEBUG] Job NOT found for JobId: {candidateStage.CandidateJob.JobId}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"[REPO DEBUG] CandidateJob is NULL!");
+            }
+
+            return candidateStage;
         }
 
         public Task Update(CandidateStage candidateStage)

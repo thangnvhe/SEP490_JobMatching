@@ -135,5 +135,69 @@ namespace JobMatchingSystem.API.Controllers
                 .WithStatusCode(HttpStatusCode.OK)
                 .Build());
         }
+
+        [HttpPost("confirm/{candidateStageId}")]
+        public async Task<IActionResult> ConfirmInterview(int candidateStageId)
+        {
+            try
+            {
+                var result = await _candidateStageService.ConfirmInterview(candidateStageId);
+                
+                if (!result)
+                {
+                    return BadRequest(APIResponse<string>.Builder()
+                        .WithResult("Link đã hết hạn hoặc không hợp lệ. Vui lòng liên hệ nhà tuyển dụng.")
+                        .WithSuccess(false)
+                        .WithStatusCode(HttpStatusCode.BadRequest)
+                        .Build());
+                }
+                
+                return Ok(APIResponse<string>.Builder()
+                    .WithResult("Đã xác nhận tham gia phỏng vấn thành công")
+                    .WithSuccess(true)
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .Build());
+            }
+            catch (AppException ex)
+            {
+                return BadRequest(APIResponse<string>.Builder()
+                    .WithResult(ex.Message)
+                    .WithSuccess(false)
+                    .WithStatusCode(ex.Error.StatusCode)
+                    .Build());
+            }
+        }
+
+        [HttpPost("reject/{candidateStageId}")]
+        public async Task<IActionResult> RejectInterview(int candidateStageId)
+        {
+            try
+            {
+                var result = await _candidateStageService.RejectInterview(candidateStageId);
+                
+                if (!result)
+                {
+                    return BadRequest(APIResponse<string>.Builder()
+                        .WithResult("Link đã hết hạn hoặc không hợp lệ. Vui lòng liên hệ nhà tuyển dụng.")
+                        .WithSuccess(false)
+                        .WithStatusCode(HttpStatusCode.BadRequest)
+                        .Build());
+                }
+                
+                return Ok(APIResponse<string>.Builder()
+                    .WithResult("Đã từ chối lịch phỏng vấn. Cảm ơn bạn đã phản hồi.")
+                    .WithSuccess(true)
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .Build());
+            }
+            catch (AppException ex)
+            {
+                return BadRequest(APIResponse<string>.Builder()
+                    .WithResult(ex.Message)
+                    .WithSuccess(false)
+                    .WithStatusCode(ex.Error.StatusCode)
+                    .Build());
+            }
+        }
     }
 }
