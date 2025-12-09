@@ -23,6 +23,7 @@ const loginSchema = z.object({
   email: z
     .string()
     .min(1, { message: 'Email là bắt buộc' })
+    .max(100, { message: 'Email không được vượt quá 100 ký tự' })
     .email({ message: 'Email sai định dạng username@domain.tld' }),
   password: z
     .string()

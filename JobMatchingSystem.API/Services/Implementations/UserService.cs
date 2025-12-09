@@ -61,7 +61,15 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task<PagedResult<UserDetailResponseDTO>> GetAllUser(int page = 1, int size = 5, string search = "", string sortBy = "", bool isDecending = false, int? companyId = null, string? role = null, bool? status = null)
         {
-            var listUser = await _unitOfWork.AuthRepository.GetAllAsync(search, sortBy, isDecending, status);
+            // Don't pass sortBy to repository if sorting by computed fields (handled in-memory later)
+            var repositorySortBy = (sortBy.Equals("Role", StringComparison.OrdinalIgnoreCase) || 
+                                    sortBy.Equals("Score", StringComparison.OrdinalIgnoreCase) ||
+                                    sortBy.Equals("FullName", StringComparison.OrdinalIgnoreCase) ||
+                                    sortBy.Equals("Email", StringComparison.OrdinalIgnoreCase))
+                ? string.Empty 
+                : sortBy;
+            
+            var listUser = await _unitOfWork.AuthRepository.GetAllAsync(search, repositorySortBy, isDecending, status);
             if (listUser == null || !listUser.Any())
             {
                 return new PagedResult<UserDetailResponseDTO>
@@ -135,12 +143,39 @@ namespace JobMatchingSystem.API.Services.Implementations
                 userDetailDtos.Add(userDetailDto);
             }
 
-            // Apply custom sorting for CreatedAt
-            if (!string.IsNullOrEmpty(sortBy) && sortBy.Equals("CreatedAt", StringComparison.OrdinalIgnoreCase))
+            // Apply custom sorting for CreatedAt, Role, Score, FullName, and Email
+            if (!string.IsNullOrEmpty(sortBy))
             {
-                userDetailDtos = isDecending 
-                    ? userDetailDtos.OrderByDescending(u => u.CreatedAt).ToList()
-                    : userDetailDtos.OrderBy(u => u.CreatedAt).ToList();
+                if (sortBy.Equals("CreatedAt", StringComparison.OrdinalIgnoreCase))
+                {
+                    userDetailDtos = isDecending 
+                        ? userDetailDtos.OrderByDescending(u => u.CreatedAt).ToList()
+                        : userDetailDtos.OrderBy(u => u.CreatedAt).ToList();
+                }
+                else if (sortBy.Equals("Role", StringComparison.OrdinalIgnoreCase))
+                {
+                    userDetailDtos = isDecending 
+                        ? userDetailDtos.OrderByDescending(u => u.Role).ToList()
+                        : userDetailDtos.OrderBy(u => u.Role).ToList();
+                }
+                else if (sortBy.Equals("Score", StringComparison.OrdinalIgnoreCase))
+                {
+                    userDetailDtos = isDecending 
+                        ? userDetailDtos.OrderByDescending(u => u.Score ?? 0).ToList()
+                        : userDetailDtos.OrderBy(u => u.Score ?? 0).ToList();
+                }
+                else if (sortBy.Equals("FullName", StringComparison.OrdinalIgnoreCase))
+                {
+                    userDetailDtos = isDecending 
+                        ? userDetailDtos.OrderByDescending(u => u.FullName).ToList()
+                        : userDetailDtos.OrderBy(u => u.FullName).ToList();
+                }
+                else if (sortBy.Equals("Email", StringComparison.OrdinalIgnoreCase))
+                {
+                    userDetailDtos = isDecending 
+                        ? userDetailDtos.OrderByDescending(u => u.Email).ToList()
+                        : userDetailDtos.OrderBy(u => u.Email).ToList();
+                }
             }
 
             // Apply pagination after filtering

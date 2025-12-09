@@ -128,7 +128,7 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
         [HttpPut("{id}/status")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Recruiter")]
         public async Task<IActionResult> ChangeStatus(int id)
         {
             await _userService.ChangeStatus(id);
@@ -186,6 +186,37 @@ namespace JobMatchingSystem.API.Controllers
             try
             {
                 _logger.LogInformation("Creating hiring manager for email: {Email}, CompanyId: {CompanyId}", request.Email, request.CompanyId);
+                
+                // Get current recruiter's userId and companyId
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int recruiterId))
+                {
+                    return BadRequest(APIResponse<string>.Builder()
+                        .WithResult("Không thể xác định thông tin người dùng")
+                        .WithStatusCode(HttpStatusCode.BadRequest)
+                        .WithSuccess(false)
+                        .Build());
+                }
+                
+                var recruiter = await _userService.GetUserById(recruiterId);
+                if (recruiter?.CompanyId == null)
+                {
+                    return BadRequest(APIResponse<string>.Builder()
+                        .WithResult("Recruiter không thuộc công ty nào")
+                        .WithStatusCode(HttpStatusCode.BadRequest)
+                        .WithSuccess(false)
+                        .Build());
+                }
+                
+                // Validate that recruiter can only create hiring manager for their own company
+                if (recruiter.CompanyId != request.CompanyId)
+                {
+                    return BadRequest(APIResponse<string>.Builder()
+                        .WithResult("Bạn chỉ có thể tạo Hiring Manager cho công ty của mình")
+                        .WithStatusCode(HttpStatusCode.Forbidden)
+                        .WithSuccess(false)
+                        .Build());
+                }
                 
                 var newUser = await _userService.CreateHiringManager(request);
 
