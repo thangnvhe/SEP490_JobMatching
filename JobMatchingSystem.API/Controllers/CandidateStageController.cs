@@ -137,7 +137,7 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpPost("confirm/{token}")]
-        public async Task<IActionResult> ConfirmInterview([FromBody]string token)
+        public async Task<IActionResult> ConfirmInterview(string token)
         {
             try
             {
@@ -169,7 +169,7 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpPost("reject/{token}")]
-        public async Task<IActionResult> RejectInterview([FromBody]string token)
+        public async Task<IActionResult> RejectInterview(string token)
         {
             try
             {
