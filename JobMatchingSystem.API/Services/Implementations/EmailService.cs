@@ -10,13 +10,14 @@ namespace JobMatchingSystem.API.Services.Implementations
     public class EmailService : IEmailService
     {
         private readonly EmailSettings _settings;
-        private readonly string _frontendBaseUrl = "http://14.225.19.47:5173";
+        private readonly string _frontendBaseUrl;
         private readonly IConfiguration _configuration;
 
         public EmailService(IOptions<EmailSettings> options, IConfiguration configuration)
         {
             _settings = options.Value;
             _configuration = configuration;
+            _frontendBaseUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:5173";
         }
         public async Task SendEmailAsync(string toEmail, string subject, string body)
         {

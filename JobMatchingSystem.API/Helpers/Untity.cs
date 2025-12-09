@@ -27,11 +27,12 @@ namespace JobMatchingSystem.API.Helpers
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.GetValue<string>("Key")));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            var expireMinutes = jwtSettings.GetValue<int>("ExpireMinutes");
             var token = new JwtSecurityToken(
                 issuer: jwtSettings.GetValue<string>("Issuer"),
                 audience: jwtSettings.GetValue<string>("Audience"),
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(30),
+                expires: DateTime.UtcNow.AddMinutes(expireMinutes),
                 signingCredentials: creds
             );
 
