@@ -6,6 +6,7 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
     {
         Task Add(CandidateStage candidateStage);
         Task<CandidateStage?> GetDetailById(int id);
+        Task<CandidateStage?> GetByConfirmationToken(string token);
         Task Update(CandidateStage candidateStage);
         Task<List<CandidateStage>> GetCandidateDetailsByJobStageId(int jobStageId, string? status = null);
         Task<List<CandidateStage>> GetAllAsync();

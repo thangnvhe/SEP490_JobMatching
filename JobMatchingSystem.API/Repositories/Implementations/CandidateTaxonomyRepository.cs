@@ -34,6 +34,12 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             await _context.SaveChangesAsync();
         }
 
+        public async Task UpdateAsync(CandidateTaxonomy entity)
+        {
+            _context.CandidateTaxonomies.Update(entity);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task DeleteAsync(CandidateTaxonomy entity)
         {
             _context.CandidateTaxonomies.Remove(entity);

@@ -69,6 +69,21 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Candidate")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateCandidateTaxonomyRequest request)
+        {
+            int userId = GetCurrentUserId();
+
+            await _service.UpdateAsync(id, request, userId);
+
+            return Ok(APIResponse<string>.Builder()
+                .WithSuccess(true)
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithResult("Updated successfully")
+                .Build());
+        }
+
         [HttpDelete("{id}")]
         [Authorize(Roles = "Candidate")]
         public async Task<IActionResult> Delete(int id)

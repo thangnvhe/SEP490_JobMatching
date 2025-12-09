@@ -8,6 +8,7 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task<CandidateTaxonomyResponse> GetByIdAsync(int id, int userId);
         Task<List<CandidateTaxonomyResponse>> GetByCandidateIdAsync(int userId);
         Task CreateAsync(CreateCandidateTaxonomyRequest request, int userId);
+        Task UpdateAsync(int id, UpdateCandidateTaxonomyRequest request, int userId);
         Task DeleteAsync(int id, int userId);
     }
 }

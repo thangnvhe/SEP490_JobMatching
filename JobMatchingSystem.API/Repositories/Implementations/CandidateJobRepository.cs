@@ -32,9 +32,19 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             }
             if (!string.IsNullOrEmpty(sortBy))
             {
-                query = IsDescending
-                    ? query.OrderByDescending(x => EF.Property<object>(x, sortBy))
-                    : query.OrderBy(x => EF.Property<object>(x, sortBy));
+                switch (sortBy.ToLower())
+                {
+                    case "cvid":
+                        query = IsDescending
+                            ? query.OrderByDescending(x => x.CVId)
+                            : query.OrderBy(x => x.CVId);
+                        break;
+                    default:
+                        query = IsDescending
+                            ? query.OrderByDescending(x => EF.Property<object>(x, sortBy))
+                            : query.OrderBy(x => EF.Property<object>(x, sortBy));
+                        break;
+                }
             }
             return await query.ToListAsync();
         }
