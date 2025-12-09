@@ -584,7 +584,6 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 candidateJob.Status = Enums.CandidateJobStatus.Fail;
                 await _unitOfWork.CandidateJobRepository.Update(candidateJob);
-                Console.WriteLine($"[INTERVIEW] CandidateJob status updated to Fail for CandidateJob ID: {candidateJob.CandidateJobId}");
             }
             
             await _unitOfWork.SaveAsync();
