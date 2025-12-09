@@ -80,6 +80,32 @@ namespace JobMatchingSystem.API.Services.Implementations
             await _candidateTaxonomyRepository.CreateAsync(entity);
         }
 
+        public async Task UpdateAsync(int id, UpdateCandidateTaxonomyRequest request, int userId)
+        {
+            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+
+            if (user == null)
+                throw new AppException(ErrorCode.NotFoundUser());
+
+            var entity = await _candidateTaxonomyRepository.GetByIdAsync(id);
+
+            if (entity == null)
+                throw new AppException(ErrorCode.NotFoundCanTaxonomy());
+
+            if (entity.CandidateId != userId)
+                throw new AppException(ErrorCode.NotFoundCanTaxonomy());
+
+            // Kiểm tra taxonomy có tồn tại không
+            bool taxonomyExists = await _candidateTaxonomyRepository.TaxonomyExistsAsync(request.TaxonomyId);
+            if (!taxonomyExists)
+                throw new AppException(ErrorCode.NotFoundCanTaxonomy());
+
+            entity.TaxonomyId = request.TaxonomyId;
+            entity.ExperienceYear = request.ExperienceYear;
+
+            await _candidateTaxonomyRepository.UpdateAsync(entity);
+        }
+
         public async Task DeleteAsync(int id, int userId)
         {
             var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);

@@ -11,10 +11,12 @@ namespace JobMatchingSystem.API.Services.Implementations
     {
         private readonly EmailSettings _settings;
         private readonly string _frontendBaseUrl = "http://localhost:5173";
+        private readonly IConfiguration _configuration;
 
-        public EmailService(IOptions<EmailSettings> options)
+        public EmailService(IOptions<EmailSettings> options, IConfiguration configuration)
         {
             _settings = options.Value;
+            _configuration = configuration;
         }
         public async Task SendEmailAsync(string toEmail, string subject, string body)
         {
@@ -412,6 +414,97 @@ namespace JobMatchingSystem.API.Services.Implementations
                 <p style='margin: 5px 0; color: #6c757d; font-size: 14px;'>Trân trọng,</p>
                 <p style='margin: 5px 0; color: #495057; font-weight: bold;'>Đội ngũ JobMatching System</p>
                 <p style='margin: 15px 0 5px 0; color: #6c757d; font-size: 12px;'>Đây là thông báo tự động, vui lòng không trả lời email này.</p>
+            </div>
+        </div>
+    </div>";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
+
+        public async Task SendInterviewScheduleNotificationAsync(string toEmail, string candidateName, string jobTitle, string companyName, DateTime interviewDate, TimeOnly? startTime, TimeOnly? endTime, string? location, string? googleMeetLink, string confirmationToken)
+        {
+            var subject = $"Thông báo lịch phỏng vấn - {jobTitle} tại {companyName}";
+
+            var interviewDateStr = interviewDate.ToString("dd/MM/yyyy");
+            var interviewTimeStr = startTime.HasValue && endTime.HasValue 
+                ? $"{startTime.Value:HH:mm} - {endTime.Value:HH:mm}"
+                : "Chưa xác định";
+
+            var locationInfo = !string.IsNullOrEmpty(location) 
+                ? $"<p><strong>📍 Địa điểm:</strong> {WebUtility.HtmlEncode(location)}</p>"
+                : "";
+
+            var meetingLinkInfo = !string.IsNullOrEmpty(googleMeetLink)
+                ? $@"
+                <div style='background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin: 15px 0;'>
+                    <p style='margin: 0 0 10px 0; color: #2e7d32;'><strong>🎥 Link phỏng vấn online:</strong></p>
+                    <a href='{WebUtility.HtmlEncode(googleMeetLink)}' style='color: #1976d2; text-decoration: none; word-break: break-all;'>{WebUtility.HtmlEncode(googleMeetLink)}</a>
+                </div>"
+                : "";
+
+            // Generate confirm/reject URLs with token (frontend URLs)
+            var confirmUrl = $"{_frontendBaseUrl}/candidate/interview/confirm/{confirmationToken}";
+            var rejectUrl = $"{_frontendBaseUrl}/candidate/interview/reject/{confirmationToken}";
+
+            var body = $@"
+    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
+        <div style='background-color: #ffffff; padding: 30px; border-radius: 10px; border-left: 4px solid #28a745;'>
+            <div style='text-align: center; margin-bottom: 30px;'>
+                <h1 style='color: #28a745; margin: 0; font-size: 24px;'>📅 Thông báo lịch phỏng vấn</h1>
+            </div>
+            
+            <div style='color: #495057; line-height: 1.6;'>
+                <p style='margin-bottom: 20px;'>Kính chào <strong>{WebUtility.HtmlEncode(candidateName)}</strong>,</p>
+                
+                <p style='margin-bottom: 20px;'>Chúc mừng! Bạn đã được mời tham gia phỏng vấn cho vị trí <strong>{WebUtility.HtmlEncode(jobTitle)}</strong> tại <strong>{WebUtility.HtmlEncode(companyName)}</strong>.</p>
+                
+                <div style='background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196f3;'>
+                    <h3 style='color: #1565c0; margin: 0 0 15px 0; font-size: 16px;'>📋 Thông tin chi tiết:</h3>
+                    <p style='margin: 8px 0;'><strong>💼 Vị trí:</strong> {WebUtility.HtmlEncode(jobTitle)}</p>
+                    <p style='margin: 8px 0;'><strong>🏢 Công ty:</strong> {WebUtility.HtmlEncode(companyName)}</p>
+                    <p style='margin: 8px 0;'><strong>📆 Ngày phỏng vấn:</strong> {interviewDateStr}</p>
+                    <p style='margin: 8px 0;'><strong>🕐 Thời gian:</strong> {interviewTimeStr}</p>
+                    {locationInfo}
+                </div>
+
+                {meetingLinkInfo}
+                
+                <div style='background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;'>
+                    <h3 style='color: #856404; margin: 0 0 10px 0; font-size: 16px;'>⚠️ Lưu ý quan trọng:</h3>
+                    <ul style='margin: 10px 0; padding-left: 20px; color: #856404;'>
+                        <li>Vui lòng xác nhận hoặc từ chối lịch phỏng vấn trong vòng 24 giờ</li>
+                        <li>Đến đúng giờ và chuẩn bị đầy đủ tài liệu cần thiết</li>
+                        <li>Mặc trang phục lịch sự, chuyên nghiệp</li>
+                        <li>Kiểm tra kết nối internet và thiết bị nếu phỏng vấn online</li>
+                    </ul>
+                </div>
+
+                <div style='background-color: #f1f1f1; padding: 20px; border-radius: 8px; margin: 25px 0;'>
+                    <h3 style='color: #333; margin: 0 0 20px 0; font-size: 16px; text-align: center;'>Vui lòng xác nhận lịch phỏng vấn:</h3>
+                    <div style='text-align: center;'>
+                        <a href='{confirmUrl}' style='display: inline-block; background-color: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 0 10px; font-weight: bold;'>✅ Xác nhận tham gia</a>
+                        <a href='{rejectUrl}' style='display: inline-block; background-color: #dc3545; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 0 10px; font-weight: bold;'>❌ Từ chối</a>
+                    </div>
+                </div>
+
+                <div style='background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;'>
+                    <h3 style='color: #155724; margin: 0 0 10px 0; font-size: 16px;'>💡 Gợi ý chuẩn bị phỏng vấn:</h3>
+                    <ul style='margin: 10px 0; padding-left: 20px; color: #155724;'>
+                        <li>Tìm hiểu kỹ về công ty và vị trí ứng tuyển</li>
+                        <li>Chuẩn bị câu trả lời cho các câu hỏi phổ biến</li>
+                        <li>Chuẩn bị câu hỏi để hỏi nhà tuyển dụng</li>
+                        <li>Kiểm tra và cập nhật CV nếu cần</li>
+                    </ul>
+                </div>
+                
+                <p style='margin-bottom: 20px;'>Chúc bạn may mắn và thành công trong buổi phỏng vấn!</p>
+            </div>
+            
+            <div style='text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;'>
+                <p style='margin: 5px 0; color: #6c757d; font-size: 14px;'>Trân trọng,</p>
+                <p style='margin: 5px 0; color: #495057; font-weight: bold;'>Đội ngũ JobMatching System</p>
+                <p style='margin: 15px 0 5px 0; color: #6c757d; font-size: 12px;'>Đây là email tự động, vui lòng không trả lời trực tiếp email này.</p>
+                <p style='margin: 5px 0; color: #6c757d; font-size: 12px;'>Nếu có thắc mắc, vui lòng liên hệ: support@jobmatching.vn</p>
             </div>
         </div>
     </div>";
