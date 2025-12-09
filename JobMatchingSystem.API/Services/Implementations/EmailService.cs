@@ -421,7 +421,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             await SendEmailAsync(toEmail, subject, body);
         }
 
-        public async Task SendInterviewScheduleNotificationAsync(string toEmail, string candidateName, string jobTitle, string companyName, DateTime interviewDate, TimeOnly? startTime, TimeOnly? endTime, string? location, string? googleMeetLink, int candidateStageId)
+        public async Task SendInterviewScheduleNotificationAsync(string toEmail, string candidateName, string jobTitle, string companyName, DateTime interviewDate, TimeOnly? startTime, TimeOnly? endTime, string? location, string? googleMeetLink, string confirmationToken)
         {
             var subject = $"Thông báo lịch phỏng vấn - {jobTitle} tại {companyName}";
 
@@ -442,9 +442,9 @@ namespace JobMatchingSystem.API.Services.Implementations
                 </div>"
                 : "";
 
-            // Generate confirm/reject URLs (frontend URLs)
-            var confirmUrl = $"{_frontendBaseUrl}/candidate/interview/confirm/{candidateStageId}";
-            var rejectUrl = $"{_frontendBaseUrl}/candidate/interview/reject/{candidateStageId}";
+            // Generate confirm/reject URLs with token (frontend URLs)
+            var confirmUrl = $"{_frontendBaseUrl}/candidate/interview/confirm/{confirmationToken}";
+            var rejectUrl = $"{_frontendBaseUrl}/candidate/interview/reject/{confirmationToken}";
 
             var body = $@"
     <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>

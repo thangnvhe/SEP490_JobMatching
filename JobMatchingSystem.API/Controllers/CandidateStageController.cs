@@ -136,12 +136,12 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
-        [HttpPost("confirm/{candidateStageId}")]
-        public async Task<IActionResult> ConfirmInterview(int candidateStageId)
+        [HttpPost("confirm/{token}")]
+        public async Task<IActionResult> ConfirmInterview(string token)
         {
             try
             {
-                var result = await _candidateStageService.ConfirmInterview(candidateStageId);
+                var result = await _candidateStageService.ConfirmInterview(token);
                 
                 if (!result)
                 {
@@ -168,12 +168,12 @@ namespace JobMatchingSystem.API.Controllers
             }
         }
 
-        [HttpPost("reject/{candidateStageId}")]
-        public async Task<IActionResult> RejectInterview(int candidateStageId)
+        [HttpPost("reject/{token}")]
+        public async Task<IActionResult> RejectInterview(string token)
         {
             try
             {
-                var result = await _candidateStageService.RejectInterview(candidateStageId);
+                var result = await _candidateStageService.RejectInterview(token);
                 
                 if (!result)
                 {

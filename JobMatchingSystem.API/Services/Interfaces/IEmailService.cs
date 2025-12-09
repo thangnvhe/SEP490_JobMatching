@@ -15,6 +15,6 @@
         Task SendAccountSuspensionNotificationAsync(string toEmail, string fullName, string reason, bool isCompany);
         Task SendFalseReportNotificationAsync(string toEmail, string fullName, string jobTitle, string companyName);
         Task SendJobClosedDueToReportAsync(string toEmail, string fullName, string jobTitle, string companyName, string reason);
-        Task SendInterviewScheduleNotificationAsync(string toEmail, string candidateName, string jobTitle, string companyName, DateTime interviewDate, TimeOnly? startTime, TimeOnly? endTime, string? location, string? googleMeetLink, int candidateStageId);
+        Task SendInterviewScheduleNotificationAsync(string toEmail, string candidateName, string jobTitle, string companyName, DateTime interviewDate, TimeOnly? startTime, TimeOnly? endTime, string? location, string? googleMeetLink, string confirmationToken);
     }
 }

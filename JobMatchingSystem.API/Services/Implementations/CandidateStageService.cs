@@ -212,6 +212,10 @@ namespace JobMatchingSystem.API.Services.Implementations
                         ? candidateStage.InterviewDate.Value.ToDateTime(TimeOnly.MinValue)
                         : DateTime.UtcNow;
 
+                    // Generate token before sending email
+                    var confirmationToken = Guid.NewGuid().ToString();
+                    candidateStage.ConfirmationToken = confirmationToken;
+                    
                     await _emailService.SendInterviewScheduleNotificationAsync(
                         user.Email,
                         user.FullName,
@@ -222,16 +226,18 @@ namespace JobMatchingSystem.API.Services.Implementations
                         candidateStage.InterviewEndTime,
                         candidateStage.InterviewLocation,
                         candidateStage.GoogleMeetLink,
-                        candidateStage.Id
+                        confirmationToken
                     );
                     
                     Console.WriteLine($"[EMAIL DEBUG] Email sent successfully!");
                     
-                    // Lưu thời điểm gửi email
+                    // Lưu thời điểm gửi email và reset confirmation status
                     candidateStage.NotificationSentAt = DateTime.Now;
+                    candidateStage.IsConfirmed = null; // Reset confirmation status
                     await _unitOfWork.CandidateStageRepository.Update(candidateStage);
                     await _unitOfWork.SaveAsync();
                     Console.WriteLine($"[EMAIL DEBUG] NotificationSentAt saved: {candidateStage.NotificationSentAt}");
+                    Console.WriteLine($"[EMAIL DEBUG] ConfirmationToken generated: {confirmationToken}");
                 }
                 else
                 {
@@ -486,73 +492,104 @@ namespace JobMatchingSystem.API.Services.Implementations
             };
         }
 
-        public async Task<bool> ConfirmInterview(int candidateStageId)
+        public async Task<bool> ConfirmInterview(string token)
         {
-            var candidateStage = await _unitOfWork.CandidateStageRepository.GetDetailById(candidateStageId);
+            // Tìm CandidateStage theo token
+            var candidateStage = await _unitOfWork.CandidateStageRepository.GetByConfirmationToken(token);
             
             if (candidateStage == null)
             {
-                throw new AppException(ErrorCode.NotFoundCandidateStage());
+                Console.WriteLine($"[INTERVIEW] Invalid token: {token}");
+                return false; // Token không hợp lệ
             }
 
             // Kiểm tra xem email đã được gửi chưa
             if (!candidateStage.NotificationSentAt.HasValue)
             {
+                Console.WriteLine($"[INTERVIEW] NotificationSentAt is null for CandidateStage ID: {candidateStage.Id}");
                 return false; // Link không hợp lệ
             }
 
             // Kiểm tra link có hết hạn sau 24h không
             if (DateTime.Now > candidateStage.NotificationSentAt.Value.AddHours(24))
             {
+                Console.WriteLine($"[INTERVIEW] Link expired for CandidateStage ID: {candidateStage.Id}");
                 return false; // Link đã hết hạn
             }
 
             // Chỉ cho phép confirm khi status là Schedule
             if (candidateStage.Status != Enums.CandidateStageStatus.Schedule)
             {
+                Console.WriteLine($"[INTERVIEW] Invalid status {candidateStage.Status} for CandidateStage ID: {candidateStage.Id}");
                 return false; // Trạng thái không hợp lệ
             }
 
-            // Cập nhật status hoặc thêm flag để đánh dấu candidate đã confirm
-            // Có thể thêm field ConfirmedAt vào model nếu cần track
-            Console.WriteLine($"[INTERVIEW] Candidate confirmed interview for CandidateStage ID: {candidateStageId}");
+            // Kiểm tra xem đã confirm trước đó chưa
+            if (candidateStage.IsConfirmed == true)
+            {
+                Console.WriteLine($"[INTERVIEW] Already confirmed for CandidateStage ID: {candidateStage.Id}");
+                return true; // Đã confirm rồi, vẫn trả về true
+            }
+
+            // Đánh dấu đã xác nhận tham gia
+            candidateStage.IsConfirmed = true;
+            await _unitOfWork.CandidateStageRepository.Update(candidateStage);
+            await _unitOfWork.SaveAsync();
+            
+            Console.WriteLine($"[INTERVIEW] Candidate confirmed interview for CandidateStage ID: {candidateStage.Id}");
             
             return true;
         }
 
-        public async Task<bool> RejectInterview(int candidateStageId)
+        public async Task<bool> RejectInterview(string token)
         {
-            var candidateStage = await _unitOfWork.CandidateStageRepository.GetDetailById(candidateStageId);
+            // Tìm CandidateStage theo token
+            var candidateStage = await _unitOfWork.CandidateStageRepository.GetByConfirmationToken(token);
             
             if (candidateStage == null)
             {
-                throw new AppException(ErrorCode.NotFoundCandidateStage());
+                Console.WriteLine($"[INTERVIEW] Invalid token: {token}");
+                return false; // Token không hợp lệ
             }
 
             // Kiểm tra xem email đã được gửi chưa
             if (!candidateStage.NotificationSentAt.HasValue)
             {
+                Console.WriteLine($"[INTERVIEW] NotificationSentAt is null for CandidateStage ID: {candidateStage.Id}");
                 return false; // Link không hợp lệ
             }
 
             // Kiểm tra link có hết hạn sau 24h không
             if (DateTime.Now > candidateStage.NotificationSentAt.Value.AddHours(24))
             {
+                Console.WriteLine($"[INTERVIEW] Link expired for CandidateStage ID: {candidateStage.Id}");
                 return false; // Link đã hết hạn
             }
 
             // Chỉ cho phép reject khi status là Schedule
             if (candidateStage.Status != Enums.CandidateStageStatus.Schedule)
             {
+                Console.WriteLine($"[INTERVIEW] Invalid status {candidateStage.Status} for CandidateStage ID: {candidateStage.Id}");
                 return false; // Trạng thái không hợp lệ
             }
 
-            // Cập nhật status thành Rejected hoặc Draft
-            candidateStage.Status = Enums.CandidateStageStatus.Draft;
+            // Đánh dấu từ chối và chuyển status về Failed
+            candidateStage.IsConfirmed = false;
+            candidateStage.Status = Enums.CandidateStageStatus.Failed;
             await _unitOfWork.CandidateStageRepository.Update(candidateStage);
+            
+            // Lấy CandidateJob và chuyển status về Fail
+            var candidateJob = await _unitOfWork.CandidateJobRepository.GetDetail(candidateStage.CandidateJobId);
+            if (candidateJob != null)
+            {
+                candidateJob.Status = Enums.CandidateJobStatus.Fail;
+                await _unitOfWork.CandidateJobRepository.Update(candidateJob);
+                Console.WriteLine($"[INTERVIEW] CandidateJob status updated to Fail for CandidateJob ID: {candidateJob.CandidateJobId}");
+            }
+            
             await _unitOfWork.SaveAsync();
             
-            Console.WriteLine($"[INTERVIEW] Candidate rejected interview for CandidateStage ID: {candidateStageId}");
+            Console.WriteLine($"[INTERVIEW] Candidate rejected interview for CandidateStage ID: {candidateStage.Id}");
             
             return true;
         }
