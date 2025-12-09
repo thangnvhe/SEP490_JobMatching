@@ -5,7 +5,7 @@ namespace JobMatchingSystem.API.DTOs.Request
     public class VerifyEmailRequest
     {
         [Required(ErrorMessage = "TokenLink is required.")]
-        public string tokenLink { get; set; } = string.Empty;
+        public string TokenLink { get; set; } = string.Empty;
     }
 
     public class ForgotPasswordRequest
