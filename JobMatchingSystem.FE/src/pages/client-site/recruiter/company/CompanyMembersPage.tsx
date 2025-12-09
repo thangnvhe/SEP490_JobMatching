@@ -125,7 +125,7 @@ export default function CompanyMembersPage() {
       };
 
       if (statusFilter !== 'all') {
-        apiParams.isActive = statusFilter === 'active';
+        apiParams.isActive = statusFilter === 'true';
       }
 
       const response = await UserServices.getAllWithPagination(apiParams);
@@ -266,6 +266,7 @@ export default function CompanyMembersPage() {
       
       toast.success("Xóa mềm thành viên thành công!");
 
+      setStatusFilter('all');
       const params = { ...paginationInput, search: debouncedKeyword };
       loadMembers(params);
     } catch (error) {
@@ -323,7 +324,7 @@ export default function CompanyMembersPage() {
       enableSorting: false,
     },
     {
-      id: "member",
+      id: "fullName",
       accessorFn: (row) => row.fullName,
       header: "Thành viên",
       enableSorting: true,
@@ -349,7 +350,7 @@ export default function CompanyMembersPage() {
       id: "position",
       accessorKey: "role",
       header: "Chức vụ",
-      enableSorting: true,
+      enableSorting: false,
       cell: ({ row: _ }) => {
         return (
           <div className="font-medium text-sm">Hiring Manager</div>
@@ -371,7 +372,7 @@ export default function CompanyMembersPage() {
       },
     },
     {
-      id: "status",
+      id: "isActive",
       accessorKey: "isActive",
       header: "Trạng thái",
       cell: ({ row }) => {
@@ -525,8 +526,8 @@ export default function CompanyMembersPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                      <SelectItem value="active">Hoạt động</SelectItem>
-                      <SelectItem value="inactive">Không hoạt động</SelectItem>
+                      <SelectItem value="true">Hoạt động</SelectItem>
+                      <SelectItem value="false">Không hoạt động</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

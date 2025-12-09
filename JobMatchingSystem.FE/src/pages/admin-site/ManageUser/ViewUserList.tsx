@@ -48,6 +48,7 @@ export default function ViewUserList() {
   const [users, setUsers] = useState<User[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [keyword, setKeyword] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -80,7 +81,14 @@ export default function ViewUserList() {
       try {
         setLoading(true);
         setError(null);
-        const response = await UserServices.getAllWithPagination(params);
+        
+        const apiParams: any = { ...params };
+        
+        if (statusFilter !== 'all') {
+          apiParams.isActive = statusFilter === 'true';
+        }
+        
+        const response = await UserServices.getAllWithPagination(apiParams);
         setUsers(response.result.items);
         setPaginationInfo(response.result.pageInfo);
       } catch (err: any) {
@@ -91,7 +99,7 @@ export default function ViewUserList() {
         setLoading(false);
       }
     },
-    []
+    [statusFilter]
   );
 
   useEffect(() => {
@@ -139,6 +147,11 @@ export default function ViewUserList() {
 
   const handlePageSizeChange = (size: string) => {
     setPaginationInput((prev) => ({ ...prev, size: parseInt(size), page: 1 }));
+  };
+
+  const handleStatusFilterChange = (status: string) => {
+    setStatusFilter(status);
+    setPaginationInput((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleView = (user: User) => {
@@ -193,7 +206,8 @@ export default function ViewUserList() {
       toast.success("Vô hiệu hóa người dùng thành công");
       setIsDeleteDialogOpen(false);
       setSelectedUser(null);
-      // Refresh danh sách sau khi vô hiệu hóa thành công
+      // Reset filter về "all" để hiển thị tất cả sau khi xóa
+      setStatusFilter('all');
       getAllWithPagination(paginationInput);
     } catch (err: any) {
       toast.error(
@@ -338,13 +352,26 @@ export default function ViewUserList() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-4">
               <Input
                 placeholder="Tìm kiếm người dùng..."
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 className="w-80"
               />
+              <Select
+                value={statusFilter}
+                onValueChange={handleStatusFilterChange}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Lọc theo trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                  <SelectItem value="true">Hoạt động</SelectItem>
+                  <SelectItem value="false">Không hoạt động</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex space-x-2">
               <Button
