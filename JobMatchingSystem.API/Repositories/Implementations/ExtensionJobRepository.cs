@@ -17,7 +17,7 @@ namespace JobMatchingSystem.API.Repositories.Implementations
         public async Task<List<ExtensionJob>> GetByRecuiterIdAsync(int recuiterId)
         {
             return await _context.ExtensionJobs
-                                 .Where(e => e.RecuiterId == recuiterId)
+                                 .Where(e => e.RecuiterId == recuiterId && e.ExtensionJobDaysCount > 0)
                                  .ToListAsync();
         }
     }

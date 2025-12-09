@@ -17,7 +17,7 @@ namespace JobMatchingSystem.API.Repositories.Implementations
         public async Task<List<HighlightJob>> GetByRecuiterIdAsync(int recuiterId)
         {
             return await _context.HighlightJobs
-                                 .Where(h => h.RecuiterId == recuiterId)
+                                 .Where(h => h.RecuiterId == recuiterId && h.HighlightJobDaysCount > 0)
                                  .ToListAsync();
         }
     }
