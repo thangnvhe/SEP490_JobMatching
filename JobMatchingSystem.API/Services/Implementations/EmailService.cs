@@ -10,7 +10,7 @@ namespace JobMatchingSystem.API.Services.Implementations
     public class EmailService : IEmailService
     {
         private readonly EmailSettings _settings;
-        private readonly string _frontendBaseUrl = "http://localhost:5173";
+        private readonly string _frontendBaseUrl = "http://14.225.19.47:5173";
         private readonly IConfiguration _configuration;
 
         public EmailService(IOptions<EmailSettings> options, IConfiguration configuration)
