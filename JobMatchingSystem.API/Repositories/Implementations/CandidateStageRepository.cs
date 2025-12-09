@@ -91,5 +91,18 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                         .ThenInclude(cv => cv!.User)
                 .ToListAsync();
         }
+
+        public async Task<CandidateStage?> GetByConfirmationToken(string token)
+        {
+            return await _context.CandidateStages
+                .Include(x => x.JobStage)
+                .Include(x => x.CandidateJob)
+                    .ThenInclude(cj => cj!.Job)
+                        .ThenInclude(j => j!.Company)
+                .Include(x => x.CandidateJob)
+                    .ThenInclude(cj => cj!.CVUpload)
+                        .ThenInclude(cv => cv!.User)
+                .FirstOrDefaultAsync(x => x.ConfirmationToken == token);
+        }
     }
 }

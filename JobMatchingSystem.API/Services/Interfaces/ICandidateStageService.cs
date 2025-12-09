@@ -13,7 +13,7 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task<PagedResult<CandidateStageDetailResponse>> GetCandidatesForHiringManagerAsync(
             int hiringManagerId, int page = 1, int size = 5, string search = "", 
             string sortBy = "", bool isDecending = false, string status = "", bool isHistory = false);
-        Task<bool> ConfirmInterview(int candidateStageId);
-        Task<bool> RejectInterview(int candidateStageId);
+        Task<bool> ConfirmInterview(string token);
+        Task<bool> RejectInterview(string token);
     }
 }
