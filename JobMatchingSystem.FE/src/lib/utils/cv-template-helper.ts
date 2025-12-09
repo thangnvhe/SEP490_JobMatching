@@ -6,6 +6,7 @@ import { CVExperience } from "@/models/cv-experience";
 import { CVProject } from "@/models/cv-project";
 import { CVCertificate } from "@/models/cv-certificate";
 import { CVAchievement } from "@/models/cv-achievement";
+import { CandidateTaxonomy } from "@/models/candidate-taxonomy";
 
 // ==========================================
 // INTERFACES
@@ -18,6 +19,7 @@ export interface CVDataCollection {
     projects: CVProject[];
     certificates: CVCertificate[];
     achievements: CVAchievement[];
+    taxonomies: CandidateTaxonomy[];
 }
 
 // ==========================================
@@ -53,7 +55,7 @@ const getEducationLevelLabel = (educationLevelId: number): string => {
  */
 export const generateCVHtml = (rawHtml: string, data: CVDataCollection): string => {
     let html = rawHtml;
-    const { userProfile, cvProfile, educations, experiences, projects, certificates, achievements } = data;
+    const { userProfile, cvProfile, educations, experiences, projects, certificates, achievements, taxonomies } = data;
 
     // ---------------------------------------------------------
     // A. THAY THẾ THÔNG TIN CÁ NHÂN (BASIC INFO)
@@ -168,25 +170,31 @@ export const generateCVHtml = (rawHtml: string, data: CVDataCollection): string 
     html = html.replace("{{ACHIEVEMENTS_LIST}}", achievementsHtml);
 
 
-    // 6. KỸ NĂNG (Skills) - Placeholder xử lý tạm thời
-    // Vì hiện tại User Model chưa có mảng Skills cụ thể, ta sẽ:
-    // - Nếu template có placeholder {{SKILLS_SECTION_HTML}}, ta sẽ thay bằng rỗng hoặc một đoạn HTML mặc định nếu muốn demo.
-    // - Sau này khi có API Skills, bạn chỉ cần query data và generate HTML tương tự như trên.
-    
-    // Kiểm tra xem có placeholder này không
+    // 6. KỸ NĂNG (Skills/Taxonomies)
     if (html.includes("{{SKILLS_SECTION_HTML}}")) {
-        // Code mẫu nếu sau này có skills:
-        /*
-        const skillsHtml = skills.map(s => `<span class="cv-skill-tag">${s.name}</span>`).join("");
-        const sectionHtml = `
-            <h4 class="cv-sidebar-title">Kỹ năng</h4>
-            <div class="cv-skill-tags">${skillsHtml}</div>
-        `;
-        html = html.replace("{{SKILLS_SECTION_HTML}}", sectionHtml);
-        */
-        
-        // Hiện tại replace bằng rỗng để không hiện lỗi trên CV
-    html = html.replace("{{SKILLS_SECTION_HTML}}", "");
+        if (taxonomies && taxonomies.length > 0) {
+            const skillsHtml = taxonomies.map(tax => `
+                <div style="margin-bottom: 8px;">
+                    <div style="font-weight: 700; font-size: 13px; color: #333;">${tax.taxonomyName}</div>
+                    ${tax.experienceYear ? `<div style="font-size: 12px; color: #666;">${tax.experienceYear} năm kinh nghiệm</div>` : ''}
+                </div>
+            `).join("");
+
+            // Bọc trong thẻ section giống như các section khác ở sidebar
+            const sectionHtml = `
+                <section class="cv-sidebar-section">
+                    <h4 class="cv-sidebar-title">Kỹ năng</h4>
+                    <div>${skillsHtml}</div>
+                </section>
+            `;
+            html = html.replace("{{SKILLS_SECTION_HTML}}", sectionHtml);
+        } else {
+            // Nếu không có skills, xóa placeholder
+            html = html.replace("{{SKILLS_SECTION_HTML}}", "");
+            // Nếu có wrapper div id="skills-section-wrapper" trong template (như trong file html mẫu),
+            // ta có thể muốn ẩn nó đi nếu không có nội dung, tuy nhiên ở đây ta chỉ replace placeholder.
+            // Logic CSS/HTML nên xử lý việc ẩn wrapper rỗng nếu cần thiết.
+        }
     }
 
     // ---------------------------------------------------------

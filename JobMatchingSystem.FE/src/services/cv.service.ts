@@ -3,7 +3,7 @@ import { BaseApiServices } from "./base-api.service";
 import { CV, CVValidate } from "@/models/cv";
 
 export const CVServices = {
-  getAll: (params?: Record<string, any>) => BaseApiServices.getAll<CV[]>('/CV', params),
+  getAll: (params?: Record<string, any>) => BaseApiServices.getAll<CV[]>('/CV/all', params),
   getAllWithPagination: (params: PaginationParamsInput) => BaseApiServices.getAllWithPagination<CV>('/CV', params),
   getById: (id: string) => BaseApiServices.getById<CV>('/CV', id),
   create: (cv: Omit<CV, 'id'>) => BaseApiServices.create<CV>('/CV', cv),

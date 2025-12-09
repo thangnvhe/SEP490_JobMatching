@@ -24,6 +24,7 @@ import { CVProjectServices } from "@/services/cv-project.service";
 import { CVCertificateServices } from "@/services/cv-certificate.service";
 import { CVAchievementServices } from "@/services/cv-achievement.service";
 import { CVProfileService } from "@/services/cv-profile.service";
+import { CandidateTaxonomyService } from "@/services/candidate-taxonomy.service";
 
 // Models
 import { TemplateCv } from "@/models/template-cv";
@@ -65,29 +66,31 @@ export default function PreviewDownloadCV() {
 
   // 1. Fetch Initial Data (User Profile & CV Details)
   useEffect(() => {
-      const fetchUserData = async () => {
-          try {
-              setIsDataLoading(true);
-              const [userRes, eduRes, expRes, projRes, certRes, achRes, profileRes] = await Promise.all([
-                  UserServices.getUserProfile(),
-                  CVEducationServices.getMyEducations(),
-                  CVExperienceServices.getMyExperiences(),
-                  CVProjectServices.getMyProjects(),
-                  CVCertificateServices.getMyCertificates(),
-                  CVAchievementServices.getMyAchievements(),
-                  CVProfileService.getMyProfile(),
-              ]);
+          const fetchUserData = async () => {
+              try {
+                  setIsDataLoading(true);
+                  const [userRes, eduRes, expRes, projRes, certRes, achRes, profileRes, taxRes] = await Promise.all([
+                      UserServices.getUserProfile(),
+                      CVEducationServices.getMyEducations(),
+                      CVExperienceServices.getMyExperiences(),
+                      CVProjectServices.getMyProjects(),
+                      CVCertificateServices.getMyCertificates(),
+                      CVAchievementServices.getMyAchievements(),
+                      CVProfileService.getMyProfile(),
+                      CandidateTaxonomyService.getMyTaxonomies(),
+                  ]);
 
-              setCvData({
-                  userProfile: userRes.result,
-                  educations: eduRes.result,
-                  experiences: expRes.result,
-                  projects: projRes.result,
-                  certificates: certRes.result,
-                  achievements: achRes.result,
-                  cvProfile: profileRes.result,
-              });
-          } catch (error) {
+                  setCvData({
+                      userProfile: userRes.result,
+                      educations: eduRes.result,
+                      experiences: expRes.result,
+                      projects: projRes.result,
+                      certificates: certRes.result,
+                      achievements: achRes.result,
+                      cvProfile: profileRes.result,
+                      taxonomies: taxRes.result,
+                  });
+              } catch (error) {
               console.error("Failed to fetch user CV data:", error);
               toast.error("Không thể tải dữ liệu hồ sơ của bạn.");
           } finally {
@@ -217,7 +220,7 @@ export default function PreviewDownloadCV() {
                     )}
                     >
                     {/* Thumbnail Preview */}
-                    <div className={cn("w-full aspect-[210/297] p-2 transition-colors bg-white")}>
+                    <div className={cn("w-full aspect-210/297 p-2 transition-colors bg-white")}>
                          {template.imageUrl ? (
                              <img 
                                  src={template.imageUrl} 
