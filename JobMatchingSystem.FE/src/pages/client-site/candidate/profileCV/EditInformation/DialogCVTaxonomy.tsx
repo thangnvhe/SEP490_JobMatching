@@ -68,7 +68,6 @@ export function DialogCVTaxonomy({
   });
 
   const {
-    register,
     handleSubmit,
     formState: { errors },
     reset,
