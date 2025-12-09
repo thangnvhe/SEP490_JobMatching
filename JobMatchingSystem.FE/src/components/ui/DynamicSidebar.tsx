@@ -214,20 +214,6 @@ function CandidateNav() {
               </SidebarMenuButton>
             </SidebarMenuItem>
 
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={useIsActivePath("/candidate/it-profile")}
-                tooltip="IT Profile"
-                size="default"
-                className="h-9 px-3"
-              >
-                <Link to="/candidate/it-profile">
-                  <User className="size-4" />
-                  <span className="font-medium text-sm">Hồ sơ IT</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
@@ -251,21 +237,6 @@ function CandidateNav() {
                 <Link to="/candidate/my-jobs">
                   <Briefcase className="size-4" />
                   <span className="font-medium text-sm">Việc làm của tôi</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={useIsActivePath("/candidate/saved-jobs")}
-                tooltip="Saved Jobs"
-                size="default"
-                className="h-9 px-3"
-              >
-                <Link to="/candidate/saved-jobs">
-                  <Bookmark className="size-4" />
-                  <span className="font-medium text-sm">Công việc đã lưu</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
