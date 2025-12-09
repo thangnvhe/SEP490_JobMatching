@@ -27,6 +27,48 @@ namespace JobMatchingSystem.API.DTOs.Request
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
+            // Kiểm tra email hợp lệ với regex chi tiết
+            if (!string.IsNullOrEmpty(Email))
+            {
+                // Pattern RFC 5322 simplified - phủ hầu hết email hợp lệ
+                var emailPattern = @"^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$";
+                
+                if (!Regex.IsMatch(Email, emailPattern))
+                {
+                    yield return new ValidationResult(
+                        "Email không đúng định dạng. Vui lòng nhập email hợp lệ (ví dụ: example@domain.com)",
+                        new[] { nameof(Email) });
+                }
+                
+                // Kiểm tra các trường hợp đặc biệt không hợp lệ
+                if (Email.Contains("..") || // Không cho phép 2 dấu chấm liên tiếp
+                    Email.StartsWith(".") || Email.StartsWith("-") || Email.StartsWith("_") || // Không bắt đầu bằng ký tự đặc biệt
+                    Email.Contains("@.") || Email.Contains(".@") || // Không có dấu chấm liền kề @
+                    Email.EndsWith(".") || Email.EndsWith("-")) // Không kết thúc bằng dấu chấm hoặc gạch ngang
+                {
+                    yield return new ValidationResult(
+                        "Email không đúng định dạng. Vui lòng nhập email hợp lệ (ví dụ: example@domain.com)",
+                        new[] { nameof(Email) });
+                }
+                
+                // Kiểm tra domain phải có ít nhất 1 dấu chấm và phần sau dấu chấm cuối >= 2 ký tự
+                var atIndex = Email.LastIndexOf('@');
+                if (atIndex > 0 && atIndex < Email.Length - 1)
+                {
+                    var domain = Email.Substring(atIndex + 1);
+                    var lastDotIndex = domain.LastIndexOf('.');
+                    
+                    if (lastDotIndex < 0 || // Không có dấu chấm trong domain
+                        lastDotIndex == domain.Length - 1 || // Dấu chấm ở cuối
+                        domain.Length - lastDotIndex - 1 < 2) // TLD quá ngắn (< 2 ký tự)
+                    {
+                        yield return new ValidationResult(
+                            "Email không đúng định dạng. Domain phải có đuôi hợp lệ (ví dụ: .com, .vn, .edu)",
+                            new[] { nameof(Email) });
+                    }
+                }
+            }
+            
             // Kiểm tra mật khẩu không chứa khoảng trắng
             if (!string.IsNullOrEmpty(Password) && Password.Contains(' '))
             {
