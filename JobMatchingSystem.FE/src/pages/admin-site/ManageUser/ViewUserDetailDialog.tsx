@@ -136,7 +136,7 @@ export const ViewUserDetailDialog: React.FC<ViewUserDetailDialogProps> = ({
               <label className="text-sm font-medium text-muted-foreground">
                 Tên đăng nhập
               </label>
-              <p className="text-sm font-medium">
+              <p className="text-sm font-medium break-words max-w-[250px]">
                 {user.userName || "Chưa cập nhật"}
               </p>
             </div>
@@ -144,7 +144,7 @@ export const ViewUserDetailDialog: React.FC<ViewUserDetailDialogProps> = ({
               <label className="text-sm font-medium text-muted-foreground">
                 Email
               </label>
-              <p className="text-sm font-medium">
+              <p className="text-sm font-medium break-words max-w-[200px]">
                 {user.email || "Chưa cập nhật"}
               </p>
             </div>

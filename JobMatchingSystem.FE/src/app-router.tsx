@@ -14,6 +14,7 @@ import CreateJobPage from './pages/client-site/recruiter/Jobs/CreateJobPage';
 import RecruitmentProcessManagement from './pages/client-site/recruiter/RecruitmentProcess/RecruitmentProcessManagement';
 import CompanyProfile from './pages/client-site/recruiter/company/CompanyProfile';
 import { CompanyMembersPage } from './pages/client-site/recruiter/company/CompanyMembersPage';
+import ViewServicePackageList from './pages/client-site/recruiter/service-package/ViewServicePackageList';
 import CandidateDashboard from './pages/client-site/candidate/Dashboard';
 import FavouriteJobsPage from './pages/client-site/candidate/FavouriteJobs';
 import CVManagement from './pages/client-site/candidate/CVManagement';
@@ -92,6 +93,7 @@ const AppRouter: React.FC = () => {
         <Route path="recruitment-process/:jobId" element={<RecruitmentProcessManagement />} />
         <Route path="company" element={<CompanyProfile />} />
         <Route path="company/members" element={<CompanyMembersPage />} />
+        <Route path="service-packages" element={<ViewServicePackageList />} />
         <Route path="stage-board" element={<StageBoardDemo />} />
       </Route>
 
