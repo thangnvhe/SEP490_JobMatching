@@ -216,12 +216,12 @@ export function ManageCompanyPage() {
       enableSorting: false,
     },
     {
-      id: "Name",
+      id: "name",
       accessorKey: "name",
       header: "Tên công ty",
       enableSorting: true,
       cell: ({ row }) => {
-        const name = row.getValue("Name") as string;
+        const name = row.getValue("name") as string;
         return (
           <div title={name} className="max-w-[200px] truncate text-sm font-medium">
             {truncateText(name, 50)}
