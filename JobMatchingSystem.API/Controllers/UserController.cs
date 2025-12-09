@@ -24,7 +24,7 @@ namespace JobMatchingSystem.API.Controllers
             _logger = logger;
         }
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Recruiter")]
         public async Task<ActionResult<PagedResult<UserDetailResponseDTO>>> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int size = 5,
