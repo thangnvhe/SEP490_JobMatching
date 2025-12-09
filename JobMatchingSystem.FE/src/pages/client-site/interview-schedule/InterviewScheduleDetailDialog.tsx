@@ -50,12 +50,12 @@ const updateResultFormSchema = z.object({
 type UpdateResultFormData = z.infer<typeof updateResultFormSchema>;
 
 // Status badge mapping
-const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-    "Pending": { label: "Chờ phỏng vấn", variant: "secondary" },
-    "Pass": { label: "Đạt", variant: "default" },
-    "Fail": { label: "Không đạt", variant: "destructive" },
-    "Scheduled": { label: "Đã lên lịch", variant: "outline" },
-};
+// const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+//     "Pending": { label: "Chờ phỏng vấn", variant: "secondary" },
+//     "Pass": { label: "Đạt", variant: "default" },
+//     "Fail": { label: "Không đạt", variant: "destructive" },
+//     "Scheduled": { label: "Đã lên lịch", variant: "outline" },
+// };
 
 interface InterviewScheduleDetailDialogProps {
     candidate: CandidateStage | null;

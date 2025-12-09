@@ -4,9 +4,7 @@ import type { RootState } from "@/store";
 import {
   LayoutDashboard,
   Briefcase,
-  User,
   FileText,
-  Bookmark,
   Settings,
   Building2,
   Package,
