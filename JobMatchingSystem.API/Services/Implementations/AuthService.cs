@@ -39,6 +39,10 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (user == null)
                 throw new AppException(ErrorCode.EmailNotExist());
             
+            // Check if account is active
+            if (!user.IsActive)
+                throw new AppException(new Error("Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.", System.Net.HttpStatusCode.BadRequest));
+            
             // Check if email is confirmed
             var isEmailConfirmed = await _userManager.IsEmailConfirmedAsync(user);
             if (!isEmailConfirmed)
@@ -174,6 +178,12 @@ namespace JobMatchingSystem.API.Services.Implementations
             await _userManager.AddToRoleAsync(user, Contraints.RoleCandidate);
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedToken = HttpUtility.UrlEncode(token);
+            
+            // Save token for one-time use tracking
+            user.EmailConfirmationToken = token;
+            user.EmailConfirmationTokenUsed = false;
+            await _userManager.UpdateAsync(user);
+            
             await _emailService.SendEmailConfirmationAsync(user.Email, user.FullName, $"{user.Id}:{encodedToken}");
             return "Please Check Email to Active Account";
 
@@ -195,10 +205,23 @@ namespace JobMatchingSystem.API.Services.Implementations
                 if (user == null)
                     return false;
 
+                // Check if token has already been used
+                if (user.EmailConfirmationTokenUsed == true)
+                    return false;
+
+                // Check if token matches
+                if (user.EmailConfirmationToken != decodedToken)
+                    return false;
+
                 var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
 
                 if (result.Succeeded)
                 {
+                    // Mark token as used
+                    user.EmailConfirmationTokenUsed = true;
+                    user.EmailConfirmationToken = null; // Clear token for security
+                    await _userManager.UpdateAsync(user);
+                    
                     await _emailService.SendWelcomeEmailAsync(user.Email!, user.FullName!);
                 }
 
