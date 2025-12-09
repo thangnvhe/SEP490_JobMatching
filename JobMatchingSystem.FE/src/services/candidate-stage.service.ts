@@ -16,4 +16,9 @@ export const CandidateStageServices = {
         BaseApiServices.custom<BaseResponse<CandidateStage>>("put", `/CandidateStage/${candidateStageId}/result`, { result, hiringManagerFeedback, ...(jobStageId !== undefined && { jobStageId }) }),
     getAllCandidateStagesWithPaginationForHiringManager: (params: PaginationParamsInput) =>
         BaseApiServices.getAllWithPagination<CandidateStage>(`/CandidateStage/hiring-manager`, params),
+
+    confirmCandidateStages: (token: string) =>
+        BaseApiServices.custom<BaseResponse<CandidateStage>>("post", `/CandidateStage/confirm/${token}`),
+    rejectCandidateStages: (token: string) =>
+        BaseApiServices.custom<BaseResponse<CandidateStage>>("post", `/CandidateStage/reject/${token}`),
 }

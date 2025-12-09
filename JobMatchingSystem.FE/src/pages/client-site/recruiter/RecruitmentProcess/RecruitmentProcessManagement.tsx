@@ -34,6 +34,8 @@ import { PageInfo, PaginationParamsInput } from "@/models/base";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Input } from "@/components/ui/input";
 import { StageBoardDemo } from "@/components/Stage/StageBoardDemo";
+import { CV } from "@/models/cv";
+import { CVServices } from "@/services/cv.service";
 
 const RecruitmentProcessManagement = () => {
   // URL search params
@@ -45,6 +47,7 @@ const RecruitmentProcessManagement = () => {
   const [activeTab, setActiveTab] = useState<"screening" | "process">(
     "screening"
   );
+  const [cvMap, setCvMap] = useState<Record<number, CV>>({});
 
   // Loading & Error states
   const [loading, setLoading] = useState(false);
@@ -175,6 +178,30 @@ const RecruitmentProcessManagement = () => {
     }
   }, [fetchCandidateJobs, paginationInput]);
 
+  // Load all CVs to map cvId -> CV detail (file + user name)
+  const fetchCVs = useCallback(async () => {
+    try {
+      const response = await CVServices.getAll();
+      if (response.isSuccess && response.result) {
+        const map = (response.result || []).reduce((acc, cv) => {
+          if (cv?.id !== undefined && cv?.id !== null) {
+            acc[cv.id] = cv;
+          }
+          return acc;
+        }, {} as Record<number, CV>);
+        setCvMap(map);
+      } else {
+        setCvMap({});
+      }
+    } catch (err) {
+      setCvMap({});
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCVs();
+  }, [fetchCVs]);
+
   // Status helpers
   const getStatusLabel = (status: CandidateJobStatus) => {
     switch (status) {
@@ -229,8 +256,39 @@ const RecruitmentProcessManagement = () => {
       {
         id: "cvId",
         accessorKey: "cvId",
-        header: "CV ID",
+        header: "CV",
         enableSorting: true,
+        cell: ({ row }) => {
+          const cvId = row.getValue("cvId") as number;
+          const cv = cvMap[cvId];
+
+          if (!cv) {
+            return <span>{cvId ?? "Không có CV"}</span>;
+          }
+
+          return (
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium">
+                {cv.user?.fullName || "Không rõ tên ứng viên"}
+              </span>
+              {cv.fileUrl ? (
+                <a
+                  href={cv.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                >
+                  <FileText className="h-3 w-3" />
+                  <span>{cv.fileName || "Xem CV"}</span>
+                </a>
+              ) : (
+                <span className="text-xs text-muted-foreground">
+                  Không có file CV
+                </span>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: "appliedAt",
@@ -303,7 +361,7 @@ const RecruitmentProcessManagement = () => {
         },
       },
     ],
-    [paginationInfo, handleApprove, handleReject]
+    [paginationInfo, handleApprove, handleReject, cvMap]
   );
 
   return (

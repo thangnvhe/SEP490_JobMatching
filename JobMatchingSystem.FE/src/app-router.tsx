@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import App from './App';
 import HomePage from './pages/client-site/HomePage';
 import AboutPage from './pages/AboutPage';
@@ -37,6 +36,7 @@ import InterviewSchedule from './pages/client-site/interview-schedule/interview-
 import EvaluationHistory from './pages/client-site/evaluation-history/evaluation-history';
 import PricingPage from './pages/client-site/pricing/pricing';
 import OrderPage from './pages/client-site/order/order';
+import InterviewConfirmPage from './pages/client-site/candidate/InterviewConfirmPage';
 
 const AppRouter: React.FC = () => {
   return (
@@ -46,6 +46,10 @@ const AppRouter: React.FC = () => {
 
       {/* Confirm email route - Public */}
       <Route path="/confirm-email" element={<ConfirmEmailPage />} />
+
+      {/* Candidate interview confirm/reject - Public */}
+      <Route path="/candidate/interview/confirm/:token" element={<InterviewConfirmPage />} />
+      <Route path="/candidate/interview/reject/:token" element={<InterviewConfirmPage />} />
 
       <Route path="profile-cv/cv-templates" element={<PreviewDownloadCV />} />
     

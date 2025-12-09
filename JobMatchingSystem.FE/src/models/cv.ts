@@ -1,3 +1,5 @@
+import { User } from "./user";
+
 export interface CV {
     id: number;
     userId: number;
@@ -7,6 +9,7 @@ export interface CV {
     fileUrl: string;
     savedCVs: any[];
     candidateJobs: any[];
+    user: User;
 }
 
 export interface CVValidate {

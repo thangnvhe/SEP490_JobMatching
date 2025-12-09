@@ -78,7 +78,7 @@ const formatDateToLocalString = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
-    
+
     return `${year}-${month}-${day}`;
 };
 
@@ -165,9 +165,8 @@ export function ScheduleInterviewDialog({
             if (updatedCandidate) {
                 onScheduleSuccess?.(updatedCandidate);
             }
-        } catch (error) {
-            console.error("Error scheduling interview:", error);
-            toast.error("Có lỗi xảy ra khi đặt lịch. Vui lòng thử lại!");
+        } catch (error: any) {
+            toast.error(error?.response?.data?.result || "Có lỗi xảy ra khi đặt lịch. Vui lòng thử lại!");
         } finally {
             setIsLoading(false);
         }

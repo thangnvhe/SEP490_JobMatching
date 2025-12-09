@@ -43,6 +43,7 @@ import {
     Sparkles,
     CheckCircle2,
     Trash2,
+    Wrench,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
@@ -51,11 +52,13 @@ import { DialogCVCertificate } from "./EditInformation/DialogCVCertificate";
 import { DialogCVEducation } from "./EditInformation/DialogCVEducation";
 import { DialogCVExperience } from "./EditInformation/DialogCVExperience";
 import { DialogCVProject } from "./EditInformation/DialogCVProject";
+import { DialogCVTaxonomy } from "./EditInformation/DialogCVTaxonomy";
 import { CVAchievementServices } from "@/services/cv-achievement.service";
 import { CVCertificateServices } from "@/services/cv-certificate.service";
 import { CVEducationServices } from "@/services/cv-education.service";
 import { CVExperienceServices } from "@/services/cv-experience.service";
 import { CVProjectServices } from "@/services/cv-project.service";
+import { CandidateTaxonomyService } from "@/services/candidate-taxonomy.service";
 import { UserServices } from "@/services/user.service";
 import { DialogCVInformation } from "./EditInformation/DialogCVInformation";
 import { DialogCVProfile } from "./EditInformation/DialogCVProfile";
@@ -67,6 +70,7 @@ import { CVCertificate } from "@/models/cv-certificate";
 import { CVEducation, EducationLevel as EducationLevelMap } from "@/models/cv-education";
 import { CVExperience } from "@/models/cv-experience";
 import { CVProject } from "@/models/cv-project";
+import { CandidateTaxonomy } from "@/models/candidate-taxonomy";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -95,6 +99,10 @@ const ProfileCvPage = () => {
     const [projects, setProjects] = useState<CVProject[]>([]);
     const [selectedProject, setSelectedProject] = useState<CVProject | null>(null);
 
+    const [isTaxonomyDialogOpen, setIsTaxonomyDialogOpen] = useState(false);
+    const [taxonomies, setTaxonomies] = useState<CandidateTaxonomy[]>([]);
+    const [selectedTaxonomy, setSelectedTaxonomy] = useState<CandidateTaxonomy | null>(null);
+
     const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
     const [userProfile, setUserProfile] = useState<User | null>(null);
 
@@ -105,7 +113,7 @@ const ProfileCvPage = () => {
     // Alert Dialog state for delete confirmation
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deleteItem, setDeleteItem] = useState<{
-        type: "achievement" | "certificate" | "education" | "experience" | "project";
+        type: "achievement" | "certificate" | "education" | "experience" | "project" | "taxonomy";
         id: number;
         name: string;
     } | null>(null);
@@ -156,9 +164,15 @@ const ProfileCvPage = () => {
         }
         maxScore += 5;
 
+        // Điểm cho Kỹ năng (Taxonomies) - 10 điểm
+        if (taxonomies.length > 0) {
+            totalScore += 10;
+        }
+        maxScore += 10;
+
         // Tính phần trăm hoàn thành
         return Math.round((totalScore / maxScore) * 100);
-    }, [cvProfile, educations, experiences, projects, certificates, achievements]);
+    }, [cvProfile, educations, experiences, projects, certificates, achievements, taxonomies]);
 
     const fetchAchievements = async () => {
         try {
@@ -205,6 +219,15 @@ const ProfileCvPage = () => {
         }
     };
 
+    const fetchTaxonomies = async () => {
+        try {
+            const response = await CandidateTaxonomyService.getMyTaxonomies();
+            setTaxonomies(response.result);
+        } catch (error) {
+            console.error("Failed to fetch taxonomies", error);
+        }
+    };
+
     const fetchUserProfile = async () => {
         try {
             const response = await UserServices.getUserProfile();
@@ -230,6 +253,7 @@ const ProfileCvPage = () => {
         fetchEducations();
         fetchExperiences();
         fetchProjects();
+        fetchTaxonomies();
         fetchUserProfile();
         fetchCVProfile();
     }, []);
@@ -389,6 +413,37 @@ const ProfileCvPage = () => {
         }
     };
 
+    // Taxonomy handlers
+    const handleEditTaxonomy = (taxonomy: CandidateTaxonomy) => {
+        setSelectedTaxonomy(taxonomy);
+        setIsTaxonomyDialogOpen(true);
+    };
+
+    const handleDeleteTaxonomy = (taxonomy: CandidateTaxonomy) => {
+        if (!taxonomy.id) return;
+        setDeleteItem({
+            type: "taxonomy",
+            id: taxonomy.id,
+            name: taxonomy.taxonomyName,
+        });
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDeleteTaxonomy = async () => {
+        if (!deleteItem || deleteItem.type !== "taxonomy") return;
+        try {
+            await CandidateTaxonomyService.delete(deleteItem.id);
+            toast.success("Xóa kỹ năng thành công");
+            fetchTaxonomies();
+        } catch (error) {
+            console.error("Failed to delete taxonomy", error);
+            toast.error("Xóa kỹ năng thất bại");
+        } finally {
+            setDeleteDialogOpen(false);
+            setDeleteItem(null);
+        }
+    };
+
     const handleDialogClose = (open: boolean) => {
         setIsAchievementDialogOpen(open);
         if (!open) {
@@ -424,6 +479,13 @@ const ProfileCvPage = () => {
         }
     };
 
+    const handleTaxonomyDialogClose = (open: boolean) => {
+        setIsTaxonomyDialogOpen(open);
+        if (!open) {
+            setSelectedTaxonomy(null);
+        }
+    };
+
     const handleDialogSuccess = () => {
         fetchAchievements();
     };
@@ -444,6 +506,10 @@ const ProfileCvPage = () => {
         fetchProjects();
     };
 
+    const handleTaxonomyDialogSuccess = () => {
+        fetchTaxonomies();
+    };
+
     // Get delete confirmation message based on type
     const getDeleteMessage = () => {
         if (!deleteItem) return "";
@@ -453,6 +519,7 @@ const ProfileCvPage = () => {
             education: "Bạn có chắc chắn muốn xóa thông tin học vấn này?",
             experience: "Bạn có chắc chắn muốn xóa kinh nghiệm làm việc này?",
             project: "Bạn có chắc chắn muốn xóa dự án này?",
+            taxonomy: "Bạn có chắc chắn muốn xóa kỹ năng này?",
         };
         return messages[deleteItem.type];
     };
@@ -475,6 +542,9 @@ const ProfileCvPage = () => {
                 break;
             case "project":
                 await confirmDeleteProject();
+                break;
+            case "taxonomy":
+                await confirmDeleteTaxonomy();
                 break;
         }
     };
@@ -557,9 +627,21 @@ const ProfileCvPage = () => {
             });
         }
 
+        if (taxonomies.length === 0) {
+            suggestions.push({
+                text: "Thêm kỹ năng chuyên môn",
+                completed: false,
+            });
+        } else {
+            suggestions.push({
+                text: "Đã thêm kỹ năng chuyên môn",
+                completed: true,
+            });
+        }
+
         // Sắp xếp: chưa hoàn thành lên trên, đã hoàn thành xuống dưới
         return suggestions.sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
-    }, [cvProfile, educations, experiences, projects, certificates, achievements]);
+    }, [cvProfile, educations, experiences, projects, certificates, achievements, taxonomies]);
 
     // Calculate circular progress for the visual widget if needed,
     // but we will focus on the linear bar as requested.
@@ -948,6 +1030,59 @@ const ProfileCvPage = () => {
                 ),
             }),
         },
+        {
+            title: "Kỹ năng",
+            description: "Các kỹ năng chuyên môn của bạn",
+            icon: Wrench,
+            action: "Thêm kỹ năng",
+            onActionClick: () => {
+                setSelectedTaxonomy(null);
+                setIsTaxonomyDialogOpen(true);
+            },
+            ...(taxonomies.length > 0 && {
+                children: (
+                    <div className="space-y-4">
+                        {taxonomies.map((taxonomy) => (
+                            <div
+                                key={taxonomy.id}
+                                className="flex flex-col gap-2 border-t border-gray-100 pt-4 first:border-none first:pt-0"
+                            >
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <h4 className="text-[18px] font-semibold text-gray-900">
+                                            {taxonomy.taxonomyName}
+                                        </h4>
+                                        <p className="text-base text-gray-800">
+                                            {taxonomy.experienceYear !== undefined && taxonomy.experienceYear !== null
+                                                ? `${taxonomy.experienceYear} năm kinh nghiệm`
+                                                : "Chưa cập nhật số năm kinh nghiệm"}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="lg"
+                                            className="h-10 w-10 text-gray-800 hover:bg-transparent hover:text-emerald-600"
+                                            onClick={() => handleEditTaxonomy(taxonomy)}
+                                        >
+                                            <Edit className="h-10 w-10" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="lg"
+                                            className="h-10 w-10 text-gray-800 hover:bg-transparent hover:text-red-500"
+                                            onClick={() => handleDeleteTaxonomy(taxonomy)}
+                                        >
+                                            <Trash2 className="h-8 w-8" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ),
+            }),
+        },
     ];
 
     return (
@@ -1162,6 +1297,13 @@ const ProfileCvPage = () => {
                 onOpenChange={handleProjectDialogClose}
                 onSuccess={handleProjectDialogSuccess}
                 projectToEdit={selectedProject}
+            />
+
+            <DialogCVTaxonomy
+                open={isTaxonomyDialogOpen}
+                onOpenChange={handleTaxonomyDialogClose}
+                onSuccess={handleTaxonomyDialogSuccess}
+                taxonomyToEdit={selectedTaxonomy}
             />
 
             <DialogCVInformation
