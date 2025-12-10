@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elegant CV Template</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700&family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,300;1,400;1,600;1,700&display=swap');
+
+        body { margin: 0; padding: 0; background-color: #525659; display: flex; justify-content: center; padding-top: 20px; padding-bottom: 20px; }
+        .cv-container { width: 100%; max-width: 1000px; margin: 0 auto; background: #fff; font-family: 'Open Sans', sans-serif; color: #333; display: grid; grid-template-columns: 65% 35%; min-height: 1123px; box-shadow: 0 0 20px rgba(0,0,0,0.1); box-sizing: border-box; }
+        .cv-main { padding: 40px; background-color: #fff; }
+        .cv-sidebar { background-color: #f4f4f4; padding: 30px; border-left: 1px solid #e0e0e0; }
+        .cv-header { margin-bottom: 40px; }
+        .cv-name { font-family: 'Merriweather', serif; font-size: 36px; font-weight: 700; color: #2c3e50; margin: 0 0 10px 0; line-height: 1.2; text-transform: uppercase; letter-spacing: 1px; }
+        .cv-title { font-size: 18px; color: #c0392b; font-weight: 600; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
+        .cv-section { margin-bottom: 35px; }
+        .cv-section-title { font-family: 'Merriweather', serif; font-size: 20px; font-weight: 700; color: #2c3e50; border-bottom: 2px solid #c0392b; padding-bottom: 8px; margin-bottom: 20px; text-transform: uppercase; }
+        .cv-item { margin-bottom: 25px; page-break-inside: avoid; }
+        .cv-item-title { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 4px; }
+        .cv-item-subtitle { font-size: 14px; font-weight: 600; color: #555; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .cv-date { font-style: italic; color: #777; font-size: 13px; }
+        .cv-description { font-size: 14px; line-height: 1.6; color: #555; margin-top: 8px; white-space: pre-line; }
+        .cv-avatar-container { text-align: center; margin-bottom: 30px; }
+        .cv-avatar { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .cv-avatar-placeholder { width: 150px; height: 150px; border-radius: 50%; background: #ddd; display: flex; align-items: center; justify-content: center; font-size: 48px; color: #777; margin: 0 auto; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-family: 'Merriweather', serif; }
+        .cv-contact-list { list-style: none; padding: 0; margin: 0; }
+        .cv-contact-item { display: flex; align-items: center; margin-bottom: 15px; font-size: 13px; word-break: break-word; }
+        .cv-contact-icon { width: 24px; height: 24px; background: #c0392b; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0; font-size: 12px; font-weight: bold; }
+        .cv-contact-label { display: block; font-weight: 700; color: #333; font-size: 11px; text-transform: uppercase; margin-bottom: 2px; }
+        .cv-sidebar-section { margin-bottom: 30px; }
+        .cv-sidebar-title { font-family: 'Merriweather', serif; font-size: 16px; font-weight: 700; color: #2c3e50; border-bottom: 1px solid #bbb; padding-bottom: 6px; margin-bottom: 15px; text-transform: uppercase; }
+        .cv-education-item { margin-bottom: 15px; }
+        .cv-education-school { font-weight: 700; font-size: 14px; color: #333; }
+        .cv-education-degree { font-size: 13px; color: #555; }
+        .cv-certificate-item { margin-bottom: 15px; }
+        .cv-certificate-name { font-weight: 700; font-size: 13px; color: #333; }
+        .cv-certificate-org { font-size: 12px; color: #666; }
+        @media print { body { background-color: white; padding: 0; } .cv-container { box-shadow: none; max-width: 100%; width: 100%; } }
+    </style>
+</head>
+<body>
+    <div class="cv-container" id="cv-template">
+        <div class="cv-main">
+            <header class="cv-header">
+                <h1 class="cv-name">{{FULL_NAME}}</h1>
+                <h2 class="cv-title">{{JOB_TITLE}}</h2>
+            </header>
+
+            <section class="cv-section">
+                <h3 class="cv-section-title">Kinh nghiệm làm việc</h3>
+                <!-- 
+                   STRUCTURE FOR JS LOOP REPLACEMENT:
+                   <div class="cv-item">
+                        <div class="cv-item-title">DATA_COMPANY_NAME</div>
+                        <div class="cv-item-subtitle">
+                            <span>DATA_POSITION</span>
+                            <span class="cv-date">DATA_START - DATA_END</span>
+                        </div>
+                        <div class="cv-description">DATA_DESCRIPTION</div>
+                   </div>
+                -->
+                {{EXPERIENCES_LIST}}
+            </section>
+
+            <section class="cv-section">
+                <h3 class="cv-section-title">Dự án nổi bật</h3>
+                <!--
+                   STRUCTURE:
+                   <div class="cv-item">
+                        <div class="cv-item-title">DATA_PROJECT_NAME</div>
+                        <div class="cv-item-subtitle">
+                             <span class="cv-date">DATA_START - DATA_END</span>
+                        </div>
+                        <div class="cv-description">DATA_DESCRIPTION</div>
+                   </div>
+                -->
+                {{PROJECTS_LIST}}
+            </section>
+
+            <section class="cv-section">
+                <h3 class="cv-section-title">Giải thưởng</h3>
+                <!--
+                   STRUCTURE:
+                   <div class="cv-item">
+                        <div class="cv-item-title">DATA_TITLE</div>
+                        <div class="cv-item-subtitle">
+                            <span>DATA_ORG</span>
+                            <span class="cv-date">DATA_DATE</span>
+                        </div>
+                        <div class="cv-description">DATA_DESCRIPTION</div>
+                   </div>
+                -->
+                {{ACHIEVEMENTS_LIST}}
+            </section>
+        </div>
+
+        <div class="cv-sidebar">
+            <div class="cv-avatar-container">
+                {{AVATAR_HTML}}
+            </div>
+
+            <section class="cv-sidebar-section">
+                <h4 class="cv-sidebar-title">Thông tin liên hệ</h4>
+                <ul class="cv-contact-list">
+                    <li class="cv-contact-item">
+                        <span class="cv-contact-icon">@</span>
+                        <div><span class="cv-contact-label">Email</span>{{EMAIL}}</div>
+                    </li>
+                    <li class="cv-contact-item">
+                        <span class="cv-contact-icon">P</span>
+                        <div><span class="cv-contact-label">Điện thoại</span>{{PHONE}}</div>
+                    </li>
+                    <li class="cv-contact-item">
+                        <span class="cv-contact-icon">D</span>
+                        <div><span class="cv-contact-label">Ngày sinh</span>{{DATE_OF_BIRTH}}</div>
+                    </li>
+                    <li class="cv-contact-item">
+                        <span class="cv-contact-icon">A</span>
+                        <div><span class="cv-contact-label">Địa chỉ</span>{{ADDRESS}}</div>
+                    </li>
+                    <li class="cv-contact-item">
+                         <!-- Example gender logic handled in JS: if gender is null, remove this li -->
+                        <span class="cv-contact-icon">G</span>
+                        <div><span class="cv-contact-label">Giới tính</span>{{GENDER}}</div>
+                    </li>
+                </ul>
+            </section>
+
+            <section class="cv-sidebar-section">
+                <h4 class="cv-sidebar-title">Học vấn</h4>
+                <!--
+                   STRUCTURE:
+                   <div class="cv-education-item">
+                        <div class="cv-education-school">DATA_SCHOOL</div>
+                        <div class="cv-education-degree">DATA_DEGREE - DATA_MAJOR</div>
+                        <div class="cv-date">DATA_START - DATA_END</div>
+                        <div class="cv-description" style="font-size: 12px; margin-top: 4px; color: #666;">DATA_DESCRIPTION</div>
+                   </div>
+                -->
+                {{EDUCATIONS_LIST}}
+            </section>
+
+            <section class="cv-sidebar-section">
+                <h4 class="cv-sidebar-title">Chứng chỉ</h4>
+                 <!--
+                   STRUCTURE:
+                   <div class="cv-certificate-item">
+                        <div class="cv-certificate-name">DATA_NAME</div>
+                        <div class="cv-certificate-org">DATA_ORG</div>
+                        <div class="cv-date">DATA_DATE</div>
+                        <div class="cv-description" style="font-size: 12px; margin-top: 2px; color: #666;">DATA_DESCRIPTION</div>
+                        <a href="DATA_LINK" target="_blank" style="display: block; font-size: 11px; color: #c0392b; margin-top: 2px;">Xem chứng chỉ</a>
+                   </div>
+                -->
+                {{CERTIFICATES_LIST}}
+            </section>
+            
+            <!-- Mục Kỹ năng: Nếu không có data thì FE sẽ xóa đoạn HTML này đi -->
+            <div id="skills-section-wrapper">
+                {{SKILLS_SECTION_HTML}}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
