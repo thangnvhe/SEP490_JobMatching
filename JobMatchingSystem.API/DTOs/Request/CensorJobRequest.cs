@@ -6,6 +6,6 @@ namespace JobMatchingSystem.API.DTOs.Request
     public class CensorJobRequest
     {
         [Required]
-        public JobStatus Status { get; set; }
+        public int Status { get; set; }
     }
 }

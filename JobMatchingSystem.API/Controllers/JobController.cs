@@ -76,7 +76,7 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpPut("{jobId}/censor")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Recruiter")]
         public async Task<IActionResult> CensorJob(int jobId, [FromBody] CensorJobRequest request)
         {
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");

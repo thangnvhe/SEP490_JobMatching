@@ -360,7 +360,14 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task CensorJobAsync(int jobId, CensorJobRequest request, int userId)
         {
-            if (request.Status != JobStatus.Rejected && request.Status != JobStatus.Moderated)
+            // Validate that provided int maps to a valid JobStatus value
+            if (!Enum.IsDefined(typeof(JobStatus), request.Status))
+                throw new AppException(ErrorCode.InvalidStatus());
+
+            var statusEnum = (JobStatus)request.Status;
+
+            // Only allow Rejected or Moderated status
+            if (statusEnum != JobStatus.Rejected && statusEnum != JobStatus.Moderated)
                 throw new AppException(ErrorCode.InvalidStatus());
 
             var job = await _context.Jobs.FirstOrDefaultAsync(j => j.JobId == jobId);
@@ -368,12 +375,12 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (job == null || job.IsDeleted == true)
                 throw new AppException(ErrorCode.NotFoundJob());
 
-            job.Status = request.Status;
+            job.Status = statusEnum;
             job.VerifiedBy = userId;
 
             await _context.SaveChangesAsync();
 
-            // Sau await _context.SaveChangesAsync(); hoặc trước cũng được
+            // Send email notification to recruiter if needed
             if (job.Recruiter != null)
             {
                 string recruiterEmail = job.Recruiter.Email!;

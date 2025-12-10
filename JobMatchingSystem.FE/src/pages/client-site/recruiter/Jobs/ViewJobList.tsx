@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { 
   Eye,
   Edit3,
@@ -14,7 +15,8 @@ import {
   CheckCircle,
   XCircle,
   X,
-  Filter
+  Filter,
+  Lock
 } from "lucide-react";
 
 // Import các UI components
@@ -183,49 +185,83 @@ export default function ViewJobList() {
     setIsEditDialogOpen(true);
   };
 
+  const handleToggleJobStatus = async (job: Job) => {
+    try {
+      const newStatus = 4;
+
+      await JobServices.censorJob(job.jobId.toString(), { status: newStatus });
+      toast.success("Tin tuyển dụng đã được đóng");
+
+      // Refresh data
+      getAllWithPagination(paginationInput);
+    } catch (error: any) {
+      console.error("Error toggling job status:", error);
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi cập nhật trạng thái");
+    }
+  };
+
   // Helper functions cho status
-  const getStatusBadgeColor = (status: number | string) => {
-    const statusNum = typeof status === 'string' ? parseInt(status) : status;
-    switch (statusNum) {
-      case 0:
-        return 'bg-orange-100 text-orange-800 border border-orange-200'; // Đang chờ duyệt
-      case 1:
-        return 'bg-red-100 text-red-800 border border-red-200'; // Bị từ chối
-      case 2:
-        return 'bg-blue-100 text-blue-800 border border-blue-200'; // Đã duyệt
-      case 3:
-        return 'bg-green-100 text-green-800 border border-green-200'; // Đang mở
-      case 4:
-        return 'bg-gray-100 text-gray-800 border border-gray-200'; // Đã đóng
-      case 5:
-        return 'bg-slate-100 text-slate-800 border border-slate-200'; // Đã xóa
+  const normalizeStatus = (status: number | string) => {
+    if (typeof status === 'number') return status;
+    if (/^\d+$/.test(status)) return parseInt(status, 10);
+    switch (status) {
+      case 'Draft':
+        return 0;
+      case 'Rejected':
+        return 1;
+      case 'Moderated':
+        return 2;
+      case 'Opened':
+        return 3;
+      case 'Closed':
+        return 4;
       default:
-        return 'bg-purple-100 text-purple-800 border border-purple-200';
+        return -1;
+    }
+  };
+
+  const getStatusBadgeColor = (status: number | string) => {
+    const statusNum = normalizeStatus(status);
+    switch (statusNum) {
+      case 0: // Đang chờ
+        return 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+      case 1: // Bị từ chối
+        return 'bg-red-100 text-red-800 border border-red-200';
+      case 2: // Đã duyệt
+        return 'bg-orange-100 text-orange-800 border border-orange-200';
+      case 3: // Đang mở
+        return 'bg-green-100 text-green-800 border border-green-200';
+      case 4: // Đã đóng
+        return 'bg-red-50 text-red-700 border border-red-100';
+      case 5: // Đã xóa
+        return 'bg-slate-100 text-slate-800 border border-slate-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border border-gray-200';
     }
   };
 
   const getStatusIcon = (status: number | string) => {
-    const statusNum = typeof status === 'string' ? parseInt(status) : status;
+    const statusNum = normalizeStatus(status);
     switch (statusNum) {
       case 0:
-        return <Clock className="h-3 w-3 mr-1" />; // Draft
+        return <Clock className="h-3 w-3 mr-1" />;
       case 1:
-        return <XCircle className="h-3 w-3 mr-1" />; // Rejected
+        return <XCircle className="h-3 w-3 mr-1" />;
       case 2:
-        return <CheckCircle className="h-3 w-3 mr-1" />; // Moderated
+        return <CheckCircle className="h-3 w-3 mr-1" />;
       case 3:
-        return <CheckCircle className="h-3 w-3 mr-1" />; // Opened
+        return <CheckCircle className="h-3 w-3 mr-1" />;
       case 4:
-        return <XCircle className="h-3 w-3 mr-1" />; // Closed
+        return <XCircle className="h-3 w-3 mr-1" />;
       case 5:
-        return <XCircle className="h-3 w-3 mr-1" />; // Deleted
+        return <XCircle className="h-3 w-3 mr-1" />;
       default:
         return null;
     }
   };
 
   const getStatusLabel = (status: number | string) => {
-    const statusNum = typeof status === 'string' ? parseInt(status) : status;
+    const statusNum = normalizeStatus(status);
     switch (statusNum) {
       case 0:
         return 'Đang chờ duyệt';
@@ -240,11 +276,11 @@ export default function ViewJobList() {
       case 5:
         return 'Đã xóa';
       default:
-        return status.toString();
+        return typeof status === 'string' ? status : status?.toString?.() ?? '';
     }
   };
 
-  // Define columns
+  // Define columns (removed Location -> moved Salary up, added Applicants column)
   const columns = useMemo<ColumnDef<Job>[]>(() => [
     {
       id: "stt",
@@ -278,39 +314,33 @@ export default function ViewJobList() {
       },
     },
     {
-      id: "location",
-      accessorKey: "location",
-      header: "Địa điểm",
-      enableSorting: true,
-      cell: ({ row }) => {
-        const location = row.getValue("location") as string;
-        const cleanLocation = location.replace(/^Địa điểm làm việc\s*/i, "");
-        const displayText = truncateText(cleanLocation, 20);
-        return (
-          <div title={location} className="max-w-[180px] truncate text-sm">
-            {displayText}
-          </div>
-        );
-      },
-    },
-    {
       id: "salaryRange",
       header: "Mức lương",
       cell: ({ row }) => {
         const job = row.original;
         if (!job.salaryMin && !job.salaryMax) return 'Thỏa thuận';
-        
+
         const formatSalary = (amount: number) => {
           if (amount >= 1000000) {
             return (amount / 1000000).toFixed(amount % 1000000 === 0 ? 0 : 1) + ' triệu';
           }
           return amount.toLocaleString();
         };
-        
+
         if (job.salaryMin === job.salaryMax) {
           return `${formatSalary(job.salaryMin!)}`;
         }
         return `${formatSalary(job.salaryMin || 0)} - ${formatSalary(job.salaryMax || 0)}`;
+      },
+      enableSorting: false,
+    },
+    {
+      id: "applicants",
+      header: "Số người ứng tuyển",
+      cell: ({ row }) => {
+        const job = row.original;
+        const count = typeof job.applyCount === 'number' ? job.applyCount : (job.applyCount ? Number(job.applyCount) : 0);
+        return <div className="text-sm">{count}</div>;
       },
       enableSorting: false,
     },
@@ -344,6 +374,9 @@ export default function ViewJobList() {
       header: "Thao tác",
       cell: ({ row }) => {
         const job = row.original;
+        const statusNum = normalizeStatus(job.status);
+        const isOpened = statusNum === 3; // Chỉ hiển thị nút đóng khi status = 3
+        
         return (
           <div className="flex items-center space-x-1">
             <Button
@@ -363,6 +396,18 @@ export default function ViewJobList() {
             >
               <Edit3 className="h-4 w-4" />
             </Button>
+
+            {isOpened && (
+              <Button
+                onClick={() => handleToggleJobStatus(job)}
+                variant="outline"
+                size="sm"
+                title="Đóng tin tuyển dụng"
+                className="hover:bg-red-50 hover:text-red-600"
+              >
+                <Lock className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         );
       },

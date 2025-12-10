@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, useLocation } from "react-router";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
@@ -115,6 +115,11 @@ export default function JobDetailPage() {
       setLoading(false);
     }
   };
+  const location = useLocation();
+  const getBackPath = () => {
+    const from = location.state?.from;
+    return from === '/' ? '/' : '/jobs';
+  };
 
   useEffect(() => {
     fetchJobData();
@@ -161,7 +166,12 @@ export default function JobDetailPage() {
       {/* Top Breadcrumb Area */}
       <div className="bg-slate-50 border-b">
         <div className="container mx-auto px-4 py-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/jobs')} className="text-emerald-600 hover:bg-emerald-600 hover:text-white pl-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(getBackPath())}
+            className="text-emerald-600 hover:bg-emerald-600 hover:text-white pl-0 cursor-pointer"
+          >
             <ArrowLeft className="w-4 h-4 mr-1" /> Quay lại tìm việc
           </Button>
         </div>
@@ -173,7 +183,11 @@ export default function JobDetailPage() {
           <div className="flex flex-col md:flex-row gap-6 items-start">
             {/* Company Logo Mobile/Desktop */}
             <div className="w-24 h-24 md:w-32 md:h-32 border border-gray-100 rounded-xl bg-white p-2 shadow-sm shrink-0 hidden md:flex items-center justify-center">
-              <img src={getLogoUrl(company?.logo)} alt="Logo" className="max-w-full max-h-full object-contain" />
+              <img
+                src={getLogoUrl(company?.logo)}
+                alt="Logo"
+                className="max-w-full max-h-full object-contain"
+              />
             </div>
 
             <div className="flex-1 space-y-4">
@@ -190,7 +204,9 @@ export default function JobDetailPage() {
                   <DollarSign className="h-5 w-5" />
                   <span>
                     {job.salaryMin && job.salaryMax
-                      ? `${(job.salaryMin / 1000000)} - ${(job.salaryMax / 1000000)} Triệu`
+                      ? `${job.salaryMin / 1000000} - ${
+                          job.salaryMax / 1000000
+                        } Triệu`
                       : "Thỏa thuận"}
                   </span>
                 </div>
@@ -200,20 +216,23 @@ export default function JobDetailPage() {
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-md">
                   <Clock className="h-5 w-5 text-gray-500" />
-                  <span>{job.experienceYear ? `${job.experienceYear} năm kinh nghiệm` : "Không yêu cầu"}</span>
+                  <span>
+                    {job.experienceYear
+                      ? `${job.experienceYear} năm kinh nghiệm`
+                      : "Không yêu cầu"}
+                  </span>
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col gap-3 w-full md:w-auto min-w-[220px]">
-              <Button 
+              <Button
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-lg py-6 shadow-lg shadow-emerald-600/20 font-bold transition-transform hover:scale-[1.02]"
                 onClick={() => setApplyDialogOpen(true)}
               >
                 Ứng tuyển ngay
               </Button>
               <div className="flex gap-2">
-
                 <Button
                   variant="outline"
                   className="flex-1 border-red-200 bg-white text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 text-base font-semibold transition-all shadow-sm h-10"
@@ -230,7 +249,6 @@ export default function JobDetailPage() {
                   <Bookmark className="h-4 w-4" />
                 </Button>
               </div>
-
             </div>
           </div>
         </div>
@@ -240,7 +258,6 @@ export default function JobDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Main Content - Left Column */}
           <div className="lg:col-span-8 space-y-8">
-
             {/* Detail Info Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Card className="p-4 bg-white shadow-sm border-l-4 border-l-blue-500">
@@ -250,7 +267,9 @@ export default function JobDetailPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Hình thức làm việc</p>
-                    <p className="font-semibold text-gray-900">{job.jobType || 'Toàn thời gian'}</p>
+                    <p className="font-semibold text-gray-900">
+                      {job.jobType || "Toàn thời gian"}
+                    </p>
                   </div>
                 </div>
               </Card>
@@ -274,8 +293,8 @@ export default function JobDetailPage() {
                     <p className="text-sm text-gray-500">Hạn nộp hồ sơ</p>
                     <p className="font-semibold text-gray-900">
                       {job.expiredAt
-                        ? `${format(new Date(job.expiredAt), 'dd/MM/yyyy')}`
-                        : 'Không giới hạn'}
+                        ? `${format(new Date(job.expiredAt), "dd/MM/yyyy")}`
+                        : "Không giới hạn"}
                     </p>
                   </div>
                 </div>
@@ -287,7 +306,9 @@ export default function JobDetailPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Trạng thái</p>
-                    <p className="font-semibold text-emerald-700">Đang tuyển dụng</p>
+                    <p className="font-semibold text-emerald-700">
+                      Đang tuyển dụng
+                    </p>
                   </div>
                 </div>
               </Card>
@@ -295,7 +316,9 @@ export default function JobDetailPage() {
 
             {/* Chi tiết tin tuyển dụng */}
             <Card className="p-6 md:p-8 shadow-sm border-0 ring-1 ring-gray-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-6 border-l-4 border-emerald-500 pl-4 py-1">Chi tiết tin tuyển dụng</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-6 border-l-4 border-emerald-500 pl-4 py-1">
+                Chi tiết tin tuyển dụng
+              </h2>
 
               <div className="space-y-8">
                 {/* Mô tả công việc */}
@@ -343,13 +366,16 @@ export default function JobDetailPage() {
 
             {/* Action Buttons Footer */}
             <div className="flex gap-4 mt-8">
-              <Button 
+              <Button
                 className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-lg py-6 shadow-md font-bold"
                 onClick={() => setApplyDialogOpen(true)}
               >
                 Ứng tuyển ngay
               </Button>
-              <Button variant="outline" className="border-gray-300 hover:bg-gray-50 px-6">
+              <Button
+                variant="outline"
+                className="border-gray-300 hover:bg-gray-50 px-6"
+              >
                 <Share2 className="w-5 h-5" />
               </Button>
             </div>
@@ -367,21 +393,33 @@ export default function JobDetailPage() {
                 <div className="space-y-5">
                   <div className="flex flex-col items-center text-center pb-4 border-b border-gray-100">
                     <Avatar className="h-24 w-24 rounded-xl border bg-white p-2 mb-3">
-                      <AvatarImage src={getLogoUrl(company.logo)} alt={company.name} className="object-contain" />
-                      <AvatarFallback className="rounded-xl text-2xl bg-emerald-50 text-emerald-600">{company.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      <AvatarImage
+                        src={getLogoUrl(company.logo)}
+                        alt={company.name}
+                        className="object-contain"
+                      />
+                      <AvatarFallback className="rounded-xl text-2xl bg-emerald-50 text-emerald-600">
+                        {company.name.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
-                    <h3 className="font-bold text-lg text-gray-900 line-clamp-2 hover:text-emerald-600 cursor-pointer transition-colors">{company.name}</h3>
+                    <h3 className="font-bold text-lg text-gray-900 line-clamp-2 hover:text-emerald-600 cursor-pointer transition-colors">
+                      {company.name}
+                    </h3>
                     <p className="text-sm text-gray-500 mt-1">IT - Phần mềm</p>
                   </div>
 
                   <div className="space-y-4 text-sm">
                     <div className="flex gap-3">
                       <Users className="h-4 w-4 text-gray-400 shrink-0 mt-0.5" />
-                      <span className="text-gray-600">Quy mô: 25-99 nhân viên</span>
+                      <span className="text-gray-600">
+                        Quy mô: 25-99 nhân viên
+                      </span>
                     </div>
                     <div className="flex gap-3">
                       <MapPin className="h-4 w-4 text-gray-400 shrink-0 mt-0.5" />
-                      <span className="text-gray-600 line-clamp-3">{company.address}</span>
+                      <span className="text-gray-600 line-clamp-3">
+                        {company.address}
+                      </span>
                     </div>
                     {company.website && (
                       <div className="flex gap-3">
@@ -398,12 +436,18 @@ export default function JobDetailPage() {
                     )}
                   </div>
 
-                  <Button variant="outline" className="w-full mt-2 border-emerald-200 text-emerald-600 hover:bg-emerald-600 hover:text-white hover:border-emerald-600" onClick={() => window.open(company.website, '_blank')}>
+                  <Button
+                    variant="outline"
+                    className="w-full mt-2 border-emerald-200 text-emerald-600 hover:bg-emerald-600 hover:text-white hover:border-emerald-600"
+                    onClick={() => window.open(company.website, "_blank")}
+                  >
                     Xem trang công ty <ChevronRight className="ml-1 h-4 w-4" />
                   </Button>
                 </div>
               ) : (
-                <div className="text-center py-4 text-gray-500">Đang tải thông tin...</div>
+                <div className="text-center py-4 text-gray-500">
+                  Đang tải thông tin...
+                </div>
               )}
             </Card>
 
@@ -416,40 +460,47 @@ export default function JobDetailPage() {
               <div className="space-y-3">
                 {recommendedJobs.length > 0 ? (
                   <>
-                    {recommendedJobs.filter(rJob => rJob.jobId !== job?.jobId).slice(0, 4).map((rJob) => (
-                      <div 
-                        key={rJob.jobId} 
-                        className="border border-gray-100 rounded-lg p-3 hover:bg-emerald-50/50 hover:border-emerald-100 transition-all cursor-pointer group"
-                        onClick={() => navigate(`/jobs/${rJob.jobId}`)}
-                      >
-                        <h4 className="font-bold text-gray-800 text-sm line-clamp-1 group-hover:text-emerald-600 transition-colors">
-                          {rJob.title}
-                        </h4>
-                        <p className="text-xs text-gray-500 mt-1 mb-2 truncate">
-                          {rJob.location}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
-                            {rJob.salaryMin && rJob.salaryMax
-                              ? `${(rJob.salaryMin / 1000000)} - ${(rJob.salaryMax / 1000000)} triệu`
-                              : "Thỏa thuận"}
-                          </span>
-                          <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
-                            {rJob.jobType || 'Toàn thời gian'}
-                          </span>
+                    {recommendedJobs
+                      .filter((rJob) => rJob.jobId !== job?.jobId)
+                      .slice(0, 4)
+                      .map((rJob) => (
+                        <div
+                          key={rJob.jobId}
+                          className="border border-gray-100 rounded-lg p-3 hover:bg-emerald-50/50 hover:border-emerald-100 transition-all cursor-pointer group"
+                          onClick={() => navigate(`/jobs/${rJob.jobId}`)}
+                        >
+                          <h4 className="font-bold text-gray-800 text-sm line-clamp-1 group-hover:text-emerald-600 transition-colors">
+                            {rJob.title}
+                          </h4>
+                          <p className="text-xs text-gray-500 mt-1 mb-2 truncate">
+                            {rJob.location}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
+                              {rJob.salaryMin && rJob.salaryMax
+                                ? `${rJob.salaryMin / 1000000} - ${
+                                    rJob.salaryMax / 1000000
+                                  } triệu`
+                                : "Thỏa thuận"}
+                            </span>
+                            <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
+                              {rJob.jobType || "Toàn thời gian"}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                    <Button 
-                      variant="link" 
+                      ))}
+                    <Button
+                      variant="link"
                       className="w-full text-emerald-600 text-sm font-medium hover:no-underline hover:bg-emerald-50 mt-2"
-                      onClick={() => navigate('/jobs')}
+                      onClick={() => navigate("/jobs")}
                     >
                       Xem tất cả việc làm tương tự
                     </Button>
                   </>
                 ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">Không có việc làm tương tự</p>
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    Không có việc làm tương tự
+                  </p>
                 )}
               </div>
             </div>
@@ -468,7 +519,7 @@ export default function JobDetailPage() {
         onOpenChange={setApplyDialogOpen}
         jobId={job.jobId}
         jobTitle={job.title}
-        onUploadCV={() => navigate('/candidate/cv-management')}
+        onUploadCV={() => navigate("/candidate/cv-management")}
       />
     </div>
   );
