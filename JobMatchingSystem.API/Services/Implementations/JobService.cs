@@ -366,8 +366,8 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             var statusEnum = (JobStatus)request.Status;
 
-            // Only allow Rejected or Moderated status
-            if (statusEnum != JobStatus.Rejected && statusEnum != JobStatus.Moderated)
+            // Only allow Rejected, Moderated, or Closed status
+            if (statusEnum != JobStatus.Rejected && statusEnum != JobStatus.Moderated && statusEnum != JobStatus.Closed)
                 throw new AppException(ErrorCode.InvalidStatus());
 
             var job = await _context.Jobs.FirstOrDefaultAsync(j => j.JobId == jobId);
