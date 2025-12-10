@@ -32,7 +32,7 @@ namespace JobMatchingSystem.API.Controllers
                 return NotFound(APIResponse<string>.Builder()
                     .WithStatusCode(HttpStatusCode.NotFound)
                     .WithSuccess(false)
-                    .WithResult("No extension jobs found")
+                    .WithResult("Không tìm thấy tiện ích mở rộng nào")
                     .Build());
 
             return Ok(APIResponse<List<ExtensionJob>>.Builder()

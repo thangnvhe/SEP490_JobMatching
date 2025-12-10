@@ -65,7 +65,7 @@ namespace JobMatchingSystem.API.Controllers
                 return NotFound(APIResponse<string>.Builder()
                     .WithStatusCode(HttpStatusCode.NotFound)
                     .WithSuccess(false)
-                    .WithResult("Taxonomy not found")
+                    .WithResult("Không tìm thấy kỹ năng")
                     .Build());
             }
 

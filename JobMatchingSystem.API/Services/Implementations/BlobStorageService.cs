@@ -23,7 +23,7 @@ namespace JobMatchingSystem.API.Services.Implementations
         {
             if (file == null || file.Length == 0)
             {
-                throw new ArgumentException("File cannot be null or empty");
+                throw new ArgumentException("File không được để trống");
             }
 
             ValidateFolder(folder);

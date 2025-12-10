@@ -32,7 +32,7 @@ namespace JobMatchingSystem.API.Controllers
                     return NotFound(APIResponse<object>.Builder()
                         .WithStatusCode(HttpStatusCode.NotFound)
                         .WithSuccess(false)
-                        .WithMessage("CV Profile not found")
+                        .WithMessage("Không tìm thấy hồ sơ CV")
                         .Build());
                 }
 
@@ -122,7 +122,7 @@ namespace JobMatchingSystem.API.Controllers
                     return BadRequest(APIResponse<object>.Builder()
                         .WithStatusCode(HttpStatusCode.BadRequest)
                         .WithSuccess(false)
-                        .WithMessage("Invalid user authentication")
+                        .WithMessage("Xác thực người dùng không hợp lệ")
                         .Build());
                 }
                 
@@ -168,7 +168,7 @@ namespace JobMatchingSystem.API.Controllers
                     return BadRequest(APIResponse<object>.Builder()
                         .WithStatusCode(HttpStatusCode.BadRequest)
                         .WithSuccess(false)
-                        .WithMessage("Invalid user authentication")
+                        .WithMessage("Xác thực người dùng không hợp lệ")
                         .Build());
                 }
                 
@@ -193,7 +193,7 @@ namespace JobMatchingSystem.API.Controllers
                 return NotFound(APIResponse<object>.Builder()
                     .WithStatusCode(HttpStatusCode.NotFound)
                     .WithSuccess(false)
-                    .WithMessage("CV Profile not found")
+                    .WithMessage("Không tìm thấy hồ sơ CV")
                     .Build());
             }
             catch (UnauthorizedAccessException ex)
@@ -230,7 +230,7 @@ namespace JobMatchingSystem.API.Controllers
                 return NotFound(APIResponse<object>.Builder()
                     .WithStatusCode(HttpStatusCode.NotFound)
                     .WithSuccess(false)
-                    .WithMessage("CV Profile not found")
+                    .WithMessage("Không tìm thấy hồ sơ CV")
                     .Build());
             }
             catch (UnauthorizedAccessException ex)
@@ -259,7 +259,7 @@ namespace JobMatchingSystem.API.Controllers
                     return BadRequest(APIResponse<object>.Builder()
                         .WithStatusCode(HttpStatusCode.BadRequest)
                         .WithSuccess(false)
-                        .WithMessage("Invalid user authentication")
+                        .WithMessage("Xác thực người dùng không hợp lệ")
                         .Build());
                 }
 
@@ -323,7 +323,7 @@ namespace JobMatchingSystem.API.Controllers
                     return BadRequest(APIResponse<object>.Builder()
                         .WithStatusCode(HttpStatusCode.BadRequest)
                         .WithSuccess(false)
-                        .WithMessage("Invalid user authentication")
+                        .WithMessage("Xác thực người dùng không hợp lệ")
                         .Build());
                 }
 
@@ -348,7 +348,7 @@ namespace JobMatchingSystem.API.Controllers
                 return NotFound(APIResponse<object>.Builder()
                     .WithStatusCode(HttpStatusCode.NotFound)
                     .WithSuccess(false)
-                    .WithMessage("CV Profile not found")
+                    .WithMessage("Không tìm thấy hồ sơ CV")
                     .Build());
             }
             catch (Exception ex)

@@ -44,7 +44,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.Created)
                 .WithSuccess(true)
-                .WithResult("Report created successfully")
+                .WithResult("Thêm báo cáo thành công")
                 .Build());
         }
 
@@ -58,7 +58,7 @@ namespace JobMatchingSystem.API.Controllers
 
             return Ok(APIResponse<string>.Builder()
                 .WithSuccess(true)
-                .WithResult("Report censored successfully")
+                .WithResult("Báo cáo đã được kiểm duyệt thành công")
                 .Build());
         }
 

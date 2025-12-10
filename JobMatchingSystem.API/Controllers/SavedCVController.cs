@@ -60,7 +60,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.Created)
                 .WithSuccess(true)
-                .WithResult("Saved CV created successfully")
+                .WithResult("Lưu CV thành công")
                 .Build());
         }
 
@@ -75,7 +75,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
-                .WithResult("Saved CV deleted successfully")
+                .WithResult("Xóa CV đã lưu thành công")
                 .Build());
         }
     }

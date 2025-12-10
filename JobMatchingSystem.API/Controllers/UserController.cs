@@ -135,7 +135,7 @@ namespace JobMatchingSystem.API.Controllers
             await _userService.ChangeStatus(id);
 
             return Ok(APIResponse<string>.Builder()
-                .WithResult("User status updated successfully")
+                .WithResult("Thay đổi trạng thái thành công")
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
                 .Build());
@@ -246,19 +246,19 @@ namespace JobMatchingSystem.API.Controllers
         private static string? ValidateAvatarFile(IFormFile file)
         {
             if (file.Length == 0)
-                return "Avatar file cannot be empty";
+                return "File avatar không được để trống";
 
             // Check file size (5MB limit)
             const long maxSize = 5 * 1024 * 1024; // 5MB
             if (file.Length > maxSize)
-                return "File size must be less than 5MB";
+                return "Kích thước file phải nhỏ hơn 5MB";
 
             // Check file type
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
             var fileExtension = Path.GetExtension(file.FileName)?.ToLower();
             
             if (string.IsNullOrEmpty(fileExtension) || !allowedExtensions.Contains(fileExtension))
-                return $"Invalid file type. Allowed types: {string.Join(", ", allowedExtensions)}";
+                return $"Loại file không hợp lệ. Các loại được phép: {string.Join(", ", allowedExtensions)}";
 
             return null; // Valid file
         }

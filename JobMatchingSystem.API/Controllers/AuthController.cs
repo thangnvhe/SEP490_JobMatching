@@ -45,7 +45,7 @@ namespace JobMatchingSystem.API.Controllers
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             await _authService.Logout(userId);
             return Ok(APIResponse<string>.Builder()
-                .WithResult("Logout Success")
+                .WithResult("Đăng xuất thành công")
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
                 .Build());
@@ -65,7 +65,7 @@ namespace JobMatchingSystem.API.Controllers
         {
             await _authService.ForgotPasswordAsync(request);
             return Ok(APIResponse<string>.Builder()
-                .WithResult("Please check your Email")
+                .WithResult("Hãy kiểm tra email của bạn để đặt lại mật khẩu")
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
                 .Build());
@@ -76,7 +76,7 @@ namespace JobMatchingSystem.API.Controllers
         {
             await _authService.ResetPasswordAsync(request);
             return Ok(APIResponse<string>.Builder()
-                .WithResult("Change Password Success")
+                .WithResult("Đổi mật khẩu thành công")
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
                 .Build());
