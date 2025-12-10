@@ -38,6 +38,8 @@ import EvaluationHistory from './pages/client-site/evaluation-history/evaluation
 import PricingPage from './pages/client-site/pricing/pricing';
 import OrderPage from './pages/client-site/order/order';
 import InterviewConfirmPage from './pages/client-site/candidate/InterviewConfirmPage';
+import CVSearchPage from './pages/client-site/recruiter/CVSearch/CVSearchPage';
+import SavedCVsPage from './pages/client-site/recruiter/SavedCVs/SavedCVsPage';
 
 const AppRouter: React.FC = () => {
   return (
@@ -90,6 +92,8 @@ const AppRouter: React.FC = () => {
         <Route index element={<RecruiterDashboard />} />
         <Route path="jobs" element={<RecruiterViewJobList />} />
         <Route path="jobs/create" element={<CreateJobPage />} />
+        <Route path="cv-search" element={<CVSearchPage />} />
+        <Route path="saved-cvs" element={<SavedCVsPage />} />
         <Route path="recruitment-process/:jobId" element={<RecruitmentProcessManagement />} />
         <Route path="company" element={<CompanyProfile />} />
         <Route path="company/members" element={<CompanyMembersPage />} />

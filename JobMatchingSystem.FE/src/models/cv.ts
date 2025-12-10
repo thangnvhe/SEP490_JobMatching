@@ -12,6 +12,21 @@ export interface CV {
     user: User;
 }
 
+// Interface cho response từ /api/CV/all
+export interface CVDetail {
+    id: number;
+    name: string;
+    isPrimary: boolean;
+    fileName: string;
+    fileUrl: string;
+    user: {
+        id: number;
+        fullName: string;
+        email: string;
+        phoneNumber: string;
+    };
+}
+
 export interface CVValidate {
     is_cv: boolean,
     confidence: number,
