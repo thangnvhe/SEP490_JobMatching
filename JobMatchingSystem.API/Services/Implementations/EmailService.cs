@@ -512,5 +512,66 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             await SendEmailAsync(toEmail, subject, body);
         }
+
+        public async Task SendJobInvitationEmailAsync(string toEmail, string jobTitle, string companyName, string jobApplicationUrl, string? message)
+        {
+            string subject = $"Lời mời ứng tuyển - {jobTitle} tại {companyName}";
+
+            string body = $@"
+    <div style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden;'>
+        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;'>
+            <h1 style='margin: 0; font-size: 24px; font-weight: bold;'>JobMatching System</h1>
+            <p style='margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;'>Lời mời ứng tuyển</p>
+        </div>
+        
+        <div style='padding: 40px 30px;'>
+            <div style='text-align: center; margin-bottom: 30px;'>
+                <div style='background-color: #f8f9fa; border-radius: 50px; width: 80px; height: 80px; margin: 0 auto 20px auto; display: flex; align-items: center; justify-content: center;'>
+                    <span style='font-size: 32px;'>💼</span>
+                </div>
+                <h2 style='margin: 0; color: #495057; font-size: 22px;'>Bạn được mời ứng tuyển!</h2>
+            </div>
+            
+            <div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;'>
+                <p style='margin: 0 0 10px 0; font-weight: bold; color: #495057;'>Thông tin vị trí:</p>
+                <p style='margin: 5px 0; font-size: 18px; color: #007bff; font-weight: bold;'>{jobTitle}</p>
+                <p style='margin: 5px 0; color: #6c757d;'>tại <span style='font-weight: bold; color: #495057;'>{companyName}</span></p>
+            </div>";
+
+            if (!string.IsNullOrEmpty(message))
+            {
+                body += $@"
+            <div style='background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 15px; margin-bottom: 25px;'>
+                <p style='margin: 0; color: #495057; font-style: italic;'>""{message}""</p>
+            </div>";
+            }
+
+            body += $@"
+            <div style='text-align: center; margin: 30px 0;'>
+                <a href='{jobApplicationUrl}' style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; transition: all 0.3s ease;'>
+                    Ứng tuyển ngay
+                </a>
+            </div>
+            
+            <div style='background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin-bottom: 20px;'>
+                <p style='margin: 0; color: #856404; font-size: 14px;'>
+                    <strong>Lưu ý:</strong> Đây là lời mời ứng tuyển từ nhà tuyển dụng. 
+                    Vui lòng đọc kỹ thông tin và yêu cầu công việc trước khi ứng tuyển.
+                </p>
+            </div>
+            
+            <p style='margin-bottom: 20px; color: #6c757d;'>Chúc bạn thành công trong quá trình ứng tuyển!</p>
+        </div>
+        
+        <div style='text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;'>
+            <p style='margin: 5px 0; color: #6c757d; font-size: 14px;'>Trân trọng,</p>
+            <p style='margin: 5px 0; color: #495057; font-weight: bold;'>Đội ngũ JobMatching System</p>
+            <p style='margin: 15px 0 5px 0; color: #6c757d; font-size: 12px;'>Đây là email tự động, vui lòng không trả lời trực tiếp email này.</p>
+            <p style='margin: 5px 0; color: #6c757d; font-size: 12px;'>Nếu có thắc mắc, vui lòng liên hệ: support@jobmatching.vn</p>
+        </div>
+    </div>";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
     }
 }
