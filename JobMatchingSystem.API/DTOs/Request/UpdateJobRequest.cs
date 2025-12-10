@@ -6,11 +6,11 @@ namespace JobMatchingSystem.API.DTOs.Request
     public class UpdateJobRequest
     {
         // Tiêu đề công việc (Có thể null. Nếu có, phải hợp lệ)
-        [StringLength(200, ErrorMessage = "Title must not exceed 200 characters")]
+        [StringLength(200, ErrorMessage = "Tiêu đề công việc không được vượt quá 200 ký tự")]
         public string? Title { get; set; }
 
         // Mô tả công việc (Có thể null. Nếu có, phải đủ độ dài tối thiểu)
-        [MinLength(50, ErrorMessage = "Description must be at least 50 characters")]
+        [MinLength(50, ErrorMessage = "Mô tả công việc phải có ít nhất 50 ký tự")]
         public string? Description { get; set; }
 
         // Yêu cầu công việc (Có thể null)
@@ -20,23 +20,23 @@ namespace JobMatchingSystem.API.DTOs.Request
         public string? Benefits { get; set; }
 
         // Lương tối thiểu (Có thể null. Nếu có, phải là số không âm)
-        [Range(0, int.MaxValue, ErrorMessage = "Salary minimum must be a non-negative number")]
+        [Range(0, int.MaxValue, ErrorMessage = "Lương tối thiểu phải là số không âm")]
         public int? SalaryMin { get; set; }
 
         // Lương tối đa (Có thể null. Nếu có, phải là số không âm)
-        [Range(0, int.MaxValue, ErrorMessage = "Salary maximum must be a non-negative number")]
+        [Range(0, int.MaxValue, ErrorMessage = "Lương tối đa phải là số không âm")]
         public int? SalaryMax { get; set; }
 
         // Địa điểm làm việc (Có thể null. Nếu có, không dài quá 255 ký tự)
-        [StringLength(255, ErrorMessage = "Location must not exceed 255 characters")]
+        [StringLength(255, ErrorMessage = "Địa điểm làm việc không được vượt quá 255 ký tự")]
         public string? Location { get; set; }
 
         // Số năm kinh nghiệm (Có thể null. Nếu có, phải trong khoảng hợp lệ)
-        [Range(0, 50, ErrorMessage = "Experience year must be between 0 and 50")]
+        [Range(0, 50, ErrorMessage = "Số năm kinh nghiệm phải từ 0 đến 50")]
         public int? ExperienceYear { get; set; }
 
         // Loại hình công việc (Có thể null. Nếu có, không dài quá 50 ký tự)
-        [StringLength(50, ErrorMessage = "Job type must not exceed 50 characters")]
+        [StringLength(50, ErrorMessage = "Loại hình công việc không được vượt quá 50 ký tự")]
         public string? JobType { get; set; }
 
         public int? PositionId { get; set; }
