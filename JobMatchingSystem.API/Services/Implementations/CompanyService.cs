@@ -272,9 +272,14 @@ namespace JobMatchingSystem.API.Services.Implementations
             await _unitOfWork.SaveAsync();
         }
 
-        public async Task UpdateCompany(UpdateCompanyRequest request, int companyId)
+        public async Task<CompanyDTO> UpdateCompany(UpdateCompanyRequest request, int companyId)
         {
             var company = await _unitOfWork.CompanyRepository.GetByIdAsync(companyId);
+            if (company == null)
+            {
+                throw new AppException(ErrorCode.NotFoundCompany());
+            }
+            
             _mapper.Map(request, company);
             
             if (request.Logo != null)
@@ -293,6 +298,16 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
 
             await _unitOfWork.SaveAsync();
+            
+            // Return updated company as DTO
+            var companyDTO = _mapper.Map<CompanyDTO>(company);
+            companyDTO.Logo = await _blobStorageService.GetSecureFileUrlAsync(company.Logo ?? "Empty");
+            if (company.LicenseFile != null)
+            {
+                companyDTO.LicenseFile = await _blobStorageService.GetSecureFileUrlAsync(company.LicenseFile);
+            }
+            
+            return companyDTO;
         }
 
         public async Task<CompanyDTO> GetMyCompanyAsync(int recruiterId)
