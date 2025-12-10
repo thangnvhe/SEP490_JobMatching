@@ -22,13 +22,11 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                 "http://localhost:5173",
-                "http://14.225.19.47:5222",
-                "http://14.225.19.47:5173",
-                "http://14.225.19.47"
+                "http://14.225.19.47:5173"
             ) // URL frontend của bạn
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials(); // Quan trọng: cho phép gửi cookie/token
+              .AllowCredentials();
     });
 });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -43,19 +41,32 @@ builder.Services.AddAutoMapper(cfg =>
 });
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
+
 var app = builder.Build();
-await app.AutoMigration();
-await app.SeedAdminUserAsync();
-await app.SeedAllData();
-// Configure the HTTP request pipeline.
-    app.UseSwagger();
-    app.UseSwaggerUI();
+
+// 1) Migration + Seed trước khi vào pipeline
+// await app.AutoMigration();
+// await app.SeedAdminUserAsync();
+// await app.SeedAllData();
+
+app.UseExceptionHandler();
+
+// 3) Swagger
+app.UseSwagger();
+app.UseSwaggerUI();
+
+// Nếu dùng HTTPS
 // app.UseHttpsRedirection();
+
+// 4) CORS phải đặt trước Auth
 app.UseCors("FrontendCors");
+
+// 5) Static files (nếu có upload)
 app.UseStaticFiles();
+
+// 6) Auth
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseExceptionHandler();
 
 app.MapControllers();
 
