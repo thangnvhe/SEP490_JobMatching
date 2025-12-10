@@ -463,3 +463,28 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 *.lnk
+JobMatchingSystem.FE/env.ts
+
+# AI Service - Python files and API keys
+JobMatchingSystem.AIService/.env
+JobMatchingSystem.AIService/.env.*
+JobMatchingSystem.AIService/__pycache__/
+JobMatchingSystem.AIService/**/__pycache__/
+JobMatchingSystem.AIService/*.pyc
+JobMatchingSystem.AIService/**/*.pyc
+JobMatchingSystem.AIService/*.log
+JobMatchingSystem.AIService/logs/
+JobMatchingSystem.AIService/temp/
+JobMatchingSystem.AIService/tmp/
+JobMatchingSystem.AIService/data/
+JobMatchingSystem.AIService/output/
+JobMatchingSystem.AIService/models/
+JobMatchingSystem.AIService/venv/
+JobMatchingSystem.AIService/.venv/
+
+# Global API keys and secrets (QUAN TRỌNG!)
+*.key
+*.secret
+*secrets.json
+*apikeys.txt
+*config.json

@@ -1,4 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using JobMatchingSystem.API.Repositories.Implementations;
+using JobMatchingSystem.API.Repositories.Interfaces;
+using JobMatchingSystem.API.Services.BackgroundServices;
+using JobMatchingSystem.API.Services.Implementations;
+using JobMatchingSystem.API.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace JobMatchingSystem.API.Configuration
@@ -8,12 +13,89 @@ namespace JobMatchingSystem.API.Configuration
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
             //services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IAuthRepository, AuthRepository>();
+            services.AddScoped<IJobRepository, JobRepository>();
+            services.AddScoped<ICompanyRepository, CompanyRepository>();
+            services.AddScoped<IJobStageRepository, JobStageRepository>();
+            services.AddScoped<ITaxonomyRepository, TaxonomyRepository>();
+            services.AddScoped<ICandidateJobRepository, CandidateJobRepository>();
+            services.AddScoped<ICvUploadRepository, CvUploadRepository>();
+            services.AddScoped<ITemplateCvRepository, TemplateCvRepository>();
+            services.AddScoped<ICVRepository, CVRepository>();
+            services.AddScoped<ICandidateStageRepository, CandidateStageRepository>();
+            services.AddScoped<ICVAchievementRepository, CVAchievementRepository>();
+            services.AddScoped<ICVCertificateRepository, CVCertificateRepository>();
+            services.AddScoped<ICVEducationRepository, CVEducationRepository>();
+            services.AddScoped<ICVExperienceRepository, CVExperienceRepository>();
+            services.AddScoped<ICVProjectRepository, CVProjectRepository>();
+            services.AddScoped<ICVProfileRepository, CVProfileRepository>();
+            services.AddScoped<IReportRepository, ReportRepository>();
+            services.AddScoped<ISavedJobRepository, SavedJobRepository>();
+            services.AddScoped<ISavedCVRepository, SavedCVRepository>();
+            services.AddScoped<ICandidateTaxonomyRepository, CandidateTaxonomyRepository>();
+            services.AddScoped<IJobTaxonomyRepository, JobTaxonomyRepository>();
+            services.AddScoped<IServicePlanRepository, ServicePlanRepository>();
+            services.AddScoped<IJobQuotaRepository, JobQuotaRepository>();
+            services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IHighlightJobRepository, HighlightJobRepository>();
+            services.AddScoped<IExtensionJobRepository, ExtensionJobRepository>();
+            services.AddScoped<IPositionRepository, PositionRepository>();
             return services;
         }
 
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
             //services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddTransient<IEmailService, EmailService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IJobService, JobService>();
+            services.AddScoped<ICompanyService, CompanyService>();
+            services.AddScoped<ITaxCodeValidationService, TaxCodeValidationService>();
+            services.AddHttpClient<ITaxCodeValidationService, TaxCodeValidationService>(client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(30);
+                client.DefaultRequestHeaders.Add("User-Agent", "JobMatchingSystem/1.0");
+            });
+            services.AddScoped<IJobStageService, JobStageService>();
+            services.AddScoped<ITaxonomyService, TaxonomyService>();
+            services.AddScoped<ICandidateJobService, CandidateJobService>();
+            services.AddScoped<ITemplateCvService, TemplateCvService>();
+            services.AddScoped<ICVService, CVService>();
+            services.AddScoped<ICandidateStageService, CandidateStageService>();
+            services.AddScoped<ITemplateCvService, TemplateCvService>();
+            services.AddScoped<ICVService, CVService>();
+            services.AddScoped<ICVAchievementService, CVAchievementService>();
+            services.AddScoped<ICVCertificateService, CVCertificateService>();
+            services.AddScoped<ICVEducationService, CVEducationService>();
+            services.AddScoped<ICVExperienceService, CVExperienceService>();
+            services.AddScoped<ICVProjectService, CVProjectService>();
+            services.AddScoped<ICVProfileService, CVProfileService>();
+            services.AddScoped<IReportService, ReportService>();
+            services.AddScoped<ISavedJobService, SavedJobService>();
+            services.AddScoped<ISavedCVService, SavedCVService>();
+            services.AddHostedService<JobStatusScheduler>();
+            services.AddHostedService<SePaySyncService>();
+            services.AddHostedService<MonthlyQuotaResetService>();
+            services.AddHostedService<OrderTimeoutService>();
+            services.AddHostedService<OrderPaymentSyncService>();
+            services.AddHostedService<JobHighlightExpirationService>();
+            services.AddScoped<ICandidateTaxonomyService, CandidateTaxonomyService>();
+            services.AddScoped<IJobTaxonomyService, JobTaxonomyService>();
+            services.AddScoped<IServicePlanService, ServicePlanService>();
+            services.AddScoped<IJobQuotaService, JobQuotaService>();
+            services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<IBlobStorageService, BlobStorageService>();
+            services.AddScoped<IHighlightJobService, HighlightJobService>();
+            services.AddScoped<IExtensionJobService, ExtensionJobService>();
+            services.AddScoped<IPositionService, PositionService>();
+            services.AddScoped<IEducationLevelService, EducationLevelService>();
+            services.AddScoped<IJobMatchingService, JobMatchingService>();
+            services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+            services.AddScoped<IRecruiterDashboardService, RecruiterDashboardService>();
+            services.AddScoped<ICandidateDashboardService, CandidateDashboardService>();
+            services.AddScoped<IHiringManagerDashboardService, HiringManagerDashboardService>();
             return services;
         }
 
