@@ -151,24 +151,24 @@ export function ForgotPasswordDialog({ isOpen, onOpenChange, onOpenLogin }: Forg
         <div className="p-6 pb-0">
           <DialogHeader className="text-center pb-2">
             <DialogTitle className="text-xl font-semibold">
-              Forgot Password
+              Quên mật khẩu
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
-            <p className="text-gray-600 text-center">
-              Enter your email address and we'll send you a link to reset your password.
-            </p>
+            {/* <p className="text-gray-600 text-center">
+             Nhập email của bạn để nhận liên kết đặt lại mật khẩu. 
+            </p> */}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">
-                  Email Address
+                  Email
                 </Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="Nhập email của bạn"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -188,7 +188,7 @@ export function ForgotPasswordDialog({ isOpen, onOpenChange, onOpenLogin }: Forg
                 disabled={loading}
                 className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50"
               >
-                {loading ? "Sending..." : "Send Reset Link"}
+                {loading ? "Sending..." : "Gửi liên kết"}
               </Button>
             </form>
           </div>
@@ -197,16 +197,16 @@ export function ForgotPasswordDialog({ isOpen, onOpenChange, onOpenLogin }: Forg
         <div className="px-6 pb-6">
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Remember your password?{" "}
+              Bạn nhớ mật khẩu rồi?{" "}
               <Button
                 variant="link"
-                className="p-0 h-auto text-blue-600 hover:text-blue-800 font-medium"
+                className="p-1 h-auto text-blue-600 hover:text-blue-800 font-medium"
                 onClick={() => {
                   onOpenChange(false);
                   onOpenLogin?.();
                 }}
               >
-                Back to Login
+              Quay lại đăng nhập
               </Button>
             </p>
           </div>

@@ -24,7 +24,7 @@ export function ClientFooter() {
               <span className="text-2xl font-bold">Superio</span>
             </div>
             <p className="text-gray-400 text-sm mb-4">
-              Find the job that fits your life. Start your career with us.
+              Tìm kiếm việc làm dễ dàng và nhanh chóng với Superio. Kết nối nhà tuyển dụng và ứng viên hiệu quả.
             </p>
             <div className="flex space-x-4">
               <Button variant="outline" size="icon" className="rounded-full">
@@ -44,31 +44,31 @@ export function ClientFooter() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">For Candidates</h3>
+            <h3 className="text-lg font-semibold mb-4">Ứng viên</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to="#" className="text-gray-400 hover:text-white transition">
-                  Browse Jobs
+                  Tìm việc
                 </Link>
               </li>
               <li>
                 <Link to="#" className="text-gray-400 hover:text-white transition">
-                  Browse Categories
+                  Duyệt danh mục
                 </Link>
               </li>
               <li>
                 <Link to="#" className="text-gray-400 hover:text-white transition">
-                  Candidate Dashboard
+                  Bảng điều khiển ứng viên
                 </Link>
               </li>
               <li>
                 <Link to="#" className="text-gray-400 hover:text-white transition">
-                  Job Alerts
+                  Thông báo việc làm
                 </Link>
               </li>
               <li>
                 <Link to="#" className="text-gray-400 hover:text-white transition">
-                  My Bookmarks
+                  Bookmark của tôi
                 </Link>
               </li>
             </ul>
@@ -76,26 +76,26 @@ export function ClientFooter() {
 
           {/* For Employers */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">For Employers</h3>
+            <h3 className="text-lg font-semibold mb-4">Nhà tuyển dụng</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to="#" className="text-gray-400 hover:text-white transition">
-                  Browse Candidates
+                  Duyệt ứng viên
                 </Link>
               </li>
               <li>
                 <Link to="#" className="text-gray-400 hover:text-white transition">
-                  Employer Dashboard
+                  Bảng điều khiển nhà tuyển dụng
                 </Link>
               </li>
               <li>
                 <Link to="#" className="text-gray-400 hover:text-white transition">
-                  Add Job
+                  Thêm việc làm
                 </Link>
               </li>
               <li>
                 <Link to="#" className="text-gray-400 hover:text-white transition">
-                  Job Packages
+                  Gói việc làm
                 </Link>
               </li>
             </ul>
@@ -124,16 +124,16 @@ export function ClientFooter() {
         <Separator className="my-8 bg-gray-700" />
 
         <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-          <p>© 2024 Superio. All rights reserved.</p>
+          <p>© 2024 Superio. Mọi quyền được bảo lưu.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link to="#" className="hover:text-white transition">
-              Privacy Policy
+              Chính sách bảo mật
             </Link>
             <Link to="#" className="hover:text-white transition">
-              Terms of Service
+              Điều khoản dịch vụ
             </Link>
             <Link to="#" className="hover:text-white transition">
-              Cookie Policy
+              Chính sách cookie
             </Link>
           </div>
         </div>

@@ -112,12 +112,6 @@ export default function ViewServicePackageList() {
         enableSorting: false,
       },
       {
-        id: "recuiterId",
-        accessorKey: "recuiterId",
-        header: "Mã nhà tuyển dụng",
-        enableSorting: true,
-      },
-      {
         id: "extensionJobDays",
         accessorKey: "extensionJobDays",
         header: "Số ngày gia hạn",
@@ -166,12 +160,6 @@ export default function ViewServicePackageList() {
           return index + 1;
         },
         enableSorting: false,
-      },
-      {
-        id: "recuiterId",
-        accessorKey: "recuiterId",
-        header: "Mã nhà tuyển dụng",
-        enableSorting: true,
       },
       {
         id: "highlightJobDays",

@@ -310,7 +310,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             return companyDTO;
         }
 
-        public async Task<CompanyDTO> GetMyCompanyAsync(int recruiterId)
+        public async Task<CompanyDetailResponse> GetMyCompanyAsync(int recruiterId)
         {
             // Find the user first
             var recruiter = await _userManager.FindByIdAsync(recruiterId.ToString());
@@ -325,11 +325,58 @@ namespace JobMatchingSystem.API.Services.Implementations
             // Get company by recruiter's CompanyId
             if (recruiter.CompanyId == null)
                 throw new AppException(new Error("Recruiter không liên kết với công ty nào", System.Net.HttpStatusCode.NotFound));
+            
             var company = await _unitOfWork.CompanyRepository.GetByIdAsync(recruiter.CompanyId.Value);
             if (company == null)
                 throw new AppException(ErrorCode.NotFoundCompany());
 
-            return _mapper.Map<CompanyDTO>(company);
+            // Map company to CompanyDetailResponse
+            var response = _mapper.Map<CompanyDetailResponse>(company);
+
+            // Populate the new fields
+            var companyId = recruiter.CompanyId.Value;
+
+            // 1. Số tin tuyển dụng: đếm các job đang Opened hoặc Moderated của công ty
+            var jobCount = (await _unitOfWork.JobRepository.GetJobsByCompanyIdAsync(companyId))
+                ?.Where(j => (j.Status == JobStatus.Opened || j.Status == JobStatus.Moderated) && !j.IsDeleted)
+                .Count() ?? 0;
+            response.JobCount = jobCount;
+
+            // 2. Số thành viên công ty: đếm tất cả users (Recruiter + Hiring Manager) của công ty
+            var teamMembers = await _unitOfWork.AuthRepository.GetUsersByCompanyIdAsync(companyId);
+            response.TeamMembersCount = teamMembers?.Count(u => u.IsActive) ?? 0;
+
+            // 3. Số người đã tuyển: đếm CandidateJob có status = Pass từ tất cả jobs của công ty
+            var companyJobs = await _unitOfWork.JobRepository.GetJobsByCompanyIdAsync(companyId);
+            int recruitsCount = 0;
+            if (companyJobs != null && companyJobs.Any())
+            {
+                var jobIds = companyJobs.Select(j => j.JobId).ToList();
+                
+                // Lấy tất cả CandidateJob từ các jobs này
+                var allCandidateJobs = new List<CandidateJob>();
+                foreach (var jobId in jobIds)
+                {
+                    var candidateJobs = await _unitOfWork.CandidateJobRepository.GetCandidateJobsByJobIdAsync(jobId);
+                    if (candidateJobs != null)
+                    {
+                        allCandidateJobs.AddRange(candidateJobs);
+                    }
+                }
+                
+                // Đếm những CandidateJob có status = Pass (4)
+                recruitsCount = allCandidateJobs.Count(cj => cj.Status == CandidateJobStatus.Pass);
+            }
+            response.RecruitsCount = recruitsCount;
+
+            // Generate secure URL for logo and license file
+            response.Logo = await _blobStorageService.GetSecureFileUrlAsync(company.Logo ?? "Empty");
+            if (!string.IsNullOrEmpty(company.LicenseFile))
+            {
+                response.LicenseFile = await _blobStorageService.GetSecureFileUrlAsync(company.LicenseFile);
+            }
+
+            return response;
         }
 
         /// <summary>

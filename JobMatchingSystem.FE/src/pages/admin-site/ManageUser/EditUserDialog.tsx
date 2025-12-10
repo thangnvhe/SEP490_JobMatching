@@ -40,7 +40,6 @@ const editUserSchema = z.object({
     .max(100, "Họ và tên không được vượt quá 100 ký tự")
     .regex(
       /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵýỷỹ\s]+$/,
-      "Họ và tên chỉ được chứa chữ cái và dấu cách"
     ),
   email: z
     .string()
@@ -311,6 +310,7 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
                 id="email"
                 {...register("email")}
                 placeholder="Nhập email"
+                readOnly = {true}
                 className={cn("w-full", errors.email && "border-red-500")}
               />
               {errors.email && (
@@ -427,6 +427,7 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
                 step="0.01"
                 min="0"
                 max="100"
+                readOnly = {true}
                 {...register("score")}
                 placeholder="Nhập điểm (0-100)"
                 className={cn("w-full", errors.score && "border-red-500")}

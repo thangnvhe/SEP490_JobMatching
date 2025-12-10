@@ -94,7 +94,7 @@ export function LoginDialog({
         <div className="p-6 pb-0">
           <DialogHeader className="text-center pb-2">
             <DialogTitle className="text-xl font-semibold text-center">
-              Login to Superio
+              Đăng nhập
             </DialogTitle>
           </DialogHeader>
 
@@ -117,7 +117,7 @@ export function LoginDialog({
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium">
-                Password
+               Mật khẩu
               </Label>
               <Input
                 id="password"
@@ -141,7 +141,7 @@ export function LoginDialog({
                   htmlFor="rememberMe"
                   className="text-sm font-normal text-gray-600 cursor-pointer"
                 >
-                  Remember me
+                  Ghi nhớ đăng nhập
                 </Label>
               </div>
               <Button
@@ -153,7 +153,7 @@ export function LoginDialog({
                   onOpenForgotPassword?.();
                 }}
               >
-                Forgot password?
+                Quên mật khẩu?
               </Button>
             </div>
 
@@ -162,7 +162,7 @@ export function LoginDialog({
               className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium"
               disabled={isLoading}
             >
-              {isLoading ? "Đang đăng nhập..." : "Log In"}
+              {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
             </Button>
           </form>
         </div>
@@ -170,7 +170,7 @@ export function LoginDialog({
         <div className="px-6 pb-6 pt-3">
           <div className="text-center space-y-4">
             <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
+              Bạn chưa có tài khoản?{" "}
               <Button
                 variant="link"
                 className="p-0 h-auto text-blue-600 hover:text-blue-800 font-medium"
@@ -179,7 +179,7 @@ export function LoginDialog({
                   onOpenRegister?.();
                 }}
               >
-                Signup
+                Đăng ký ngay
               </Button>
             </p>
           </div>

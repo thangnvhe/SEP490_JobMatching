@@ -25,6 +25,7 @@ import {
   ChevronsRight,
   CheckCircle,
   XCircle,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
@@ -130,6 +131,15 @@ const RecruitmentProcessManagement = () => {
   const handleRefresh = () => {
     if (activeTab === "screening") {
       fetchCandidateJobs(paginationInput);
+    }
+  };
+
+  const handleSearchCandidates = () => {
+    if (jobId) {
+      // Navigate to CV search page with pre-selected job
+      navigate(`/recruiter/cv-search?jobId=${jobId}`);
+    } else {
+      toast.error('Vui lòng chọn công việc trước khi tìm kiếm ứng viên');
     }
   };
 
@@ -396,13 +406,23 @@ const RecruitmentProcessManagement = () => {
                     <UserIcon className="h-5 w-5" />
                     <span>Danh sách ứng viên</span>
                   </CardTitle>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center space-x-2">
                     <Input
                       placeholder="Tìm kiếm..."
                       value={keyword}
                       onChange={(e) => setKeyword(e.target.value)}
                       className="w-64"
                     />
+                    <Button
+                      onClick={handleSearchCandidates}
+                      variant="default"
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      title="Tìm kiếm ứng viên cho công việc này"
+                    >
+                      <Search className="h-4 w-4 mr-2" />
+                      Tìm ứng viên
+                    </Button>
                     <Button
                       onClick={handleRefresh}
                       variant="outline"

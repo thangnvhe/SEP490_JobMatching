@@ -14,6 +14,9 @@ export interface Company {
   score: number;
   rejectReason: string | null;
   createdAt: string;
+  jobCount?: number; // Số tin tuyển dụng
+  teamMembersCount?: number; // Số thành viên công ty
+  recruitsCount?: number; // Số người đã tuyển
 }
 
 // Helper để convert status number thành string để hiển thị
