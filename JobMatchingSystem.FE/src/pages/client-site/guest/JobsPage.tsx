@@ -17,7 +17,7 @@ import { Company } from "@/models/company";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Input } from "@/components/ui/input";
 import { Province, ProvincesService } from "@/services/provinces.service";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { SaveJobServices } from "@/services/save-job.service";
 import { Position } from "@/models/position";
 import { PositionService } from "@/services/position.service";
@@ -27,6 +27,9 @@ import { TaxonomyService } from "@/services/taxonomy.service";
 
 export default function JobsPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const initialSearch = searchParams.get("search") || "";
   // Data
   const [jobs, setJobs] = useState<Job[]>([]);
   const [companies, setCompanies] = useState<Record<number, Company>>({});
@@ -35,7 +38,8 @@ export default function JobsPage() {
   const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
   // local state 
   const [loading, setLoading] = useState(true);
-  const [keyword, setKeyword] = useState('');
+ 
+  const [keyword, setKeyword] = useState(initialSearch);
   const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
     currentPage: 1,
     pageSize: 10,
@@ -49,7 +53,7 @@ export default function JobsPage() {
   const [paginationInput, setPaginationInput] = useState<PaginationParamsInput>({
     page: 1,
     size: 10,
-    search: '',
+    search: initialSearch,
     sortBy: '',
     isDecending: false,
     title: null,
@@ -65,7 +69,7 @@ export default function JobsPage() {
     status: "Opened",
     companyId: null,
     recruiterId: null,
-    isDeleted: null,
+    isDeleted: false,
     positionId: null,
     taxonomyIds: null,
   });
@@ -86,6 +90,18 @@ export default function JobsPage() {
     },
     []
   );
+
+  useEffect(() => {
+    const searchParam = searchParams.get("search");
+    if (searchParam !== keyword) {
+      setKeyword(searchParam || "");
+      setPaginationInput((prev) => ({
+        ...prev,
+        page: 1,
+        search: searchParam || "",
+      }));
+    }
+  }, [searchParams, keyword]);
 
   const getAllWithPagination = useCallback(async (params: PaginationParamsInput) => {
     try {

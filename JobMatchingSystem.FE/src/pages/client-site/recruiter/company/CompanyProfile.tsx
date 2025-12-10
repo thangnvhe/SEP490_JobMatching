@@ -211,7 +211,7 @@ const CompanyProfile = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Tin tuyển dụng</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">0</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{company.jobCount ?? 0}</p>
                 </div>
                 <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
                   <Briefcase className="w-5 h-5 text-blue-600" />
@@ -228,7 +228,7 @@ const CompanyProfile = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500 group-hover:text-blue-600 transition-colors">Thành viên</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">6</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{company.teamMembersCount ?? 0}</p>
                 </div>
                 <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
                   <Users className="w-5 h-5 text-indigo-600" />
@@ -242,7 +242,7 @@ const CompanyProfile = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Đã tuyển</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">0</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{company.recruitsCount ?? 0}</p>
                 </div>
                 <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
                   <CheckCircle className="w-5 h-5 text-green-600" />

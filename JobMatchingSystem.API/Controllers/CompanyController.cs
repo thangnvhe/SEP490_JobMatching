@@ -133,7 +133,7 @@ namespace JobMatchingSystem.API.Controllers
             }
 
             var company = await _companyService.GetMyCompanyAsync(userId);
-            return Ok(APIResponse<CompanyDTO>.Builder()
+            return Ok(APIResponse<CompanyDetailResponse>.Builder()
                 .WithResult(company)
                 .WithSuccess(true)
                 .WithStatusCode(HttpStatusCode.OK)
