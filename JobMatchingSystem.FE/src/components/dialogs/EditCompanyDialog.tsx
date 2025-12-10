@@ -193,7 +193,23 @@ export const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
       }
     } catch (error: any) {
       console.error("Error updating company:", error);
-      toast.error(error.message || "Có lỗi xảy ra khi cập nhật thông tin công ty");
+      
+      // Extract validation errors from API response
+      if (error.response?.data?.errors) {
+        const apiErrors = error.response.data.errors;
+        // Show each validation error
+        Object.entries(apiErrors).forEach(([field, messages]: [string, any]) => {
+          if (Array.isArray(messages)) {
+            messages.forEach((msg: string) => {
+              toast.error(msg);
+            });
+          }
+        });
+      } else if (error.message) {
+        toast.error(error.message);
+      } else {
+        toast.error("Có lỗi xảy ra khi cập nhật thông tin công ty");
+      }
     } finally {
       setLoading(false);
     }
