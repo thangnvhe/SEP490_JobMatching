@@ -110,9 +110,9 @@ namespace JobMatchingSystem.API.Controllers
         [Authorize(Roles = "Recruiter")]
         public async Task<IActionResult> UpdateCompany([FromForm] UpdateCompanyRequest request, int companyId)
         {
-            await _companyService.UpdateCompany(request, companyId);
-            return Ok(APIResponse<string>.Builder()
-                .WithResult("Update Company Success")
+            var updatedCompany = await _companyService.UpdateCompany(request, companyId);
+            return Ok(APIResponse<CompanyDTO>.Builder()
+                .WithResult(updatedCompany)
                 .WithSuccess(true)
                 .WithStatusCode(HttpStatusCode.OK)
                 .Build());

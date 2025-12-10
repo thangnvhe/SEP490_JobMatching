@@ -101,6 +101,19 @@ export const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
     website: company.website || "",
   });
 
+  React.useEffect(() => {
+    setFormData({
+      name: company.name || "",
+      description: company.description || "",
+      address: company.address || "",
+      phoneContact: company.phoneContact || "",
+      email: company.email || "",
+      website: company.website || "",
+    });
+    // Reset logo preview when company changes (e.g., after successful update)
+    setLogoPreview(null);
+  }, [company, isOpen]);
+
   // Handle input changes
   const handleInputChange = (field: keyof CompanyFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -175,14 +188,17 @@ export const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
       updateData.append('description', formData.description.trim());
       updateData.append('address', formData.address.trim());
       updateData.append('phoneContact', formData.phoneContact.trim());
-      updateData.append('email', formData.email.trim());
       updateData.append('website', formData.website.trim());
 
       if (formData.logo) {
         updateData.append('logo', formData.logo);
       }
 
-      // Call API to update company
+      // Call API to update company - use company.id safely
+      if (!company || !company.id) {
+        throw new Error("Công ty ID không tồn tại");
+      }
+      
       const response = await CompanyServices.updateCompany(company.id.toString(), updateData);
 
       if (response.isSuccess && response.result) {
@@ -353,6 +369,7 @@ export const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
               id="company-email"
               type="email"
               value={formData.email}
+              readOnly = {true}
               onChange={(e) => handleInputChange('email', e.target.value)}
               placeholder="contact@company.com"
               className="mt-1"
