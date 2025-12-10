@@ -4,8 +4,8 @@ namespace JobMatchingSystem.API.DTOs.Request
 {
     public class SelectPositionRequest
     {
-        [Required(ErrorMessage = "Position ID is required")]
-        [Range(1, int.MaxValue, ErrorMessage = "Position ID must be greater than 0")]
+        [Required(ErrorMessage = "Mã vị trí không được để trống")]
+        [Range(1, int.MaxValue, ErrorMessage = "Mã vị trí phải lớn hơn 0")]
         public int PositionId { get; set; }
     }
 }

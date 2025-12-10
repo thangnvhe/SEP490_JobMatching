@@ -4,8 +4,8 @@ namespace JobMatchingSystem.API.DTOs.Request
 {
     public class UpdatePositionRequest
     {
-        [Required(ErrorMessage = "Position name is required")]
-        [StringLength(100, ErrorMessage = "Position name cannot exceed 100 characters")]
+        [Required(ErrorMessage = "Tên vị trí không được để trống")]
+        [StringLength(100, ErrorMessage = "Tên vị trí không được vượt quá 100 ký tự")]
         public string Name { get; set; }
         
     }

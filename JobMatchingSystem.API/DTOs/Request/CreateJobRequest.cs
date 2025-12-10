@@ -6,53 +6,53 @@ namespace JobMatchingSystem.API.DTOs.Request
     public class CreateJobRequest
     {
         // Tiêu đề công việc
-        [Required(ErrorMessage = "Title is required")]
-        [StringLength(200, ErrorMessage = "Title must not exceed 200 characters")]
+        [Required(ErrorMessage = "Tiêu đề công việc không được để trống")]
+        [StringLength(200, ErrorMessage = "Tiêu đề công việc không được vượt quá 200 ký tự")]
         public string Title { get; set; }
 
         // Mô tả công việc
-        [Required(ErrorMessage = "Description is required")]
-        [MinLength(50, ErrorMessage = "Description must be at least 50 characters")]
+        [Required(ErrorMessage = "Mô tả công việc không được để trống")]
+        [MinLength(50, ErrorMessage = "Mô tả công việc phải có ít nhất 50 ký tự")]
         public string Description { get; set; }
 
         // Yêu cầu công việc
-        [Required(ErrorMessage = "Requirements are required")]
+        [Required(ErrorMessage = "Yêu cầu công việc không được để trống")]
         public string Requirements { get; set; }
 
         // Phúc lợi
-        [Required(ErrorMessage = "Benefits are required")]
+        [Required(ErrorMessage = "Phúc lợi không được để trống")]
         public string Benefits { get; set; }
 
         // Lương tối thiểu (có thể null)
-        [Range(0, int.MaxValue, ErrorMessage = "Salary minimum must be a non-negative number")]
+        [Range(0, int.MaxValue, ErrorMessage = "Lương tối thiểu phải là số không âm")]
         public int? SalaryMin { get; set; }
 
         // Lương tối đa (có thể null)
-        [Range(0, int.MaxValue, ErrorMessage = "Salary maximum must be a non-negative number")]
+        [Range(0, int.MaxValue, ErrorMessage = "Lương tối đa phải là số không âm")]
         public int? SalaryMax { get; set; }
 
         // Địa điểm làm việc
-        [Required(ErrorMessage = "Location is required")]
-        [StringLength(255, ErrorMessage = "Location must not exceed 255 characters")]
+        [Required(ErrorMessage = "Địa điểm làm việc không được để trống")]
+        [StringLength(255, ErrorMessage = "Địa điểm làm việc không được vượt quá 255 ký tự")]
         public string Location { get; set; }
 
         // Số năm kinh nghiệm (có thể null)
-        [Range(0, 50, ErrorMessage = "Experience year must be between 0 and 50")]
+        [Range(0, 50, ErrorMessage = "Số năm kinh nghiệm phải từ 0 đến 50")]
         public int? ExperienceYear { get; set; }
 
         // Loại hình công việc (Full-time, Part-time,...)
-        [Required(ErrorMessage = "Job type is required")]
-        [StringLength(50, ErrorMessage = "Job type must not exceed 50 characters")]
+        [Required(ErrorMessage = "Loại hình công việc không được để trống")]
+        [StringLength(50, ErrorMessage = "Loại hình công việc không được vượt quá 50 ký tự")]
         public string JobType { get; set; }
 
         public int? PositionId { get; set; }
 
         // Ngày mở đăng tuyển
-        [Required(ErrorMessage = "Opened at date is required")]
+        [Required(ErrorMessage = "Ngày mở tuyển dụng không được để trống")]
         public DateTime? OpenedAt { get; set; }
 
         // Ngày hết hạn đăng tuyển
-        [Required(ErrorMessage = "Expired at date is required")]
+        [Required(ErrorMessage = "Ngày hết hạn tuyển dụng không được để trống")]
         // Custom validation để đảm bảo ExpiredAt lớn hơn OpenedAt (Cần triển khai IValidatableObject hoặc Custom Attribute cho validation này nếu muốn kiểm tra chéo)
         public DateTime? ExpiredAt { get; set; }
 

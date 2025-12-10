@@ -4,23 +4,23 @@ namespace JobMatchingSystem.API.DTOs.Request
 {
     public class ResetPasswordRequest
     {
-        [Required(ErrorMessage = "Email is required.")]
-        [EmailAddress(ErrorMessage = "Invalid email format.")]
-        [StringLength(100, ErrorMessage = "Email must be less than 100 characters.")]
+        [Required(ErrorMessage = "Email không được để trống.")]
+        [EmailAddress(ErrorMessage = "Định dạng email không hợp lệ.")]
+        [StringLength(100, ErrorMessage = "Email không được vượt quá 100 ký tự.")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Token is required.")]
+        [Required(ErrorMessage = "Mã xác thực không được để trống.")]
         public string Token { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "New password is required.")]
+        [Required(ErrorMessage = "Mật khẩu mới không được để trống.")]
         [DataType(DataType.Password)]
         [StringLength(100, MinimumLength = 6,
-            ErrorMessage = "Password must be at least 6 characters long.")]
+            ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự.")]
         public string NewPassword { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Confirm password is required.")]
+        [Required(ErrorMessage = "Xác nhận mật khẩu không được để trống.")]
         [DataType(DataType.Password)]
-        [Compare("NewPassword", ErrorMessage = "Passwords do not match.")]
+        [Compare("NewPassword", ErrorMessage = "Mật khẩu không khớp.")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 }

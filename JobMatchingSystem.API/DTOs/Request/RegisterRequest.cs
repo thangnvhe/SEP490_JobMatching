@@ -5,24 +5,24 @@ namespace JobMatchingSystem.API.DTOs.Request
 {
     public class RegisterRequest : IValidatableObject
     {
-        [Required(ErrorMessage = "Full name is required.")]
-        [StringLength(100, ErrorMessage = "Full name must be less than 100 characters.")]
+        [Required(ErrorMessage = "Họ tên không được để trống.")]
+        [StringLength(100, ErrorMessage = "Họ tên không được vượt quá 100 ký tự.")]
         public string FullName { get; set; }
 
-        [Required(ErrorMessage = "Email is required.")]
-        [EmailAddress(ErrorMessage = "Email is invalid.")]
-        [StringLength(100, ErrorMessage = "Email must be less than 100 characters.")]
+        [Required(ErrorMessage = "Email không được để trống.")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
+        [StringLength(100, ErrorMessage = "Email không được vượt quá 100 ký tự.")]
         public string Email { get; set; }
 
-        [Required(ErrorMessage = "Password is required.")]
+        [Required(ErrorMessage = "Mật khẩu không được để trống.")]
         [DataType(DataType.Password)]
         [StringLength(100, MinimumLength = 6,
             ErrorMessage = "Mật khẩu chứa ít nhất 6 ký tự và bao gồm ít nhất 1 ký tự đặc biệt")]
         public string Password { get; set; }
 
-        [Required(ErrorMessage = "Confirm password is required.")]
+        [Required(ErrorMessage = "Xác nhận mật khẩu không được để trống.")]
         [DataType(DataType.Password)]
-        [Compare("Password", ErrorMessage = "Passwords do not match.")]
+        [Compare("Password", ErrorMessage = "Mật khẩu không khớp.")]
         public string ConfirmPassword { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
