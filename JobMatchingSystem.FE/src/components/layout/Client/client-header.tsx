@@ -143,7 +143,7 @@ export function ClientHeader() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} disabled={isLoading}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>{isLoading ? "Đang đăng xuất..." : "Logout"}</span>
+                    <span>{isLoading ? "Đang đăng xuất..." : "Đăng xuất"}</span>
                   </DropdownMenuItem>
 
                 </DropdownMenuContent>
@@ -154,7 +154,7 @@ export function ClientHeader() {
                 className="text-sm transition-colors hover:bg-green-600 hover:text-white"
                 onClick={() => setLoginOpen(true)}
               >
-                Login / Register
+                Đăng nhập / Đăng ký
               </Button>
             )}
           </nav>
@@ -209,7 +209,7 @@ export function ClientHeader() {
                     onClick={handleLogout}
                     disabled={isLoading}
                   >
-                    {isLoading ? "Đang đăng xuất..." : "Logout"}
+                    {isLoading ? "Đang đăng xuất..." : "Đăng xuất"}
                   </Button>
                 </>
               ) : (
@@ -218,7 +218,7 @@ export function ClientHeader() {
                   className="w-fit text-sm transition-colors hover:bg-green-600 hover:text-white"
                   onClick={() => setLoginOpen(true)}
                 >
-                  Login / Register
+                  Đăng nhập / Đăng ký
                 </Button>
               )}
             </div>

@@ -15,7 +15,7 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task<IEnumerable<CompanyDTO>> GetAllCompaniesAsync();
         Task ChangeStatus(int companyId);
         Task<CompanyDTO> UpdateCompany(UpdateCompanyRequest request,int companyId);
-        Task<CompanyDTO> GetMyCompanyAsync(int recruiterId);
+        Task<CompanyDetailResponse> GetMyCompanyAsync(int recruiterId);
 
     }
 }
