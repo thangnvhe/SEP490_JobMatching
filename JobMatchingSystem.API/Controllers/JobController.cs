@@ -56,7 +56,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.Created)
                 .WithSuccess(true)
-                .WithResult("Job created successfully")
+                .WithResult("Thêm job thành công")
                 .Build());
         }
 
@@ -71,7 +71,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
-                .WithResult("Job updated successfully")
+                .WithResult("Cập nhật job thành công")
                 .Build());
         }
 
@@ -86,7 +86,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
-                .WithResult("Job censored successfully")
+                .WithResult("Công việc đã được kiểm duyệt thành công")
                 .Build());
         }
 
@@ -101,7 +101,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
-                .WithResult("Job deleted successfully. All candidate applications have been processed and notifications sent.")
+                .WithResult("Xóa job thành công. Tất cả các ứng viên đã được xử lý và thông báo đã được gửi.")
                 .Build());
         }
 

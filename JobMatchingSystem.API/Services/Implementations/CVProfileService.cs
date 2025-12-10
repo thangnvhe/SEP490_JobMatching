@@ -41,13 +41,13 @@ namespace JobMatchingSystem.API.Services.Implementations
             var existingProfile = await _cvProfileRepository.GetByIdAsync(id);
             if (existingProfile == null)
             {
-                throw new KeyNotFoundException($"CV Profile with id {id} not found");
+                throw new KeyNotFoundException($"Hồ sơ CV với id {id} không tìm thấy");
             }
 
             // Ensure the user can only update their own profile
             if (existingProfile.UserId != userId)
             {
-                throw new UnauthorizedAccessException("Cannot update CV profile of another user");
+                throw new UnauthorizedAccessException("Không thể cập nhật hồ sơ CV của người dùng khác");
             }
 
             existingProfile.PositionId = request.PositionId;
@@ -62,13 +62,13 @@ namespace JobMatchingSystem.API.Services.Implementations
             var existingProfile = await _cvProfileRepository.GetByIdAsync(id);
             if (existingProfile == null)
             {
-                throw new KeyNotFoundException($"CV Profile with id {id} not found");
+                throw new KeyNotFoundException($"Hồ sơ CV với id {id} không tìm thấy");
             }
 
             // Ensure the user can only delete their own profile
             if (existingProfile.UserId != userId)
             {
-                throw new UnauthorizedAccessException("Cannot delete CV profile of another user");
+                throw new UnauthorizedAccessException("Không thể xóa hồ sơ CV của người dùng khác");
             }
 
             await _cvProfileRepository.DeleteAsync(existingProfile);
@@ -79,7 +79,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             var existingProfile = await _cvProfileRepository.GetByUserIdAsync(userId);
             if (existingProfile == null)
             {
-                throw new KeyNotFoundException($"CV Profile for user with id {userId} not found");
+                throw new KeyNotFoundException($"Hồ sơ CV của người dùng với id {userId} không tìm thấy");
             }
 
             existingProfile.AboutMe = aboutMe;

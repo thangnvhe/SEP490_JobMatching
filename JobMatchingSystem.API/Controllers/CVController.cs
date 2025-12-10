@@ -48,7 +48,7 @@ namespace JobMatchingSystem.API.Controllers
                 return Ok(APIResponse<string>.Builder()
                     .WithStatusCode(HttpStatusCode.Created)
                     .WithSuccess(true)
-                    .WithResult("CV uploaded successfully")
+                    .WithResult("Upload CV thành công")
                     .Build());
             }
             catch (Exception ex)
@@ -56,7 +56,7 @@ namespace JobMatchingSystem.API.Controllers
                 return StatusCode(500, APIResponse<string>.Builder()
                     .WithStatusCode(HttpStatusCode.InternalServerError)
                     .WithSuccess(false)
-                    .WithResult($"Upload failed: {ex.Message}")
+                    .WithResult($"Upload thất bại: {ex.Message}")
                     .Build());
             }
         }
@@ -149,7 +149,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
-                .WithResult("CV deleted successfully")
+                .WithResult("Xóa CV thành công")
                 .Build());
         }
 
@@ -162,7 +162,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
-                .WithResult("CV set as primary successfully")
+                .WithResult("Đặt CV làm chính thành công")
                 .Build());
         }
 
@@ -186,7 +186,7 @@ namespace JobMatchingSystem.API.Controllers
                     return BadRequest(APIResponse<string>.Builder()
                         .WithStatusCode(HttpStatusCode.BadRequest)
                         .WithSuccess(false)
-                        .WithResult("File is required")
+                        .WithResult("File là bắt buộc")
                         .Build());
                 }
 
@@ -202,7 +202,7 @@ namespace JobMatchingSystem.API.Controllers
                 return StatusCode(500, APIResponse<string>.Builder()
                     .WithStatusCode(HttpStatusCode.InternalServerError)
                     .WithSuccess(false)
-                    .WithResult($"Validation failed: {ex.Message}")
+                    .WithResult($"Validation thất bại: {ex.Message}")
                     .Build());
             }
         }
@@ -215,19 +215,19 @@ namespace JobMatchingSystem.API.Controllers
         private static string? ValidateCVFile(IFormFile? file)
         {
             if (file == null || file.Length == 0)
-                return "CV file is required";
+                return "File CV là bắt buộc";
 
             // Check file size (10MB limit)
             const long maxSize = 10 * 1024 * 1024; // 10MB
             if (file.Length > maxSize)
-                return "File size must be less than 10MB";
+                return "Kích thước file phải nhỏ hơn 10MB";
 
             // Check file type
             var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
             var fileExtension = Path.GetExtension(file.FileName)?.ToLower();
             
             if (string.IsNullOrEmpty(fileExtension) || !allowedExtensions.Contains(fileExtension))
-                return $"Invalid file type. Allowed types: {string.Join(", ", allowedExtensions)}";
+                return $"Loại file không hợp lệ. Các loại được phép: {string.Join(", ", allowedExtensions)}";
 
             return null; // Valid file
         }

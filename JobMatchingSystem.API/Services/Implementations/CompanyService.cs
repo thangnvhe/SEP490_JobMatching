@@ -272,9 +272,14 @@ namespace JobMatchingSystem.API.Services.Implementations
             await _unitOfWork.SaveAsync();
         }
 
-        public async Task UpdateCompany(UpdateCompanyRequest request, int companyId)
+        public async Task<CompanyDTO> UpdateCompany(UpdateCompanyRequest request, int companyId)
         {
             var company = await _unitOfWork.CompanyRepository.GetByIdAsync(companyId);
+            if (company == null)
+            {
+                throw new AppException(ErrorCode.NotFoundCompany());
+            }
+            
             _mapper.Map(request, company);
             
             if (request.Logo != null)
@@ -293,6 +298,16 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
 
             await _unitOfWork.SaveAsync();
+            
+            // Return updated company as DTO
+            var companyDTO = _mapper.Map<CompanyDTO>(company);
+            companyDTO.Logo = await _blobStorageService.GetSecureFileUrlAsync(company.Logo ?? "Empty");
+            if (company.LicenseFile != null)
+            {
+                companyDTO.LicenseFile = await _blobStorageService.GetSecureFileUrlAsync(company.LicenseFile);
+            }
+            
+            return companyDTO;
         }
 
         public async Task<CompanyDTO> GetMyCompanyAsync(int recruiterId)
@@ -305,12 +320,11 @@ namespace JobMatchingSystem.API.Services.Implementations
             // Check if user has Recruiter role
             var isRecruiter = await _userManager.IsInRoleAsync(recruiter, "Recruiter");
             if (!isRecruiter)
-                throw new AppException(new Error("User is not a recruiter", System.Net.HttpStatusCode.Forbidden));
+                throw new AppException(new Error("Tài khoản không phải là Recruiter", System.Net.HttpStatusCode.Forbidden));
 
             // Get company by recruiter's CompanyId
             if (recruiter.CompanyId == null)
-                throw new AppException(new Error("Recruiter is not associated with any company", System.Net.HttpStatusCode.NotFound));
-
+                throw new AppException(new Error("Recruiter không liên kết với công ty nào", System.Net.HttpStatusCode.NotFound));
             var company = await _unitOfWork.CompanyRepository.GetByIdAsync(recruiter.CompanyId.Value);
             if (company == null)
                 throw new AppException(ErrorCode.NotFoundCompany());
