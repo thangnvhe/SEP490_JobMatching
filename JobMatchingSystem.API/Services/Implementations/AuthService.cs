@@ -185,7 +185,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             await _userManager.UpdateAsync(user);
             
             await _emailService.SendEmailConfirmationAsync(user.Email, user.FullName, $"{user.Id}:{encodedToken}");
-            return "Please Check Email to Active Account";
+            return "Hãy kiểm tra email để xác nhận tài khoản của bạn.";
 
         }
         public async Task<bool> VerifyEmailAsync(string tokenLink)

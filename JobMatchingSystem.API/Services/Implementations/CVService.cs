@@ -197,10 +197,10 @@ namespace JobMatchingSystem.API.Services.Implementations
                 var fileName = file.FileName.ToLower();
                 var allowedExtensions = new[] { ".pdf", ".docx", ".doc" };
                 if (!allowedExtensions.Any(ext => fileName.EndsWith(ext)))
-                    throw new AppException(ErrorCode.InvalidFile("Only PDF, DOCX, and DOC files are allowed"));
+                    throw new AppException(ErrorCode.InvalidFile("Chỉ PDF, DOCX, và DOC được phép"));
 
                 if (file.Length > 10 * 1024 * 1024) // 10MB limit
-                    throw new AppException(ErrorCode.InvalidFile("File size must be less than 10MB"));
+                    throw new AppException(ErrorCode.InvalidFile("Kích thước file phải nhỏ hơn 10MB"));
 
                 // Prepare request to AI service
                 using var form = new MultipartFormDataContent();
@@ -231,7 +231,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                     {
                         IsCV = false,
                         Confidence = 0.0,
-                        Reason = "Invalid response from AI service",
+                        Reason = "Phản hồi không hợp lệ từ dịch vụ AI",
                         FileInfo = null
                     };
                 }
@@ -242,12 +242,12 @@ namespace JobMatchingSystem.API.Services.Implementations
                     {
                         IsCV = false,
                         Confidence = 0.0,
-                        Reason = $"AI validation failed: {errorContent}",
+                        Reason = $"Xác thực AI thất bại: {errorContent}",
                         FileInfo = new CVFileInfo
                         {
                             FileName = file.FileName,
                             FileSizeMB = file.Length / (1024.0 * 1024.0),
-                            Error = "AI service error"
+                            Error = "Lỗi dịch vụ AI"
                         }
                     };
                 }
@@ -258,12 +258,12 @@ namespace JobMatchingSystem.API.Services.Implementations
                 {
                     IsCV = false,
                     Confidence = 0.0,
-                    Reason = $"AI service unavailable: {ex.Message}",
+                    Reason = $"Dịch vụ AI không khả dụng: {ex.Message}",
                     FileInfo = new CVFileInfo
                     {
                         FileName = file.FileName,
                         FileSizeMB = file.Length / (1024.0 * 1024.0),
-                        Error = "Service connection failed"
+                        Error = "Kết nối dịch vụ thất bại"
                     }
                 };
             }
@@ -273,12 +273,12 @@ namespace JobMatchingSystem.API.Services.Implementations
                 {
                     IsCV = false,
                     Confidence = 0.0,
-                    Reason = "AI service timeout",
+                    Reason = "Hết thời gian chờ dịch vụ AI",
                     FileInfo = new CVFileInfo
                     {
                         FileName = file.FileName,
                         FileSizeMB = file.Length / (1024.0 * 1024.0),
-                        Error = "Request timeout"
+                        Error = "Hết thời gian chờ yêu cầu"
                     }
                 };
             }
@@ -288,12 +288,12 @@ namespace JobMatchingSystem.API.Services.Implementations
                 {
                     IsCV = false,
                     Confidence = 0.0,
-                    Reason = $"Validation error: {ex.Message}",
+                    Reason = $"Lỗi xác thực: {ex.Message}",
                     FileInfo = new CVFileInfo
                     {
                         FileName = file.FileName,
                         FileSizeMB = file.Length / (1024.0 * 1024.0),
-                        Error = "Processing failed"
+                        Error = "Xử lý thất bại"
                     }
                 };
             }

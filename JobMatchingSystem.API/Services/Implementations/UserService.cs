@@ -586,7 +586,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                     if (!roleCreateResult.Succeeded)
                     {
                         var roleErrors = string.Join(", ", roleCreateResult.Errors.Select(e => e.Description));
-                        throw new AppException(ErrorCode.CreateUserFailed($"Failed to create role: {roleErrors}"));
+                        throw new AppException(ErrorCode.CreateUserFailed($"Thất bại khi tạo vai trò: {roleErrors}"));
                     }
                 }
 
@@ -668,7 +668,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
             catch (Exception ex)
             {
-                throw new AppException(ErrorCode.CreateUserFailed($"Unexpected error: {ex.Message}"));
+                throw new AppException(ErrorCode.CreateUserFailed($"Lỗi không mong muốn: {ex.Message}"));
             }
         }
 

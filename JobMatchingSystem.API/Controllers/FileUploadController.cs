@@ -25,7 +25,7 @@ namespace JobMatchingSystem.API.Controllers
                 if (file == null || file.Length == 0)
                 {
                     return BadRequest(APIResponse<string>.Builder()
-                        .WithResult("No file provided")
+                        .WithResult("Không có tệp được cung cấp")
                         .WithSuccess(false)
                         .WithStatusCode(HttpStatusCode.BadRequest)
                         .Build());
@@ -36,7 +36,7 @@ namespace JobMatchingSystem.API.Controllers
                 if (file.Length > maxSize)
                 {
                     return BadRequest(APIResponse<string>.Builder()
-                        .WithResult("File size exceeds 10MB limit")
+                        .WithResult("Kích thước tệp vượt quá giới hạn 10MB")
                         .WithSuccess(false)
                         .WithStatusCode(HttpStatusCode.BadRequest)
                         .Build());
@@ -47,7 +47,7 @@ namespace JobMatchingSystem.API.Controllers
                 if (allowedExtensions.Length == 0)
                 {
                     return BadRequest(APIResponse<string>.Builder()
-                        .WithResult($"Invalid folder. Allowed folders: avartars, company-logos, cvs, licenses")
+                        .WithResult($"Thư mục không hợp lệ. Các thư mục được phép: avartars, company-logos, cvs, licenses")
                         .WithSuccess(false)
                         .WithStatusCode(HttpStatusCode.BadRequest)
                         .Build());
@@ -57,7 +57,7 @@ namespace JobMatchingSystem.API.Controllers
                 if (string.IsNullOrEmpty(fileExtension) || !allowedExtensions.Contains(fileExtension))
                 {
                     return BadRequest(APIResponse<string>.Builder()
-                        .WithResult($"Invalid file type. Allowed types for {folder}: {string.Join(", ", allowedExtensions)}")
+                        .WithResult($"Loại tệp không hợp lệ. Các loại được phép cho {folder}: {string.Join(", ", allowedExtensions)}")
                         .WithSuccess(false)
                         .WithStatusCode(HttpStatusCode.BadRequest)
                         .Build());
@@ -82,7 +82,7 @@ namespace JobMatchingSystem.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, APIResponse<string>.Builder()
-                    .WithResult("Internal server error during file upload")
+                    .WithResult("Lỗi máy chủ nội bộ trong quá trình tải tệp lên")
                     .WithSuccess(false)
                     .WithStatusCode(HttpStatusCode.InternalServerError)
                     .Build());
@@ -97,7 +97,7 @@ namespace JobMatchingSystem.API.Controllers
                 if (string.IsNullOrEmpty(fileUrl))
                 {
                     return BadRequest(APIResponse<string>.Builder()
-                        .WithResult("File URL is required")
+                        .WithResult("URL tệp là bắt buộc")
                         .WithSuccess(false)
                         .WithStatusCode(HttpStatusCode.BadRequest)
                         .Build());
@@ -114,7 +114,7 @@ namespace JobMatchingSystem.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, APIResponse<string>.Builder()
-                    .WithResult("Internal server error during file deletion")
+                    .WithResult("Lỗi máy chủ nội bộ trong quá trình xóa tệp")
                     .WithSuccess(false)
                     .WithStatusCode(HttpStatusCode.InternalServerError)
                     .Build());
@@ -153,7 +153,7 @@ namespace JobMatchingSystem.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, APIResponse<string>.Builder()
-                    .WithResult("Internal server error")
+                    .WithResult("Lỗi máy chủ nội bộ")
                     .WithSuccess(false)
                     .WithStatusCode(HttpStatusCode.InternalServerError)
                     .Build());

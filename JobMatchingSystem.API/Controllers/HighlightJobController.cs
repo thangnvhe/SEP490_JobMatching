@@ -32,7 +32,7 @@ namespace JobMatchingSystem.API.Controllers
                 return NotFound(APIResponse<string>.Builder()
                     .WithStatusCode(HttpStatusCode.NotFound)
                     .WithSuccess(false)
-                    .WithResult("No highlight jobs found")
+                    .WithResult("Không tìm thấy công việc nổi bật nào")
                     .Build());
 
             return Ok(APIResponse<List<HighlightJob>>.Builder()
