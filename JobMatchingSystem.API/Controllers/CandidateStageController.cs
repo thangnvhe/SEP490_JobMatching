@@ -45,7 +45,7 @@ namespace JobMatchingSystem.API.Controllers
             if (candidateStage == null)
             {
                 return NotFound(APIResponse<string>.Builder()
-                    .WithResult("Candidate stage not found")
+                    .WithResult("Không tìm thấy giai đoạn ứng viên")
                     .WithSuccess(false)
                     .WithStatusCode(HttpStatusCode.NotFound)
                     .Build());
@@ -67,7 +67,7 @@ namespace JobMatchingSystem.API.Controllers
             if (result == null)
             {
                 return NotFound(APIResponse<string>.Builder()
-                    .WithResult("Candidate stage not found")
+                    .WithResult("Không tìm thấy giai đoạn ứng viên")
                     .WithSuccess(false)
                     .WithStatusCode(HttpStatusCode.NotFound)
                     .Build());
@@ -88,7 +88,7 @@ namespace JobMatchingSystem.API.Controllers
                 await _candidateStageService.UpdateSchedule(id, request);
 
                 return Ok(APIResponse<string>.Builder()
-                    .WithResult("Update schedule thành công")
+                    .WithResult("Cập nhật lịch thành công")
                     .WithSuccess(true)
                     .WithStatusCode(HttpStatusCode.OK)
                     .Build());
@@ -120,7 +120,7 @@ namespace JobMatchingSystem.API.Controllers
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int hiringManagerId))
             {
                 return BadRequest(APIResponse<string>.Builder()
-                    .WithResult("Invalid user ID")
+                    .WithResult("User ID không hợp lệ")
                     .WithSuccess(false)
                     .WithStatusCode(HttpStatusCode.BadRequest)
                     .Build());

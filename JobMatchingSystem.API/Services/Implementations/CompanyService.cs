@@ -305,12 +305,11 @@ namespace JobMatchingSystem.API.Services.Implementations
             // Check if user has Recruiter role
             var isRecruiter = await _userManager.IsInRoleAsync(recruiter, "Recruiter");
             if (!isRecruiter)
-                throw new AppException(new Error("User is not a recruiter", System.Net.HttpStatusCode.Forbidden));
+                throw new AppException(new Error("Tài khoản không phải là Recruiter", System.Net.HttpStatusCode.Forbidden));
 
             // Get company by recruiter's CompanyId
             if (recruiter.CompanyId == null)
-                throw new AppException(new Error("Recruiter is not associated with any company", System.Net.HttpStatusCode.NotFound));
-
+                throw new AppException(new Error("Recruiter không liên kết với công ty nào", System.Net.HttpStatusCode.NotFound));
             var company = await _unitOfWork.CompanyRepository.GetByIdAsync(recruiter.CompanyId.Value);
             if (company == null)
                 throw new AppException(ErrorCode.NotFoundCompany());

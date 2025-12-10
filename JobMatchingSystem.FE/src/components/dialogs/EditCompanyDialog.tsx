@@ -198,7 +198,7 @@ export const EditCompanyDialog: React.FC<EditCompanyDialogProps> = ({
       if (error.response?.data?.errors) {
         const apiErrors = error.response.data.errors;
         // Show each validation error
-        Object.entries(apiErrors).forEach(([field, messages]: [string, any]) => {
+        Object.entries(apiErrors).forEach(([, messages]: [string, any]) => {
           if (Array.isArray(messages)) {
             messages.forEach((msg: string) => {
               toast.error(msg);

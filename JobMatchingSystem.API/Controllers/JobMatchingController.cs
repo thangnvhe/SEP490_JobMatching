@@ -40,7 +40,7 @@ namespace JobMatchingSystem.API.Controllers
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int candidateId))
             {
                 return BadRequest(APIResponse<string>.Builder()
-                    .WithResult("Invalid user ID")
+                    .WithResult("ID người dùng không hợp lệ")
                     .WithSuccess(false)
                     .WithStatusCode(HttpStatusCode.BadRequest)
                     .Build());

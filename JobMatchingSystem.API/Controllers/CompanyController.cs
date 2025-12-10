@@ -107,6 +107,7 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
         [HttpPut("{companyId}")]
+        [Authorize(Roles = "Recruiter")]
         public async Task<IActionResult> UpdateCompany([FromForm] UpdateCompanyRequest request, int companyId)
         {
             await _companyService.UpdateCompany(request, companyId);

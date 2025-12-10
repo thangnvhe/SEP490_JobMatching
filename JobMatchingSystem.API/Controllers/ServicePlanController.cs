@@ -118,7 +118,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
-                .WithResult("Service plan created successfully")
+                .WithResult("Thêm gói dịch vụ thành công")
                 .Build());
         }
 
@@ -131,7 +131,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
-                .WithResult("Service plan deleted successfully")
+                .WithResult("Xóa gói dịch vụ thành công")
                 .Build());
         }
 
@@ -144,7 +144,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
-                .WithResult("Service plan updated successfully")
+                .WithResult("Cập nhật gói dịch vụ thành công")
                 .Build());
         }
     }

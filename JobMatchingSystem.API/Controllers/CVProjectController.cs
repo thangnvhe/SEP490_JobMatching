@@ -63,7 +63,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.Created)
                 .WithSuccess(true)
-                .WithResult("Project added successfully")
+                .WithResult("Thêm dự án thành công")
                 .Build());
         }
 
@@ -75,7 +75,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
-                .WithResult("Project updated successfully")
+                .WithResult("Cập nhật dự án thành công")
                 .Build());
         }
 
@@ -87,7 +87,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
-                .WithResult("Project deleted successfully")
+                .WithResult("Xóa dự án thành công")
                 .Build());
         }
     }
