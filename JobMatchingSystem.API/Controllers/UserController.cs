@@ -117,6 +117,7 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin, Recruiter")]
         public async Task<IActionResult> GetUserById(int id)
         {
             var user = await _userService.GetUserById(id);
