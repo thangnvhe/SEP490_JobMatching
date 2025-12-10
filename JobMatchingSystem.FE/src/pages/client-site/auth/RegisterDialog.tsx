@@ -108,19 +108,19 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
         <div className="p-6 pb-0">
           <DialogHeader className="text-center pb-2">
             <DialogTitle className="text-xl font-semibold">
-              Create Account
+              Tạo tài khoản mới
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="fullName" className="text-sm font-medium">
-                Full Name
+                Họ và tên
               </Label>
               <Input
                 id="fullName"
                 type="text"
-                placeholder="Full Name"
+                placeholder="Họ và tên"
                 {...register("fullName")}
                 className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${
                   errors.fullName ? "border-red-500" : ""
@@ -151,12 +151,12 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium">
-                Password
+                Mật khẩu
               </Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Password"
+                placeholder="Mật khẩu"
                 {...register("password")}
                 className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${
                   errors.password ? "border-red-500" : ""
@@ -169,12 +169,12 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
 
             <div className="space-y-2">
               <Label htmlFor="confirmPassword" className="text-sm font-medium">
-                Confirm Password
+                Xác nhận mật khẩu
               </Label>
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="Confirm Password"
+                placeholder="Xác nhận mật khẩu"
                 {...register("confirmPassword")}
                 className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${
                   errors.confirmPassword ? "border-red-500" : ""
@@ -192,7 +192,7 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
               className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium"
               disabled={isLoading}
             >
-              {isLoading ? "Đang đăng ký..." : "Create Account"}
+              {isLoading ? "Đang đăng ký..." : "Đăng ký"}
             </Button>
           </form>
         </div>
@@ -202,16 +202,16 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
     
 
             <p className="text-sm text-gray-600">
-              Already have an account?{" "}
+              Bạn đã có tài khoản?{" "}
               <Button
                 variant="link"
-                className="p-0 h-auto text-blue-600 hover:text-blue-800 font-medium"
+                className="p-2 h-auto text-blue-600 hover:text-blue-800 font-medium"
                 onClick={() => {
                   onOpenChange(false);
                   onOpenLogin?.();
                 }}
               >
-                Log In
+                Đăng nhập ngay
               </Button>
             </p>
           </div>
