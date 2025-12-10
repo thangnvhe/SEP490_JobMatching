@@ -1,8 +1,12 @@
 ﻿using JobMatchingSystem.API.Data;
 using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Text;
 
 namespace JobMatchingSystem.API.Configuration
 {
@@ -42,33 +46,37 @@ namespace JobMatchingSystem.API.Configuration
                 }
             }
 
-            // ✅ Tạo user admin nếu chưa có
-            var adminEmail = "admin123@gmail.com";
-            var adminUser = await userManager.FindByEmailAsync(adminEmail);
+            var password = "Admin123@";
 
-            if (adminUser == null)
+            for (int i = 1; i <= 3; i++)
             {
-                var newAdmin = new ApplicationUser
+                var email = $"admin{i}@gmail.com";
+                var existingUser = await userManager.FindByEmailAsync(email);
+                if (existingUser != null)
                 {
-                    UserName = adminEmail,
-                    Email = adminEmail,
-                    FullName = "Admin",
-                    PhoneNumber = "0123456789",
+                    Console.WriteLine($"⚠️ User {email} already exists, skipping.");
+                    continue;
+                }
+
+                var user = new ApplicationUser
+                {
+                    UserName = email,
+                    Email = email,
+                    FullName = $"Admin {i}",
                     EmailConfirmed = true,
-                    IsActive = true,
-                    AccessFailedCount = 0
+                    IsActive = true
                 };
 
-                var createResult = await userManager.CreateAsync(newAdmin, "Admin123@");
-
-                if (createResult.Succeeded)
+                var result = await userManager.CreateAsync(user, password);
+                if (result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(newAdmin, Contraints.RoleAdmin);
+                    await userManager.AddToRoleAsync(user, Contraints.RoleAdmin);
+                    Console.WriteLine($"✅ Seeded admin: {email} / {password}");
                 }
                 else
                 {
-                    var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
-                    Console.WriteLine($"❌ Seed admin failed: {errors}");
+                    var errs = string.Join("; ", result.Errors.Select(e => e.Description));
+                    Console.WriteLine($"❌ Failed to create {email}: {errs}");
                 }
             }
         }
@@ -78,9 +86,71 @@ namespace JobMatchingSystem.API.Configuration
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
 
-            services.AddIdentity<ApplicationUser, IdentityRole<int>>()
+            services.AddIdentity<ApplicationUser, IdentityRole<int>>(
+                options =>
+                {
+                    options.SignIn.RequireConfirmedEmail = true;
+                    options.Password.RequireDigit = false;
+                    options.Password.RequireLowercase = false;
+                    options.Password.RequireUppercase = false;
+                    options.Password.RequireNonAlphanumeric = false;
+                    options.Password.RequiredLength = 6;
+                    options.Password.RequiredUniqueChars = 0;
+                })
                    .AddEntityFrameworkStores<ApplicationDbContext>()
                    .AddDefaultTokenProviders();
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "JWT API", Version = "v1" });
+
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = @"BearToken",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+            });
+            var jwtSettings = configuration.GetSection("Jwt");
+            var key = jwtSettings.GetValue<string>("Key");
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+
+            })
+           .AddJwtBearer(options =>
+           {
+               options.TokenValidationParameters = new TokenValidationParameters
+               {
+                   ValidateIssuer = true,
+                   ValidateAudience = true,
+                   ValidateLifetime = true,
+                   ValidateIssuerSigningKey = true,
+                   ValidIssuer = jwtSettings.GetValue<string>("Issuer"),
+                   ValidAudience = jwtSettings.GetValue<string>("Audience"),
+                   IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+                   ClockSkew = TimeSpan.Zero
+               };
+           });
         }
     }
 }

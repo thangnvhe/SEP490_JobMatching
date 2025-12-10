@@ -1,4 +1,4 @@
-﻿using JobMatchingSystem.API.DTOs; // Thay bằng namespace chứa APIResponse của bạn
+using JobMatchingSystem.API.DTOs; // Thay bằng namespace chứa APIResponse của bạn
 using Microsoft.AspNetCore.Diagnostics;
 using System.ComponentModel.DataAnnotations;
 using System.Net;

@@ -1,0 +1,20 @@
+﻿using JobMatchingSystem.API.Models;
+using Microsoft.AspNetCore.Identity;
+
+namespace JobMatchingSystem.API.Repositories.Interfaces
+{
+    public interface IAuthRepository
+    {
+        Task<ApplicationUser?> GetUserByEmailAsync(string email);
+        Task<IList<string>> GetRolesAsync(ApplicationUser user);
+        Task UpdateUserAsync(ApplicationUser user);
+        Task<ApplicationUser?> GetUserByRefreshToken(string refreshToken);
+        Task<ApplicationUser?> GetUserById(int id);
+        Task<bool> ExistsAsync(string email);
+        Task<List<ApplicationUser>> GetAllAsync(string search, string sortBy, bool IsDecending, bool? status = null);
+        Task<Dictionary<int, string>> GetUserRolesDictionaryAsync(List<int> userIds);
+        Task ChangeStatus(ApplicationUser user);
+        Task<ApplicationUser?> FindUserByCompanyId(int companyId);
+        Task<List<ApplicationUser>> GetUsersByCompanyIdAsync(int companyId);
+    }
+}

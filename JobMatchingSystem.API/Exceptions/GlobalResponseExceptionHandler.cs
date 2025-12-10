@@ -10,11 +10,23 @@ namespace JobMatchingSystem.API.Exceptions
 
     public class GlobalResponseExceptionHandler : IExceptionHandler
     {
+        private readonly ILogger<GlobalResponseExceptionHandler> _logger;
+        private readonly IWebHostEnvironment _environment;
+
+        public GlobalResponseExceptionHandler(ILogger<GlobalResponseExceptionHandler> logger, IWebHostEnvironment environment)
+        {
+            _logger = logger;
+            _environment = environment;
+        }
+
         public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
         {
             var response = APIResponse<object>.Builder()
                 .WithSuccess(false)
                 .Build();
+            
+            _logger.LogError(exception, "An error occurred: {Message}", exception.Message);
+
             if (exception is AppException e)
             {
                 Error error = e.Error;
@@ -26,8 +38,22 @@ namespace JobMatchingSystem.API.Exceptions
             {
                 httpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 response.StatusCode = HttpStatusCode.InternalServerError;
-                response.ErrorMessages = new List<string> { "An unexpected error occurred. Please try again later." };
+                
+                // In development, show detailed error message
+                if (_environment.IsDevelopment())
+                {
+                    response.ErrorMessages = new List<string> 
+                    { 
+                        exception.Message,
+                        exception.StackTrace ?? string.Empty
+                    };
+                }
+                else
+                {
+                    response.ErrorMessages = new List<string> { "An unexpected error occurred. Please try again later." };
+                }
             }
+            
             await httpContext.Response.WriteAsJsonAsync(response, cancellationToken).ConfigureAwait(false);
             return true;
         }

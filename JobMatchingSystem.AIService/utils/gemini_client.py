@@ -1,0 +1,267 @@
+from typing import Optional, Dict, Any, List
+import json
+from google import genai
+from config.config import Config
+
+
+class GeminiClient:
+    """Utility class for Google Gemini API interactions with fallback support"""
+    
+    def __init__(self):
+        self.client = genai.Client(api_key=Config.GOOGLE_API_KEY)
+        self.primary_model = Config.GEMINI_MODEL
+        self.fallback_models = Config.GEMINI_FALLBACK_MODELS.copy()
+        self.current_model = self.primary_model
+        self.failed_models = set()
+    
+    def _get_next_available_model(self) -> Optional[str]:
+        """Get next available model that hasn't failed"""
+        available_models = [m for m in self.fallback_models if m not in self.failed_models]
+        return available_models[0] if available_models else None
+    
+    def generate_content(self, prompt: str, retry_on_quota_error: bool = True) -> str:
+        """Generate content using Gemini API with automatic fallback"""
+        models_to_try = [self.current_model] + [m for m in self.fallback_models if m != self.current_model]
+        
+        last_error = None
+        
+        for model in models_to_try:
+            if model in self.failed_models:
+                continue
+                
+            try:
+                print(f"🤖 Trying model: {model}")
+                result = self.client.models.generate_content(
+                    model=model,
+                    contents=prompt
+                )
+                
+                # Success! Update current model
+                self.current_model = model
+                print(f"✅ Success with model: {model}")
+                return result.text
+                
+            except Exception as e:
+                error_str = str(e)
+                print(f"❌ Model {model} failed: {error_str[:100]}...")
+                
+                # Check if it's a quota error
+                if "RESOURCE_EXHAUSTED" in error_str or "429" in error_str:
+                    print(f"⚠️ Quota exhausted for {model}, trying next model...")
+                    self.failed_models.add(model)
+                    last_error = f"Quota exhausted: {error_str}"
+                    continue
+                elif "NOT_FOUND" in error_str or "404" in error_str:
+                    print(f"⚠️ Model {model} not available, trying next model...")
+                    self.failed_models.add(model)
+                    last_error = f"Model not found: {error_str}"
+                    continue
+                else:
+                    # Other errors, might be temporary
+                    last_error = error_str
+                    
+        # All models failed
+        error_msg = f"All Gemini models failed. Last error: {last_error}"
+        print(f"💥 {error_msg}")
+        
+        # Check if mock mode is enabled
+        if Config.MOCK_MODE:
+            return self._get_mock_response(prompt)
+        
+        if Config.DEBUG_MODE:
+            return f"AI ERROR: {error_msg}"
+        else:
+            return "AI service temporarily unavailable. Please try again later."
+    
+    def _get_mock_response(self, prompt: str) -> str:
+        """Generate mock response for testing when all models are down"""
+        prompt_lower = prompt.lower()
+        
+        # CV Validation mock responses - Based on new criteria
+        if any(keyword in prompt_lower for keyword in [
+            "có phải cv", "có phải là cv", "curriculum vitae", "validate", 
+            "đánh giá xem", "cv/resume", "resume"
+        ]):
+            # Extract only the CV content between markers
+            content_start = prompt.find("===== NỘI DUNG FILE =====")
+            content_end = prompt.find("==========================")
+            
+            if content_start != -1 and content_end != -1:
+                # Extract only CV content
+                cv_content = prompt[content_start + len("===== NỘI DUNG FILE ====="):content_end].strip()
+                content_lower = cv_content.lower()
+            else:
+                # Fallback to full prompt if markers not found
+                content_lower = prompt_lower
+            
+            # Look for required elements: name + contact info
+            has_name = any(word in content_lower for word in ["tên", "name", "nguyễn", "trần", "lê", "phạm", "hoàng", "văn", "thị"])
+            has_contact = any(word in content_lower for word in ["email", "phone", "điện thoại", "@", "gmail", "yahoo", "hotmail"])
+            
+            # Look for professional elements (need 3 of 5) - More precise detection
+            professional_count = 0
+            
+            # 1. Experience - check for real work experience
+            if any(word in content_lower for word in ["kinh nghiệm", "experience", "làm việc", "intern", "developer", "engineer", "tại công ty", "năm developer", "năm làm"]):
+                professional_count += 1
+                
+            # 2. Skills - check for technical skills  
+            if any(word in content_lower for word in ["kỹ năng", "skills", "java", "python", "javascript", "react", "html", "css", "spring", "node.js", "sql"]):
+                professional_count += 1
+                
+            # 3. Projects - check for actual projects
+            if any(word in content_lower for word in ["dự án", "project", "phát triển", "xây dựng", "website", "app", "hệ thống"]):
+                professional_count += 1
+                
+            # 4. Education - check for formal education (not just "trường" alone)
+            if any(phrase in content_lower for phrase in ["học vấn", "education", "đại học", "university", "cử nhân", "thạc sĩ", "bằng cấp", "tốt nghiệp đại học"]):
+                professional_count += 1
+                
+            # 5. Achievements/Certificates
+            if any(word in content_lower for word in ["chứng chỉ", "certificate", "giải thưởng", "thành tích", "certify", "certified"]):
+                professional_count += 1
+            
+            # Apply new validation criteria
+            if has_name and has_contact and professional_count >= 3:
+                elements = []
+                if has_name: elements.append("họ tên")
+                if has_contact: elements.append("thông tin liên lạc")
+                elements.append(f"{professional_count}/5 yếu tố chuyên môn")
+                return f"YES - CV hợp lệ. Có {' + '.join(elements)}"
+            elif has_name and has_contact and professional_count >= 1:
+                return f"NO - Thiếu yếu tố chuyên môn (chỉ có {professional_count}/3 yêu cầu)"
+            elif (has_name or has_contact) and professional_count >= 2:
+                missing = "thông tin liên lạc" if not has_contact else "họ tên"
+                return f"NO - Thiếu {missing}"
+            else:
+                # Check if clearly not a CV
+                non_cv_indicators = ["invoice", "hóa đơn", "contract", "hợp đồng", "report", "báo cáo"]
+                if any(indicator in content_lower for indicator in non_cv_indicators):
+                    return "NO - Đây không phải CV vì là tài liệu khác"
+                else:
+                    return "NO - Thiếu các yếu tố cơ bản của CV (họ tên, thông tin liên lạc, ít nhất 3 yếu tố chuyên môn)"
+        
+        # CV Information extraction mock
+        elif "trích xuất thông tin" in prompt_lower or "extract" in prompt_lower and "json" in prompt_lower:
+            return '''
+            {
+                "name": "John Smith",
+                "email": "john.smith@example.com",
+                "phone": "+1234567890",
+                "experience_years": "3",
+                "education": "Bachelor of Computer Science",
+                "skills": ["Python", "JavaScript", "React", "Docker"],
+                "positions": ["Software Engineer", "Backend Developer"],
+                "summary": "Experienced software engineer with 3 years in web development"
+            }
+            '''
+        
+        # Job matching mock
+        elif "match score" in prompt_lower or "phù hợp" in prompt_lower:
+            return '''
+            {
+                "match_score": 85,
+                "matching_skills": ["Python", "JavaScript", "React"],
+                "missing_skills": ["AWS", "Kubernetes"],
+                "experience_match": true,
+                "education_match": true,
+                "overall_assessment": "Good match with most required skills",
+                "recommendations": ["Learn cloud technologies", "Gain DevOps experience"]
+            }
+            '''
+        
+        # Default response
+        else:
+            return "Mock AI response: Service is in testing mode. All Gemini models are currently unavailable due to quota limits."
+    
+    def generate_json_content(self, prompt: str) -> Dict[Any, Any]:
+        """Generate JSON content using Gemini API with fallback support"""
+        try:
+            response = self.generate_content(prompt)
+            
+            # Try to extract JSON from response
+            json_start = response.find('{')
+            json_end = response.rfind('}') + 1
+            
+            if json_start != -1 and json_end > json_start:
+                json_str = response[json_start:json_end]
+                return json.loads(json_str)
+            else:
+                # If no JSON found, return the response as text
+                return {"raw_response": response}
+                
+        except json.JSONDecodeError as e:
+            if Config.DEBUG_MODE:
+                print(f"JSON Parse Error: {e}")
+            return {"error": "Invalid JSON response", "raw_response": response}
+        except Exception as e:
+            if Config.DEBUG_MODE:
+                print(f"Gemini JSON API Error: {e}")
+            return {"error": str(e)}
+    
+    def check_connection(self) -> bool:
+        """Check if Gemini API is accessible by testing with available models"""
+        try:
+            # Try a simple test with each model
+            test_prompt = "Reply with just 'OK'"
+            
+            for model in self.fallback_models:
+                if model in self.failed_models:
+                    continue
+                    
+                try:
+                    result = self.client.models.generate_content(
+                        model=model,
+                        contents=test_prompt
+                    )
+                    if result.text and len(result.text.strip()) > 0:
+                        self.current_model = model
+                        return True
+                except:
+                    self.failed_models.add(model)
+                    continue
+            
+            # If all models failed, check if API key is at least set
+            from config.config import Config
+            return Config.GOOGLE_API_KEY and Config.GOOGLE_API_KEY != "YOUR_API_KEY_HERE"
+        except:
+            return False
+    
+    def get_status_info(self) -> Dict[str, Any]:
+        """Get detailed status information about model availability"""
+        return {
+            "current_model": self.current_model,
+            "available_models": [m for m in self.fallback_models if m not in self.failed_models],
+            "failed_models": list(self.failed_models),
+            "total_models": len(self.fallback_models)
+        }
+    
+    @staticmethod
+    def parse_yes_no_response(response: str) -> tuple[bool, str]:
+        """Parse YES/NO response from Gemini"""
+        response_lower = response.lower().strip()
+        
+        if response_lower.startswith('yes'):
+            return True, response
+        elif response_lower.startswith('no'):
+            return False, response
+        else:
+            # Try to detect yes/no in the response
+            if 'yes' in response_lower and 'no' not in response_lower:
+                return True, response
+            elif 'no' in response_lower and 'yes' not in response_lower:
+                return False, response
+            else:
+                # Default to False if unclear
+                return False, f"Unclear response: {response}"
+
+
+# Singleton instance
+_gemini_client: Optional[GeminiClient] = None
+
+def get_gemini_client() -> GeminiClient:
+    """Get singleton Gemini client instance"""
+    global _gemini_client
+    if _gemini_client is None:
+        _gemini_client = GeminiClient()
+    return _gemini_client

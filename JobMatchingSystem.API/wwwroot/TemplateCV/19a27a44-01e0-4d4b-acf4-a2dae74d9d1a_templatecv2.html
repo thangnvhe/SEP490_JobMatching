@@ -1,0 +1,173 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{{User.FullName}}</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            background-color: #f2fbfb;
+        }
+
+        .wrapper {
+            display: flex;
+            max-width: 1000px;
+            margin: 40px auto;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            background: #2ecc71;
+            color: white;
+            width: 30%;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+            .sidebar img {
+                width: 120px;
+                height: 120px;
+                border-radius: 50%;
+                object-fit: cover;
+                margin-bottom: 20px;
+                border: 3px solid #fff;
+            }
+
+            .sidebar h1 {
+                font-size: 26px;
+                margin: 10px 0;
+            }
+
+            .sidebar p {
+                font-size: 15px;
+                line-height: 1.6;
+            }
+
+        .content {
+            background: white;
+            width: 70%;
+            padding: 30px 40px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+            .section h2 {
+                color: #27ae60;
+                border-bottom: 2px solid #e9f5ef;
+                padding-bottom: 5px;
+                font-size: 20px;
+            }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .small {
+            font-size: 13px;
+            color: #777;
+        }
+
+        a {
+            color: #27ae60;
+            text-decoration: none;
+        }
+
+            a:hover {
+                text-decoration: underline;
+            }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="sidebar">
+            {{#if User.AvatarUrl}}
+            <img src="{{User.AvatarUrl}}" alt="Avatar">
+            {{/if}}
+            <h1>{{User.FullName}}</h1>
+            <p>{{User.Email}}<br>{{User.PhoneNumber}}<br>Ngày sinh: {{User.Birthday}}</p>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>Kỹ năng</h2>
+                <ul>
+                    {{#each CVSkills}}
+                    <li>{{Name}} – Mức độ: {{Level}}/5</li>
+                    {{/each}}
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>Kinh nghiệm làm việc</h2>
+                <ul>
+                    {{#each CVExperiences}}
+                    <li>
+                        <b>{{Position}}</b> tại <b>{{CompanyName}}</b><br>
+                        <span class="small">{{StartDate}} – {{EndDate}}</span><br>{{Description}}
+                    </li>
+                    {{/each}}
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>Dự án</h2>
+                <ul>
+                    {{#each CVProjects}}
+                    <li>
+                        <b>{{ProjectName}}</b> (Vai trò: {{Role}})<br>
+                        <span class="small">{{StartDate}} – {{EndDate}}</span><br>{{Description}}
+                    </li>
+                    {{/each}}
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>Học vấn</h2>
+                <ul>
+                    {{#each CVEducations}}
+                    <li>
+                        <b>{{SchoolName}}</b> – {{Major}} ({{Degree}})<br>
+                        <span class="small">{{StartDate}} – {{EndDate}}</span><br>{{Description}}
+                    </li>
+                    {{/each}}
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>Chứng chỉ</h2>
+                <ul>
+                    {{#each CVCertificates}}
+                    <li>
+                        <b>{{Name}}</b> – {{Organization}}<br>
+                        <span class="small">Ngày cấp: {{CertificateAt}}</span><br>{{Description}}<br>
+                        {{#if Link}}<a href="{{Link}}" target="_blank">Xem chứng chỉ</a>{{/if}}
+                    </li>
+                    {{/each}}
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>Thành tích</h2>
+                <ul>
+                    {{#each CVAchievements}}
+                    <li>
+                        <b>{{Title}}</b> – {{Organization}}<br>
+                        <span class="small">Thời gian: {{AchievedAt}}</span><br>{{Description}}
+                    </li>
+                    {{/each}}
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

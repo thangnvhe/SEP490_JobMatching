@@ -1,4 +1,4 @@
-﻿namespace JobMatchingSystem.API.Exceptions
+namespace JobMatchingSystem.API.Exceptions
 {
     public class ValidationException : Exception
     {

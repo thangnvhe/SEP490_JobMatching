@@ -1,6 +1,22 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@font-face {
+  font-family: 'Geist Sans';
+  src: url('./assets/fonts/Geist/webfonts/Geist[wght].woff2') format('woff2');
+  font-display: swap;
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('./assets/fonts/GeistMono/webfonts/GeistMono[wght].woff2') format('woff2');
+  font-display: swap;
+  font-weight: 100 900;
+  font-style: normal;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -43,71 +59,71 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.21 0.006 285.885);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.705 0.015 286.067);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.21 0.006 285.885);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.705 0.015 286.067);
+  --background: #FFFFFF;
+  --foreground: #202124;
+  --card: #FFFFFF;
+  --card-foreground: #202124;
+  --popover: #FFFFFF;
+  --popover-foreground: #202124;
+  --primary: #1967D2;
+  --primary-foreground: #FFFFFF;
+  --secondary: #34A853;
+  --secondary-foreground: #FFFFFF;
+  --muted: #F8F9FA;
+  --muted-foreground: #5F6368;
+  --accent: #0B57D0;
+  --accent-foreground: #FFFFFF;
+  --destructive: #DC2626;
+  --border: #E0E0E0;
+  --input: #E0E0E0;
+  --ring: #1967D2;
+  --chart-1: #E76E50;
+  --chart-2: #2A9D8F;
+  --chart-3: #264653;
+  --chart-4: #E9C46A;
+  --chart-5: #F4A261;
+  --sidebar: #FBFBFB;
+  --sidebar-foreground: #1F2937;
+  --sidebar-primary: #111827;
+  --sidebar-primary-foreground: #F9FAFB;
+  --sidebar-accent: #F3F4F6;
+  --sidebar-accent-foreground: #111827;
+  --sidebar-border: #E5E7EB;
+  --sidebar-ring: #3B82F6;
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.92 0.004 286.32);
-  --primary-foreground: oklch(0.21 0.006 285.885);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.552 0.016 285.938);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.552 0.016 285.938);
+  --background: #202124;
+  --foreground: #F8F9FA;
+  --card: #282a2d;
+  --card-foreground: #F8F9FA;
+  --popover: #282a2d;
+  --popover-foreground: #F8F9FA;
+  --primary: #8AB4F8;
+  --primary-foreground: #202124;
+  --secondary: #81C995;
+  --secondary-foreground: #202124;
+  --muted: #282a2d;
+  --muted-foreground: #5F6368;
+  --accent: #AECBFA;
+  --accent-foreground: #202124;
+  --destructive: #F87171;
+  --border: #5F6368;
+  --input: #5F6368;
+  --ring: #8AB4F8;
+  --chart-1: #2662D9;
+  --chart-2: #2EB88A;
+  --chart-3: #E88C30;
+  --chart-4: #AF57DB;
+  --chart-5: #E23670;
+  --sidebar: #18181B;
+  --sidebar-foreground: #F9FAFB;
+  --sidebar-primary: #3B82F6;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #27272A;
+  --sidebar-accent-foreground: #F9FAFB;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #1D4ED8;
 }
 
 @layer base {
@@ -116,5 +132,227 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Geist Sans', sans-serif;
   }
+}
+
+/* FullCalendar Styles */
+.calendar-container {
+  --fc-border-color: var(--border);
+  --fc-button-bg-color: var(--primary);
+  --fc-button-border-color: var(--primary);
+  --fc-button-hover-bg-color: var(--primary);
+  --fc-button-hover-border-color: var(--primary);
+  --fc-button-active-bg-color: var(--primary);
+  --fc-button-active-border-color: var(--primary);
+  --fc-today-bg-color: color-mix(in srgb, var(--primary) 10%, transparent);
+  --fc-now-indicator-color: var(--destructive);
+  --fc-page-bg-color: var(--background);
+  --fc-neutral-bg-color: var(--muted);
+  --fc-list-event-hover-bg-color: var(--accent);
+  --fc-highlight-color: color-mix(in srgb, var(--primary) 15%, transparent);
+  --fc-non-business-color: color-mix(in srgb, var(--muted) 50%, transparent);
+  --fc-event-bg-color: var(--primary);
+  --fc-event-border-color: var(--primary);
+  --fc-event-text-color: white;
+
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.calendar-container .fc {
+  font-family: 'Geist Sans', sans-serif;
+}
+
+.calendar-container .fc-theme-standard td,
+.calendar-container .fc-theme-standard th {
+  border-color: var(--border);
+}
+
+.calendar-container .fc-theme-standard .fc-scrollgrid {
+  border: none;
+}
+
+.calendar-container .fc-col-header-cell {
+  background-color: var(--muted);
+  padding: 12px 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--foreground);
+}
+
+.calendar-container .fc-col-header-cell-cushion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.calendar-container .fc-timegrid-slot-label {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.calendar-container .fc-daygrid-day-number,
+.calendar-container .fc-daygrid-day-top {
+  font-size: 0.875rem;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.calendar-container .fc-daygrid-day-number:hover {
+  text-decoration: none;
+}
+
+.calendar-container .fc-day-today {
+  background-color: var(--fc-today-bg-color) !important;
+}
+
+.calendar-container .fc-day-today .fc-daygrid-day-number {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px;
+}
+
+.calendar-container .fc-event {
+  border-radius: 4px;
+  border: none;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.calendar-container .fc-event:hover {
+  opacity: 0.9;
+  transform: scale(1.01);
+}
+
+.calendar-container .fc-event-main {
+  padding: 2px 4px;
+}
+
+.calendar-container .fc-event-title {
+  font-weight: 500;
+}
+
+.calendar-container .fc-event-time {
+  font-size: 0.7rem;
+  opacity: 0.9;
+}
+
+.calendar-container .fc-timegrid-event {
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-container .fc-timegrid-event .fc-event-main {
+  padding: 2px 4px;
+}
+
+.calendar-container .fc-daygrid-event {
+  margin: 2px 4px;
+}
+
+.calendar-container .fc-daygrid-more-link {
+  color: var(--primary);
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+.calendar-container .fc-popover {
+  background: var(--popover);
+  border-color: var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.calendar-container .fc-popover-header {
+  background: var(--muted);
+  padding: 8px 12px;
+  font-weight: 500;
+}
+
+.calendar-container .fc-now-indicator {
+  border-color: var(--destructive);
+}
+
+.calendar-container .fc-now-indicator-line {
+  border-width: 2px;
+}
+
+.calendar-container .fc-now-indicator-arrow {
+  border-color: var(--destructive);
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+}
+
+.calendar-container .fc-timegrid-now-indicator-container {
+  overflow: visible;
+}
+
+.calendar-container .fc-timegrid-now-indicator-arrow {
+  border-width: 6px;
+  margin-top: -6px;
+}
+
+.calendar-container .fc-highlight {
+  background: var(--fc-highlight-color);
+}
+
+.calendar-container .fc-daygrid-day.fc-day-other {
+  background-color: var(--fc-non-business-color);
+}
+
+.calendar-container .fc-daygrid-day.fc-day-other .fc-daygrid-day-number {
+  color: var(--muted-foreground);
+}
+
+/* Scrollbar styles for calendar */
+.calendar-container .fc-scroller::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.calendar-container .fc-scroller::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+.calendar-container .fc-scroller::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.calendar-container .fc-scroller::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* All day section */
+.calendar-container .fc-timegrid-axis {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.calendar-container .fc-timegrid-divider {
+  padding: 0;
+  border-color: var(--border);
+}
+
+/* Dark mode adjustments */
+.dark .calendar-container .fc-event {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.dark .calendar-container .fc-popover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
