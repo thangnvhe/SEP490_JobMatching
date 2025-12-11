@@ -137,7 +137,7 @@ export default function CreateJobPage() {
 
   // Step 2: Job Stages only
   const [jobStages, setJobStages] = useState<JobStage[]>([
-    { stageNumber: 1, name: "Sàng lọc hồ sơ", hiringManagerId: undefined },
+    { stageNumber: 1, name: "Phỏng vấn sơ bộ", hiringManagerId: undefined },
     { stageNumber: 2, name: "Phỏng vấn kỹ thuật", hiringManagerId: undefined },
   ]);
 
@@ -482,6 +482,37 @@ export default function CreateJobPage() {
       }
     } catch (error: any) {
       console.error("Error creating job:", error);
+      
+      // Collect all error messages
+      const errorMessages: string[] = [];
+      
+      // Check for validation errors (RFC 9110 format)
+      if (error.response?.data?.errors && typeof error.response.data.errors === 'object') {
+        Object.entries(error.response.data.errors).forEach(([, messages]: [string, any]) => {
+          if (Array.isArray(messages)) {
+            messages.forEach((msg: string) => {
+              errorMessages.push(msg);
+            });
+          } else if (typeof messages === 'string') {
+            errorMessages.push(messages);
+          }
+        });
+      }
+      
+      // Check for business logic error messages
+      if (error.response?.data?.errorMessages && Array.isArray(error.response.data.errorMessages)) {
+        error.response.data.errorMessages.forEach((msg: string) => {
+          errorMessages.push(msg);
+        });
+      }
+      
+      // If we have collected error messages from above, use them
+      if (errorMessages.length > 0) {
+        errorMessages.forEach((msg: string) => {
+          toast.error(msg);
+        });
+        return;
+      }
       
       // Handle specific error messages from API
       let errorMessage = "Có lỗi xảy ra khi tạo tin tuyển dụng";
