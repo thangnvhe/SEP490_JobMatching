@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,6 @@ import type { HiringManagerDashboard } from "@/models/dashboard";
 import { toast } from "sonner";
 
 export default function HiringManagerDashboardPage() {
-  const navigate = useNavigate();
   const [dashboard, setDashboard] = useState<HiringManagerDashboard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -34,11 +32,6 @@ export default function HiringManagerDashboardPage() {
 
     fetchDashboard();
   }, []);
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "-";
-    return new Date(dateString).toLocaleDateString("vi-VN");
-  };
 
   const formatTime = (dateString?: string) => {
     if (!dateString) return "-";
