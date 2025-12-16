@@ -17,6 +17,7 @@ import { useAppDispatch } from "@/store";
 import type { RootState } from "@/store";
 import { loginAsync, clearError } from "@/store/slices/authSlice";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 // Zod validation schema với messages tiếng Việt
 const loginSchema = z.object({
@@ -43,6 +44,24 @@ interface LoginDialogProps {
   onLoginSuccess?: () => void;
 }
 
+/**
+ * Hàm helper để lấy redirect path dựa trên role
+ */
+const getRedirectPathByRole = (role: string): string => {
+  switch (role?.toLowerCase()) {
+    case 'admin':
+      return '/admin';
+    case 'recruiter':
+      return '/recruiter';
+    case 'candidate':
+      return '/candidate';
+    case 'hiringmanager':
+      return '/hiringmanager';
+    default:
+      return '/';
+  }
+};
+
 export function LoginDialog({
   isOpen,
   onOpenChange,
@@ -51,6 +70,7 @@ export function LoginDialog({
   onLoginSuccess
 }: LoginDialogProps) {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { loading: isLoading } = useSelector((state: RootState) => state.authState);
 
   const form = useForm<LoginFormData>({
@@ -75,13 +95,19 @@ export function LoginDialog({
   // Handle form submission
   const onSubmit = async (data: LoginFormData) => {
     try {
-      await dispatch(loginAsync({
+      const result = await dispatch(loginAsync({
         email: data.email.trim(),
         password: data.password,
         rememberMe: data.rememberMe || false
       })).unwrap();
+      
       toast.success("Đăng nhập thành công!");
       onOpenChange(false);
+      
+      // Redirect dựa trên role từ response
+      const redirectPath = getRedirectPathByRole(result.role);
+      navigate(redirectPath);
+      
       onLoginSuccess?.(); // Call success callback if provided
     } catch (error) {
       toast.error("Đăng nhập thất bại!");
@@ -106,7 +132,7 @@ export function LoginDialog({
               <Input
                 id="email"
                 type="text"
-                placeholder="Email"
+                placeholder="Email của bạn"
                 {...register("email")}
                 className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${errors.email ? "border-red-500" : ""}`}
               />
@@ -122,7 +148,7 @@ export function LoginDialog({
               <Input
                 id="password"
                 type="password"
-                placeholder="Password"
+                placeholder="Mật khẩu"
                 {...register("password")}
                 className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${errors.password ? "border-red-500" : ""}`}
               />
