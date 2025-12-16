@@ -8,10 +8,7 @@ import ContactRecruiterPage from './pages/client-site/guest/ContactRecruiterPage
 import { ClientLayout } from './components/layout/Client/ClientLayout';
 import { ManageCompanyPage } from './pages/admin-site/ManageCompany/ViewCompanyList';
 import ViewJobList from './pages/admin-site/ManageJob/ViewJobList';
-import RecruiterDashboardPage from './pages/client-site/recruiter/Dashboard/RecruiterDashboardPage';
-import HiringManagerDashboardPage from './pages/client-site/hiringmanager/Dashboard/HiringManagerDashboardPage';
-import AdminDashboardPage from './pages/admin/Dashboard/AdminDashboardPage';
-import CandidateDashboardPage from './pages/candidate/Dashboard/CandidateDashboardPage';
+
 import RecruiterViewJobList from './pages/client-site/recruiter/Jobs/ViewJobList';
 import CreateJobPage from './pages/client-site/recruiter/Jobs/CreateJobPage';
 import RecruitmentProcessManagement from './pages/client-site/recruiter/RecruitmentProcess/RecruitmentProcessManagement';
@@ -42,6 +39,9 @@ import OrderPage from './pages/client-site/order/order';
 import InterviewConfirmPage from './pages/client-site/candidate/InterviewConfirmPage';
 import CVSearchPage from './pages/client-site/recruiter/CVSearch/CVSearchPage';
 import SavedCVsPage from './pages/client-site/recruiter/SavedCVs/SavedCVsPage';
+import { AdminGuard, RecruiterGuard, CandidateGuard, AuthGuard } from './guards/AuthGuard';
+import CandidateDashboard from './pages/client-site/candidate/Dashboard';
+import RecruiterDashboard from './pages/client-site/recruiter/Dashboard';
 
 const AppRouter: React.FC = () => {
   return (
@@ -76,9 +76,11 @@ const AppRouter: React.FC = () => {
       </Route>
 
       {/* Admin routes - Protected */}
-      <Route path="/admin" element={<ClientLayout />}
-      >
-        <Route index element={<AdminDashboardPage />} />
+      <Route path="/admin" element={
+        <AdminGuard>
+          <ClientLayout />
+        </AdminGuard>
+      }>
         <Route path="manage-user" element={<ViewUserList />} />
         <Route path="manage-company" element={<ManageCompanyPage />} />
         <Route path="manage-job" element={<ViewJobList />} />
@@ -90,9 +92,12 @@ const AppRouter: React.FC = () => {
       </Route>
 
       {/* Recruiter routes - Protected */}
-      <Route path="/recruiter" element={<ClientLayout />}
-      >
-        <Route index element={<RecruiterDashboardPage />} />
+      <Route path="/recruiter" element={
+        <RecruiterGuard>
+          <ClientLayout />
+        </RecruiterGuard>
+      }>
+        <Route index element={<RecruiterDashboard />} />
         <Route path="jobs" element={<RecruiterViewJobList />} />
         <Route path="jobs/create" element={<CreateJobPage />} />
         <Route path="cv-search" element={<CVSearchPage />} />
@@ -105,16 +110,23 @@ const AppRouter: React.FC = () => {
       </Route>
 
       {/* Candidate routes - Protected */}
-      <Route path="/candidate" element={<ClientLayout />}
-      >
-        <Route index element={<CandidateDashboardPage />} />
+      <Route path="/candidate" element={
+        <CandidateGuard>
+          <ClientLayout />
+        </CandidateGuard>
+      }>
+        <Route index element={<CandidateDashboard />} />
         <Route path="saved-jobs" element={<FavouriteJobsPage />} />
         <Route path="my-jobs" element={<MyJobsPage />} />
         <Route path="cv-management" element={<CVManagement />} />
       </Route>
 
-      <Route path="/hiringmanager" element={<ClientLayout />}>
-        <Route index element={<HiringManagerDashboardPage />} />
+      {/* HiringManager routes - Protected */}
+      <Route path="/hiringmanager" element={
+        <AuthGuard requiredRoles={['Hiringmanager']}>
+          <ClientLayout />
+        </AuthGuard>
+      }>
         <Route path="interview-schedule" element={<InterviewSchedule />} />
         <Route path="evaluation-history" element={<EvaluationHistory />} />
       </Route>

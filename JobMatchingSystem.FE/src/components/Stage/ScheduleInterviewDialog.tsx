@@ -43,20 +43,31 @@ const scheduleFormSchema = z.object({
         .optional()
         .or(z.literal("")),
     googleMeetLink: z
-        .string()
-        .url("Link Google Meet không hợp lệ")
-        .optional()
-        .or(z.literal("")),
-}).refine((data) => {
-    // Validate that end time is after start time
-    if (data.startTime && data.endTime) {
-        return data.endTime > data.startTime;
-    }
-    return true;
-}, {
-    message: "Giờ kết thúc phải sau giờ bắt đầu",
-    path: ["endTime"],
-});
+        .union([
+            z.string().url("Link Google Meet không hợp lệ"),
+            z.literal(""),
+        ])
+        .optional(),
+})
+    .refine((data) => {
+        // Validate that end time is after start time
+        if (data.startTime && data.endTime) {
+            return data.endTime > data.startTime;
+        }
+        return true;
+    }, {
+        message: "Giờ kết thúc phải sau giờ bắt đầu",
+        path: ["endTime"],
+    })
+    .refine((data) => {
+        // Validate that at least one of interviewLocation or googleMeetLink is provided
+        const hasLocation = data.interviewLocation?.trim() && data.interviewLocation.trim().length > 0;
+        const hasMeetLink = data.googleMeetLink?.trim() && data.googleMeetLink.trim().length > 0;
+        return hasLocation || hasMeetLink;
+    }, {
+        message: "Vui lòng nhập địa điểm phỏng vấn hoặc link Google Meet",
+        path: ["interviewLocation"],
+    });
 
 type ScheduleFormData = z.infer<typeof scheduleFormSchema>;
 
@@ -333,7 +344,7 @@ export function ScheduleInterviewDialog({
                             </p>
                         ) : (
                             <p className="text-xs text-muted-foreground">
-                                Dùng cho phỏng vấn trực tuyến (không bắt buộc)
+                                Vui lòng nhập địa điểm phỏng vấn hoặc link Google Meet (ít nhất một trong hai)
                             </p>
                         )}
                     </div>

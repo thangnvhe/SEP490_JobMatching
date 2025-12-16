@@ -353,7 +353,7 @@ export default function CompanyMembersPage() {
       enableSorting: false,
       cell: ({ row: _ }) => {
         return (
-          <div className="font-medium text-sm">Hiring Manager</div>
+          <div className="font-medium text-sm">Quản lý tuyển dụng</div>
         );
       },
     },
@@ -693,7 +693,7 @@ export default function CompanyMembersPage() {
                   <h3 className="text-3xl font-bold text-gray-900 mb-3">
                     {selectedMember.fullName}
                   </h3>
-                  <p className="text-xl text-gray-600 mb-4">Hiring Manager</p>
+                  <p className="text-xl text-gray-600 mb-4">Quản lý tuyển dụng</p>
                   <Badge
                     className={`${getStatusBadgeColor(
                       selectedMember.isActive
@@ -735,7 +735,7 @@ export default function CompanyMembersPage() {
                       <Briefcase className="w-5 h-5 mr-2" />
                       Chức vụ
                     </label>
-                    <p className="text-lg text-gray-900">Hiring Manager</p>
+                    <p className="text-lg text-gray-900">Quản lý tuyển dụng</p>
                   </div>
 
                   <div className="p-6 border border-gray-200 rounded-xl">
