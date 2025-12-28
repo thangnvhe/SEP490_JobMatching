@@ -52,10 +52,10 @@ export function ClientHeader() {
         navigate('/admin');
         break;
       case 'hiringmanager':
-        navigate('/recruiter'); // HiringManager uses same dashboard as Recruiter
+        navigate('/hiringmanager');
         break;
       default:
-        navigate('/'); // Fallback to profile if role is unknown
+        navigate('/');
         break;
     }
   };
@@ -127,7 +127,7 @@ export function ClientHeader() {
                   <RoleGuard allowedRoles={["Recruiter", "Hiringmanager", "Admin"]}>
                     <DropdownMenuItem onClick={handleDashboardNavigation}>
                       <LayoutDashboard className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
+                      <span>Bảng điều khiển</span>
                     </DropdownMenuItem>
                   </RoleGuard>
 
@@ -201,7 +201,7 @@ export function ClientHeader() {
                     onClick={handleDashboardNavigation}
                   >
                     <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Dashboard
+                    Bảng điều khiển
                   </Button>
                   <Button
                     variant="ghost"

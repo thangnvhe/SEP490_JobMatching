@@ -22,3 +22,7 @@ export type AppDispatch = typeof store.dispatch;
 // Typed hooks
 export const useAppDispatch = () => useDispatch<AppDispatch>();
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
+
+// Export store reference for use in interceptors
+// This allows interceptors to dispatch actions without circular dependencies
+export const getStore = () => store;

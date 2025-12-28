@@ -82,7 +82,7 @@ function RecruiterNav() {
               </SidebarMenuButton>
             </SidebarMenuItem>
 
-            <SidebarMenuItem>
+            {/* <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
                 isActive={useIsActivePath("/recruiter/saved-cvs")}
@@ -95,7 +95,7 @@ function RecruiterNav() {
                   <span className="font-medium text-sm">Danh sách CVs đã lưu</span>
                 </Link>
               </SidebarMenuButton>
-            </SidebarMenuItem>
+            </SidebarMenuItem> */}
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>

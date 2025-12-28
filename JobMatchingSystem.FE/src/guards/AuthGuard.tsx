@@ -2,7 +2,6 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAppSelector } from '@/store';
 import type { UserRole } from '@/models/user';
-import Cookies from 'js-cookie';
 
 /**
  * Chuẩn hóa role thành viết hoa chữ cái đầu
@@ -21,19 +20,25 @@ interface AuthGuardProps {
 export const AuthGuard: React.FC<AuthGuardProps> = ({ 
   children, 
   requiredRoles, 
-  redirectTo = '/login' 
+  redirectTo = '/' 
 }) => {
   const location = useLocation();
-  const { isAuthenticated } = useAppSelector(state => state.authState);
+  const { isAuthenticated, role, isInitializing } = useAppSelector(state => state.authState);
   
-  // Check if user is authenticated
-  if (!isAuthenticated && !Cookies.get('accessToken')) {
+  // Đợi cho đến khi auth state được restore xong (tránh race condition khi F5)
+  if (isInitializing) {
+    // Có thể hiển thị loading spinner hoặc null
+    return null; // hoặc <LoadingSpinner />
+  }
+  
+  // Check if user is authenticated - sử dụng Redux state đã được restore từ AppInitializer
+  if (!isAuthenticated) {
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
   // Check role permissions if required
   if (requiredRoles && requiredRoles.length > 0) {
-    const currentRole = capitalizeRole(Cookies.get('role') || '');
+    const currentRole = capitalizeRole(role);
     const normalizedRequiredRoles = requiredRoles.map(r => capitalizeRole(r));
     
     if (!currentRole || !normalizedRequiredRoles.includes(currentRole as UserRole)) {
@@ -62,11 +67,11 @@ export const GuestGuard: React.FC<{
   children: React.ReactNode; 
   redirectTo?: string 
 }> = ({ children, redirectTo = '/' }) => {
-  const { isAuthenticated } = useAppSelector(state => state.authState);
+  const { isAuthenticated, role } = useAppSelector(state => state.authState);
   
-  if (isAuthenticated || Cookies.get('accessToken')) {
+  if (isAuthenticated) {
     // Redirect based on user role
-    const userRole = capitalizeRole(Cookies.get('role') || '');
+    const userRole = capitalizeRole(role);
     let defaultRedirect = redirectTo;
     
     switch (userRole) {
@@ -80,7 +85,7 @@ export const GuestGuard: React.FC<{
         defaultRedirect = '/candidate';
         break;
       case 'Hiringmanager':
-        defaultRedirect = '/recruiter'; // HiringManager uses same dashboard as Recruiter
+        defaultRedirect = '/hiringmanager';
         break;
       default:
         defaultRedirect = redirectTo;

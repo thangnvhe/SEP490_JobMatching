@@ -120,7 +120,7 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
               <Input
                 id="fullName"
                 type="text"
-                placeholder="Họ và tên"
+                placeholder="Nhập họ và tên"
                 {...register("fullName")}
                 className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${
                   errors.fullName ? "border-red-500" : ""
@@ -138,7 +138,7 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
               <Input
                 id="email"
                 type="email"
-                placeholder="Email"
+                placeholder="Email của bạn"
                 {...register("email")}
                 className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${
                   errors.email ? "border-red-500" : ""
@@ -174,7 +174,7 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="Xác nhận mật khẩu"
+                placeholder="Nhập lại mật khẩu"
                 {...register("confirmPassword")}
                 className={`h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${
                   errors.confirmPassword ? "border-red-500" : ""
@@ -192,7 +192,7 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
               className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium"
               disabled={isLoading}
             >
-              {isLoading ? "Đang đăng ký..." : "Đăng ký"}
+              {isLoading ? "Đang đăng ký..." : "Tạo tài khoản"}
             </Button>
           </form>
         </div>
@@ -202,7 +202,7 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
     
 
             <p className="text-sm text-gray-600">
-              Bạn đã có tài khoản?{" "}
+              Đã có tài khoản?{" "}
               <Button
                 variant="link"
                 className="p-2 h-auto text-blue-600 hover:text-blue-800 font-medium"
@@ -211,7 +211,7 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
                   onOpenLogin?.();
                 }}
               >
-                Đăng nhập ngay
+                Đăng nhập
               </Button>
             </p>
           </div>

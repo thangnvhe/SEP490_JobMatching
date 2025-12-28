@@ -112,6 +112,25 @@ function CandidateContent({
   const status = candidate.status || "Pending";
   const statusStyle = statusColors[status] || statusColors.Pending;
 
+  // Check if candidate has valid schedule
+  const hasValidSchedule = () => {
+    const hasValidDate = candidate.interviewDate && 
+        candidate.interviewDate !== "0001-01-01" && 
+        candidate.interviewDate.trim() !== "";
+    
+    const hasValidStartTime = candidate.interviewStartTime && 
+        candidate.interviewStartTime !== "00:00:00" && 
+        candidate.interviewStartTime.trim() !== "";
+    
+    const hasValidEndTime = candidate.interviewEndTime && 
+        candidate.interviewEndTime !== "00:00:00" && 
+        candidate.interviewEndTime.trim() !== "";
+    
+    return hasValidDate && hasValidStartTime && hasValidEndTime;
+  };
+
+  const hasSchedule = hasValidSchedule();
+
   // Get initials from fullName
   const getInitials = (name: string) => {
     if (!name) return "?";
@@ -195,7 +214,7 @@ function CandidateContent({
           }}
         >
           <CalendarPlus className="h-3.5 w-3.5 mr-1.5" />
-          Đặt lịch
+          {hasSchedule ? "Chỉnh sửa lịch" : "Đặt lịch"}
         </Button>
         <Button
           variant="outline"

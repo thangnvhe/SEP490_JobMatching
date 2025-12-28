@@ -37,6 +37,21 @@ import { Input } from "@/components/ui/input";
 import { StageBoardDemo } from "@/components/Stage/StageBoardDemo";
 import { CV } from "@/models/cv";
 import { CVServices } from "@/services/cv.service";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  ExternalLink,
+  User,
+} from "lucide-react";
 
 const RecruitmentProcessManagement = () => {
   // URL search params
@@ -49,6 +64,8 @@ const RecruitmentProcessManagement = () => {
     "screening"
   );
   const [cvMap, setCvMap] = useState<Record<number, CV>>({});
+  const [selectedCandidateJob, setSelectedCandidateJob] = useState<CandidateJob | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
   // Loading & Error states
   const [loading, setLoading] = useState(false);
@@ -363,7 +380,15 @@ const RecruitmentProcessManagement = () => {
                   </Button>
                 </>
               )}
-              <Button variant="outline" size="sm" title="Xem chi tiết">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                title="Xem chi tiết"
+                onClick={() => {
+                  setSelectedCandidateJob(candidateJob);
+                  setIsDetailDialogOpen(true);
+                }}
+              >
                 <Eye className="h-4 w-4" />
               </Button>
             </div>
@@ -583,6 +608,213 @@ const RecruitmentProcessManagement = () => {
           </TabsContent>
         </Tabs>
       )}
+
+      {/* Detail Dialog */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Chi tiết ứng viên</DialogTitle>
+          </DialogHeader>
+
+          {selectedCandidateJob && (
+            <div className="space-y-6">
+              {/* Profile Header */}
+              {selectedCandidateJob.cvId && cvMap[selectedCandidateJob.cvId] && (
+                <>
+                  <div className="flex items-start gap-4 p-4 rounded-lg bg-muted/30 border">
+                    <Avatar className="h-16 w-16 border-2">
+                      <AvatarImage 
+                        src={cvMap[selectedCandidateJob.cvId].user?.avatarUrl || ""} 
+                        alt={cvMap[selectedCandidateJob.cvId].user?.fullName || ""} 
+                      />
+                      <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
+                        {cvMap[selectedCandidateJob.cvId].user?.fullName
+                          ? cvMap[selectedCandidateJob.cvId].user.fullName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()
+                              .slice(0, 2)
+                          : "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-foreground">
+                        {cvMap[selectedCandidateJob.cvId].user?.fullName || "Không có tên"}
+                      </h3>
+                      <Badge className={getStatusColor(selectedCandidateJob.status)}>
+                        {getStatusLabel(selectedCandidateJob.status)}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Contact Information */}
+                  {cvMap[selectedCandidateJob.cvId].user && (
+                    <>
+                      <div>
+                        <h4 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          Thông tin liên hệ
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {cvMap[selectedCandidateJob.cvId].user.email && (
+                            <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                              <Mail className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                              <div>
+                                <p className="text-xs text-muted-foreground">Email</p>
+                                <p className="text-sm text-foreground">
+                                  {cvMap[selectedCandidateJob.cvId].user.email}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          {cvMap[selectedCandidateJob.cvId].user.phoneNumber && (
+                            <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                              <Phone className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                              <div>
+                                <p className="text-xs text-muted-foreground">Số điện thoại</p>
+                                <p className="text-sm text-foreground">
+                                  {cvMap[selectedCandidateJob.cvId].user.phoneNumber}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          {cvMap[selectedCandidateJob.cvId].user.address && (
+                            <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                              <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                              <div>
+                                <p className="text-xs text-muted-foreground">Địa chỉ</p>
+                                <p className="text-sm text-foreground">
+                                  {cvMap[selectedCandidateJob.cvId].user.address}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <Separator />
+                    </>
+                  )}
+
+                  {/* Application Information */}
+                  <div>
+                    <h4 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Thông tin ứng tuyển
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                        <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Ngày ứng tuyển</p>
+                          <p className="text-sm text-foreground">
+                            {new Date(selectedCandidateJob.appliedAt).toLocaleDateString("vi-VN", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                        <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Cập nhật lần cuối</p>
+                          <p className="text-sm text-foreground">
+                            {new Date(selectedCandidateJob.updatedAt).toLocaleDateString("vi-VN", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* CV Information */}
+                  <div>
+                    <h4 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Hồ sơ ứng tuyển
+                    </h4>
+                    {cvMap[selectedCandidateJob.cvId] ? (
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-primary/10">
+                            <FileText className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">
+                              {cvMap[selectedCandidateJob.cvId].fileName || cvMap[selectedCandidateJob.cvId].name || "CV"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              ID: {cvMap[selectedCandidateJob.cvId].id}
+                            </p>
+                          </div>
+                        </div>
+                        {cvMap[selectedCandidateJob.cvId].fileUrl && (
+                          <Button variant="outline" size="sm" asChild>
+                            <a
+                              href={cv.fileUrl || ""}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink className="h-4 w-4 mr-1.5" />
+                              Xem CV
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">
+                        Không có CV
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {(!selectedCandidateJob.cvId || !cvMap[selectedCandidateJob.cvId]) && (
+                <div className="text-center py-8">
+                  <p className="text-sm text-muted-foreground">
+                    Không tìm thấy thông tin ứng viên
+                  </p>
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                      <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Ngày ứng tuyển</p>
+                        <p className="text-sm text-foreground">
+                          {new Date(selectedCandidateJob.appliedAt).toLocaleDateString("vi-VN", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                      <Badge className={getStatusColor(selectedCandidateJob.status)}>
+                        {getStatusLabel(selectedCandidateJob.status)}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

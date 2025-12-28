@@ -36,7 +36,19 @@ const formSchema = z.object({
   phoneNumber: z.string().optional(),
   address: z.string().optional(),
   gender: z.boolean({ required_error: "Vui lòng chọn giới tính" }),
-  birthday: z.date({ required_error: "Vui lòng nhập ngày sinh" }),
+  birthday: z
+    .date({ required_error: "Vui lòng nhập ngày sinh" })
+    .refine(
+      (date) => {
+        const today = new Date();
+        const minDate = new Date();
+        minDate.setFullYear(today.getFullYear() - 18);
+        return date <= minDate;
+      },
+      {
+        message: "Người dùng phải từ 18 tuổi trở lên",
+      }
+    ),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -335,9 +347,12 @@ export function DialogCVInformation({
                             field.onChange(date);
                             setBirthdayOpen(false);
                           }}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
+                          disabled={(date) => {
+                            const today = new Date();
+                            const minDate = new Date();
+                            minDate.setFullYear(today.getFullYear() - 18);
+                            return date > minDate || date < new Date("1900-01-01");
+                          }}
                         />
                       </PopoverContent>
                     </Popover>

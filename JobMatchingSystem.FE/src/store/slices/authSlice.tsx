@@ -16,6 +16,7 @@ interface AuthState {
   loading: boolean;
   error: string;
   rememberMe: boolean;
+  isInitializing: boolean; // Flag để đợi restore auth state khi refresh
 }
 
 const initialState: AuthState = {
@@ -28,6 +29,7 @@ const initialState: AuthState = {
   loading: false,
   error: '',
   rememberMe: false,
+  isInitializing: true, // Bắt đầu với true để đợi restore
 }
 
 // Login async thunk
@@ -38,13 +40,18 @@ export const loginAsync = createAsyncThunk(
       const response = await axiosInstance.post<BaseResponse<any>>('/auth/login', { email, password });
       const token = response.data.result.token;
       
-      if (rememberMe) {
-        localStorage.setItem('accessToken', token);
-      } else {
-        Cookies.set('accessToken', token, { path: '/', expires: new Date(Date.now() + 24 * 60 * 60 * 1000) });
-      }
       // Decode token để lấy thông tin
       const decodedToken = JWTUtils.decodeToken(token);
+      const role = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+      
+      if (rememberMe) {
+        localStorage.setItem('accessToken', token);
+        localStorage.setItem('role', role);
+      } else {
+        const cookieExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        Cookies.set('accessToken', token, { path: '/', expires: cookieExpires });
+        Cookies.set('role', role, { path: '/', expires: cookieExpires });
+      }
       return {
         token,
         exp: decodedToken?.exp,
@@ -59,15 +66,21 @@ export const loginAsync = createAsyncThunk(
   }
 );
 
-export const logoutAsync = createAsyncThunk('Auth/logout', async (_, { rejectWithValue }) => {
+export const logoutAsync = createAsyncThunk('Auth/logout', async () => {
   try {
     await axiosInstance.post<BaseResponse<any>>('/auth/logout');
-    localStorage.removeItem('accessToken');
-    Cookies.remove('accessToken');
-    return initialState;
   } catch (error: any) {
-    return rejectWithValue(error.response?.data?.errorMessages?.[0] || 'Đăng xuất thất bại');
+    // Log error nhưng vẫn tiếp tục clear storage local
+    console.warn('Logout API failed, but continuing with local logout:', error);
+  } finally {
+    // Luôn clear storage dù API thành công hay thất bại
+    // Vì logout local đã thành công nên return initialState
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('role');
+    Cookies.remove('accessToken');
+    Cookies.remove('role');
   }
+  return initialState;
 });
 
 // Register async thunk
@@ -105,8 +118,10 @@ const authSlice = createSlice({
   reducers: {
     logout: () => {
       localStorage.removeItem('accessToken');
+      localStorage.removeItem('role');
       Cookies.remove('accessToken');
-      return initialState;
+      Cookies.remove('role');
+      return { ...initialState, isInitializing: false };
     },
     clearError: (state) => {
       state.error = '';
@@ -124,11 +139,34 @@ const authSlice = createSlice({
           state.isAuthenticated = true;
           state.rememberMe = !!localStorage.getItem('accessToken');
         } else {
-          // Token expired - clear it
+          // Token expired or invalid - clear all auth data and reset state
           localStorage.removeItem('accessToken');
+          localStorage.removeItem('role');
           Cookies.remove('accessToken');
+          Cookies.remove('role');
+          // Reset state to initialState
+          state.accessToken = '';
+          state.exp = 0;
+          state.name = '';
+          state.nameid = '';
+          state.role = '';
+          state.isAuthenticated = false;
+          state.rememberMe = false;
+          state.error = '';
         }
+      } else {
+        // No token found - ensure state is reset
+        state.accessToken = '';
+        state.exp = 0;
+        state.name = '';
+        state.nameid = '';
+        state.role = '';
+        state.isAuthenticated = false;
+        state.rememberMe = false;
+        state.error = '';
       }
+      // Đánh dấu đã hoàn thành việc restore auth state
+      state.isInitializing = false;
     },
   },
   
@@ -189,6 +227,7 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.rememberMe = false;
         state.error = '';
+        state.isInitializing = false;
       })
       // Logout rejected
       .addCase(logoutAsync.rejected, (state, action) => {
@@ -202,6 +241,7 @@ const authSlice = createSlice({
         state.role = '';
         state.isAuthenticated = false;
         state.rememberMe = false;
+        state.isInitializing = false;
       })
       // Forgot password pending
       .addCase(forgotPassword.pending, (state) => {

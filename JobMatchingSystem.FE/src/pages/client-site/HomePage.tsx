@@ -693,9 +693,7 @@ const HomePage = () => {
                       {/* Footer */}
                       <div className="flex items-center justify-between pt-2 border-t border-slate-100 mt-auto">
                         <div className="text-sm font-semibold text-emerald-700">
-                          {job.salaryMin && job.salaryMax
-                            ? `$${job.salaryMin.toLocaleString()} - $${job.salaryMax.toLocaleString()}`
-                            : "Thỏa thuận"}
+                          {job.salaryMin && job.salaryMax ? `${(job.salaryMin / 1000000).toLocaleString()} - ${(job.salaryMax / 1000000).toLocaleString()} triệu` : "Thỏa thuận"}
                         </div>
                         <Button
                           size="sm"

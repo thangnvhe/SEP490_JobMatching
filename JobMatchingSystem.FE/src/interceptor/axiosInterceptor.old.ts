@@ -1,6 +1,9 @@
 import axios, { AxiosError } from 'axios';
 import type { AxiosResponse } from 'axios';
 import Cookies from 'js-cookie';
+import { JWTUtils } from '@/lib/utils/jwtUtils';
+import { getStore } from '@/store';
+import { logout } from '@/store/slices/authSlice';
 
 import { API_BASE_URL } from '../../env.ts';
 
@@ -42,11 +45,25 @@ const transformPaginationParams = (params: Record<string, any> | undefined): Rec
 // ====== REQUEST INTERCEPTOR ======
 axiosInstance.interceptors.request.use(
     function (config) {
-        // Thêm token vào header nếu có
+        // Thêm token vào header nếu có và token chưa hết hạn
         if (!config.headers.Authorization) {
             const accessToken = localStorage.getItem('accessToken') || Cookies.get('accessToken');
             if (accessToken) {
-                config.headers.Authorization = `Bearer ${accessToken}`;
+                // Kiểm tra token expiration trước khi gửi request
+                if (JWTUtils.isTokenExpired(accessToken)) {
+                    // Token đã hết hạn - clear storage và logout ngay lập tức
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('role');
+                    Cookies.remove('accessToken');
+                    Cookies.remove('role');
+                    // Dispatch logout action để reset Redux state
+                    const store = getStore();
+                    store.dispatch(logout());
+                    // Không thêm token vào header - request sẽ nhận 401 từ server
+                    // Response interceptor sẽ xử lý 401
+                } else {
+                    config.headers.Authorization = `Bearer ${accessToken}`;
+                }
             }
         }
 
@@ -68,11 +85,27 @@ axiosInstance.interceptors.response.use(
         return response;
     },
     async function (error: AxiosError) {
-        // Xử lý lỗi 401 (Unauthorized) - Token hết hạn
+        // Xử lý lỗi 401 (Unauthorized) - Token hết hạn hoặc không hợp lệ
         if (error.response?.status === 401) {
-            // Xóa token và redirect về trang login
+            // Clear storage
             localStorage.removeItem('accessToken');
+            localStorage.removeItem('role');
             Cookies.remove('accessToken');
+            Cookies.remove('role');
+            
+            // Dispatch logout action để reset Redux state
+            const store = getStore();
+            store.dispatch(logout());
+            
+            // Redirect về trang chủ nếu đang ở protected route
+            // Sử dụng window.location để tránh circular dependency với react-router
+            if (window.location.pathname.startsWith('/admin') || 
+                window.location.pathname.startsWith('/recruiter') ||
+                window.location.pathname.startsWith('/candidate') ||
+                window.location.pathname.startsWith('/hiringmanager')) {
+                window.location.href = '/';
+            }
+            
             return Promise.reject(error);
         }
 
