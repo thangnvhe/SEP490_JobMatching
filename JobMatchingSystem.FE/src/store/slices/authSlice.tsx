@@ -16,6 +16,7 @@ interface AuthState {
   loading: boolean;
   error: string;
   rememberMe: boolean;
+  isInitializing: boolean; // Flag để đợi restore auth state khi refresh
 }
 
 const initialState: AuthState = {
@@ -28,6 +29,7 @@ const initialState: AuthState = {
   loading: false,
   error: '',
   rememberMe: false,
+  isInitializing: true, // Bắt đầu với true để đợi restore
 }
 
 // Login async thunk
@@ -119,7 +121,7 @@ const authSlice = createSlice({
       localStorage.removeItem('role');
       Cookies.remove('accessToken');
       Cookies.remove('role');
-      return initialState;
+      return { ...initialState, isInitializing: false };
     },
     clearError: (state) => {
       state.error = '';
@@ -163,6 +165,8 @@ const authSlice = createSlice({
         state.rememberMe = false;
         state.error = '';
       }
+      // Đánh dấu đã hoàn thành việc restore auth state
+      state.isInitializing = false;
     },
   },
   
@@ -223,6 +227,7 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.rememberMe = false;
         state.error = '';
+        state.isInitializing = false;
       })
       // Logout rejected
       .addCase(logoutAsync.rejected, (state, action) => {
@@ -236,6 +241,7 @@ const authSlice = createSlice({
         state.role = '';
         state.isAuthenticated = false;
         state.rememberMe = false;
+        state.isInitializing = false;
       })
       // Forgot password pending
       .addCase(forgotPassword.pending, (state) => {

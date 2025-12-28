@@ -13,13 +13,55 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { CheckCircle, XCircle, Loader2, ArrowRightLeft, MessageSquare } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, ArrowRightLeft, MessageSquare, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { CandidateStageServices } from "@/services/candidate-stage.service";
 import { CandidateStage } from "@/models/candidate-stage";
 import { cn } from "@/lib/utils";
 import { AxiosError } from "axios";
 import { BaseResponse } from "@/models/base";
+
+// Helper function để parse date và time thành Date object
+const parseDateTime = (dateStr: string, timeStr: string): Date => {
+    const date = new Date(dateStr);
+    if (timeStr) {
+        const timeParts = timeStr.split(':').map(Number);
+        const hours = timeParts[0] || 0;
+        const minutes = timeParts[1] || 0;
+        date.setHours(hours, minutes, 0, 0);
+    }
+    return date;
+};
+
+// Helper function để kiểm tra xem thời gian phỏng vấn đã đến chưa
+const isInterviewTimePassed = (candidate: CandidateStage): boolean => {
+    // Nếu không có interviewDate hoặc interviewStartTime, cho phép update
+    if (!candidate.interviewDate || !candidate.interviewStartTime) {
+        return true;
+    }
+
+    // Kiểm tra giá trị mặc định (có thể là "0001-01-01" hoặc "00:00:00")
+    if (
+        candidate.interviewDate === "0001-01-01" ||
+        candidate.interviewStartTime === "00:00:00" ||
+        !candidate.interviewDate.trim() ||
+        !candidate.interviewStartTime.trim()
+    ) {
+        return true;
+    }
+
+    try {
+        const interviewDateTime = parseDateTime(candidate.interviewDate, candidate.interviewStartTime);
+        const now = new Date();
+        
+        // So sánh: thời gian hiện tại phải >= thời gian phỏng vấn
+        return now >= interviewDateTime;
+    } catch (error) {
+        // Nếu có lỗi khi parse, cho phép update (fallback)
+        console.error("Error parsing interview date/time:", error);
+        return true;
+    }
+};
 
 // Zod schema for form validation
 const updateResultFormSchema = z.object({
@@ -86,6 +128,21 @@ export function UpdateResultDialog({
 
     const onSubmit = async (data: UpdateResultFormData) => {
         if (!candidate || !toStageId) return;
+
+        // Kiểm tra thời gian phỏng vấn
+        if (!isInterviewTimePassed(candidate)) {
+            const interviewDate = candidate.interviewDate 
+                ? new Date(candidate.interviewDate).toLocaleDateString('vi-VN')
+                : '';
+            const interviewTime = candidate.interviewStartTime 
+                ? candidate.interviewStartTime.slice(0, 5)
+                : '';
+            
+            toast.error(
+                `Chưa đến thời gian phỏng vấn. Vui lòng đợi đến ${interviewDate} ${interviewTime} mới có thể cập nhật kết quả.`
+            );
+            return;
+        }
 
         try {
             setIsLoading(true);
@@ -163,6 +220,29 @@ export function UpdateResultDialog({
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 mt-2">
+                    {/* Warning nếu chưa đến thời gian phỏng vấn */}
+                    {candidate && !isInterviewTimePassed(candidate) && (
+                        <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                            <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                            <div className="flex-1">
+                                <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                                    Chưa đến thời gian phỏng vấn
+                                </p>
+                                <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                                    {candidate.interviewDate && candidate.interviewStartTime && (
+                                        <>
+                                            Chỉ có thể cập nhật kết quả sau thời điểm phỏng vấn:{" "}
+                                            <span className="font-semibold">
+                                                {new Date(candidate.interviewDate).toLocaleDateString('vi-VN')}{" "}
+                                                {candidate.interviewStartTime.slice(0, 5)}
+                                            </span>
+                                        </>
+                                    )}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Result Selection */}
                     <div className="space-y-3">
                         <Label className="flex items-center gap-2">
@@ -294,7 +374,7 @@ export function UpdateResultDialog({
                         </Button>
                         <Button
                             type="submit"
-                            disabled={isLoading}
+                            disabled={isLoading || (candidate && !isInterviewTimePassed(candidate))}
                             className={cn(
                                 selectedResult === "Pass" && "bg-emerald-600 hover:bg-emerald-700",
                                 selectedResult === "Fail" && "bg-rose-600 hover:bg-rose-700"

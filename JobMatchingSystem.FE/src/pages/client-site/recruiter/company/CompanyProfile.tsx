@@ -19,8 +19,6 @@ import {
   Users,
   Edit,
   Camera,
-  Briefcase,
-  CheckCircle,
 } from "lucide-react";
 
 // Services
@@ -202,54 +200,6 @@ const CompanyProfile = () => {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Dashboard Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-white border-none shadow-sm hover:shadow-md transition-all duration-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Tin tuyển dụng</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{company.jobCount ?? 0}</p>
-                </div>
-                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <Briefcase className="w-5 h-5 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="bg-white border-none shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
-            onClick={handleNavigateToMembers}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 group-hover:text-blue-600 transition-colors">Thành viên</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{company.teamMembersCount ?? 0}</p>
-                </div>
-                <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
-                  <Users className="w-5 h-5 text-indigo-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white border-none shadow-sm hover:shadow-md transition-all duration-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Đã tuyển</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{company.recruitsCount ?? 0}</p>
-                </div>
-                <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Main Content Grid */}

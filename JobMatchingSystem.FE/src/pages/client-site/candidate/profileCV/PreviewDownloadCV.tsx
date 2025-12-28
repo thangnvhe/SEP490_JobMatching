@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   ChevronLeft,
   Download,
@@ -154,9 +154,59 @@ export default function PreviewDownloadCV() {
     generateContent();
   }, [selectedTemplate, cvData, selectedColor, language]); // Re-run when template or data changes
 
+  // Validate CV data before allowing download - memoized to avoid recalculation
+  const cvValidation = useMemo((): { isValid: boolean; missingFields: string[] } => {
+    const missingFields: string[] = [];
+
+    if (!cvData) {
+      return { isValid: false, missingFields: ["Dữ liệu CV"] };
+    }
+
+    const { userProfile, cvProfile } = cvData;
+
+    // Check required fields from user profile
+    if (!userProfile.fullName || userProfile.fullName.trim() === "") {
+      missingFields.push("Họ và tên");
+    }
+    if (!userProfile.email || userProfile.email.trim() === "") {
+      missingFields.push("Email");
+    }
+    if (!userProfile.phoneNumber || userProfile.phoneNumber.trim() === "") {
+      missingFields.push("Số điện thoại");
+    }
+    if (!userProfile.address || userProfile.address.trim() === "") {
+      missingFields.push("Địa chỉ");
+    }
+    if (!userProfile.birthday) {
+      missingFields.push("Ngày sinh");
+    }
+    if (userProfile.gender === null || userProfile.gender === undefined) {
+      missingFields.push("Giới tính");
+    }
+
+    // Check CV Profile (position/Job Title)
+    if (!cvProfile || !cvProfile.positionName || cvProfile.positionName.trim() === "") {
+      missingFields.push("Vị trí công việc");
+    }
+
+    return {
+      isValid: missingFields.length === 0,
+      missingFields,
+    };
+  }, [cvData]);
 
   // Handle Print / Download
   const handleDownloadPdf = () => {
+      // Validate CV data before download
+      if (!cvValidation.isValid) {
+          const missingList = cvValidation.missingFields.join(", ");
+          toast.error(
+              `CV chưa đủ thông tin. Vui lòng bổ sung các thông tin sau: ${missingList}. Hãy quay lại trang cập nhật hồ sơ để điền đầy đủ thông tin.`,
+              { duration: 5000 }
+          );
+          return;
+      }
+
       if (iframeRef.current && iframeRef.current.contentWindow) {
           iframeRef.current.contentWindow.print();
           console.log("Printed");
@@ -341,14 +391,31 @@ export default function PreviewDownloadCV() {
             </div>
           </div>
 
-          <Button 
-            onClick={handleDownloadPdf}
-            disabled={!htmlContent || isHtmlGenerating}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 px-8 rounded-full shadow-lg shadow-emerald-100 hover:shadow-emerald-200 transition-all"
-          >
-            {isHtmlGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            Download PDF
-          </Button>
+          <div className="flex flex-col items-end gap-1">
+            <Button 
+              onClick={handleDownloadPdf}
+              disabled={!htmlContent || isHtmlGenerating || !cvValidation.isValid}
+              className={cn(
+                "font-bold gap-2 px-8 rounded-full shadow-lg transition-all",
+                !htmlContent || isHtmlGenerating || !cvValidation.isValid
+                  ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed text-white"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-100 hover:shadow-emerald-200"
+              )}
+              title={
+                !cvValidation.isValid && cvData
+                  ? `CV chưa đủ thông tin. Vui lòng cập nhật: ${cvValidation.missingFields.join(", ")}`
+                  : undefined
+              }
+            >
+              {isHtmlGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              Download PDF
+            </Button>
+            {!cvValidation.isValid && cvData && (
+              <p className="text-xs text-red-500 text-right max-w-[200px]">
+                ⚠️ Chưa đủ thông tin để download
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>
