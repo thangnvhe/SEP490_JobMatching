@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -93,6 +93,51 @@ const formatDateToLocalString = (date: Date): string => {
     return `${year}-${month}-${day}`;
 };
 
+// Helper to check if candidate has valid schedule
+const hasValidSchedule = (candidate: CandidateStage | null): boolean => {
+    if (!candidate) return false;
+    
+    const hasValidDate = !!(candidate.interviewDate && 
+        candidate.interviewDate !== "0001-01-01" && 
+        candidate.interviewDate.trim() !== "");
+    
+    const hasValidStartTime = !!(candidate.interviewStartTime && 
+        candidate.interviewStartTime !== "00:00:00" && 
+        candidate.interviewStartTime.trim() !== "");
+    
+    const hasValidEndTime = !!(candidate.interviewEndTime && 
+        candidate.interviewEndTime !== "00:00:00" && 
+        candidate.interviewEndTime.trim() !== "");
+    
+    return hasValidDate && hasValidStartTime && hasValidEndTime;
+};
+
+// Helper to parse time from HH:mm:ss to HH:mm
+const parseTimeToHHmm = (timeStr: string): string => {
+    if (!timeStr || timeStr === "00:00:00") return "";
+    // Extract HH:mm from HH:mm:ss
+    return timeStr.slice(0, 5);
+};
+
+// Helper to parse date string (YYYY-MM-DD) to Date object without timezone issues
+const parseDateString = (dateStr: string): Date => {
+    if (!dateStr || dateStr === "0001-01-01") return new Date();
+    
+    // Parse YYYY-MM-DD format
+    const parts = dateStr.split("-");
+    if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+        const day = parseInt(parts[2], 10);
+        
+        if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+            return new Date(year, month, day);
+        }
+    }
+    
+    return new Date();
+};
+
 interface ScheduleInterviewDialogProps {
     candidate: CandidateStage | null;
     open: boolean;
@@ -131,6 +176,35 @@ export function ScheduleInterviewDialog({
     const startTime = watch("startTime");
     const endTime = watch("endTime");
 
+    // Load existing schedule values when dialog opens
+    useEffect(() => {
+        if (open && candidate) {
+            if (hasValidSchedule(candidate)) {
+                // Load existing schedule values
+                const existingDate = parseDateString(candidate.interviewDate);
+                const existingStartTime = parseTimeToHHmm(candidate.interviewStartTime);
+                const existingEndTime = parseTimeToHHmm(candidate.interviewEndTime);
+                
+                reset({
+                    selectedDate: existingDate,
+                    startTime: existingStartTime || getCurrentTime(),
+                    endTime: existingEndTime || getOneHourLater(),
+                    interviewLocation: candidate.interviewLocation || "",
+                    googleMeetLink: candidate.googleMeetLink || "",
+                });
+            } else {
+                // Use default values if no valid schedule exists
+                reset({
+                    selectedDate: new Date(),
+                    startTime: getCurrentTime(),
+                    endTime: getOneHourLater(),
+                    interviewLocation: "",
+                    googleMeetLink: "",
+                });
+            }
+        }
+    }, [open, candidate, reset]);
+
     const handleOpenChange = (newOpen: boolean) => {
         if (!newOpen) {
             // Reset form when closing
@@ -147,6 +221,8 @@ export function ScheduleInterviewDialog({
 
     const onSubmit = async (data: ScheduleFormData) => {
         if (!candidate) return;
+
+        const wasScheduled = hasValidSchedule(candidate);
 
         try {
             setIsLoading(true);
@@ -170,7 +246,7 @@ export function ScheduleInterviewDialog({
             const response = await CandidateStageServices.getById(candidate.id);
             const updatedCandidate = response.result;
 
-            toast.success("Đặt lịch phỏng vấn thành công!");
+            toast.success(wasScheduled ? "Cập nhật lịch phỏng vấn thành công!" : "Đặt lịch phỏng vấn thành công!");
             handleOpenChange(false);
 
             if (updatedCandidate) {
@@ -186,6 +262,7 @@ export function ScheduleInterviewDialog({
     if (!candidate) return null;
 
     const user = candidate.user;
+    const hasSchedule = hasValidSchedule(candidate);
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -193,10 +270,10 @@ export function ScheduleInterviewDialog({
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <CalendarIcon className="h-5 w-5 text-primary" />
-                        Đặt lịch phỏng vấn
+                        {hasSchedule ? "Chỉnh sửa lịch phỏng vấn" : "Đặt lịch phỏng vấn"}
                     </DialogTitle>
                     <DialogDescription>
-                        Đặt lịch phỏng vấn cho ứng viên{" "}
+                        {hasSchedule ? "Chỉnh sửa" : "Đặt"} lịch phỏng vấn cho ứng viên{" "}
                         <span className="font-medium text-foreground">
                             {user?.fullName || "Không có tên"}
                         </span>

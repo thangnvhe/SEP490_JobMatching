@@ -23,7 +23,13 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
   redirectTo = '/' 
 }) => {
   const location = useLocation();
-  const { isAuthenticated, role } = useAppSelector(state => state.authState);
+  const { isAuthenticated, role, isInitializing } = useAppSelector(state => state.authState);
+  
+  // Đợi cho đến khi auth state được restore xong (tránh race condition khi F5)
+  if (isInitializing) {
+    // Có thể hiển thị loading spinner hoặc null
+    return null; // hoặc <LoadingSpinner />
+  }
   
   // Check if user is authenticated - sử dụng Redux state đã được restore từ AppInitializer
   if (!isAuthenticated) {
