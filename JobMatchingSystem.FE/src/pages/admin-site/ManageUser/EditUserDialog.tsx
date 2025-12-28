@@ -80,6 +80,19 @@ const editUserSchema = z.object({
       {
         message: "Ngày sinh không đúng định dạng",
       }
+    )
+    .refine(
+      (val) => {
+        if (!val || val.trim() === "") return true;
+        const birthDate = new Date(val);
+        const today = new Date();
+        const minDate = new Date();
+        minDate.setFullYear(today.getFullYear() - 18);
+        return birthDate <= minDate;
+      },
+      {
+        message: "Người dùng phải từ 18 tuổi trở lên",
+      }
     ),
   score: z
     .string()
@@ -405,9 +418,12 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
                     captionLayout="dropdown"
                     fromYear={1900}
                     toYear={new Date().getFullYear()}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
+                    disabled={(date) => {
+                      const today = new Date();
+                      const minDate = new Date();
+                      minDate.setFullYear(today.getFullYear() - 18);
+                      return date > minDate || date < new Date("1900-01-01");
+                    }}
                     initialFocus
                   />
                 </PopoverContent>

@@ -24,7 +24,7 @@ export function ClientFooter() {
               <span className="text-2xl font-bold">Superio</span>
             </div>
             <p className="text-gray-400 text-sm mb-4">
-              Tìm kiếm việc làm dễ dàng và nhanh chóng với Superio. Kết nối nhà tuyển dụng và ứng viên hiệu quả.
+              Tìm công việc phù hợp với cuộc sống của bạn. Bắt đầu sự nghiệp cùng chúng tôi.
             </p>
             <div className="flex space-x-4">
               <Button variant="outline" size="icon" className="rounded-full">
@@ -44,16 +44,16 @@ export function ClientFooter() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Ứng viên</h3>
+            <h3 className="text-lg font-semibold mb-4">Dành cho ứng viên</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to="#" className="text-gray-400 hover:text-white transition">
-                  Tìm việc
+                  Tìm việc làm
                 </Link>
               </li>
               <li>
                 <Link to="#" className="text-gray-400 hover:text-white transition">
-                  Duyệt danh mục
+                  Danh mục việc làm
                 </Link>
               </li>
               <li>
@@ -68,7 +68,7 @@ export function ClientFooter() {
               </li>
               <li>
                 <Link to="#" className="text-gray-400 hover:text-white transition">
-                  Bookmark của tôi
+                  Việc làm đã lưu
                 </Link>
               </li>
             </ul>
@@ -76,11 +76,11 @@ export function ClientFooter() {
 
           {/* For Employers */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Nhà tuyển dụng</h3>
+            <h3 className="text-lg font-semibold mb-4">Dành cho nhà tuyển dụng</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to="#" className="text-gray-400 hover:text-white transition">
-                  Duyệt ứng viên
+                  Tìm ứng viên
                 </Link>
               </li>
               <li>
@@ -90,12 +90,12 @@ export function ClientFooter() {
               </li>
               <li>
                 <Link to="#" className="text-gray-400 hover:text-white transition">
-                  Thêm việc làm
+                  Đăng việc làm
                 </Link>
               </li>
               <li>
                 <Link to="#" className="text-gray-400 hover:text-white transition">
-                  Gói việc làm
+                  Gói tuyển dụng
                 </Link>
               </li>
             </ul>
@@ -103,15 +103,15 @@ export function ClientFooter() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Contact</h3>
+            <h3 className="text-lg font-semibold mb-4">Liên hệ</h3>
             <ul className="space-y-3 text-sm text-gray-400">
               <li className="flex items-start">
                 <MapPin className="h-5 w-5 mr-2 mt-0.5 shrink-0" />
-                <span>123 Main Street, City, Country</span>
+                <span>123 Đường Chính, Thành phố, Quốc gia</span>
               </li>
               <li className="flex items-center">
                 <Phone className="h-5 w-5 mr-2 shrink-0" />
-                <span>+1 234 567 8900</span>
+                <span>+84 234 567 890</span>
               </li>
               <li className="flex items-center">
                 <Mail className="h-5 w-5 mr-2 shrink-0" />
@@ -124,7 +124,7 @@ export function ClientFooter() {
         <Separator className="my-8 bg-gray-700" />
 
         <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-          <p>© 2024 Superio. Mọi quyền được bảo lưu.</p>
+          <p> Đã đăng ký bản quyền.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link to="#" className="hover:text-white transition">
               Chính sách bảo mật
@@ -133,7 +133,7 @@ export function ClientFooter() {
               Điều khoản dịch vụ
             </Link>
             <Link to="#" className="hover:text-white transition">
-              Chính sách cookie
+              Chính sách Cookie
             </Link>
           </div>
         </div>

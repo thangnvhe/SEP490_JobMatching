@@ -15,14 +15,19 @@ export function AuthEventProvider({ children }: { children: React.ReactNode }) {
   const isFirstMount = useRef(true);
 
   useEffect(() => {
-    // Bỏ qua lần mount đầu tiên
+    // Lần mount đầu tiên: emit event nếu đã authenticated (restore auth thành công)
+    // Điều này đảm bảo các component subscribe sau khi mount vẫn nhận được trạng thái hiện tại
     if (isFirstMount.current) {
       isFirstMount.current = false;
       prevAuthState.current = isAuthenticated;
+      // Emit event khi mount nếu đã authenticated (restore auth thành công)
+      if (isAuthenticated) {
+        authEventEmitter.emit(isAuthenticated);
+      }
       return;
     }
 
-    // Chỉ emit khi isAuthenticated thực sự thay đổi
+    // Các lần sau: chỉ emit khi isAuthenticated thực sự thay đổi
     if (prevAuthState.current !== isAuthenticated) {
       prevAuthState.current = isAuthenticated;
       authEventEmitter.emit(isAuthenticated);

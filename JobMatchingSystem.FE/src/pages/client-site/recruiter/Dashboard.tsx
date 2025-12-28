@@ -11,10 +11,9 @@ export default function RecruiterDashboard() {
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           {/* Header */}
           <div className="px-4 lg:px-6">
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Bảng điều khiển</h1>
             <p className="text-muted-foreground">
-              Welcome back! Here's what's happening with your recruitment
-              activities.
+              Chào mừng trở lại! Dưới đây là tổng quan về hoạt động tuyển dụng của bạn.
             </p>
           </div>
 
