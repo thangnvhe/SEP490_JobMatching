@@ -6,6 +6,7 @@ using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace JobMatchingSystem.API.Services.Implementations
 {
@@ -163,7 +164,43 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 throw new AppException(ErrorCode.InvalidCandidateStageStatus("Không thể cập nhật lịch khi ứng viên đã hoàn thành hoặc thất bại"));
             }
-            
+
+            // ===== CHECK TRÙNG LỊCH HIRING MANAGER =====
+            if (request.InterviewDate.HasValue &&
+                request.InterviewStartTime.HasValue &&
+                request.InterviewEndTime.HasValue)
+            {
+                if (request.InterviewStartTime >= request.InterviewEndTime)
+                {
+                    throw new AppException(
+                        ErrorCode.InvalidCandidateStageStatus("Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc")
+                    );
+                }
+
+                var hiringManagerId = candidateStage.JobStage?.HiringManagerId;
+
+                if (hiringManagerId.HasValue)
+                {
+                    var isConflict = await _unitOfWork.CandidateStageRepository
+                        .Query()
+                        .AnyAsync(cs =>
+                            cs.Id != candidateStage.Id && // loại trừ chính nó
+                            cs.InterviewDate == request.InterviewDate &&
+                            cs.InterviewStartTime.HasValue &&
+                            cs.InterviewEndTime.HasValue &&
+                            cs.JobStage != null &&
+                            cs.JobStage.HiringManagerId == hiringManagerId &&
+                            cs.InterviewStartTime < request.InterviewEndTime &&
+                            request.InterviewStartTime < cs.InterviewEndTime
+                        );
+
+                    if (isConflict)
+                    {
+                        throw new AppException(ErrorCode.HiringManagerScheduleConflict());
+                    }
+                }
+            }
+
             // Update interview date and time fields
             candidateStage.InterviewDate = request.InterviewDate;
             candidateStage.InterviewStartTime = request.InterviewStartTime;

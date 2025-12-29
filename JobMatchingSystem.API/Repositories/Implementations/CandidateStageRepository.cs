@@ -17,6 +17,12 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             await _context.AddAsync(candidateStage);
         }
 
+        public IQueryable<CandidateStage> Query()
+        {
+            return _context.CandidateStages
+                .Include(x => x.JobStage);
+        }
+
         public async Task<CandidateStage?> GetDetailById(int id)
         {
             var candidateStage = await _context.CandidateStages
