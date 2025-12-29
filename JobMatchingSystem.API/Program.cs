@@ -45,9 +45,9 @@ builder.Services.Configure<EmailSettings>(
 var app = builder.Build();
 
 // 1) Migration + Seed trước khi vào pipeline
-// await app.AutoMigration();
-// await app.SeedAdminUserAsync();
-// await app.SeedAllData();
+await app.AutoMigration();
+await app.SeedAdminUserAsync();
+await app.SeedAllData();
 
 app.UseExceptionHandler();
 

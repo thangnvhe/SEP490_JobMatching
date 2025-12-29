@@ -1,6 +1,7 @@
-﻿using JobMatchingSystem.API.DTOs.Response;
+﻿using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.DTOs.Request;
-using JobMatchingSystem.API.DTOs;
+using JobMatchingSystem.API.DTOs.Response;
+using JobMatchingSystem.API.Services.Implementations;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -81,6 +82,24 @@ namespace JobMatchingSystem.API.Controllers
                 .WithSuccess(true)
                 .Build());
         }
+
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword(
+            [FromBody] ChangePasswordRequest request)
+        {
+            int userId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0"
+            );
+
+            await _authService.ChangePasswordAsync(userId, request);
+
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult("Đổi mật khẩu thành công")
+                .Build());
+        }
+
         [HttpPost("verify-email")]
         public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
         {
