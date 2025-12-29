@@ -73,5 +73,18 @@ namespace JobMatchingSystem.API.Controllers
                 .WithResult(result)
                 .Build());
         }
+
+        [HttpGet("me")]
+        public async Task<IActionResult> GetReportsMe([FromQuery] GetReportPagedRequest request)
+        {
+            request.reporterId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var result = await _reportService.GetReportsPagedAsync(request);
+
+            return Ok(APIResponse<PagedResult<ReportDetailResponse>>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(result)
+                .Build());
+        }
     }
 }
