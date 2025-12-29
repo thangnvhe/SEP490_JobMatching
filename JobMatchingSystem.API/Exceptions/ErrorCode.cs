@@ -4,6 +4,7 @@ namespace JobMatchingSystem.API.Exceptions
 {
     public static class ErrorCode
     {
+        public static Error HiringManagerScheduleConflict() => new("Hiring Manager đã có lịch phỏng vấn khác trong thời gian này", HttpStatusCode.BadRequest);
         public static Error InvalidOldPassword() => new("Mật khẩu cũ không đúng", HttpStatusCode.BadRequest);
         public static Error PasswordNotMatch() => new("Mật khẩu mới không trùng nhau", HttpStatusCode.BadRequest);
         public static Error PasswordTooShort() => new("Mật khẩu phải có ít nhất 6 ký tự", HttpStatusCode.BadRequest);
