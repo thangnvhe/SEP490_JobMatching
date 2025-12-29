@@ -1,18 +1,8 @@
 import { useState } from "react";
 import { FavouriteJobsHeader } from "@/components/ui/candidate/FavouriteJobsHeader";
-import { FavouriteJobsFilters } from "@/components/ui/candidate/FavouriteJobsFilters";
-import { FavouriteJobsList } from "@/components/ui/candidate/FavouriteJobsList";
 import { FavouriteJobsStats } from "@/components/ui/candidate/FavouriteJobsStats";
 
 export default function FavouriteJobsPage() {
-  const [selectedFilters, setSelectedFilters] = useState({
-    jobType: "all",
-    location: "all",
-    salary: "all",
-    dateAdded: "all",
-    company: "all",
-  });
-
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("dateAdded");
 
@@ -31,24 +21,9 @@ export default function FavouriteJobsPage() {
           {/* Stats */}
           <FavouriteJobsStats />
 
-          {/* Main content area */}
-          <div className="grid grid-cols-1 gap-6 px-4 lg:grid-cols-4 lg:px-6">
-            {/* Filters Sidebar */}
-            <div className="lg:col-span-1">
-              <FavouriteJobsFilters 
-                filters={selectedFilters}
-                onFiltersChange={setSelectedFilters}
-              />
-            </div>
-
-            {/* Jobs List */}
-            <div className="lg:col-span-3">
-              <FavouriteJobsList 
-                searchQuery={searchQuery}
-                filters={selectedFilters}
-                sortBy={sortBy}
-              />
-            </div>
+          {/* Main content area - TODO: Implement new job list component */}
+          <div className="px-4 lg:px-6">
+            <p className="text-muted-foreground">Job list will be implemented here</p>
           </div>
         </div>
       </div>

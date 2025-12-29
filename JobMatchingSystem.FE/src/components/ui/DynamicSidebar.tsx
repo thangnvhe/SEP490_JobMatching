@@ -174,12 +174,12 @@ function CandidateNav() {
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                isActive={useIsActivePath("/candidate")}
+                isActive={useIsActivePath("/candidate/dashboard")}
                 tooltip="Dashboard"
                 size="default"
                 className="h-9 px-3"
               >
-                <Link to="/candidate">
+                <Link to="/candidate/dashboard">
                   <LayoutDashboard className="size-4" />
                   <span className="font-medium text-sm">Dashboard</span>
                 </Link>
