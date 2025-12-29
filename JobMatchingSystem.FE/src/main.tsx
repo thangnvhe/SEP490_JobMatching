@@ -8,7 +8,6 @@ import { AppInitializer } from './components/AppInitializer.tsx'
 import { Toaster } from './components/ui/sonner'
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
     <StoreProvider>
       <AppInitializer>
         <BrowserRouter>
@@ -17,5 +16,4 @@ createRoot(document.getElementById('root')!).render(
       </AppInitializer>
       <Toaster />
     </StoreProvider>
-  </StrictMode>,
 )

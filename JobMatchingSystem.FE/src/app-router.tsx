@@ -31,6 +31,8 @@ import CompanyDetailPage from './pages/client-site/guest/CompanyDetailPage';
 import JobDetailPage from './pages/client-site/guest/JobDetailPage';
 import { ConfirmEmailPage } from './pages/client-site/auth/ConfirmEmailPage';
 import ViewReportList from './pages/admin-site/ManageReport/ViewReportList';
+import ViewOrderList from './pages/admin-site/ManageOrder/ViewOrderList';
+
 import { StageBoardDemo } from './components/Stage/StageBoardDemo';
 import InterviewSchedule from './pages/client-site/interview-schedule/interview-schedule';
 import EvaluationHistory from './pages/client-site/evaluation-history/evaluation-history';
@@ -42,6 +44,7 @@ import SavedCVsPage from './pages/client-site/recruiter/SavedCVs/SavedCVsPage';
 import { AdminGuard, RecruiterGuard, CandidateGuard, AuthGuard } from './guards/AuthGuard';
 import CandidateDashboard from './pages/client-site/candidate/Dashboard';
 import RecruiterDashboard from './pages/client-site/recruiter/Dashboard';
+import AdminDashboardPage from './pages/admin/Dashboard/AdminDashboardPage';
 
 const AppRouter: React.FC = () => {
   return (
@@ -57,7 +60,7 @@ const AppRouter: React.FC = () => {
       <Route path="/candidate/interview/reject/:token" element={<InterviewConfirmPage />} />
 
       <Route path="profile-cv/cv-templates" element={<PreviewDownloadCV />} />
-    
+
       {/* Client routes with ClientLayout */}
       <Route path="/" element={<App />}>
         <Route element={<ClientLayout />}>
@@ -85,10 +88,12 @@ const AppRouter: React.FC = () => {
         <Route path="manage-company" element={<ManageCompanyPage />} />
         <Route path="manage-job" element={<ViewJobList />} />
         <Route path="manage-report" element={<ViewReportList />} />
+        <Route path="manage-order" element={<ViewOrderList />} />
         <Route path="manage-template-cv" element={<ViewTemplateCvList />} />
         <Route path="manage-service-plan" element={<ViewServicePlanList />} />
         <Route path="manage-position" element={<ViewPositionList />} />
         <Route path="manage-taxonomies" element={<ViewTaxonomyList />} />
+        <Route path="dashboard" element={<AdminDashboardPage />} />
       </Route>
 
       {/* Recruiter routes - Protected */}

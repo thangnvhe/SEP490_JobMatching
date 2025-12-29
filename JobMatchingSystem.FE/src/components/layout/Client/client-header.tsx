@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Mountain, User, LogOut, LayoutDashboard, FileText } from "lucide-react";
+import { Menu, Mountain, User, LogOut, LayoutDashboard, FileText, Settings } from "lucide-react";
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LoginDialog } from "@/pages/client-site/auth/LoginDialog";
@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import RoleGuard from "@/guards/RoleGuard";
+import { ChangePasswordDialog } from "@/components/dialogs/ChangePasswordDialog";
 
 export function ClientHeader() {
   const dispatch = useAppDispatch();
@@ -28,6 +29,7 @@ export function ClientHeader() {
   const [loginOpen, setLoginOpen] = React.useState(false);
   const [registerOpen, setRegisterOpen] = React.useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = React.useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = React.useState(false);
 
   const handleLogout = async () => {
     try {
@@ -141,6 +143,11 @@ export function ClientHeader() {
                   </RoleGuard>
 
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setChangePasswordOpen(true)}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Đổi mật khẩu
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} disabled={isLoading}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>{isLoading ? "Đang đăng xuất..." : "Đăng xuất"}</span>
@@ -252,6 +259,10 @@ export function ClientHeader() {
             setForgotPasswordOpen(false);
             setLoginOpen(true);
           }}
+        />
+        <ChangePasswordDialog 
+          isOpen={changePasswordOpen} 
+          onOpenChange={setChangePasswordOpen} 
         />
       </div>
     </header >

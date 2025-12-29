@@ -24,7 +24,6 @@ import {
   SidebarGroupContent,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { NavUser } from "@/components/nav-user";
 import React from "react";
 import RoleGuard from "@/guards/RoleGuard";
 
@@ -157,6 +156,21 @@ function AdminNav() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/admin/manage-order")}
+                tooltip="Manage Orders"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/admin/manage-order">
+                  <Package className="size-4" />
+                  <span className="font-medium text-sm">Lịch sử giao dịch</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
@@ -232,12 +246,6 @@ function AdminNav() {
   );
 }
 
-const dummyUser = {
-  name: "Admin",
-  email: "admin@example.com",
-  avatar: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
-};
-
 export function AdminSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
@@ -264,7 +272,6 @@ export function AdminSidebar({
       </SidebarContent>
 
       <SidebarFooter>
-        <NavUser user={dummyUser} />
       </SidebarFooter>
     </Sidebar>
   );

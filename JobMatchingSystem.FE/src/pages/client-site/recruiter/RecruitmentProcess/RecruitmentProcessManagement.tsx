@@ -103,7 +103,7 @@ const RecruitmentProcessManagement = () => {
   // Fetch candidate jobs with pagination
   const fetchCandidateJobs = useCallback(async (params: PaginationParamsInput) => {
     if (!jobId) return;
-    
+
     try {
       setLoading(true);
       setError(null);
@@ -380,9 +380,9 @@ const RecruitmentProcessManagement = () => {
                   </Button>
                 </>
               )}
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 title="Xem chi tiết"
                 onClick={() => {
                   setSelectedCandidateJob(candidateJob);
@@ -423,7 +423,7 @@ const RecruitmentProcessManagement = () => {
           {/* Tab 1: Screening List */}
           <TabsContent value="screening" className="mt-4">
 
-            
+
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -623,18 +623,18 @@ const RecruitmentProcessManagement = () => {
                 <>
                   <div className="flex items-start gap-4 p-4 rounded-lg bg-muted/30 border">
                     <Avatar className="h-16 w-16 border-2">
-                      <AvatarImage 
-                        src={cvMap[selectedCandidateJob.cvId].user?.avatarUrl || ""} 
-                        alt={cvMap[selectedCandidateJob.cvId].user?.fullName || ""} 
+                      <AvatarImage
+                        src={cvMap[selectedCandidateJob.cvId].user?.avatarUrl || ""}
+                        alt={cvMap[selectedCandidateJob.cvId].user?.fullName || ""}
                       />
                       <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
                         {cvMap[selectedCandidateJob.cvId].user?.fullName
                           ? cvMap[selectedCandidateJob.cvId].user.fullName
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .toUpperCase()
-                              .slice(0, 2)
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()
+                            .slice(0, 2)
                           : "?"}
                       </AvatarFallback>
                     </Avatar>
@@ -763,7 +763,7 @@ const RecruitmentProcessManagement = () => {
                         {cvMap[selectedCandidateJob.cvId].fileUrl && (
                           <Button variant="outline" size="sm" asChild>
                             <a
-                              href={cv.fileUrl || ""}
+                              href={cvMap[selectedCandidateJob.cvId].fileUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                             >

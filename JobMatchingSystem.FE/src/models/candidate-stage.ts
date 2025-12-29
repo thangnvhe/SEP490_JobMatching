@@ -11,6 +11,7 @@ export interface CandidateStage {
     interviewEndTime: string;
     interviewLocation: string;
     googleMeetLink: string;
+    hiringManagerFullName: string;
     hiringManagerFeedback: string;
     jobStageTitle: string;
     user: Pick<User, 'fullName' | 'email' | 'phoneNumber' | 'address' | 'avatarUrl' | 'birthday' | 'gender'>;

@@ -67,7 +67,7 @@ export default function CVManagement() {
 
         if (!isNotFoundError && response.errorMessages?.length) {
           console.error('Error fetching CVs:', response.errorMessages);
-          alert(`Lỗi: ${response.errorMessages.join(', ')}`);
+          toast.error(`Lỗi: ${response.errorMessages.join(', ')}`);
         }
         setCvs([]);
       }
@@ -105,11 +105,11 @@ export default function CVManagement() {
         setValidationResult(response.result);
       } else {
         console.error('Validation failed:', response.errorMessages);
-        alert(`Lỗi validate CV: ${response.errorMessages?.join(', ')}`);
+        toast.error(`Lỗi validate CV: ${response.errorMessages?.join(', ')}`);
       }
     } catch (error) {
       console.error('Error validating CV:', error);
-      alert('Không thể kết nối tới dịch vụ kiểm tra CV. Bạn vẫn có thể upload file.');
+      toast.error('Không thể kết nối tới dịch vụ kiểm tra CV. Bạn vẫn có thể upload file.');
     } finally {
       setIsValidating(false);
     }
@@ -124,12 +124,12 @@ export default function CVManagement() {
         'application/msword' // .doc
       ];
       if (!allowedTypes.includes(file.type)) {
-        alert("Lỗi: Chỉ chấp nhận file PDF, DOCX hoặc DOC");
+        toast.error("Lỗi: Chỉ chấp nhận file PDF, DOCX hoặc DOC");
         return;
       }
 
       if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        alert("Lỗi: File không được vượt quá 10MB");
+        toast.error("Lỗi: File không được vượt quá 10MB");
         return;
       }
 
@@ -147,18 +147,18 @@ export default function CVManagement() {
 
   const handleUpload = async () => {
     if (!selectedFile || !cvName.trim()) {
-      alert("Lỗi: Vui lòng chọn file và nhập tên CV");
+      toast.error("Lỗi: Vui lòng chọn file và nhập tên CV");
       return;
     }
 
     if (!userId) {
-      alert("Lỗi: Không thể xác định người dùng. Vui lòng đăng nhập lại.");
+      toast.error("Lỗi: Không thể xác định người dùng. Vui lòng đăng nhập lại.");
       return;
     }
 
     // Kiểm tra validation result - chỉ cho upload nếu AI xác nhận đây là CV
     if (validationResult?.is_cv === false) {
-      alert("Lỗi: File này không được AI xác nhận là CV hợp lệ. Vui lòng chọn file CV khác.");
+      toast.error("Lỗi: File này không được AI xác nhận là CV hợp lệ. Vui lòng chọn file CV khác.");
       return;
     }
 
@@ -184,7 +184,7 @@ export default function CVManagement() {
 
       if (response.isSuccess) {
         const msg = typeof response.result === 'string' ? response.result : 'CV đã được upload thành công';
-        alert(`Thành công: ${msg}`);
+        toast.success(`Thành công: ${msg}`);
 
         // Reset form
         setSelectedFile(null);
@@ -197,11 +197,11 @@ export default function CVManagement() {
       } else {
         const errorMsg = response.errorMessages?.join(', ') || 'Không thể upload CV';
         console.error('Upload error:', response.errorMessages);
-        alert(`Lỗi: ${errorMsg}`);
+        toast.error(`Lỗi: ${errorMsg}`);
       }
     } catch (error) {
       console.error('Error uploading CV:', error);
-      alert("Lỗi: Không thể upload CV. Vui lòng thử lại.");
+      toast.error("Lỗi: Không thể upload CV. Vui lòng thử lại.");
     } finally {
       setIsUploading(false);
     }
@@ -213,16 +213,16 @@ export default function CVManagement() {
 
       if (response.isSuccess) {
         const msg = typeof response.result === 'string' ? response.result : 'Đã đặt làm CV chính';
-        alert(`Thành công: ${msg}`);
+        toast.success(`Thành công: ${msg}`);
         fetchCVs();
       } else {
         const errorMsg = response.errorMessages?.join(', ') || 'Không thể đặt làm CV chính';
         console.error('Set primary error:', response.errorMessages);
-        alert(`Lỗi: ${errorMsg}`);
+        toast.error(`Lỗi: ${errorMsg}`);
       }
     } catch (error) {
       console.error('Error setting primary CV:', error);
-      alert("Lỗi: Không thể đặt làm CV chính. Vui lòng thử lại.");
+      toast.error("Lỗi: Không thể đặt làm CV chính. Vui lòng thử lại.");
     }
   };
 
@@ -235,15 +235,15 @@ export default function CVManagement() {
       const response = await CVServices.delete(cvId.toString());
 
       if (response.isSuccess) {
-        alert("Thành công: CV đã được xóa");
+        toast.success("Thành công: CV đã được xóa");
         fetchCVs();
       } else {
         const errorMsg = response.errorMessages?.join(', ') || 'Không thể xóa CV';
-        alert(`Lỗi: ${errorMsg}`);
+        toast.error(`Lỗi: ${errorMsg}`);
       }
     } catch (error) {
       console.error('Error deleting CV:', error);
-      alert("Lỗi: Không thể kết nối đến server. Vui lòng thử lại.");
+      toast.error("Lỗi: Không thể kết nối đến server. Vui lòng thử lại.");
     }
   };
 
