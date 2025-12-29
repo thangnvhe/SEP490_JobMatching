@@ -1,4 +1,4 @@
-import type { User, CreateHiringManagerRequest } from '@/models/user';
+import type { User, CreateHiringManagerRequest, ChangePasswordRequest } from '@/models/user';
 import type { BaseResponse, PaginationParamsInput } from "@/models/base";
 import { BaseApiServices } from "./base-api.service";
 
@@ -13,6 +13,7 @@ export const UserServices = {
   forgotPassword: (email: string) => BaseApiServices.custom<BaseResponse<User>>("post", "/Auth/forgot-password", { email }),
   resetPassword: (email: string, token: string, newPassword: string, confirmPassword: string) =>
     BaseApiServices.custom<BaseResponse<User>>("post", "/Auth/reset-password", { email, token, newPassword, confirmPassword }),
+  changePassword: (data: ChangePasswordRequest) => BaseApiServices.custom<BaseResponse<any>>("post", "/Auth/change-password", data),
   getUserProfile: () => BaseApiServices.custom<BaseResponse<User>>("get", "/User/me"),
   editUserProfile: (payload: FormData) => BaseApiServices.custom<BaseResponse<User>>("put", "/User/me", payload),
   verifyEmail: (token: string) => BaseApiServices.custom<BaseResponse<User>>("post", "/Auth/verify-email", { TokenLink: token }),

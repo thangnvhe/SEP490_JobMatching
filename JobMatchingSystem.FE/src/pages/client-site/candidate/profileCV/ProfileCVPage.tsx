@@ -45,7 +45,7 @@ import {
     Trash2,
     Wrench,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { DialogCVAchievement } from "./EditInformation/DialogCVAchievement";
 import { DialogCVCertificate } from "./EditInformation/DialogCVCertificate";
@@ -79,6 +79,7 @@ const getEducationLevelLabel = (educationLevelId: number): string => {
 };
 
 const ProfileCvPage = () => {
+    const navigate = useNavigate();
     const [isAchievementDialogOpen, setIsAchievementDialogOpen] = useState(false);
     const [achievements, setAchievements] = useState<CVAchievement[]>([]);
     const [selectedAchievement, setSelectedAchievement] = useState<CVAchievement | null>(null);
@@ -1229,10 +1230,16 @@ const ProfileCvPage = () => {
                                 </div>
 
                                 <Button
-                                    asChild
+                                    onClick={() => {
+                                        if (profileCompletion < 100) {
+                                            toast.error("Vui lòng hoàn thành 100% hồ sơ để xem trước và tải CV");
+                                            return;
+                                        }
+                                        navigate("/profile-cv/cv-templates");
+                                    }}
                                     className="w-full rounded-full bg-emerald-500 font-semibold hover:bg-emerald-600 shadow-md shadow-emerald-200"
                                 >
-                                    <Link to="/profile-cv/cv-templates">Xem trước & Tải CV</Link>
+                                    Xem trước & Tải CV
                                 </Button>
                             </CardContent>
                         </Card>

@@ -3,7 +3,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { CandidateStage } from "@/models/candidate-stage";
-import { GripVertical, Mail, Phone, Calendar, Eye, CalendarPlus } from "lucide-react";
+import { GripVertical, Mail, Phone, Calendar, Eye, CalendarPlus, UserCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScheduleInterviewDialog } from "./ScheduleInterviewDialog";
@@ -182,6 +182,15 @@ function CandidateContent({
           <div className="flex items-center gap-2 text-muted-foreground">
             <Phone className="h-3.5 w-3.5 shrink-0" />
             <span className="text-xs">{user.phoneNumber}</span>
+          </div>
+        )}
+
+        {candidate.hiringManagerFullName && (
+          <div className="flex items-center gap-2 text-muted-foreground" title="Hiring Manager">
+            <UserCheck className="h-3.5 w-3.5 shrink-0" />
+            <span className="text-xs truncate">
+              HM: {candidate.hiringManagerFullName}
+            </span>
           </div>
         )}
       </div>

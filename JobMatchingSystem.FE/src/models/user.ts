@@ -29,3 +29,9 @@ export interface CreateHiringManagerRequest {
   phone: string;
   companyId: number;
 }
+
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}

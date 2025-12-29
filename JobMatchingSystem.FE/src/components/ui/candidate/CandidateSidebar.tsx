@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { IconInnerShadowTop } from "@tabler/icons-react";
-import { NavUser } from "@/components/nav-user";
 import React from "react";
 
 function useIsActivePath(path: string) {
@@ -171,12 +170,6 @@ function CandidateNav() {
   );
 }
 
-const dummyUser = {
-  name: "John Candidate",
-  email: "john@example.com",
-  avatar: "https://i.pravatar.cc/150?u=candidate",
-};
-
 export function CandidateSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
@@ -205,7 +198,6 @@ export function CandidateSidebar({
       </ScrollArea>
 
       <SidebarFooter>
-        <NavUser user={dummyUser} />
       </SidebarFooter>
     </Sidebar>
   );

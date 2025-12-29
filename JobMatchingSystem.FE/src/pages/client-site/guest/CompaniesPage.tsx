@@ -71,12 +71,15 @@ export default function CompaniesPage() {
   }, []);
 
   useEffect(() => {
-    const params = {
-      ...paginationInput,
-      search: debouncedKeyword,
-    };
-    getAllCompanies(params);
-  }, [getAllCompanies, debouncedKeyword, paginationInput]);
+    setPaginationInput(prev => {
+      if (prev.search === debouncedKeyword) return prev;
+      return { ...prev, search: debouncedKeyword, page: 1 };
+    });
+  }, [debouncedKeyword]);
+
+  useEffect(() => {
+    getAllCompanies(paginationInput);
+  }, [getAllCompanies, paginationInput]);
 
   const handlePageChange = (page: number) => {
     setPaginationInput(prev => ({ ...prev, page }));
@@ -156,7 +159,7 @@ export default function CompaniesPage() {
 
                 {/* Search Button */}
                 <Button
-                  onClick={() => getAllCompanies({ ...paginationInput, search: keyword })}
+                  onClick={() => setPaginationInput(prev => ({ ...prev, search: keyword, page: 1 }))}
                   className="w-full md:w-auto rounded-xl px-8 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base shadow-md hover:shadow-lg transition-all"
                 >
                   Tìm kiếm
