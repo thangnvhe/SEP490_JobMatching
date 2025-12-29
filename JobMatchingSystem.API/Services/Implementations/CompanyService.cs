@@ -70,8 +70,15 @@ namespace JobMatchingSystem.API.Services.Implementations
         {
             try
             {
-                // Validate email first
+                // Validate email first - check in both Users and Companies tables
                 if (await _unitOfWork.AuthRepository.ExistsAsync(request.Email))
+                {
+                    throw new AppException(ErrorCode.EmailExist());
+                }
+                
+                // Check if email exists in Companies table
+                var existingCompanyByEmail = await _unitOfWork.CompanyRepository.GetByEmailAsync(request.Email);
+                if (existingCompanyByEmail != null)
                 {
                     throw new AppException(ErrorCode.EmailExist());
                 }
@@ -126,7 +133,6 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
             catch (Exception ex) when (!(ex is AppException))
             {
-                // Log the actual exception for debugging
                 throw new AppException(ErrorCode.InvalidCreate());
             }
         }

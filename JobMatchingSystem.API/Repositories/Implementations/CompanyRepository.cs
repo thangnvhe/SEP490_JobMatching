@@ -92,6 +92,13 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                 .ToListAsync();
         }
 
+        public async Task<Company?> GetByEmailAsync(string email)
+        {
+            return await _context.Companies
+                .Where(c => c.Email == email)
+                .FirstOrDefaultAsync();
+        }
+
         public Task Update(Company company)
         {
             _context.Companies.Update(company);
