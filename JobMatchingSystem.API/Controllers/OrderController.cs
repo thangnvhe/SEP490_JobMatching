@@ -48,5 +48,18 @@ namespace JobMatchingSystem.API.Controllers
                 .WithResult(result)
                 .Build());
         }
+
+        [HttpGet("me")]
+        public async Task<IActionResult> GetOrdersMe([FromQuery] GetOrderPagedRequest request)
+        {
+            request.buyerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var result = await _orderService.GetOrdersPagedAsync(request);
+
+            return Ok(APIResponse<PagedResult<OrderResponse>>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(result)
+                .Build());
+        }
     }
 }
