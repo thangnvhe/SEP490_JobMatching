@@ -42,9 +42,11 @@ import InterviewConfirmPage from './pages/client-site/candidate/InterviewConfirm
 import CVSearchPage from './pages/client-site/recruiter/CVSearch/CVSearchPage';
 import SavedCVsPage from './pages/client-site/recruiter/SavedCVs/SavedCVsPage';
 import { AdminGuard, RecruiterGuard, CandidateGuard, AuthGuard } from './guards/AuthGuard';
-import CandidateDashboard from './pages/client-site/candidate/Dashboard';
-import RecruiterDashboard from './pages/client-site/recruiter/Dashboard';
+import CandidateDashboard from './pages/candidate/Dashboard/CandidateDashboardPage';
 import AdminDashboardPage from './pages/admin/Dashboard/AdminDashboardPage';
+import CandidateDashboardPage from './pages/candidate/Dashboard/CandidateDashboardPage';
+import HiringManagerDashboardPage from './pages/client-site/hiringmanager/Dashboard/HiringManagerDashboardPage';
+
 
 const AppRouter: React.FC = () => {
   return (
@@ -102,7 +104,6 @@ const AppRouter: React.FC = () => {
           <ClientLayout />
         </RecruiterGuard>
       }>
-        <Route index element={<RecruiterDashboard />} />
         <Route path="jobs" element={<RecruiterViewJobList />} />
         <Route path="jobs/create" element={<CreateJobPage />} />
         <Route path="cv-search" element={<CVSearchPage />} />
@@ -124,6 +125,7 @@ const AppRouter: React.FC = () => {
         <Route path="saved-jobs" element={<FavouriteJobsPage />} />
         <Route path="my-jobs" element={<MyJobsPage />} />
         <Route path="cv-management" element={<CVManagement />} />
+        <Route path="dashboard" element={<CandidateDashboardPage />} />
       </Route>
 
       {/* HiringManager routes - Protected */}
@@ -134,6 +136,7 @@ const AppRouter: React.FC = () => {
       }>
         <Route path="interview-schedule" element={<InterviewSchedule />} />
         <Route path="evaluation-history" element={<EvaluationHistory />} />
+        <Route path="dashboard" element={<HiringManagerDashboardPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

@@ -45,7 +45,7 @@ import {
     Trash2,
     Wrench,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { DialogCVAchievement } from "./EditInformation/DialogCVAchievement";
 import { DialogCVCertificate } from "./EditInformation/DialogCVCertificate";
@@ -689,7 +689,7 @@ const ProfileCvPage = () => {
                 children: (
                     <div className="space-y-4">
                         <div className="flex items-center gap-3">
-                   
+
                             <div>
                                 <p className="text-sm text-gray-500">Vị trí ứng tuyển</p>
                                 <p className="text-base font-semibold text-gray-900">
