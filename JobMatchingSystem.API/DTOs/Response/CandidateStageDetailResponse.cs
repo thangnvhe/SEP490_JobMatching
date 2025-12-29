@@ -16,7 +16,8 @@ namespace JobMatchingSystem.API.DTOs.Response
         public string? GoogleMeetLink { get; set; }
         public string? HiringManagerFeedback { get; set; }
         public string? JobStageTitle { get; set; }
-        
+
+        public string? HiringManagerFullName { get; set; }
         // User information
         public UserInfo User { get; set; } = null!;
         
