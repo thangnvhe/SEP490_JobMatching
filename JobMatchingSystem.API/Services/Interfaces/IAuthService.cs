@@ -12,5 +12,6 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task ForgotPasswordAsync(ForgotPasswordRequest request);
         Task ResetPasswordAsync(ResetPasswordRequest request);
         Task<bool> VerifyEmailAsync(string tokenLink);
+        Task ChangePasswordAsync(int userId, ChangePasswordRequest request);
     }
 }

@@ -4,6 +4,10 @@ namespace JobMatchingSystem.API.Exceptions
 {
     public static class ErrorCode
     {
+        public static Error InvalidOldPassword() => new("Mật khẩu cũ không đúng", HttpStatusCode.BadRequest);
+        public static Error PasswordNotMatch() => new("Mật khẩu mới không trùng nhau", HttpStatusCode.BadRequest);
+        public static Error PasswordTooShort() => new("Mật khẩu phải có ít nhất 6 ký tự", HttpStatusCode.BadRequest);
+        public static Error ChangePasswordFailed() => new("Đổi mật khẩu thất bại", HttpStatusCode.BadRequest);
         public static Error InvalidCredentials() => new("Email hoặc mật khẩu không đúng.", HttpStatusCode.Unauthorized);
         public static Error InvalidCreate() => new("Tạo thất bại", HttpStatusCode.BadRequest);
         public static Error NotEnoughJobQuota() => new("Không đủ lượt đăng tin tuyển dụng", HttpStatusCode.BadRequest);

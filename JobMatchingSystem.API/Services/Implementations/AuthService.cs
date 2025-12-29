@@ -1,11 +1,12 @@
-﻿using JobMatchingSystem.API.DTOs.Response;
-using JobMatchingSystem.API.DTOs.Request;
+﻿using JobMatchingSystem.API.DTOs.Request;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System.Web;
 
 namespace JobMatchingSystem.API.Services.Implementations
@@ -31,6 +32,44 @@ namespace JobMatchingSystem.API.Services.Implementations
             _httpContextAccessor = httpContextAccessor;
             _userManager = userManager;
             _emailService = emailService;
+        }
+
+        public async Task ChangePasswordAsync(int userId, ChangePasswordRequest request)
+        {
+            var user = await _userManager.Users
+                .FirstOrDefaultAsync(x => x.Id == userId);
+
+            if (user == null)
+                throw new AppException(ErrorCode.NotFoundUser());
+
+            // 1️⃣ Kiểm tra mật khẩu cũ
+            var isOldPasswordCorrect =
+                await _userManager.CheckPasswordAsync(user, request.OldPassword);
+
+            if (!isOldPasswordCorrect)
+                throw new AppException(ErrorCode.InvalidOldPassword());
+
+            // 2️⃣ Kiểm tra mật khẩu mới
+            if (request.NewPassword != request.ConfirmNewPassword)
+                throw new AppException(ErrorCode.PasswordNotMatch());
+
+            if (request.NewPassword.Length < 6)
+                throw new AppException(ErrorCode.PasswordTooShort());
+
+            // 3️⃣ Đổi mật khẩu
+            var result = await _userManager.ChangePasswordAsync(
+                user,
+                request.OldPassword,
+                request.NewPassword
+            );
+
+            if (!result.Succeeded)
+            {
+                var error = string.Join(", ",
+                    result.Errors.Select(e => e.Description));
+
+                throw new AppException(ErrorCode.ChangePasswordFailed());
+            }
         }
 
         public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
