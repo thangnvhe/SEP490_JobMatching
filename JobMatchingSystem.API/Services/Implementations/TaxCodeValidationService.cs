@@ -8,11 +8,13 @@ namespace JobMatchingSystem.API.Services.Implementations
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<TaxCodeValidationService> _logger;
+        private readonly IConfiguration _configuration;
 
-        public TaxCodeValidationService(HttpClient httpClient, ILogger<TaxCodeValidationService> logger)
+        public TaxCodeValidationService(HttpClient httpClient, ILogger<TaxCodeValidationService> logger, IConfiguration configuration)
         {
             _httpClient = httpClient;
             _logger = logger;
+            _configuration = configuration;
         }
 
         public async Task<TaxCodeValidationResult> ValidateTaxCodeAsync(string taxCode)
@@ -40,7 +42,8 @@ namespace JobMatchingSystem.API.Services.Implementations
                 }
 
                 // Thử gọi API VietQR để kiểm tra
-                var url = $"https://api.vietqr.io/v2/business/{taxCode}";
+                var vietQRUrl = _configuration["ExternalApis:VietQR:BusinessUrl"] ?? "https://api.vietqr.io/v2/business/{0}";
+                var url = string.Format(vietQRUrl, taxCode);
                 
                 _logger.LogInformation("Validating tax code: {TaxCode}", taxCode);
                 
