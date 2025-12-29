@@ -75,6 +75,7 @@ namespace JobMatchingSystem.API.Repositories.Implementations
                     .ThenInclude(cj => cj!.CVUpload)
                         .ThenInclude(cv => cv!.User)
                 .Include(x => x.JobStage)
+                .ThenInclude(js => js.HiringManager)
                 .Where(x => x.JobStageId == jobStageId);
 
             if (!string.IsNullOrEmpty(status))

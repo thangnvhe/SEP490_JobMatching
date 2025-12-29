@@ -307,7 +307,9 @@ namespace JobMatchingSystem.API.Services.Implementations
                 var candidateJob = stage.CandidateJob;
                 var cv = candidateJob?.CVUpload;
                 var user = cv?.User; // Get user from CV instead of CandidateJob
-                
+
+                var hiringManagerFullName = stage.JobStage?.HiringManager?.FullName;
+
                 // Generate secure URLs with SAS tokens for files
                 var secureAvatarUrl = await _blobStorageService.GetSecureFileUrlAsync(user?.AvatarUrl);
                 var secureCVUrl = await _blobStorageService.GetSecureFileUrlAsync(cv?.FileUrl);
@@ -324,6 +326,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                     InterviewLocation = stage.InterviewLocation,
                     GoogleMeetLink = stage.GoogleMeetLink,
                     HiringManagerFeedback = stage.HiringManagerFeedback,
+                    HiringManagerFullName = hiringManagerFullName,
                     User = new UserInfo
                     {
                         FullName = user?.FullName ?? "Unknown",
