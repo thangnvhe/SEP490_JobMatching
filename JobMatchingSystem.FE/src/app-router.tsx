@@ -8,7 +8,6 @@ import ContactRecruiterPage from './pages/client-site/guest/ContactRecruiterPage
 import { ClientLayout } from './components/layout/Client/ClientLayout';
 import { ManageCompanyPage } from './pages/admin-site/ManageCompany/ViewCompanyList';
 import ViewJobList from './pages/admin-site/ManageJob/ViewJobList';
-
 import RecruiterViewJobList from './pages/client-site/recruiter/Jobs/ViewJobList';
 import CreateJobPage from './pages/client-site/recruiter/Jobs/CreateJobPage';
 import RecruitmentProcessManagement from './pages/client-site/recruiter/RecruitmentProcess/RecruitmentProcessManagement';
@@ -32,7 +31,6 @@ import JobDetailPage from './pages/client-site/guest/JobDetailPage';
 import { ConfirmEmailPage } from './pages/client-site/auth/ConfirmEmailPage';
 import ViewReportList from './pages/admin-site/ManageReport/ViewReportList';
 import ViewOrderList from './pages/admin-site/ManageOrder/ViewOrderList';
-
 import { StageBoardDemo } from './components/Stage/StageBoardDemo';
 import InterviewSchedule from './pages/client-site/interview-schedule/interview-schedule';
 import EvaluationHistory from './pages/client-site/evaluation-history/evaluation-history';
@@ -42,9 +40,8 @@ import InterviewConfirmPage from './pages/client-site/candidate/InterviewConfirm
 import CVSearchPage from './pages/client-site/recruiter/CVSearch/CVSearchPage';
 import SavedCVsPage from './pages/client-site/recruiter/SavedCVs/SavedCVsPage';
 import { AdminGuard, RecruiterGuard, CandidateGuard, AuthGuard } from './guards/AuthGuard';
-import CandidateDashboard from './pages/candidate/Dashboard/CandidateDashboardPage';
-import AdminDashboardPage from './pages/admin/Dashboard/AdminDashboardPage';
 import CandidateDashboardPage from './pages/candidate/Dashboard/CandidateDashboardPage';
+import AdminDashboardPage from './pages/admin/Dashboard/AdminDashboardPage';
 import HiringManagerDashboardPage from './pages/client-site/hiringmanager/Dashboard/HiringManagerDashboardPage';
 
 
@@ -121,7 +118,7 @@ const AppRouter: React.FC = () => {
           <ClientLayout />
         </CandidateGuard>
       }>
-        <Route index element={<CandidateDashboard />} />
+        <Route index element={<CandidateDashboardPage />} />
         <Route path="saved-jobs" element={<FavouriteJobsPage />} />
         <Route path="my-jobs" element={<MyJobsPage />} />
         <Route path="cv-management" element={<CVManagement />} />
