@@ -101,32 +101,50 @@ namespace JobMatchingSystem.API.Services.Implementations
         public async Task ResetPasswordAsync(ResetPasswordRequest request)
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
+            //if (user == null)
+            //    throw new AppException(ErrorCode.InvalidCredentials());
+
+            //// Check if token has been used
+            //if (user.PasswordResetTokenUsed == true)
+            //    throw new AppException(new Error("Token đã được sử dụng. Vui lòng yêu cầu reset password mới.", System.Net.HttpStatusCode.BadRequest));
+
+            //// Check if token has expired
+            //if (user.PasswordResetTokenExpiry == null || user.PasswordResetTokenExpiry < DateTime.UtcNow)
+            //    throw new AppException(new Error("Token đã hết hạn. Vui lòng yêu cầu reset password mới.", System.Net.HttpStatusCode.BadRequest));
+
+            //// Check if token matches
+            //if (user.PasswordResetToken != request.Token)
+            //    throw new AppException(new Error("Token không hợp lệ.", System.Net.HttpStatusCode.BadRequest));
+
+            //var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+            //if (!result.Succeeded)
+            //{
+            //    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            //    throw new Exception($"Không thể đặt lại mật khẩu: {errors}");
+            //}
+
+            //// Mark token as used
+            //user.PasswordResetTokenUsed = true;
+            //user.PasswordResetToken = null; // Clear token for security
+            //await _userManager.UpdateAsync(user);
             if (user == null)
-                throw new AppException(ErrorCode.InvalidCredentials());
-
-            // Check if token has been used
-            if (user.PasswordResetTokenUsed == true)
-                throw new AppException(new Error("Token đã được sử dụng. Vui lòng yêu cầu reset password mới.", System.Net.HttpStatusCode.BadRequest));
-
-            // Check if token has expired
-            if (user.PasswordResetTokenExpiry == null || user.PasswordResetTokenExpiry < DateTime.UtcNow)
-                throw new AppException(new Error("Token đã hết hạn. Vui lòng yêu cầu reset password mới.", System.Net.HttpStatusCode.BadRequest));
-
-            // Check if token matches
-            if (user.PasswordResetToken != request.Token)
-                throw new AppException(new Error("Token không hợp lệ.", System.Net.HttpStatusCode.BadRequest));
-
-            var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
-            if (!result.Succeeded)
             {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                throw new Exception($"Không thể đặt lại mật khẩu: {errors}");
+                throw new AppException(ErrorCode.InvalidCredentials());
             }
 
-            // Mark token as used
-            user.PasswordResetTokenUsed = true;
-            user.PasswordResetToken = null; // Clear token for security
-            await _userManager.UpdateAsync(user);
+            var decodedToken = HttpUtility.UrlDecode(request.Token);
+
+            var result = await _userManager.ResetPasswordAsync(
+                user,
+                decodedToken,
+                request.NewPassword
+            );
+
+            if (!result.Succeeded)
+            {
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    throw new Exception($"Không thể đặt lại mật khẩu: {errors}");
+            }
         }
 
         public async Task<LoginDTO> LoginAsync(LoginRequest request)
