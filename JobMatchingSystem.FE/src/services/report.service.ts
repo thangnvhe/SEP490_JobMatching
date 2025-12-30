@@ -14,4 +14,7 @@ export const ReportService = {
 
   updateReportCensor: (reportId: number, reportData: Pick<ReportItem, 'status' | 'note'>) =>
     BaseApiServices.update<ReportItem>('/Report/censor', reportId, reportData),
+
+  getReportForCandidate: (params: PaginationParamsInput) =>
+    BaseApiServices.getAllWithPagination<ReportItem>('/Report/me', params),
 }   

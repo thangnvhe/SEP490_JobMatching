@@ -11,6 +11,7 @@ import {
   UserPlus,
   Calendar,
   HistoryIcon,
+  Flag,
 } from "lucide-react";
 import {
   Sidebar,
@@ -235,6 +236,32 @@ function CandidateNav() {
                 <Link to="/candidate/my-jobs">
                   <Briefcase className="size-4" />
                   <span className="font-medium text-sm">Việc làm của tôi</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarSeparator className="my-2" />
+
+      <SidebarGroup>
+        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
+          Báo cáo
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu className="">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/candidate/my-reports")}
+                tooltip="My Reports"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/candidate/my-reports">
+                  <Flag className="size-4" />
+                  <span className="font-medium text-sm">Báo cáo của tôi</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
