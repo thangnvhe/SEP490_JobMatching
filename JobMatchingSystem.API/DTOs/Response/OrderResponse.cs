@@ -7,7 +7,9 @@
         public string TransferContent { get; set; } = null!;
         public string Status { get; set; } = null!;
         public int BuyerId { get; set; }
+        public string BuyerName { get; set; } = "";
         public int ServiceId { get; set; }
+        public string ServiceName { get; set; } = "";
         public DateTime CreatedAt { get; set; }
     }
 }
