@@ -96,7 +96,9 @@ namespace JobMatchingSystem.API.Services.Implementations
                 TransferContent = o.TransferContent ?? "",
                 Status = o.Status.ToString(),
                 BuyerId = o.BuyerId,
+                BuyerName = o.Buyer?.FullName ?? "",
                 ServiceId = o.ServiceId,
+                ServiceName = o.ServicePlan?.Name ?? "",
                 CreatedAt = o.CreatedAt
             }).ToList();
 

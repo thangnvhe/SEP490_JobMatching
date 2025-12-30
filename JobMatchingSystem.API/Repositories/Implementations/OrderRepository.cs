@@ -28,7 +28,8 @@ namespace JobMatchingSystem.API.Repositories.Implementations
 
         public async Task<List<Order>> GetAllOrdersPagedAsync(GetOrderPagedRequest request)
         {
-            IQueryable<Order> query = _context.Orders.AsQueryable();
+            IQueryable<Order> query = _context.Orders.Include(o => o.Buyer)
+                                                   .Include(o => o.ServicePlan).AsQueryable();
 
             // Filter theo các trường cụ thể
             if (request.id.HasValue)
