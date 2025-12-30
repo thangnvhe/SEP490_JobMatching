@@ -54,7 +54,7 @@ export default function OrderPage() {
         search: "",
         sortBy: "",
         isDecending: false,
-        orderId: orderId,
+        id: orderId,
       });
       const order = response.result.items[0] as unknown as Order;
 

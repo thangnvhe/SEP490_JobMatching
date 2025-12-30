@@ -31,6 +31,7 @@ import JobDetailPage from './pages/client-site/guest/JobDetailPage';
 import { ConfirmEmailPage } from './pages/client-site/auth/ConfirmEmailPage';
 import ViewReportList from './pages/admin-site/ManageReport/ViewReportList';
 import ViewOrderList from './pages/admin-site/ManageOrder/ViewOrderList';
+import CandidateViewReportList from './pages/client-site/ManageReport/ViewReportList';
 import { StageBoardDemo } from './components/Stage/StageBoardDemo';
 import InterviewSchedule from './pages/client-site/interview-schedule/interview-schedule';
 import EvaluationHistory from './pages/client-site/evaluation-history/evaluation-history';
@@ -122,6 +123,7 @@ const AppRouter: React.FC = () => {
         <Route path="saved-jobs" element={<FavouriteJobsPage />} />
         <Route path="my-jobs" element={<MyJobsPage />} />
         <Route path="cv-management" element={<CVManagement />} />
+        <Route path="my-reports" element={<CandidateViewReportList />} />
         <Route path="dashboard" element={<CandidateDashboardPage />} />
       </Route>
 

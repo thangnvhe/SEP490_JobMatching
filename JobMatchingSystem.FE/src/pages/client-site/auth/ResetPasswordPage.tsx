@@ -25,7 +25,7 @@ const ResetPasswordPage: React.FC = () => {
   // Get parameters from URL (these would come from the email link)
   const email = searchParams.get('email');
   const token = searchParams.get('token');
-  const decodedToken = token ? decodeURIComponent(token) : null;
+  const decodedToken = token;
 
   useEffect(() => {
     // Clear any previous errors when component mounts
