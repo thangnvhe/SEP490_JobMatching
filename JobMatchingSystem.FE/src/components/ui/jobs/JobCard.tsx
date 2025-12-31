@@ -157,7 +157,7 @@ export const JobCard: React.FC<JobCardProps> = ({
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-3 flex-1">
             {/* Company Avatar */}
-            <div className="shrink-0">
+            <div className="flex-shrink-0">
               {companyLoading ? (
                 <div className="w-12 h-12 bg-gray-200 rounded-lg animate-pulse" />
               ) : (
@@ -189,7 +189,7 @@ export const JobCard: React.FC<JobCardProps> = ({
             </div>
           </div>
           
-          <div className="flex items-center gap-2 shrink-0 ml-2">
+          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
             {/* Bookmark Button */}
             {onSaveJob && (
               <Button
