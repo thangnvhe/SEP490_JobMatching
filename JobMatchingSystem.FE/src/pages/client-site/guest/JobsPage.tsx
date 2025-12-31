@@ -101,7 +101,7 @@ export default function JobsPage() {
         search: searchParam || "",
       }));
     }
-  }, [searchParams]);
+  }, [searchParams, keyword]);
 
   const getAllWithPagination = useCallback(async (params: PaginationParamsInput) => {
     try {
@@ -183,40 +183,14 @@ export default function JobsPage() {
     getAllCompanies();
   }, [getAllCompanies]);
 
-  // useEffect để reset page về 1 khi search keyword thay đổi
-  useEffect(() => {
-    if (debouncedKeyword !== paginationInput.search) {
-      setPaginationInput((prev) => ({
-        ...prev,
-        page: 1,
-        search: debouncedKeyword,
-      }));
-    }
-  }, [debouncedKeyword, paginationInput.search]);
-
-  // useEffect để gọi API khi có thay đổi filter hoặc pagination
   useEffect(() => {
     const params = {
       ...paginationInput,
-      search: debouncedKeyword, // Luôn sử dụng debouncedKeyword để đồng bộ
+      search: debouncedKeyword,
       status: "Opened", // Đảm bảo chỉ lấy jobs có status = "Opened"
     };
     getAllWithPagination(params);
-  }, [
-    getAllWithPagination,
-    debouncedKeyword,
-    paginationInput.location,
-    paginationInput.jobType,
-    paginationInput.experienceYearMin,
-    paginationInput.experienceYearMax,
-    paginationInput.salaryMin,
-    paginationInput.salaryMax,
-    paginationInput.positionId,
-    paginationInput.taxonomyIds,
-    paginationInput.page,
-    paginationInput.sortBy,
-    paginationInput.isDecending,
-  ]);
+  }, [getAllWithPagination, debouncedKeyword, paginationInput]);
 
 
   const handleSaveJob = async (jobId: number) => {
@@ -281,17 +255,6 @@ export default function JobsPage() {
                     placeholder="Vị trí tuyển dụng, tên công ty..."
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        const params = {
-                          ...paginationInput,
-                          search: keyword,
-                          page: 1, // Reset về trang đầu khi search
-                        };
-                        setPaginationInput(params);
-                        getAllWithPagination(params);
-                      }
-                    }}
                     className="border-0 shadow-none focus-visible:ring-0 text-base h-12 bg-transparent placeholder:text-gray-400 flex-1"
                   />
                 </div>
@@ -301,14 +264,7 @@ export default function JobsPage() {
                   <MapPin className="h-5 w-5 text-gray-400 shrink-0 ml-2" />
                   <Select
                     value={paginationInput.location || ''}
-                    onValueChange={(value) => {
-                      const locationValue = value === "all_locations" ? null : value;
-                      setPaginationInput({ 
-                        ...paginationInput, 
-                        location: locationValue,
-                        page: 1 // Reset về trang đầu khi thay đổi filter
-                      });
-                    }}
+                    onValueChange={(value) => setPaginationInput({ ...paginationInput, location: value })}
                   >
                     <SelectTrigger className="border-0 shadow-none focus:ring-0 text-base h-12 bg-transparent w-full pl-2 focus:ring-offset-0">
                       <SelectValue placeholder="Tất cả địa điểm" />
@@ -326,15 +282,7 @@ export default function JobsPage() {
 
                 {/* Search Button */}
                 <Button
-                  onClick={() => {
-                    const params = {
-                      ...paginationInput,
-                      search: keyword,
-                      page: 1, // Reset về trang đầu khi search
-                    };
-                    setPaginationInput(params);
-                    getAllWithPagination(params);
-                  }}
+                  onClick={() => getAllWithPagination(paginationInput)}
                   className="w-full md:w-auto rounded-xl px-8 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base shadow-md hover:shadow-lg transition-all"
                 >
                   Tìm kiếm
@@ -366,7 +314,6 @@ export default function JobsPage() {
                 onFiltersChange={(newFilters) => {
                   setPaginationInput({
                     ...paginationInput,
-                    page: 1, // Reset về trang đầu khi thay đổi filter
                     jobType: newFilters.jobType || '',
                     experienceYearMin: newFilters.experienceYearMin ?? null,
                     experienceYearMax: newFilters.experienceYearMax ?? null,
