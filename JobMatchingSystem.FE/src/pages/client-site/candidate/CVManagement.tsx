@@ -249,7 +249,7 @@ export default function CVManagement() {
 
   const handleDownload = (cv: CV) => {
     const link = document.createElement('a');
-    link.href = `https://localhost:7044/${cv.fileUrl}`;
+    link.href = `${cv.fileUrl}`;
     link.download = cv.fileName;
     link.target = '_blank';
     document.body.appendChild(link);
@@ -258,7 +258,7 @@ export default function CVManagement() {
   };
 
   const handlePreview = (cv: CV) => {
-    window.open(`${API_BASE_URL}${cv.fileUrl}`, '_blank');
+    window.open(`${cv.fileUrl}`, '_blank');
   };
 
   if (isLoadingProfile || isLoading) {
