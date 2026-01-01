@@ -38,6 +38,8 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpGet("paged")]
+        [ProducesResponseType(typeof(APIResponse<PagedResult<OrderResponse>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(APIResponse<string>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetOrdersPaged([FromQuery] GetOrderPagedRequest request)
         {
             var result = await _orderService.GetOrdersPagedAsync(request);
@@ -50,6 +52,9 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpGet("me")]
+        [ProducesResponseType(typeof(APIResponse<PagedResult<OrderResponse>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(APIResponse<string>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(APIResponse<string>), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetOrdersMe([FromQuery] GetOrderPagedRequest request)
         {
             request.buyerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
