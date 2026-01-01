@@ -253,7 +253,10 @@ export function ScheduleInterviewDialog({
                 onScheduleSuccess?.(updatedCandidate);
             }
         } catch (error: any) {
-            toast.error(error?.response?.data?.result || "Có lỗi xảy ra khi đặt lịch. Vui lòng thử lại!");
+            const errorMessage = error.response.data.result;
+            if (errorMessage) {
+                toast.error(errorMessage);
+            }
         } finally {
             setIsLoading(false);
         }

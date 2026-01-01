@@ -4,7 +4,9 @@ export interface Order {
     transferContent: string;
     status: OrderStatus;
     buyerId: number;
+    buyerName: string;
     serviceId: number;
+    serviceName: string;
     createdAt: string;
 }
 

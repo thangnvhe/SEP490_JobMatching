@@ -12,6 +12,7 @@ import {
   Calendar,
   HistoryIcon,
   Flag,
+  ShoppingCart,
 } from "lucide-react";
 import {
   Sidebar,
@@ -150,6 +151,21 @@ function RecruiterNav() {
                 <Link to="/recruiter/service-packages">
                   <Package className="size-4" />
                   <span className="font-medium text-sm">Gói dịch vụ</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/recruiter/orders")}
+                tooltip="Order History"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/recruiter/orders">
+                  <ShoppingCart className="size-4" />
+                  <span className="font-medium text-sm">Lịch sử mua hàng</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
