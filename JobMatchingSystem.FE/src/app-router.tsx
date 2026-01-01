@@ -40,6 +40,7 @@ import OrderPage from './pages/client-site/order/order';
 import InterviewConfirmPage from './pages/client-site/candidate/InterviewConfirmPage';
 import CVSearchPage from './pages/client-site/recruiter/CVSearch/CVSearchPage';
 import SavedCVsPage from './pages/client-site/recruiter/SavedCVs/SavedCVsPage';
+import ViewOrderListForRecruiter from './pages/client-site/recruiter/order/ViewOrderListForRecruiter';
 import { AdminGuard, RecruiterGuard, CandidateGuard, AuthGuard } from './guards/AuthGuard';
 import CandidateDashboardPage from './pages/candidate/Dashboard/CandidateDashboardPage';
 import AdminDashboardPage from './pages/admin/Dashboard/AdminDashboardPage';
@@ -110,6 +111,7 @@ const AppRouter: React.FC = () => {
         <Route path="company" element={<CompanyProfile />} />
         <Route path="company/members" element={<CompanyMembersPage />} />
         <Route path="service-packages" element={<ViewServicePackageList />} />
+        <Route path="orders" element={<ViewOrderListForRecruiter />} />
         <Route path="stage-board" element={<StageBoardDemo />} />
       </Route>
 

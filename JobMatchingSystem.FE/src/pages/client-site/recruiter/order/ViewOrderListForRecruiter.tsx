@@ -26,7 +26,7 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { useDebounce } from "@/hooks/useDebounce";
 import { format } from "date-fns";
 
-export default function ViewOrderList() {
+export default function ViewOrderListForRecruiter() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -68,7 +68,7 @@ export default function ViewOrderList() {
             apiParams.status = statusFilter;
         }
 
-        const response = await OrderServices.getAllForAdmin(apiParams);
+        const response = await OrderServices.getOrderForRecruiter(apiParams);
         if (response.result) {
             setOrders(response.result.items as unknown as Order[]);
             setPaginationInfo(response.result.pageInfo);
@@ -222,10 +222,10 @@ export default function ViewOrderList() {
     <div className="p-6 space-y-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-bold tracking-tight">
-          Lịch sử giao dịch
+          Lịch sử mua hàng
         </h1>
         <p className="text-muted-foreground">
-          Quản lý và theo dõi lịch sử thanh toán của người dùng
+          Xem và theo dõi lịch sử giao dịch mua gói dịch vụ của bạn
         </p>
       </div>
 
@@ -388,3 +388,4 @@ export default function ViewOrderList() {
     </div>
   );
 }
+
