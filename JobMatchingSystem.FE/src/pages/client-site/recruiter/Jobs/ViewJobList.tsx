@@ -418,7 +418,7 @@ export default function ViewJobList() {
   return (
     <div className="p-6 space-y-6">
       <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">Quản lý tin tuyển dụng</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Danh sách tin tuyển dụng</h1>
           <p className="text-muted-foreground">
             Danh sách các tin tuyển dụng của bạn
           </p>

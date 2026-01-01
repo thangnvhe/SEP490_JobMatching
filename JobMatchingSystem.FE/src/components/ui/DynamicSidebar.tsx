@@ -13,6 +13,7 @@ import {
   HistoryIcon,
   Flag,
   ShoppingCart,
+  GitBranch,
 } from "lucide-react";
 import {
   Sidebar,
@@ -46,12 +47,12 @@ function RecruiterNav() {
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                isActive={useIsActivePath("/recruiter")}
+                isActive={useIsActivePath("/recruiter/dashboard")}
                 tooltip="Dashboard"
                 size="default"
                 className="h-9 px-3"
               >
-                <Link to="/recruiter">
+                <Link to="/recruiter/dashboard">
                   <LayoutDashboard className="size-4" />
                   <span className="font-medium text-sm">Dashboard</span>
                 </Link>
@@ -80,6 +81,21 @@ function RecruiterNav() {
                 <Link to="/recruiter/jobs">
                   <Briefcase className="size-4" />
                   <span className="font-medium text-sm">Danh sách tin tuyển dụng</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/recruiter/recruitment-process")}
+                tooltip="Recruitment Process"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/recruiter/recruitment-process">
+                  <GitBranch className="size-4" />
+                  <span className="font-medium text-sm">Quy trình tuyển dụng</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -128,12 +144,12 @@ function RecruiterNav() {
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                isActive={useIsActivePath("/recruiter/company/members")}
+                isActive={useIsActivePath("/recruiter/members")}
                 tooltip="Company Members"
                 size="default"
                 className="h-9 px-3"
               >
-                <Link to="/recruiter/company/members">
+                <Link to="/recruiter/members">
                   <UserPlus className="size-4" />
                   <span className="font-medium text-sm">Thành viên công ty</span>
                 </Link>
