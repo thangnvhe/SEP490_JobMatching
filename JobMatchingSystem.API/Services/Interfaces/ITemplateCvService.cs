@@ -9,7 +9,7 @@ namespace JobMatchingSystem.API.Services.Interfaces
     public interface ITemplateCvService
     {
         Task<APIResponse<TemplateCV>> CreateTemplateAsync(CreateTemplateCvRequest request);
-        Task<APIResponse<PagedResult<TemplateCV>>> GetAllAsync(int page = 1, int pageSize = 10, string sortBy = "", bool isDescending = false);
+        Task<APIResponse<PagedResult<TemplateCV>>> GetAllAsync(int page = 1, int pageSize = 10, string sortBy = "", bool isDescending = false, string search = "");
         Task<APIResponse<TemplateCV>> GetByIdAsync(int id);
         Task<APIResponse<object>> DeleteAsync(int id);
     }
