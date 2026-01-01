@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -22,23 +23,12 @@ import {
   ChevronsRight,
   Eye,
   Edit,
-  Trash2,
   AlertTriangle,
 } from "lucide-react";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { useDebounce } from "@/hooks/useDebounce";
 import { ViewUserDetailDialog } from "@/pages/admin-site/ManageUser/ViewUserDetailDialog";
 import { EditUserDialog } from "@/pages/admin-site/ManageUser/EditUserDialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 export default function ViewUserList() {
@@ -51,9 +41,8 @@ export default function ViewUserList() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [togglingUserId, setTogglingUserId] = useState<number | null>(null);
   const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
     currentPage: 1,
     pageSize: 10,
@@ -164,59 +153,31 @@ export default function ViewUserList() {
     setIsEditDialogOpen(true);
   };
 
-
-  const handleDelete = (user: User) => {
-    setSelectedUser(user);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (!selectedUser) return;
-
-    try {
-      setDeleteLoading(true);
-      // Gửi FormData giống như EditUserDialog
-      const payload = new FormData();
-      payload.append("fullName", selectedUser.fullName?.trim() || "");
-      payload.append("email", selectedUser.email?.trim() || "");
-      payload.append("phoneNumber", selectedUser.phoneNumber?.trim() || "");
-      payload.append("address", selectedUser.address?.trim() || "");
-
-      if (selectedUser.gender !== null && selectedUser.gender !== undefined) {
-        payload.append("gender", selectedUser.gender ? "true" : "false");
+  const handleToggleStatus = useCallback(
+    async (user: User, newStatus: boolean) => {
+      try {
+        setTogglingUserId(user.id);
+        await UserServices.changeStatus(user.id.toString(), newStatus);
+        toast.success(
+          newStatus
+            ? "Kích hoạt người dùng thành công"
+            : "Vô hiệu hóa người dùng thành công"
+        );
+        // Refresh lại danh sách
+        getAllWithPagination(paginationInput);
+      } catch (err: any) {
+        toast.error(
+          err.response?.data?.message ||
+            (newStatus
+              ? "Lỗi khi kích hoạt người dùng"
+              : "Lỗi khi vô hiệu hóa người dùng")
+        );
+      } finally {
+        setTogglingUserId(null);
       }
-
-      if (selectedUser.birthday) {
-        const birthdayDate =
-          selectedUser.birthday !== "0001-01-01T00:00:00"
-            ? selectedUser.birthday.split("T")[0]
-            : "";
-        if (birthdayDate) {
-          payload.append("birthday", birthdayDate);
-        }
-      }
-
-      if (selectedUser.score !== null && selectedUser.score !== undefined) {
-        payload.append("score", selectedUser.score.toString());
-      }
-
-      payload.append("isActive", "false");
-
-      await UserServices.update(selectedUser.id.toString(), payload);
-      toast.success("Vô hiệu hóa người dùng thành công");
-      setIsDeleteDialogOpen(false);
-      setSelectedUser(null);
-      // Reset filter về "all" để hiển thị tất cả sau khi xóa
-      setStatusFilter('all');
-      getAllWithPagination(paginationInput);
-    } catch (err: any) {
-      toast.error(
-        err.response?.data?.message || "Lỗi khi vô hiệu hóa người dùng"
-      );
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
+    },
+    [getAllWithPagination, paginationInput]
+  );
 
   const getRoleLabel = (role?: string) => {
     if (!role) return "Chưa cập nhật";
@@ -258,26 +219,6 @@ export default function ViewUserList() {
         enableSorting: true,
       },
       {
-        id: "isActive",
-        accessorKey: "isActive",
-        header: "Trạng thái",
-        cell: ({ row }) => {
-          const isActive = row.getValue("isActive") as boolean;
-          return (
-            <Badge
-              className={
-                isActive
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
-              }
-            >
-              {isActive ? "Hoạt động" : "Vô hiệu hóa"}
-            </Badge>
-          );
-        },
-        enableSorting: true,
-      },
-      {
         id: "role",
         accessorKey: "role",
         header: "Vai trò",
@@ -299,6 +240,32 @@ export default function ViewUserList() {
         enableSorting: true,
       },
       {
+        id: "isActive",
+        accessorKey: "isActive",
+        header: "Trạng thái",
+        cell: ({ row }) => {
+          const user = row.original;
+          const isActive = row.getValue("isActive") as boolean;
+          const isToggling = togglingUserId === user.id;
+          return (
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={isActive}
+                onCheckedChange={(checked) =>
+                  handleToggleStatus(user, checked)
+                }
+                disabled={isToggling}
+                title={isActive ? "Vô hiệu hóa người dùng" : "Kích hoạt người dùng"}
+              />
+              <span className="text-sm text-muted-foreground">
+                {isActive ? "Hoạt động" : "Vô hiệu hóa"}
+              </span>
+            </div>
+          );
+        },
+        enableSorting: true,
+      },
+      {
         id: "actions",
         header: "Thao tác",
         cell: ({ row }) => {
@@ -309,6 +276,7 @@ export default function ViewUserList() {
                 onClick={() => handleView(user)}
                 variant="outline"
                 size="sm"
+                title="Xem chi tiết"
               >
                 <Eye className="h-4 w-4" />
               </Button>
@@ -316,17 +284,9 @@ export default function ViewUserList() {
                 onClick={() => handleEdit(user)}
                 variant="outline"
                 size="sm"
+                title="Chỉnh sửa"
               >
                 <Edit className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={() => handleDelete(user)}
-                variant="outline"
-                size="sm"
-                className="text-orange-600 hover:bg-orange-600 hover:text-white hover:border-orange-600"
-                title="Vô hiệu hóa người dùng"
-              >
-                <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           );
@@ -334,7 +294,7 @@ export default function ViewUserList() {
         enableSorting: false,
       },
     ],
-    [paginationInfo]
+    [paginationInfo, togglingUserId, handleToggleStatus]
   );
 
   // Viết html xử lý kết hợp các hàm logic trên
@@ -519,39 +479,6 @@ export default function ViewUserList() {
         user={selectedUser}
         onUpdateSuccess={handleRefresh}
       />
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Bạn có chắc chắn muốn vô hiệu hóa người dùng?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Hành động này sẽ vô hiệu hóa người dùng "{selectedUser?.fullName || selectedUser?.email}".
-              Người dùng sẽ không thể đăng nhập vào hệ thống nữa.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteLoading}>Hủy</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                confirmDelete();
-              }}
-              disabled={deleteLoading}
-              className="bg-orange-600 hover:bg-orange-700 focus:ring-orange-600"
-            >
-              {deleteLoading ? (
-                <>
-                  <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-                  Đang xử lý...
-                </>
-              ) : (
-                "Vô hiệu hóa"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

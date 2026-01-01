@@ -75,7 +75,7 @@ const CompanyProfile = () => {
   };
 
   const handleNavigateToMembers = () => {
-    navigate("/recruiter/company/members");
+    navigate("/recruiter/members");
   };
 
   const handleReload = () => {

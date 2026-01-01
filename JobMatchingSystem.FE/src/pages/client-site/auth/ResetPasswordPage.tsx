@@ -23,10 +23,18 @@ const ResetPasswordPage: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState(false);
 
   // Get parameters from URL (these would come from the email link)
+  // Get token as raw encoded value from URL to preserve encoding
+  const getEncodedTokenFromUrl = () => {
+    const search = window.location.search;
+    const tokenParam = search.match(/token=([^&]*)/);
+    if (tokenParam && tokenParam[1]) {
+      return tokenParam[1];
+    }
+    return null;
+  };
   const email = searchParams.get('email');
-  const token = searchParams.get('token');
-  const decodedToken = token;
-
+  const token = getEncodedTokenFromUrl();
+  
   useEffect(() => {
     // Clear any previous errors when component mounts
     dispatch(clearError());
@@ -41,10 +49,10 @@ const ResetPasswordPage: React.FC = () => {
 
   // Validate that we have the required parameters
   useEffect(() => {
-    if (!decodedToken || !email) {
+    if (!token || !email) {
       setLocalError('Đường dẫn không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu mới.');
     }
-  }, [decodedToken, email]);
+  }, [token, email]);
 
   const validateForm = () => {
     if (!newPassword || !confirmPassword) {
@@ -71,14 +79,14 @@ const ResetPasswordPage: React.FC = () => {
 
     if (!validateForm()) return;
 
-    if (!email || !decodedToken) {
+    if (!email || !token) {
       setLocalError('Đường dẫn không hợp lệ. Vui lòng thử lại.');
       return;
     }
 
     try {
       // Call reset password API
-      const result = await UserServices.resetPassword(email, decodedToken, newPassword, confirmPassword);
+      const result = await UserServices.resetPassword(email, token, newPassword, confirmPassword);
 
       if (result.statusCode === 200) {
         setIsSuccess(true);

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { RootState } from '@/store';
 import { UserServices } from '@/services/user.service';
 import { CVServices } from '@/services/cv.service';
@@ -10,10 +10,32 @@ import { User } from '@/models/user';
 import { CV, CVValidate } from '@/models/cv';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, Upload, Download, Star, Trash2, Eye, File, Calendar, CheckCircle } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { FileText, Upload, Download, Star, Trash2, Eye, File, Calendar, CheckCircle, X, AlertCircle, MoreVertical } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from 'sonner';
-import { API_BASE_URL } from '../../../../env.ts';
 
 
 export default function CVManagement() {
@@ -27,6 +49,9 @@ export default function CVManagement() {
   const [validationResult, setValidationResult] = useState<CVValidate | null>(null);
   const [userProfile, setUserProfile] = useState<User>();
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [cvToDelete, setCvToDelete] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Get authentication state from Redux
   const authState = useSelector((state: RootState) => state.authState);
@@ -115,35 +140,38 @@ export default function CVManagement() {
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const processFile = useCallback((file: File) => {
+    const allowedTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword'
+    ];
+    
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Lỗi: Chỉ chấp nhận file PDF, DOCX hoặc DOC");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Lỗi: File không được vượt quá 10MB");
+      return;
+    }
+
+    setSelectedFile(file);
+    if (!cvName) {
+      const nameWithoutExt = file.name.replace(/\.(pdf|docx|doc)$/i, '');
+      setCvName(nameWithoutExt);
+    }
+
+    validateCV(file);
+  }, [cvName]);
+
+  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const allowedTypes = [
-        'application/pdf',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-        'application/msword' // .doc
-      ];
-      if (!allowedTypes.includes(file.type)) {
-        toast.error("Lỗi: Chỉ chấp nhận file PDF, DOCX hoặc DOC");
-        return;
-      }
-
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        toast.error("Lỗi: File không được vượt quá 10MB");
-        return;
-      }
-
-      setSelectedFile(file);
-      if (!cvName) {
-        // Remove file extension (.pdf, .docx, .doc)
-        const nameWithoutExt = file.name.replace(/\.(pdf|docx|doc)$/i, '');
-        setCvName(nameWithoutExt);
-      }
-
-      // Validate CV with AI
-      validateCV(file);
+      processFile(file);
     }
-  };
+  }, [processFile]);
 
   const handleUpload = async () => {
     if (!selectedFile || !cvName.trim()) {
@@ -226,13 +254,16 @@ export default function CVManagement() {
     }
   };
 
-  const handleDelete = async (cvId: number) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa CV này?')) {
-      return;
-    }
+  const handleDeleteClick = (cvId: number) => {
+    setCvToDelete(cvId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!cvToDelete) return;
 
     try {
-      const response = await CVServices.delete(cvId.toString());
+      const response = await CVServices.delete(cvToDelete.toString());
 
       if (response.isSuccess) {
         toast.success("Thành công: CV đã được xóa");
@@ -244,8 +275,34 @@ export default function CVManagement() {
     } catch (error) {
       console.error('Error deleting CV:', error);
       toast.error("Lỗi: Không thể kết nối đến server. Vui lòng thử lại.");
+    } finally {
+      setDeleteDialogOpen(false);
+      setCvToDelete(null);
     }
   };
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  }, [processFile]);
 
   const handleDownload = (cv: CV) => {
     const link = document.createElement('a');
@@ -261,25 +318,74 @@ export default function CVManagement() {
     window.open(`${cv.fileUrl}`, '_blank');
   };
 
-  if (isLoadingProfile || isLoading) {
-    return (
-      <div className="flex flex-1 flex-col">
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center space-y-4">
-            <div className="relative">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto"></div>
-              <FileText className="h-8 w-8 text-blue-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+  const LoadingSkeleton = () => (
+    <div className="flex flex-1 flex-col">
+      <div className="@container/main flex flex-1 flex-col gap-2">
+        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+          {/* Header Skeleton */}
+          <div className="px-4 md:px-6">
+            <div className="space-y-1 mb-6">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-5 w-96 max-w-full" />
             </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {isLoadingProfile ? "Đang tải thông tin người dùng" : "Đang tải danh sách CV"}
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">Vui lòng đợi trong giây lát...</p>
+            <Skeleton className="h-10 w-40" />
+          </div>
+
+          {/* Stats Skeleton */}
+          <div className="grid grid-cols-1 gap-6 px-4 md:grid-cols-3 lg:px-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="relative overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-8 w-16 mb-2" />
+                  <Skeleton className="h-3 w-32" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* CV List Skeleton */}
+          <div className="px-4 lg:px-6">
+            <div className="grid gap-4">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="group relative overflow-hidden">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-4 flex-1">
+                        <Skeleton className="h-14 w-14 rounded-2xl" />
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-6 w-48" />
+                            <Skeleton className="h-5 w-20 rounded-full" />
+                          </div>
+                          <Skeleton className="h-4 w-64" />
+                          <Skeleton className="h-4 w-32" />
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="flex flex-wrap gap-2">
+                      <Skeleton className="h-8 w-24" />
+                      <Skeleton className="h-8 w-24" />
+                      <Skeleton className="h-8 w-32" />
+                      <Skeleton className="h-8 w-20 ml-auto" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </div>
       </div>
-    );
+    </div>
+  );
+
+  if (isLoadingProfile || isLoading) {
+    return <LoadingSkeleton />;
   }
 
   // Show error if user is not authenticated or no user ID
@@ -304,49 +410,229 @@ export default function CVManagement() {
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-          {/* Header */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20">
-            <div className="absolute inset-0 bg-grid-black/[0.02] dark:bg-grid-white/[0.02]" />
-            <div className="relative flex items-center justify-between px-4 py-8 lg:px-6">
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 shadow-lg">
-                    <FileText className="h-6 w-6 text-white" />
+    <div className="py-6 px-4 md:px-6 min-h-screen bg-gray-50/30">
+      {/* Header với Title/Subtitle bên trái và Button bên phải */}
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight">Quản lý CV</h1>
+          <p className="text-muted-foreground">Quản lý và tải lên CV của bạn để ứng tuyển vào các vị trí công việc</p>
+        </div>
+        
+        <Button 
+          size="default"
+          onClick={() => setIsUploadDialogOpen(true)}
+          className="shrink-0"
+        >
+          <Upload className="h-5 w-5 mr-2" />
+          Upload CV Mới
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-6">
+        {/* CV Stats - Modern Grid */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Card className="bg-white hover:shadow-md transition-shadow duration-200">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800">
+                  <FileText className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+                </div>
+                <span className="text-2xl font-bold">{cvs.length}</span>
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-medium leading-none tracking-tight">Tổng số CV</h3>
+                <p className="text-sm text-muted-foreground">
+                  Đã tải lên hệ thống
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white hover:shadow-md transition-shadow duration-200">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-amber-100 dark:bg-amber-900/30">
+                  <Star className="h-5 w-5 text-amber-600 dark:text-amber-400 fill-current" />
+                </div>
+                <span className="text-2xl font-bold">{cvs.filter(cv => cv.isPrimary).length}</span>
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-medium leading-none tracking-tight">CV Chính</h3>
+                <p className="text-sm text-muted-foreground">
+                  Đang được sử dụng
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white hover:shadow-md transition-shadow duration-200">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800">
+                  <File className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+                </div>
+                <span className="text-2xl font-bold">{cvs.filter(cv => !cv.isPrimary).length}</span>
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-medium leading-none tracking-tight">CV Phụ</h3>
+                <p className="text-sm text-muted-foreground">
+                  Lưu trữ dự phòng
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* CV List - Responsive Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {cvs.length === 0 ? (
+            <Card className="col-span-full border-dashed border-2 bg-slate-50/50">
+              <CardContent className="flex flex-col items-center justify-center py-16 px-4 text-center">
+                <div className="rounded-full bg-white p-4 shadow-sm mb-4">
+                  <Upload className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Chưa có CV nào</h3>
+                <p className="text-muted-foreground mb-6 max-w-sm">
+                  Upload CV ngay để nhà tuyển dụng có thể tìm thấy bạn và bắt đầu ứng tuyển.
+                </p>
+                <Button onClick={() => setIsUploadDialogOpen(true)}>
+                  Upload CV đầu tiên
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            cvs.map((cv) => (
+              <Card 
+                key={cv.id}
+                className={`group relative flex flex-col overflow-hidden border transition-all hover:shadow-lg hover:border-blue-200 ${
+                  cv.isPrimary ? 'border-amber-200 bg-amber-50/30' : 'bg-white'
+                }`}
+              >
+                {/* Primary Indicator Strip */}
+                {cv.isPrimary && (
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500 z-10" />
+                )}
+
+                <div className="p-4 flex flex-1 items-start gap-4">
+                  {/* Icon */}
+                  <div className="h-12 w-12 rounded-lg bg-white border shadow-sm flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    {cv.fileName.toLowerCase().endsWith('.pdf') ? (
+                      <FileText className="h-6 w-6 text-red-500" />
+                    ) : (
+                      <FileText className="h-6 w-6 text-blue-500" />
+                    )}
                   </div>
-                  <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-                      Quản lý CV
-                    </h1>
-                    <p className="text-lg text-gray-600 dark:text-gray-300">
-                      Quản lý và tải lên CV của bạn để ứng tuyển vào các vị trí công việc.
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-900 truncate" title={cv.name}>
+                        {cv.name}
+                      </h3>
+                      {cv.isPrimary && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500 shrink-0" />
+                            </TooltipTrigger>
+                            <TooltipContent>CV Chính</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground truncate" title={cv.fileName}>
+                      {cv.fileName}
                     </p>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        Vừa xong
+                      </span>
+                      <span className="w-1 h-1 rounded-full bg-gray-300" />
+                      <span className="uppercase">{cv.fileName.split('.').pop()}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="lg" className="shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                    <Upload className="h-5 w-5 mr-2" />
-                    Upload CV Mới
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
+                {/* Actions - Luôn nằm ngang */}
+                <div className="flex items-center justify-end gap-2 px-4 pb-4 pt-2 border-t bg-gray-50/50">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 hover:text-blue-600 hover:bg-blue-50"
+                          onClick={() => handlePreview(cv)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Xem trước</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4 text-gray-500" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => handleDownload(cv)}>
+                        <Download className="mr-2 h-4 w-4" />
+                        <span>Tải xuống</span>
+                      </DropdownMenuItem>
+                      {!cv.isPrimary && (
+                        <DropdownMenuItem onClick={() => handleSetPrimary(cv.id)}>
+                          <Star className="mr-2 h-4 w-4" />
+                          <span>Đặt làm CV chính</span>
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={() => handleDeleteClick(cv.id)}
+                        className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        <span>Xóa CV</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
+
+        {/* Dialog Upload CV */}
+        <Dialog 
+          open={isUploadDialogOpen} 
+          onOpenChange={(open) => {
+            setIsUploadDialogOpen(open);
+            if (!open) {
+              setSelectedFile(null);
+              setCvName('');
+              setValidationResult(null);
+              setIsDragging(false);
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-lg">
                   <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                      <Upload className="h-5 w-5 text-blue-600" />
+                    <DialogTitle className="flex items-center gap-2 text-xl">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30">
+                        <Upload className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      </div>
                       Upload CV mới
                     </DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription className="text-base">
                       Chọn file PDF, DOCX hoặc DOC để upload CV của bạn. File phải nhỏ hơn 10MB.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="space-y-2">
-                      <Label htmlFor="cvName" className="text-sm font-medium">Tên CV</Label>
+                      <Label htmlFor="cvName" className="text-sm font-semibold">Tên CV</Label>
                       <Input
                         id="cvName"
                         value={cvName}
@@ -355,75 +641,160 @@ export default function CVManagement() {
                         className="h-11"
                       />
                     </div>
+                    
+                    {/* Drag & Drop Zone */}
                     <div className="space-y-2">
-                      <Label htmlFor="cvFile" className="text-sm font-medium">Chọn file CV (PDF, DOCX, DOC)</Label>
-                      <div className="relative">
-                        <Input
+                      <Label className="text-sm font-semibold">Chọn file CV</Label>
+                      <div
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        className={`
+                          relative border-2 border-dashed rounded-lg p-8 transition-all duration-200
+                          ${isDragging 
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20 scale-[1.02]' 
+                            : 'border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600'
+                          }
+                        `}
+                      >
+                        <input
                           id="cvFile"
                           type="file"
                           accept=".pdf,.docx,.doc"
                           onChange={handleFileChange}
-                          className="h-11 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         />
+                        <div className="flex flex-col items-center justify-center gap-3 text-center">
+                          <div className={`flex h-16 w-16 items-center justify-center rounded-full transition-colors ${
+                            isDragging 
+                              ? 'bg-blue-100 dark:bg-blue-900/30' 
+                              : 'bg-gray-100 dark:bg-gray-800'
+                          }`}>
+                            <Upload className={`h-8 w-8 transition-colors ${
+                              isDragging 
+                                ? 'text-blue-600 dark:text-blue-400' 
+                                : 'text-gray-400'
+                            }`} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              {isDragging ? 'Thả file vào đây' : 'Kéo thả file vào đây hoặc click để chọn'}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              PDF, DOCX, DOC (tối đa 10MB)
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Selected File Display */}
                     {selectedFile && (
-                      <div className="rounded-lg border bg-green-50 p-3">
-                        <div className="flex items-center gap-2 text-sm text-green-800">
-                          <CheckCircle className="h-4 w-4" />
-                          <span className="font-medium">File đã chọn:</span>
+                      <div className="rounded-lg border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20 p-4 animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 flex-1">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30 shrink-0">
+                              <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 text-sm font-medium text-green-800 dark:text-green-200">
+                                <CheckCircle className="h-4 w-4 shrink-0" />
+                                <span className="truncate">{selectedFile.name}</span>
+                              </div>
+                              <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0"
+                            onClick={() => {
+                              setSelectedFile(null);
+                              setValidationResult(null);
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <p className="text-sm text-green-700 mt-1">
-                          {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-                        </p>
                       </div>
                     )}
 
-                    {/* CV Validation Result */}
+                    {/* Validation Loading */}
                     {isValidating && (
-                      <div className="rounded-lg border bg-blue-50 p-3">
-                        <div className="flex items-center gap-2 text-sm text-blue-800">
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent" />
-                          <span className="font-medium">Đang kiểm tra CV bằng AI...</span>
+                      <div className="rounded-lg border-2 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 p-4 animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-center gap-3">
+                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent" />
+                          <div>
+                            <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                              Đang kiểm tra CV bằng AI...
+                            </p>
+                            <p className="text-xs text-blue-600 dark:text-blue-300 mt-0.5">
+                              Vui lòng đợi trong giây lát
+                            </p>
+                          </div>
                         </div>
                       </div>
                     )}
 
+                    {/* Validation Result */}
                     {validationResult && (
-                      <div className={`rounded-lg border p-3 ${validationResult.is_cv
-                        ? 'bg-green-50 border-green-200'
-                        : 'bg-red-50 border-red-200'
-                        }`}>
-                        <div className="flex items-center gap-2 text-sm">
+                      <div className={`rounded-lg border-2 p-4 animate-in fade-in slide-in-from-top-2 ${
+                        validationResult.is_cv
+                          ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
+                          : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+                      }`}>
+                        <div className="flex items-start gap-3">
                           {validationResult.is_cv ? (
                             <>
-                              <CheckCircle className="h-4 w-4 text-green-600" />
-                              <span className="font-medium text-green-800">✅ Đây là CV hợp lệ</span>
+                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30 shrink-0">
+                                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-semibold text-green-800 dark:text-green-200">
+                                  ✅ Đây là CV hợp lệ
+                                </p>
+                                <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                                  {validationResult.reason}
+                                </p>
+                              </div>
                             </>
                           ) : (
                             <>
-                              <div className="h-4 w-4 rounded-full bg-red-600 flex items-center justify-center">
-                                <span className="text-white text-xs">!</span>
+                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30 shrink-0">
+                                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
                               </div>
-                              <span className="font-medium text-red-800">⚠️ File này không phải CV hợp lệ</span>
+                              <div className="flex-1">
+                                <p className="text-sm font-semibold text-red-800 dark:text-red-200">
+                                  ⚠️ File này không phải CV hợp lệ
+                                </p>
+                                <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                                  {validationResult.reason}
+                                </p>
+                                <div className="mt-3 p-3 bg-red-100 dark:bg-red-900/20 rounded-md border-l-4 border-red-500">
+                                  <p className="text-xs text-red-800 dark:text-red-200 font-medium">
+                                    📋 Hướng dẫn: Vui lòng chọn file CV chứa thông tin cá nhân (tên, email, kinh nghiệm, học vấn...) để tiếp tục upload.
+                                  </p>
+                                </div>
+                              </div>
                             </>
                           )}
                         </div>
-                        <p className="text-xs text-gray-700 mt-1">
-                          {validationResult.reason}
-                        </p>
-                        {!validationResult.is_cv && (
-                          <div className="mt-2 p-2 bg-red-100 rounded border-l-4 border-red-500">
-                            <p className="text-xs text-red-800 font-medium">
-                              📋 Hướng dẫn: Vui lòng chọn file CV chứa thông tin cá nhân (tên, email, kinh nghiệm, học vấn...) để tiếp tục upload.
-                            </p>
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
+                  <DialogFooter className="gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setIsUploadDialogOpen(false);
+                        setSelectedFile(null);
+                        setCvName('');
+                        setValidationResult(null);
+                      }}
+                      disabled={isUploading}
+                    >
                       Hủy
                     </Button>
                     <Button
@@ -435,10 +806,6 @@ export default function CVManagement() {
                         isValidating ||
                         (validationResult?.is_cv === false)
                       }
-                      className={`${(validationResult?.is_cv === false)
-                        ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700'
-                        }`}
                     >
                       {isUploading ? (
                         <>
@@ -452,7 +819,8 @@ export default function CVManagement() {
                         </>
                       ) : (validationResult?.is_cv === false) ? (
                         <>
-                          <span className="text-xs">❌ File không hợp lệ</span>
+                          <AlertCircle className="h-4 w-4 mr-2" />
+                          File không hợp lệ
                         </>
                       ) : (
                         <>
@@ -464,173 +832,36 @@ export default function CVManagement() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-            </div>
-          </div>
-
-          {/* CV Stats */}
-          <div className="grid grid-cols-1 gap-6 px-4 md:grid-cols-3 lg:px-6">
-            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-xl">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-blue-100">Tổng số CV</CardTitle>
-                <div className="rounded-full bg-white/20 p-2">
-                  <FileText className="h-4 w-4" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{cvs.length}</div>
-                <p className="text-xs text-blue-100 mt-1">
-                  CV trong hệ thống
-                </p>
-              </CardContent>
-              <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10" />
-            </Card>
-
-            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-xl">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-emerald-100">CV chính</CardTitle>
-                <div className="rounded-full bg-white/20 p-2">
-                  <Star className="h-4 w-4" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">
-                  {cvs.filter(cv => cv.isPrimary).length}
-                </div>
-                <p className="text-xs text-emerald-100 mt-1">
-                  CV được ưu tiên
-                </p>
-              </CardContent>
-              <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10" />
-            </Card>
-
-            <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-violet-500 to-violet-600 text-white shadow-xl">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-violet-100">CV phụ</CardTitle>
-                <div className="rounded-full bg-white/20 p-2">
-                  <File className="h-4 w-4" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">
-                  {cvs.filter(cv => !cv.isPrimary).length}
-                </div>
-                <p className="text-xs text-violet-100 mt-1">
-                  CV dự phòng
-                </p>
-              </CardContent>
-              <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10" />
-            </Card>
-          </div>
-
-          {/* CV List */}
-          <div className="px-4 lg:px-6">
-            <div className="grid gap-4">
-              {cvs.length === 0 ? (
-                <Card className="border-dashed border-2 border-gray-200 dark:border-gray-700">
-                  <CardContent className="flex flex-col items-center justify-center py-16">
-                    <div className="rounded-full bg-gray-100 dark:bg-gray-800 p-6 mb-6">
-                      <FileText className="h-12 w-12 text-gray-400" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Chưa có CV nào</h3>
-                    <p className="text-gray-600 dark:text-gray-400 text-center mb-8 max-w-md">
-                      Bạn chưa upload CV nào. Hãy upload CV đầu tiên để bắt đầu ứng tuyển và tăng cơ hội tìm được việc làm phù hợp!
-                    </p>
-                    <Button
-                      onClick={() => setIsUploadDialogOpen(true)}
-                      size="lg"
-                      className="bg-blue-600 hover:bg-blue-700 shadow-lg"
-                    >
-                      <Upload className="h-5 w-5 mr-2" />
-                      Upload CV đầu tiên
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                cvs.map((cv) => (
-                  <Card key={cv.id} className="group relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-all duration-300 bg-white dark:bg-gray-800">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <CardHeader className="relative pb-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50">
-                            <FileText className="h-7 w-7 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-                                {cv.name}
-                              </CardTitle>
-                              {cv.isPrimary && (
-                                <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 shadow-sm">
-                                  <Star className="h-3 w-3 mr-1" />
-                                  CV Chính
-                                </Badge>
-                              )}
-                            </div>
-                            <CardDescription className="text-gray-600 dark:text-gray-400">
-                              {cv.fileName}
-                            </CardDescription>
-                            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                              <Calendar className="h-4 w-4" />
-                              <span>Tải lên gần đây</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardHeader>
-
-                    <CardContent className="relative pt-0">
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handlePreview(cv)}
-                          className="hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 dark:hover:bg-blue-900/20"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          Xem trước
-                        </Button>
-
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDownload(cv)}
-                          className="hover:bg-green-50 hover:border-green-200 hover:text-green-700 dark:hover:bg-green-900/20"
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Tải xuống
-                        </Button>
-
-                        {!cv.isPrimary && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleSetPrimary(cv.id)}
-                            className="hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 dark:hover:bg-amber-900/20"
-                          >
-                            <Star className="h-4 w-4 mr-2" />
-                            Đặt làm CV chính
-                          </Button>
-                        )}
-
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDelete(cv.id)}
-                          className="hover:bg-red-50 hover:border-red-200 hover:text-red-700 dark:hover:bg-red-900/20 ml-auto"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Xóa
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+                <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <AlertDialogTitle className="text-xl">Xác nhận xóa CV</AlertDialogTitle>
+                <AlertDialogDescription className="mt-1">
+                  Bạn có chắc chắn muốn xóa CV này? Hành động này không thể hoàn tác.
+                </AlertDialogDescription>
+              </div>
+            </div>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Xóa CV
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

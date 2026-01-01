@@ -17,7 +17,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -25,7 +24,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // Import icons
 import {
-  Search,
   UserPlus,
   RefreshCcw,
   Eye,
@@ -420,174 +418,115 @@ export default function CompanyMembersPage() {
     },
   ], [startIndex]);
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="space-y-6">
-            {/* Header skeleton */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <div className="animate-pulse">
-                <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            </div>
-
-            {/* Content skeleton */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <div className="animate-pulse space-y-4">
-                <div className="flex space-x-4">
-                  <div className="h-10 bg-gray-200 rounded w-80"></div>
-                  <div className="h-10 bg-gray-200 rounded w-48"></div>
-                </div>
-                <div className="space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="h-16 bg-gray-200 rounded"></div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
-            <Users className="w-12 h-12 text-gray-400" />
-          </div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-            Không thể tải danh sách thành viên
-          </h2>
-          <p className="text-gray-600 mb-6">
-            {error}
-          </p>
-          <Button
-            onClick={() => window.location.reload()}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            Thử lại
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="space-y-6">
-          {/* Page Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Thành viên công ty
-              </h1>
-              <p className="text-gray-600 mt-2">
-                Quản lý danh sách Hiring Manager và nhân sự tuyển dụng
-              </p>
-            </div>
-            <Button
-              onClick={() => setIsCreateDialogOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              size="lg"
-            >
-              <UserPlus className="w-4 h-4 mr-2" />
-              Tạo thành viên
-            </Button>
-          </div>
+    <div className="p-6 space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold">Thành viên công ty</h1>
+        <p className="text-muted-foreground">
+          Quản lý danh sách Hiring Manager và nhân sự tuyển dụng
+        </p>
+      </div>
 
-          {/* Search and Actions */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      placeholder="Tìm kiếm thành viên..."
-                      value={keyword}
-                      onChange={(e) => setKeyword(e.target.value)}
-                      className="pl-10 w-80"
-                    />
-                  </div>
-                  <Select
-                    value={statusFilter}
-                    onValueChange={handleStatusFilterChange}
-                  >
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Lọc theo trạng thái" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                      <SelectItem value="true">Hoạt động</SelectItem>
-                      <SelectItem value="false">Không hoạt động</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    onClick={handleRefresh}
-                    variant="outline"
-                    size="icon"
-                    aria-label="Làm mới"
-                    title="Làm mới dữ liệu"
-                    disabled={loading}
-                  >
-                    <RefreshCcw
-                      className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-                    />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {members.length === 0 && !loading ? (
-                <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                  <div className="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center">
-                    <Users className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <div className="text-center">
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      {keyword || statusFilter !== "all"
-                        ? "Không tìm thấy thành viên"
-                        : "Chưa có thành viên nào"}
-                    </h3>
-                    <p className="text-sm text-gray-500 mb-4">
-                      {keyword || statusFilter !== "all"
-                        ? "Thử thay đổi tiêu chí tìm kiếm hoặc bộ lọc"
-                        : "Hãy tạo thành viên đầu tiên cho công ty của bạn"}
-                    </p>
-                    {!keyword && statusFilter === "all" && (
-                      <Button
-                        onClick={() => setIsCreateDialogOpen(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        <UserPlus className="w-4 h-4 mr-2" />
-                        Tạo thành viên đầu tiên
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <DataTable
-                  columns={columns}
-                  data={members}
-                  loading={loading}
-                  sorting={sorting}
-                  onSortingChange={handleSortingChange}
+      {/* Search and Actions */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Input
+                placeholder="Tìm kiếm thành viên..."
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                className="w-64"
+              />
+              <Select
+                value={statusFilter}
+                onValueChange={handleStatusFilterChange}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Lọc theo trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                  <SelectItem value="true">Hoạt động</SelectItem>
+                  <SelectItem value="false">Không hoạt động</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={() => setIsCreateDialogOpen(true)}
+                variant="default"
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Tạo thành viên
+              </Button>
+              <Button
+                onClick={handleRefresh}
+                variant="outline"
+                size="icon"
+                disabled={loading}
+                title="Làm mới dữ liệu"
+              >
+                <RefreshCcw
+                  className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
                 />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading && !members.length ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Đang tải danh sách thành viên...
+                </p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-8 space-y-2">
+              <Users className="h-8 w-8 text-red-500" />
+              <p className="text-sm text-red-500">{error}</p>
+              <Button onClick={handleRefresh} variant="outline" size="sm">
+                Thử lại
+              </Button>
+            </div>
+          ) : members.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 space-y-2">
+              <Users className="h-8 w-8 text-gray-400" />
+              <p className="text-sm text-gray-500">
+                {keyword || statusFilter !== "all"
+                  ? "Không tìm thấy thành viên"
+                  : "Chưa có thành viên nào"}
+              </p>
+              {!keyword && statusFilter === "all" && (
+                <Button
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  variant="default"
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 text-white mt-2"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Tạo thành viên đầu tiên
+                </Button>
               )}
+            </div>
+          ) : (
+            <>
+              <DataTable
+                columns={columns}
+                data={members}
+                loading={loading}
+                sorting={sorting}
+                onSortingChange={handleSortingChange}
+              />
 
               {/* Pagination */}
               {paginationInfo.totalItem > 0 && (
-                <div className="flex items-center justify-between mt-6 gap-6">
+                <div className="flex items-center justify-between mt-4 gap-6">
                   <div className="text-sm text-muted-foreground">
                     Hiển thị {startItem} - {endItem} của {paginationInfo.totalItem} kết quả
                   </div>
@@ -613,159 +552,158 @@ export default function CompanyMembersPage() {
 
                     <div className="flex items-center gap-3">
                       <div className="text-sm font-medium">
-                        Trang {paginationInfo.currentPage} trên {paginationInfo.totalPage || 1}
+                        Trang {paginationInfo.currentPage} trên{" "}
+                        {paginationInfo.totalPage || 1}
                       </div>
                       <div className="flex items-center gap-1">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handlePageChange(1)}
-                          disabled={paginationInfo.currentPage === 1}
+                          disabled={paginationInfo.currentPage === 1 || loading}
                           className="h-8 w-8 p-0"
                         >
-                          <ChevronsLeft />
+                          <ChevronsLeft className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handlePageChange(paginationInfo.currentPage - 1)}
-                          disabled={paginationInfo.currentPage === 1}
+                          disabled={paginationInfo.currentPage === 1 || loading}
                           className="h-8 w-8 p-0"
                         >
-                          <ChevronLeft />
+                          <ChevronLeft className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handlePageChange(paginationInfo.currentPage + 1)}
-                          disabled={paginationInfo.currentPage >= paginationInfo.totalPage || paginationInfo.totalPage === 0}
+                          disabled={
+                            paginationInfo.currentPage >= paginationInfo.totalPage ||
+                            paginationInfo.totalPage === 0 ||
+                            loading
+                          }
                           className="h-8 w-8 p-0"
                         >
-                          <ChevronRight />
+                          <ChevronRight className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handlePageChange(paginationInfo.totalPage)}
-                          disabled={paginationInfo.currentPage >= paginationInfo.totalPage || paginationInfo.totalPage === 0}
+                          disabled={
+                            paginationInfo.currentPage >= paginationInfo.totalPage ||
+                            paginationInfo.totalPage === 0 ||
+                            loading
+                          }
                           className="h-8 w-8 p-0"
                         >
-                          <ChevronsRight />
+                          <ChevronsRight className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* View Member Dialog */}
-      {isViewDialogOpen && selectedMember && (
-        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="max-w-6xl w-[90vw] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-semibold flex items-center">
-                <Users className="w-6 h-6 mr-3 text-blue-600" />
-                Chi tiết thành viên
-              </DialogTitle>
-              <DialogDescription className="text-base">
-                Thông tin chi tiết về thành viên {selectedMember.fullName}
-              </DialogDescription>
-            </DialogHeader>
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Chi tiết thành viên</DialogTitle>
+          </DialogHeader>
 
-            <div className="space-y-8 py-4">
-              {/* Member Header */}
-              <div className="flex items-start space-x-6 p-6 bg-linear-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-                <Avatar className="h-24 w-24">
+          {selectedMember && (
+            <div className="space-y-6">
+              {/* Profile Header */}
+              <div className="flex items-start gap-4 p-4 rounded-lg bg-muted/30 border">
+                <Avatar className="h-16 w-16 border-2">
                   <AvatarImage
                     src={selectedMember.avatarUrl || ""}
                     alt={selectedMember.fullName}
                   />
-                  <AvatarFallback className="text-2xl font-semibold">
+                  <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
                     {getInitials(selectedMember.fullName)}
                   </AvatarFallback>
                 </Avatar>
-
                 <div className="flex-1">
-                  <h3 className="text-3xl font-bold text-gray-900 mb-3">
+                  <h3 className="text-lg font-semibold text-foreground">
                     {selectedMember.fullName}
                   </h3>
-                  <p className="text-xl text-gray-600 mb-4">Quản lý tuyển dụng</p>
-                  <Badge
-                    className={`${getStatusBadgeColor(
-                      selectedMember.isActive
-                    )} text-base px-4 py-2`}
-                  >
+                  <Badge className={getStatusBadgeColor(selectedMember.isActive)}>
                     {getStatusIcon(selectedMember.isActive)}
                     {getStatusLabel(selectedMember.isActive)}
                   </Badge>
                 </div>
               </div>
 
-              {/* Member Details */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="space-y-6">
-                  <div className="p-6 border border-gray-200 rounded-xl">
-                    <label className="text-sm font-semibold text-gray-500 flex items-center mb-3">
-                      <Mail className="w-5 h-5 mr-2" />
-                      Email
-                    </label>
-                    <p className="text-lg text-gray-900 break-all">
-                      {selectedMember.email}
-                    </p>
-                  </div>
-
-                  <div className="p-6 border border-gray-200 rounded-xl">
-                    <label className="text-sm font-semibold text-gray-500 flex items-center mb-3">
-                      <Phone className="w-5 h-5 mr-2" />
-                      Số điện thoại
-                    </label>
-                    <p className="text-lg text-gray-900">
-                      {selectedMember.phoneNumber || "Chưa cập nhật"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="p-6 border border-gray-200 rounded-xl">
-                    <label className="text-sm font-semibold text-gray-500 flex items-center mb-3">
-                      <Briefcase className="w-5 h-5 mr-2" />
-                      Chức vụ
-                    </label>
-                    <p className="text-lg text-gray-900">Quản lý tuyển dụng</p>
-                  </div>
-
-                  <div className="p-6 border border-gray-200 rounded-xl">
-                    <label className="text-sm font-semibold text-gray-500 flex items-center mb-3">
-                      <Calendar className="w-5 h-5 mr-2" />
-                      Ngày tham gia
-                    </label>
-                    <p className="text-lg text-gray-900">
-                      {selectedMember.createdAt
-                        ? formatDate(selectedMember.createdAt)
-                        : "Không xác định"}
-                    </p>
-                  </div>
+              {/* Contact Information */}
+              <div>
+                <h4 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Thông tin liên hệ
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {selectedMember.email && (
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                      <Mail className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Email</p>
+                        <p className="text-sm text-foreground">
+                          {selectedMember.email}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedMember.phoneNumber && (
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                      <Phone className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Số điện thoại</p>
+                        <p className="text-sm text-foreground">
+                          {selectedMember.phoneNumber}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsViewDialogOpen(false)}
-                  className="px-8 py-3 text-base"
-                >
-                  Đóng
-                </Button>
+              {/* Member Information */}
+              <div>
+                <h4 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  Thông tin thành viên
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                    <Briefcase className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Chức vụ</p>
+                      <p className="text-sm text-foreground">Quản lý tuyển dụng</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                    <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Ngày tham gia</p>
+                      <p className="text-sm text-foreground">
+                        {selectedMember.createdAt
+                          ? formatDate(selectedMember.createdAt)
+                          : "Không xác định"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Create Member Dialog */}
       {companyId && (

@@ -153,7 +153,7 @@ export default function MyJobsPage() {
     }
 
     return (
-        <div className="container mx-auto py-6 px-4 md:px-6 min-h-screen bg-gray-50/30">
+        <div className="py-6 px-4 md:px-6 min-h-screen bg-gray-50/30">
             <div className="space-y-1 mb-6">
                 <h1 className="text-2xl font-bold tracking-tight">Việc làm của tôi</h1>
                 <p className="text-muted-foreground">Quản lý danh sách việc làm đã ứng tuyển và đã lưu</p>

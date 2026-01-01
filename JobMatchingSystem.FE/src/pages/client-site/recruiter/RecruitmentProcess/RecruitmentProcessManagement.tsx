@@ -30,8 +30,9 @@ import {
 import { toast } from "sonner";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { CandidateJobServices } from "@/services/candidate-job.service";
-import { CandidateJob, CandidateJobStatus } from "@/models/job";
+import { CandidateJob, CandidateJobStatus, Job } from "@/models/job";
 import { PageInfo, PaginationParamsInput } from "@/models/base";
+import { JobServices } from "@/services/job.service";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Input } from "@/components/ui/input";
 import { StageBoardDemo } from "@/components/Stage/StageBoardDemo";
@@ -55,10 +56,13 @@ import {
 
 const RecruitmentProcessManagement = () => {
   // URL search params
-  const { jobId } = useParams();
+  const { jobId: jobIdFromUrl } = useParams();
   const navigate = useNavigate();
 
   // State management
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(jobIdFromUrl || null);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
   const [candidateJobs, setCandidateJobs] = useState<CandidateJob[]>([]);
   const [activeTab, setActiveTab] = useState<"screening" | "process">(
     "screening"
@@ -99,16 +103,52 @@ const RecruitmentProcessManagement = () => {
   );
   const pageSizeOptions = [5, 10, 20, 50];
 
+  // Fetch jobs list for recruiter
+  const fetchJobs = useCallback(async () => {
+    try {
+      setJobsLoading(true);
+      const response = await JobServices.getAllMyJobsPagination({
+        page: 1,
+        size: 100, // Get all jobs for dropdown
+        search: "",
+        sortBy: "",
+        isDescending: false,
+      });
+
+      if (response.isSuccess && response.result) {
+        setJobs(response.result.items || []);
+      } else {
+        setJobs([]);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Lỗi khi tải danh sách tin tuyển dụng");
+      setJobs([]);
+    } finally {
+      setJobsLoading(false);
+    }
+  }, []);
+
+  // Load jobs on mount
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
+
+  // Update selectedJobId when URL param changes
+  useEffect(() => {
+    if (jobIdFromUrl) {
+      setSelectedJobId(jobIdFromUrl);
+    }
+  }, [jobIdFromUrl]);
 
   // Fetch candidate jobs with pagination
   const fetchCandidateJobs = useCallback(async (params: PaginationParamsInput) => {
-    if (!jobId) return;
+    if (!selectedJobId) return;
 
     try {
       setLoading(true);
       setError(null);
       const response = await CandidateJobServices.getCandidateJobsByJobId(
-        parseInt(jobId),
+        parseInt(selectedJobId),
         {
           ...params,
           search: debouncedKeyword,
@@ -130,15 +170,27 @@ const RecruitmentProcessManagement = () => {
       setLoading(false);
     }
   },
-    [jobId, debouncedKeyword]
+    [selectedJobId, debouncedKeyword]
   );
+
+  // Handle job selection change
+  const handleJobChange = (newJobId: string) => {
+    setSelectedJobId(newJobId);
+    setPaginationInput((prev) => ({ ...prev, page: 1 }));
+    // Update URL without navigation
+    if (newJobId) {
+      navigate(`/recruiter/recruitment-process/${newJobId}`, { replace: true });
+    } else {
+      navigate(`/recruiter/recruitment-process`, { replace: true });
+    }
+  };
 
   // Load candidate jobs when job selected (for screening tab)
   useEffect(() => {
-    if (jobId && activeTab === "screening") {
+    if (selectedJobId && activeTab === "screening") {
       fetchCandidateJobs(paginationInput);
     }
-  }, [jobId, activeTab, paginationInput, fetchCandidateJobs]);
+  }, [selectedJobId, activeTab, paginationInput, fetchCandidateJobs]);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab as "screening" | "process");
@@ -152,9 +204,9 @@ const RecruitmentProcessManagement = () => {
   };
 
   const handleSearchCandidates = () => {
-    if (jobId) {
+    if (selectedJobId) {
       // Navigate to CV search page with pre-selected job
-      navigate(`/recruiter/cv-search?jobId=${jobId}`);
+      navigate(`/recruiter/cv-search?jobId=${selectedJobId}`);
     } else {
       toast.error('Vui lòng chọn công việc trước khi tìm kiếm ứng viên');
     }
@@ -401,19 +453,49 @@ const RecruitmentProcessManagement = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          className="flex items-center px-0"
-          onClick={() => navigate("/recruiter/jobs")}
-        >
-          <ChevronLeft className="h-4 w-4" />
-          <span>Quay về quản lý tin tuyển dụng</span>
-        </Button>
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold">Quy trình tuyển dụng</h1>
+        <p className="text-muted-foreground">
+          Quản lý và theo dõi quy trình tuyển dụng ứng viên cho các tin tuyển dụng
+        </p>
+      </div>
+
+      {/* Job Selection */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700">Chọn tin tuyển dụng</label>
+        <div className="flex items-center gap-4">
+          <div className="flex-1">
+            <Select
+              value={selectedJobId || ""}
+              onValueChange={handleJobChange}
+              disabled={jobsLoading}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Chọn tin tuyển dụng để xem quy trình" />
+              </SelectTrigger>
+              <SelectContent>
+                {jobs.length === 0 && !jobsLoading ? (
+                  <SelectItem value="no-jobs" disabled>
+                    Chưa có tin tuyển dụng nào
+                  </SelectItem>
+                ) : (
+                  jobs.map((job) => (
+                    <SelectItem key={job.jobId} value={job.jobId.toString()}>
+                      {job.title} {job.status === 'Opened' && '(Đang mở)'}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          {jobsLoading && (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
-      {jobId && (
+      {selectedJobId && (
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="grid w-[400px] grid-cols-2">
             <TabsTrigger value="screening">Danh sách sàng lọc</TabsTrigger>
@@ -604,7 +686,7 @@ const RecruitmentProcessManagement = () => {
 
           {/* Tab 2: Recruitment Process */}
           <TabsContent value="process" className="mt-4">
-            <StageBoardDemo jobId={parseInt(jobId)} />
+            <StageBoardDemo jobId={parseInt(selectedJobId)} />
           </TabsContent>
         </Tabs>
       )}

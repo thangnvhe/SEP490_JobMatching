@@ -15,7 +15,6 @@ import {
   RefreshCcw, 
   Eye, 
   Trash2, 
-  Download,
   Image as ImageIcon,
   AlertTriangle,
   FileText,
@@ -34,6 +33,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 export default function ViewTemplateCvList() {
@@ -46,6 +49,8 @@ export default function ViewTemplateCvList() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateCv | null>(null);
+  const [isImageZoomOpen, setIsImageZoomOpen] = useState(false);
+  const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
   const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
     currentPage: 1,
     pageSize: 10,
@@ -101,21 +106,14 @@ export default function ViewTemplateCvList() {
     }
   };
 
-  const handleDownload = (template: TemplateCv) => {
-    if (template.pathUrl) {
-      const link = document.createElement('a');
-      link.href = template.pathUrl;
-      link.download = `${template.name}.html`;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
-
   const handleDelete = (template: TemplateCv) => {
     setSelectedTemplate(template);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleImageClick = (imageUrl: string) => {
+    setZoomedImageUrl(imageUrl);
+    setIsImageZoomOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -196,7 +194,11 @@ export default function ViewTemplateCvList() {
       cell: ({ row }) => {
         const imageUrl = row.getValue("imageUrl") as string | null;
         return imageUrl ? (
-          <div className="flex items-center justify-center w-16 h-12 rounded border overflow-hidden">
+          <div 
+            className="flex items-center justify-center w-16 h-12 rounded border overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => handleImageClick(imageUrl)}
+            title="Click để xem ảnh phóng to"
+          >
             <img 
               src={imageUrl} 
               alt="Preview" 
@@ -254,14 +256,6 @@ export default function ViewTemplateCvList() {
               title="Xem trước"
             >
               <Eye className="h-4 w-4" />
-            </Button>
-            <Button
-              onClick={() => handleDownload(template)}
-              variant="outline"
-              size="sm"
-              title="Tải xuống"
-            >
-              <Download className="h-4 w-4" />
             </Button>
             <Button
               onClick={() => handleDelete(template)}
@@ -459,6 +453,21 @@ export default function ViewTemplateCvList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Image Zoom Dialog */}
+      <Dialog open={isImageZoomOpen} onOpenChange={setIsImageZoomOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-auto">
+          {zoomedImageUrl && (
+            <div className="flex items-center justify-center p-4">
+              <img 
+                src={zoomedImageUrl} 
+                alt="Preview zoom" 
+                className="max-w-none max-h-none w-auto h-auto rounded"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

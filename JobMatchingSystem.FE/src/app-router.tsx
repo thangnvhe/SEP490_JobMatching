@@ -42,9 +42,9 @@ import CVSearchPage from './pages/client-site/recruiter/CVSearch/CVSearchPage';
 import SavedCVsPage from './pages/client-site/recruiter/SavedCVs/SavedCVsPage';
 import ViewOrderListForRecruiter from './pages/client-site/recruiter/order/ViewOrderListForRecruiter';
 import { AdminGuard, RecruiterGuard, CandidateGuard, AuthGuard } from './guards/AuthGuard';
-import CandidateDashboardPage from './pages/candidate/Dashboard/CandidateDashboardPage';
-import AdminDashboardPage from './pages/admin/Dashboard/AdminDashboardPage';
-import HiringManagerDashboardPage from './pages/client-site/hiringmanager/Dashboard/HiringManagerDashboardPage';
+import CandidateDashboardPage from './pages/admin-site/Dashboard/CandidateDashboardPage';
+import AdminDashboardPage from './pages/admin-site/Dashboard/AdminDashboardPage';
+import HiringManagerDashboardPage from './pages/admin-site/Dashboard/HiringManagerDashboardPage';
 
 
 const AppRouter: React.FC = () => {
@@ -107,9 +107,10 @@ const AppRouter: React.FC = () => {
         <Route path="jobs/create" element={<CreateJobPage />} />
         <Route path="cv-search" element={<CVSearchPage />} />
         <Route path="saved-cvs" element={<SavedCVsPage />} />
+        <Route path="recruitment-process" element={<RecruitmentProcessManagement />} />
         <Route path="recruitment-process/:jobId" element={<RecruitmentProcessManagement />} />
         <Route path="company" element={<CompanyProfile />} />
-        <Route path="company/members" element={<CompanyMembersPage />} />
+        <Route path="members" element={<CompanyMembersPage />} />
         <Route path="service-packages" element={<ViewServicePackageList />} />
         <Route path="orders" element={<ViewOrderListForRecruiter />} />
         <Route path="stage-board" element={<StageBoardDemo />} />
