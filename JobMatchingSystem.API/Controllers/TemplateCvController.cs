@@ -28,10 +28,10 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10, 
-            [FromQuery] string sortBy = "", [FromQuery] bool isDescending = false)
+        public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10,
+            [FromQuery] string search = "", [FromQuery] string sortBy = "", [FromQuery] bool isDescending = false)
         {
-            var response = await _service.GetAllAsync(page, pageSize, sortBy, isDescending);
+            var response = await _service.GetAllAsync(page, pageSize, sortBy, isDescending, search);
             return StatusCode((int)response.StatusCode, response);
         }
 

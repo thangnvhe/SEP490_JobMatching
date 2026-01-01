@@ -6,6 +6,10 @@ using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace JobMatchingSystem.API.Services.Implementations
 {
@@ -125,7 +129,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                     .FirstOrDefaultAsync(e => e.LevelName.ToLower() == request.LevelName.ToLower());
 
                 if (existingLevel != null)
-                    throw new AppException(ErrorCode.BadRequest("Trình độ học vấn đã tồn tại"));
+                    throw new AppException(ErrorCode.AlreadyExists());
 
                 var educationLevel = new EducationLevel
                 {
@@ -159,7 +163,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                     .FirstOrDefaultAsync(e => e.LevelName.ToLower() == request.LevelName.ToLower() && e.Id != id);
 
                 if (existingLevel != null)
-                    throw new AppException(ErrorCode.BadRequest("Trình độ học vấn đã tồn tại"));
+                    throw new AppException(ErrorCode.AlreadyExists());
 
                 educationLevel.LevelName = request.LevelName;
                 educationLevel.RankScore = request.RankScore;

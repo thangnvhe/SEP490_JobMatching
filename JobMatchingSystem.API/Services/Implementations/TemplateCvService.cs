@@ -7,6 +7,7 @@ using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
 using JobMatchingSystem.API.Extensions;
 using Microsoft.AspNetCore.Hosting;
+using System.Linq;
 using System;
 using System.IO;
 using System.Net;
@@ -109,11 +110,18 @@ namespace JobMatchingSystem.API.Services.Implementations
                     .Build();
             }
         }
-        public async Task<APIResponse<PagedResult<TemplateCV>>> GetAllAsync(int page = 1, int pageSize = 10, string sortBy = "", bool isDescending = false)
+        public async Task<APIResponse<PagedResult<TemplateCV>>> GetAllAsync(int page = 1, int pageSize = 10, string sortBy = "", bool isDescending = false, string search = "")
         {
             try
             {
                 var templates = await _repository.GetAllAsync();
+                // Apply search filter by template name if provided
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    templates = templates
+                        .Where(t => !string.IsNullOrEmpty(t.Name) && t.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
+                        .ToList();
+                }
                 
                 // Generate secure URLs with SAS tokens for all templates
                 foreach (var template in templates)
