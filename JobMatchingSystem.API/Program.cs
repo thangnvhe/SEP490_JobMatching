@@ -31,7 +31,7 @@ builder.Services.AddCors(options =>
 });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Swagger được cấu hình trong ConfigurationService.ConfigureIdentity()
 builder.Services.ConfigureIdentity(builder.Configuration);
 builder.Services.AddRepositories();
 builder.Services.AddServices();
