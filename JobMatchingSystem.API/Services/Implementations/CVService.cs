@@ -8,6 +8,7 @@ using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -22,13 +23,13 @@ namespace JobMatchingSystem.API.Services.Implementations
         private readonly IBlobStorageService _blobStorageService;
         private readonly string _aiServiceUrl;
 
-        public CVService(ICVRepository cvRepository, IWebHostEnvironment env, IBlobStorageService blobStorageService)
+        public CVService(ICVRepository cvRepository, IWebHostEnvironment env, IBlobStorageService blobStorageService, IConfiguration configuration)
         {
             _cvRepository = cvRepository;
             _env = env;
             _httpClient = new HttpClient();
             _blobStorageService = blobStorageService;
-            _aiServiceUrl = "http://localhost:8000"; // AI Service URL
+            _aiServiceUrl = configuration["AIService:BaseUrl"] ?? "http://localhost:8000"; // AI Service URL from configuration
         }
 
         public async Task UploadCVAsync(UploadCVRequest request, int userId)
