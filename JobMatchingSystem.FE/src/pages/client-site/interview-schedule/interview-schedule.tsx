@@ -101,8 +101,8 @@ export default function InterviewSchedule() {
   return (
     <div className="w-full p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Lịch Phỏng Vấn</h1>
-        <p className="text-muted-foreground mt-2">
+        <h1 className="text-2xl font-bold tracking-tight">Lịch phỏng vấn</h1>
+        <p className="text-muted-foreground ">
           Quản lý và theo dõi các buổi phỏng vấn của bạn
         </p>
       </div>

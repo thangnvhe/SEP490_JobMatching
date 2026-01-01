@@ -18,4 +18,5 @@ export const DashboardServices = {
 
   getAdminDashboard: (month?: number, year?: number) =>
     BaseApiServices.getAll<AdminDashboard>("/AdminDashboard", { month: month ?? 0, year: year ?? 0 }),
+  
 };
