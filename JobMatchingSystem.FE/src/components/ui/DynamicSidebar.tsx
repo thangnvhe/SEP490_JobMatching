@@ -305,7 +305,7 @@ function HiringManagerNav() {
     <>
       <SidebarGroup>
         <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
-          Tổng quan
+          Dashboard
         </SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu className="">
@@ -319,11 +319,22 @@ function HiringManagerNav() {
               >
                 <Link to="/hiringmanager/dashboard">
                   <LayoutDashboard className="size-4" />
-                  <span className="font-medium text-sm">Tổng quan</span>
+                  <span className="font-medium text-sm">Dashboard</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
 
+      <SidebarSeparator className="my-2" />
+
+      <SidebarGroup>
+        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
+          Phỏng vấn & Đánh giá
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu className="">
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
@@ -353,7 +364,6 @@ function HiringManagerNav() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>

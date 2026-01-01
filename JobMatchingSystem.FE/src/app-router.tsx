@@ -45,6 +45,7 @@ import { AdminGuard, RecruiterGuard, CandidateGuard, AuthGuard } from './guards/
 import CandidateDashboardPage from './pages/admin-site/Dashboard/CandidateDashboardPage';
 import AdminDashboardPage from './pages/admin-site/Dashboard/AdminDashboardPage';
 import HiringManagerDashboardPage from './pages/admin-site/Dashboard/HiringManagerDashboardPage';
+import RecruiterDashboardPage from './pages/admin-site/Dashboard/RecruiterDashboardPage';
 
 
 const AppRouter: React.FC = () => {
@@ -103,6 +104,7 @@ const AppRouter: React.FC = () => {
           <ClientLayout />
         </RecruiterGuard>
       }>
+        <Route path="dashboard" element={<RecruiterDashboardPage />} />
         <Route path="jobs" element={<RecruiterViewJobList />} />
         <Route path="jobs/create" element={<CreateJobPage />} />
         <Route path="cv-search" element={<CVSearchPage />} />
