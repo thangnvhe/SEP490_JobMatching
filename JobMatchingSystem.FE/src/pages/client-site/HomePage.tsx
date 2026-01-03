@@ -118,9 +118,6 @@ const HomePage = () => {
       setBestJobs(response.result.items);
       setBestJobsPagination(response.result.pageInfo);
     } catch (err: any) {
-      setBestJobsError(
-        err.response?.data?.message || "Lỗi khi tải danh sách việc làm tốt nhất"
-      );
     } finally {
       setBestJobsLoading(false);
     }
@@ -366,11 +363,10 @@ const HomePage = () => {
                     variant={selectedLocation === "" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setSelectedLocation("")}
-                    className={`shrink-0 ${
-                      selectedLocation === ""
+                    className={`shrink-0 ${selectedLocation === ""
                         ? "bg-emerald-600 hover:bg-emerald-700"
                         : "hover:bg-slate-100 hover:text-emerald-600"
-                    }`}
+                      }`}
                   >
                     Tất cả
                   </Button>
@@ -380,11 +376,10 @@ const HomePage = () => {
                       variant={selectedLocation === loc ? "default" : "ghost"}
                       size="sm"
                       onClick={() => handleLocationFilter(loc)}
-                      className={`shrink-0 ${
-                        selectedLocation === loc
+                      className={`shrink-0 ${selectedLocation === loc
                           ? "bg-emerald-600 hover:bg-emerald-700"
                           : "hover:bg-slate-100 hover:text-emerald-600"
-                      }`}
+                        }`}
                     >
                       {loc}
                     </Button>
@@ -508,9 +503,8 @@ const HomePage = () => {
                               </span>
                               <span className="text-sm font-bold text-emerald-700">
                                 {job.salaryMin && job.salaryMax
-                                  ? `${job.salaryMin / 1000000} - ${
-                                      job.salaryMax / 1000000
-                                    } triệu`
+                                  ? `${job.salaryMin / 1000000} - ${job.salaryMax / 1000000
+                                  } triệu`
                                   : "Thoả thuận"}
                               </span>
                             </div>

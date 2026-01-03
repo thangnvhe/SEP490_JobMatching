@@ -75,9 +75,7 @@ export const EditPositionDialog: React.FC<EditPositionDialogProps> = ({
       onUpdateSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Cập nhật vị trí thất bại"
-      );
+      toast.error(error.response.data.errorMessages[0]);
     } finally {
       setLoading(false);
     }

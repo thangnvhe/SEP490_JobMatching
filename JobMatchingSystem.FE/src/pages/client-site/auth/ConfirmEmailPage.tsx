@@ -14,10 +14,21 @@ export const ConfirmEmailPage = () => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
 
+  // Get token as raw encoded value from URL to preserve encoding
+  const getEncodedTokenFromUrl = () => {
+    const search = window.location.search;
+    const tokenParam = search.match(/token=([^&]*)/);
+    if (tokenParam && tokenParam[1]) {
+      return tokenParam[1];
+    }
+    return null;
+  };
+
   useEffect(() => {
     const confirmEmail = async () => {
       // Lấy token từ query parameter (TokenLink)
-      const token = searchParams.get('token');
+      // Get token as raw encoded value from URL to preserve encoding
+      const token = getEncodedTokenFromUrl();
       
       if (!token) {
         setStatus('error');
@@ -41,9 +52,7 @@ export const ConfirmEmailPage = () => {
         
       } catch (error: any) {
         setStatus('error');
-        const errorMessage = error.response?.data?.message || 
-          error.message ||
-          'Xác nhận email thất bại. Token có thể đã hết hạn hoặc không hợp lệ.';
+        const errorMessage = error.response.data.errorMessages[0];
         setMessage(errorMessage);
         toast.error(errorMessage);
       }

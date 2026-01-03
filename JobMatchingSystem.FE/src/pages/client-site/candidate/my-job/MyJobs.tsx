@@ -72,8 +72,8 @@ const fetchCompanyById = async (companyId: number): Promise<Company | null> => {
         if (res.isSuccess && res.result) {
             return res.result;
         }
-    } catch (error) {
-        console.error("Error fetching company", error);
+    } catch (error: any) {
+        toast.error(error.response.data.errorMessages[0]);
     }
     return null;
 };
@@ -115,7 +115,7 @@ export default function MyJobsPage() {
             });
             setAppliedJobs(response.result.items);
         } catch (err: any) {
-            console.log(err);
+            toast.error(err.response.data.errorMessages[0]);
         } finally {
             setLoadingApplied(false);
         }
@@ -127,7 +127,7 @@ export default function MyJobsPage() {
             const response = await SaveJobServices.getMySavedJobs();
             setSavedJobs(response.result);
         } catch (err: any) {
-            console.log(err);
+            toast.error(err.response.data.errorMessages[0]);
         } finally {
             setLoadingSaved(false);
         }
@@ -146,9 +146,8 @@ export default function MyJobsPage() {
                 // Refresh danh sách saved jobs
                 setSavedJobs(prev => prev.filter(job => job.id !== savedJobId));
             }
-        } catch (error) {
-            console.error(error);
-            toast.error("Lỗi khi bỏ lưu việc làm");
+        } catch (error: any) {
+            toast.error(error.response.data.errorMessages[0]);
         }
     }
 
@@ -275,8 +274,8 @@ const SavedJobItemWithFetch = ({ savedJob, onToggleSave, onNavigate }: { savedJo
                         setCompany(companyData);
                     }
                 }
-            } catch (error) {
-                console.error("Error fetching job or company", error);
+            } catch (error: any) {
+                toast.error(error.response.data.errorMessages[0]);
             } finally {
                 setLoading(false);
             }
@@ -427,8 +426,8 @@ const AppliedJobItemWithFetch = ({ candidateJob, onNavigate }: { candidateJob: C
                         setCompany(companyData);
                     }
                 }
-            } catch (error) {
-                console.error("Error fetching job or company", error);
+            } catch (error: any) {
+                toast.error(error.response.data.errorMessages[0]);
             } finally {
                 setLoading(false);
             }

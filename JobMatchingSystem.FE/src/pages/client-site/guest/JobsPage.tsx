@@ -111,7 +111,7 @@ export default function JobsPage() {
       setJobs(response.result.items);
       setPaginationInfo(response.result.pageInfo);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Lỗi khi tải dữ liệu việc làm");
+      toast.error(err.response.data.errorMessages[0]);
     } finally {
       setLoading(false);
     }
@@ -122,7 +122,7 @@ export default function JobsPage() {
       const response = await ProvincesService.getAllProvinces();
       setProvinces(response);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Lỗi khi tải dữ liệu tỉnh thành");
+      toast.error(err.response.data.errorMessages[0]);
     }
   }, []);
 
@@ -139,7 +139,7 @@ export default function JobsPage() {
         setPositions([]);
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Lỗi khi tải dữ liệu vị trí");
+      toast.error(err.response.data.errorMessages[0]);
       setPositions([]);
     }
   }, []);
@@ -153,7 +153,7 @@ export default function JobsPage() {
         setTaxonomies([]);
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Lỗi khi tải dữ liệu kỹ năng");
+      toast.error(err.response.data.errorMessages[0]);
       setTaxonomies([]);
     }
   }, []);
@@ -175,7 +175,7 @@ export default function JobsPage() {
       }
       setCompanies(companiesMap);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Lỗi khi tải dữ liệu công ty");
+      toast.error(err.response.data.errorMessages[0]);
     }
   }, []);
 

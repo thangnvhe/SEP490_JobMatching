@@ -100,7 +100,7 @@ export default function ViewTaxonomyList() {
         setExpandedIds(new Set());
         setChildrenMap(new Map());
       } catch (err: any) {
-        setError(err.response?.data?.message || "Lỗi khi tải dữ liệu kỹ năng");
+        setError(err.response.data.errorMessages[0]);
       } finally {
         setLoading(false);
       }
@@ -183,7 +183,7 @@ export default function ViewTaxonomyList() {
       setSelectedTaxonomy(null);
       getAllWithPagination(paginationInput);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Lỗi khi xóa kỹ năng");
+      toast.error(err.response.data.errorMessages[0]);
     } finally {
       setDeleteLoading(false);
     }
@@ -211,7 +211,7 @@ export default function ViewTaxonomyList() {
           const response = await TaxonomyService.getTaxonomyByParentId(id.toString());
           setChildrenMap((prev) => new Map(prev).set(id, response.result));
         } catch (err: any) {
-          toast.error(err.response?.data?.message || "Lỗi khi tải dữ liệu con");
+          toast.error(err.response.data.errorMessages[0]);
           return;
         } finally {
           setLoadingIds((prev) => {

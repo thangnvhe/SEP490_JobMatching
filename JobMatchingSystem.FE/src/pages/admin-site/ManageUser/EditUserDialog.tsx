@@ -236,9 +236,7 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
       onUpdateSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Cập nhật người dùng thất bại"
-      );
+      toast.error(error.response.data.errorMessages[0]);
     } finally {
       setLoading(false);
     }

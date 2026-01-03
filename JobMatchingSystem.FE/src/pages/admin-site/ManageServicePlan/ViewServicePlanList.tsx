@@ -84,7 +84,7 @@ export default function ViewServicePlanList() {
       setServicePlans(response.result.items);
       setPaginationInfo(response.result.pageInfo);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Lỗi khi tải dữ liệu gói dịch vụ");
+      setError(err.response.data.errorMessages[0]);
     } finally {
       setLoading(false);
     }
@@ -127,7 +127,7 @@ export default function ViewServicePlanList() {
       toast.success("Xóa gói dịch vụ thành công");
       handleRefresh();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi xóa gói dịch vụ");
+      toast.error(error.response.data.errorMessages[0]);
     } finally {
       setDeleteLoading(null);
       setDeleteDialogOpen(false);

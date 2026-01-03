@@ -75,9 +75,7 @@ export const EditTaxonomyDialog: React.FC<EditTaxonomyDialogProps> = ({
       onUpdateSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Cập nhật kỹ năng thất bại"
-      );
+      toast.error(error.response.data.errorMessages[0]);
     } finally {
       setLoading(false);
     }

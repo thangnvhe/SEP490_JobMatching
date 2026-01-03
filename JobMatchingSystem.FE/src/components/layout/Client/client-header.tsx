@@ -45,16 +45,16 @@ export function ClientHeader() {
   const handleDashboardNavigation = () => {
     switch (role?.toLowerCase()) {
       case 'candidate':
-        navigate('/candidate');
+        navigate('/candidate/dashboard');
         break;
       case 'recruiter':
-        navigate('/recruiter');
+        navigate('/recruiter/dashboard');
         break;
       case 'admin':
-        navigate('/admin');
+        navigate('/admin/dashboard');
         break;
       case 'hiringmanager':
-        navigate('/hiringmanager');
+        navigate('/hiringmanager/dashboard');
         break;
       default:
         navigate('/');
@@ -129,7 +129,7 @@ export function ClientHeader() {
                   <RoleGuard allowedRoles={["Recruiter", "Hiringmanager", "Admin"]}>
                     <DropdownMenuItem onClick={handleDashboardNavigation}>
                       <LayoutDashboard className="mr-2 h-4 w-4" />
-                      <span>Bảng điều khiển</span>
+                      <span>Dashboard</span>
                     </DropdownMenuItem>
                   </RoleGuard>
 
@@ -208,7 +208,7 @@ export function ClientHeader() {
                     onClick={handleDashboardNavigation}
                   >
                     <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Bảng điều khiển
+                    Dashboard
                   </Button>
                   <Button
                     variant="ghost"

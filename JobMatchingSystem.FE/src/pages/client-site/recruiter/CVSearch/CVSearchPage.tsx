@@ -51,8 +51,8 @@ export default function CVSearchPage() {
       if (response.isSuccess && response.result) {
         setTaxonomies(response.result);
       }
-    } catch (error) {
-      console.error('Error loading taxonomies:', error);
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     }
   }, []);
 
@@ -71,9 +71,8 @@ export default function CVSearchPage() {
           }
         }
       }
-    } catch (error) {
-      console.error('Error loading jobs:', error);
-      toast.error('Không thể tải danh sách công việc');
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     }
   }, [searchParams]);
 
@@ -86,8 +85,8 @@ export default function CVSearchPage() {
         const cvIds = new Set(response.result.map(savedCV => savedCV.cvId));
         setSavedCVIds(cvIds);
       }
-    } catch (error) {
-      console.error('Error loading saved CVs:', error);
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     }
   }, []);
 
@@ -117,10 +116,9 @@ export default function CVSearchPage() {
         setTotalCount(0);
         toast.error('Có lỗi xảy ra khi tìm kiếm ứng viên');
       }
-    } catch (error) {
-      console.error('Error searching candidates:', error);
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
       setCandidates([]); // Đảm bảo candidates luôn là array
-      toast.error('Có lỗi xảy ra khi tìm kiếm ứng viên');
     } finally {
       setLoading(false);
     }
@@ -176,9 +174,8 @@ export default function CVSearchPage() {
       // Reload saved CVs to get the updated list
       loadSavedCVs();
       toast.success('Đã lưu CV thành công');
-    } catch (error) {
-      console.error('Error saving CV:', error);
-      toast.error('Có lỗi xảy ra khi lưu CV');
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     } finally {
       setSavingCVIds(prev => {
         const newSet = new Set(prev);
@@ -206,9 +203,8 @@ export default function CVSearchPage() {
       });
       setSavedCVs(prev => prev.filter(cv => cv.cvId !== cvId));
       toast.success('Đã bỏ lưu CV');
-    } catch (error) {
-      console.error('Error unsaving CV:', error);
-      toast.error('Có lỗi xảy ra khi bỏ lưu CV');
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     } finally {
       setSavingCVIds(prev => {
         const newSet = new Set(prev);
@@ -232,9 +228,8 @@ export default function CVSearchPage() {
         message: `Chúng tôi muốn mời bạn ứng tuyển vào vị trí ${selectedJob.title} tại công ty chúng tôi.`
       });
       toast.success(`Đã gửi email mời ứng tuyển đến ${candidate.candidateName}`);
-    } catch (error) {
-      console.error('Error inviting candidate:', error);
-      toast.error('Có lỗi xảy ra khi gửi email mời ứng tuyển');
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     } finally {
       setInvitingCandidateIds(prev => {
         const newSet = new Set(prev);

@@ -181,10 +181,7 @@ export default function CreateEditServicePlanDialog({
       setIsOpen(false);
       onSuccess?.();
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.message ||
-        `Có lỗi xảy ra khi ${isEditMode ? "cập nhật" : "tạo"} gói dịch vụ`
-      );
+      toast.error(error.response.data.errorMessages[0]);
     } finally {
       setLoading(false);
     }

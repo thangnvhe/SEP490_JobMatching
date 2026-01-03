@@ -156,8 +156,7 @@ export default function CompanyMembersPage() {
         setError('Không thể tải danh sách thành viên');
       }
     } catch (error: any) {
-      console.error('Error loading members:', error);
-      setError(error?.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách thành viên');
+      toast.error(error.response.data.errorMessages[0]);
       setMembers([]);
     } finally {
       setLoading(false);
@@ -190,9 +189,8 @@ export default function CompanyMembersPage() {
 
         setCompanyId(userData.companyId);
 
-      } catch (error) {
-        console.error("Error loading company info:", error);
-        setError("Có lỗi xảy ra khi tải thông tin công ty");
+      } catch (error: any) {
+        toast.error(error.response.data.errorMessages[0]);
         setLoading(false);
       }
     };
@@ -267,9 +265,8 @@ export default function CompanyMembersPage() {
       setStatusFilter('all');
       const params = { ...paginationInput, search: debouncedKeyword };
       loadMembers(params);
-    } catch (error) {
-      toast.error("Có lỗi xảy ra khi xóa thành viên");
-      console.error("Error soft deleting member:", error);
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     }
   };
 
