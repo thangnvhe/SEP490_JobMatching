@@ -368,6 +368,32 @@ function HiringManagerNav() {
         </SidebarGroupContent>
       </SidebarGroup>
 
+      <SidebarSeparator className="my-2" />
+
+      <SidebarGroup>
+        <SidebarGroupLabel className=" text-xs font-semibold text-sidebar-foreground/60">
+          Cài đặt
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu className="">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={useIsActivePath("/hiringmanager/profile")}
+                tooltip="Hồ sơ cá nhân"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/hiringmanager/profile">
+                  <User className="size-4" />
+                  <span className="font-medium text-sm">Hồ sơ cá nhân</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
     </>
   );
 }

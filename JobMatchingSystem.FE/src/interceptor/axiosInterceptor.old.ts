@@ -16,6 +16,35 @@ const axiosInstance = axios.create({
         // "Content-Type": "application/json",
     },
     withCredentials: true,
+    // Custom paramsSerializer để xử lý array params đúng format
+    paramsSerializer: {
+        serialize: (params) => {
+            const parts: string[] = [];
+            
+            Object.keys(params).forEach(key => {
+                const value = params[key];
+                
+                // Bỏ qua giá trị null, undefined, hoặc array rỗng
+                if (value === null || value === undefined || (Array.isArray(value) && value.length === 0)) {
+                    return;
+                }
+                
+                // Nếu là array, thêm nhiều params cùng tên: key=value1&key=value2
+                if (Array.isArray(value)) {
+                    value.forEach(item => {
+                        if (item !== null && item !== undefined) {
+                            parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(item))}`);
+                        }
+                    });
+                } else {
+                    // Giá trị đơn lẻ
+                    parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);
+                }
+            });
+            
+            return parts.join('&');
+        }
+    }
 });
 
 /**
