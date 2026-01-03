@@ -253,10 +253,7 @@ export function ScheduleInterviewDialog({
                 onScheduleSuccess?.(updatedCandidate);
             }
         } catch (error: any) {
-            const errorMessage = error.response.data.result;
-            if (errorMessage) {
-                toast.error(errorMessage);
-            }
+            toast.error(error.response.data.errorMessages[0]);
         } finally {
             setIsLoading(false);
         }

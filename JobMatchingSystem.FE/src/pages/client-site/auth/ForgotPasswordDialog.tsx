@@ -22,7 +22,7 @@ interface ForgotPasswordDialogProps {
 
 export function ForgotPasswordDialog({ isOpen, onOpenChange, onOpenLogin }: ForgotPasswordDialogProps) {
   const dispatch = useAppDispatch();
-  const { loading, error } = useSelector((state: RootState) => state.authState);
+  const { loading } = useSelector((state: RootState) => state.authState);
   
   const [email, setEmail] = React.useState("");
   const [localError, setLocalError] = React.useState("");
@@ -37,13 +37,6 @@ export function ForgotPasswordDialog({ isOpen, onOpenChange, onOpenLogin }: Forg
       dispatch(clearError());
     }
   }, [isOpen, dispatch]);
-
-  // Show error toast when there's an error
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-    }
-  }, [error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,9 +62,8 @@ export function ForgotPasswordDialog({ isOpen, onOpenChange, onOpenLogin }: Forg
       } else {
         toast.error("Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại.");
       }
-    } catch (error) {
-      // Error is handled by the slice and shown via toast
-      console.error("Forgot password error:", error);
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     }
   };
 

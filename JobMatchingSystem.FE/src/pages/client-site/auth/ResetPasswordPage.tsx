@@ -98,9 +98,8 @@ const ResetPasswordPage: React.FC = () => {
       } else {
         toast.error(result.errorMessages?.[0] || 'Không thể đặt lại mật khẩu. Vui lòng thử lại.');
       }
-    } catch (error) {
-      console.error('Reset password error:', error);
-      toast.error('Có lỗi xảy ra khi đặt lại mật khẩu');
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     }
   };
 

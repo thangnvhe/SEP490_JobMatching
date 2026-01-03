@@ -76,7 +76,7 @@ export const CreateTaxonomyDialog: React.FC<CreateTaxonomyDialogProps> = ({
       onCreateSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Tạo kỹ năng thất bại");
+      toast.error(error.response.data.errorMessages[0]);
     } finally {
       setLoading(false);
     }

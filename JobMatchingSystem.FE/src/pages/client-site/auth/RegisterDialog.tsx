@@ -25,7 +25,7 @@ interface RegisterDialogProps {
 
 export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDialogProps) {
   const dispatch = useAppDispatch();
-  const { loading: isLoading, error } = useSelector((state: RootState) => state.authState);
+  const { loading: isLoading } = useSelector((state: RootState) => state.authState);
 
   // Zod schema chỉ giữ các trường cần thiết
   const registerSchema = z.object({
@@ -74,13 +74,6 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
     }
   }, [isOpen, dispatch, reset]);
 
-  // Show error toast when there's an error
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-    }
-  }, [error]);
-
   // Handle submit theo pattern LoginDialog
   const onSubmit = async (data: RegisterFormData) => {
     try {
@@ -97,8 +90,8 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
       setTimeout(() => {
         onOpenChange(false);
       }, 1500);
-    } catch (_) {
-      toast.error("Đăng ký thất bại!");
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     }
   };
 

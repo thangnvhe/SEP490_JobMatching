@@ -90,8 +90,8 @@ export default function CVManagement() {
         }
         setCvs([]);
       }
-    } catch (error) {
-      console.error('Error fetching CVs:', error);
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
       setCvs([]);
     } finally {
       setIsLoading(false);
@@ -126,9 +126,8 @@ export default function CVManagement() {
         console.error('Validation failed:', response.errorMessages);
         toast.error(`Lỗi validate CV: ${response.errorMessages?.join(', ')}`);
       }
-    } catch (error) {
-      console.error('Error validating CV:', error);
-      toast.error('Không thể kết nối tới dịch vụ kiểm tra CV. Bạn vẫn có thể upload file.');
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     } finally {
       setIsValidating(false);
     }
@@ -221,9 +220,8 @@ export default function CVManagement() {
         console.error('Upload error:', response.errorMessages);
         toast.error(`Lỗi: ${errorMsg}`);
       }
-    } catch (error) {
-      console.error('Error uploading CV:', error);
-      toast.error("Lỗi: Không thể upload CV. Vui lòng thử lại.");
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     } finally {
       setIsUploading(false);
     }
@@ -249,9 +247,8 @@ export default function CVManagement() {
         console.error('Set primary error:', response.errorMessages);
         toast.error(`Lỗi: ${errorMsg}`);
       }
-    } catch (error) {
-      console.error('Error setting primary CV:', error);
-      toast.error("Lỗi: Không thể đặt làm CV chính. Vui lòng thử lại.");
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     }
   };
 
@@ -273,9 +270,8 @@ export default function CVManagement() {
         const errorMsg = response.errorMessages?.join(', ') || 'Không thể xóa CV';
         toast.error(`Lỗi: ${errorMsg}`);
       }
-    } catch (error) {
-      console.error('Error deleting CV:', error);
-      toast.error("Lỗi: Không thể kết nối đến server. Vui lòng thử lại.");
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     } finally {
       setDeleteDialogOpen(false);
       setCvToDelete(null);

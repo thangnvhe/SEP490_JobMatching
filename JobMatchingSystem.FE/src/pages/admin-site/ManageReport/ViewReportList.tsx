@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { 
+import {
   Eye,
   Check,
   X,
@@ -27,6 +27,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 // Import types và services
 import { ReportService } from "@/services/report.service";
@@ -36,6 +48,7 @@ import { ReportItem, ReportStatus } from "@/models/report";
 import { PageInfo, PaginationParamsInput } from "@/models/base";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
+import { toast } from "sonner";
 
 export default function ViewReportList() {
   // Khai báo local state
@@ -47,7 +60,16 @@ export default function ViewReportList() {
   const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  
+
+  // Approve dialog state
+  const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
+  const [approveReportId, setApproveReportId] = useState<number | null>(null);
+
+  // Reject dialog state
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [rejectReportId, setRejectReportId] = useState<number | null>(null);
+  const [rejectReason, setRejectReason] = useState<string>('');
+
   // Pagination state
   const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
     currentPage: 1,
@@ -66,7 +88,7 @@ export default function ViewReportList() {
     sortBy: '',
     isDescending: false,
   });
-  
+
   const pageSizeOptions = [5, 10, 20, 50];
   const debouncedKeyword = useDebounce(keyword, 700);
 
@@ -75,7 +97,7 @@ export default function ViewReportList() {
     const enrichedReports = await Promise.all(
       reports.map(async (report) => {
         const enrichedReport = { ...report };
-        
+
         // Fetch job title
         try {
           const jobResponse = await JobServices.getById(report.jobId.toString());
@@ -86,7 +108,7 @@ export default function ViewReportList() {
           console.error(`Error fetching job ${report.jobId}:`, error);
           enrichedReport.jobTitle = `Job #${report.jobId}`;
         }
-        
+
         // Fetch reporter name
         try {
           const userResponse = await UserServices.getById(report.reporterId.toString());
@@ -97,7 +119,7 @@ export default function ViewReportList() {
           console.error(`Error fetching user ${report.reporterId}:`, error);
           enrichedReport.reporterName = `User #${report.reporterId}`;
         }
-        
+
         return enrichedReport;
       })
     );
@@ -109,15 +131,15 @@ export default function ViewReportList() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Thêm status filter vào params nếu có
       const requestParams = { ...params };
       if (statusFilter) {
         requestParams.status = statusFilter;
       }
-      
+
       const response = await ReportService.getAllWithPagination(requestParams);
-      
+
       // Enrich reports data with job and user information
       const enrichedReports = await enrichReportsData(response.result.items);
       setReports(enrichedReports);
@@ -184,35 +206,50 @@ export default function ViewReportList() {
     setIsViewDialogOpen(true);
   };
 
-  const handleApprove = async (reportId: number) => {
+  const handleOpenApproveDialog = (reportId: number) => {
+    setApproveReportId(reportId);
+    setIsApproveDialogOpen(true);
+  };
+
+  const handleApprove = async () => {
+    if (!approveReportId) return;
+
     try {
-      const response = await ReportService.updateReportCensor(reportId, {
+      const response = await ReportService.updateReportCensor(approveReportId, {
         status: 1, // Approved
         note: "Báo cáo được chấp nhận"
       });
-      if (response.isSuccess) {
-        getAllWithPagination(paginationInput); // Refresh data
-      } else {
-        console.error("Failed to approve report:", response.errorMessages);
-      }
-    } catch (error) {
-      console.error("Error approving report:", error);
+
+      setIsApproveDialogOpen(false);
+      setApproveReportId(null);
+      getAllWithPagination(paginationInput); // Refresh data
+      toast.success("Báo cáo được chấp nhận");
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     }
   };
 
-  const handleReject = async (reportId: number) => {
+  const handleOpenRejectDialog = (reportId: number) => {
+    setRejectReportId(reportId);
+    setRejectReason('');
+    setIsRejectDialogOpen(true);
+  };
+
+  const handleReject = async () => {
+    if (!rejectReportId) return;
+
     try {
-      const response = await ReportService.updateReportCensor(reportId, {
+      const response = await ReportService.updateReportCensor(rejectReportId, {
         status: 2, // Rejected
-        note: "Báo cáo bị từ chối"
+        note: rejectReason.trim() || "Báo cáo bị từ chối"
       });
-      if (response.isSuccess) {
-        getAllWithPagination(paginationInput); // Refresh data
-      } else {
-        console.error("Failed to reject report:", response.errorMessages);
-      }
-    } catch (error) {
-      console.error("Error rejecting report:", error);
+      setIsRejectDialogOpen(false);
+      setRejectReportId(null);
+      setRejectReason('');
+      getAllWithPagination(paginationInput); // Refresh data
+      toast.success("Báo cáo được từ chối");
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     }
   };
 
@@ -220,7 +257,7 @@ export default function ViewReportList() {
   const getStatusBadgeColor = (status: ReportStatus | number | string) => {
     // Handle both string and number values
     let normalizedStatus: string;
-    
+
     if (typeof status === 'number') {
       switch (status) {
         case 0: normalizedStatus = 'Pending'; break;
@@ -231,7 +268,7 @@ export default function ViewReportList() {
     } else {
       normalizedStatus = status.toString();
     }
-    
+
     switch (normalizedStatus) {
       case 'Pending':
         return 'bg-yellow-100 text-yellow-800';
@@ -247,7 +284,7 @@ export default function ViewReportList() {
   const getStatusIcon = (status: ReportStatus | number | string) => {
     // Handle both string and number values
     let normalizedStatus: string;
-    
+
     if (typeof status === 'number') {
       switch (status) {
         case 0: normalizedStatus = 'Pending'; break;
@@ -258,7 +295,7 @@ export default function ViewReportList() {
     } else {
       normalizedStatus = status.toString();
     }
-    
+
     switch (normalizedStatus) {
       case 'Pending':
         return <Clock className="h-3 w-3 mr-1" />;
@@ -274,7 +311,7 @@ export default function ViewReportList() {
   const getStatusLabel = (status: ReportStatus | number | string) => {
     // Handle both string and number values
     let normalizedStatus: string;
-    
+
     if (typeof status === 'number') {
       // Convert number to string enum
       switch (status) {
@@ -286,7 +323,7 @@ export default function ViewReportList() {
     } else {
       normalizedStatus = status.toString();
     }
-    
+
     // Convert to Vietnamese
     switch (normalizedStatus) {
       case 'Pending':
@@ -304,7 +341,7 @@ export default function ViewReportList() {
   const getReportTypeLabel = (subject: number | string) => {
     // Handle both string and number values
     let normalizedSubject: string;
-    
+
     if (typeof subject === 'number') {
       // Convert number to string enum
       switch (subject) {
@@ -317,7 +354,7 @@ export default function ViewReportList() {
     } else {
       normalizedSubject = subject;
     }
-    
+
     // Convert to Vietnamese
     switch (normalizedSubject) {
       case 'Spam':
@@ -435,7 +472,7 @@ export default function ViewReportList() {
           normalizedStatus = String(status);
         }
         const isPending = normalizedStatus === 'Pending';
-        
+
         return (
           <div className="flex items-center space-x-1">
             <Button
@@ -446,17 +483,28 @@ export default function ViewReportList() {
             >
               <Eye className="h-4 w-4" />
             </Button>
-            
+
             {isPending && (
-              <Button
-                onClick={() => handleApprove(report.id)}
-                variant="outline"
-                size="sm"
-                className="text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600"
-                title="Chấp nhận"
-              >
-                <Check className="h-4 w-4" />
-              </Button>
+              <>
+                <Button
+                  onClick={() => handleOpenApproveDialog(report.id)}
+                  variant="outline"
+                  size="sm"
+                  className="text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600"
+                  title="Chấp nhận"
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button
+                  onClick={() => handleOpenRejectDialog(report.id)}
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600"
+                  title="Từ chối"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </>
             )}
           </div>
         );
@@ -533,7 +581,7 @@ export default function ViewReportList() {
               onSortingChange={handleSortingChange}
             />
           )}
-          
+
           {/* Pagination */}
           {!error && paginationInfo && paginationInfo.totalItem > 0 && (
             <div className="flex items-center justify-between mt-4 gap-6">
@@ -634,7 +682,7 @@ export default function ViewReportList() {
                 </Button>
               </div>
             </div>
-            
+
             {/* Content */}
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
               <div className="space-y-6">
@@ -709,7 +757,7 @@ export default function ViewReportList() {
                   )}
                   */}
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
                     Lý do báo cáo
@@ -718,7 +766,7 @@ export default function ViewReportList() {
                     <p className="text-sm whitespace-pre-wrap">{selectedReport.reason}</p>
                   </div>
                 </div>
-                
+
                 {selectedReport.note && (
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">
@@ -730,7 +778,7 @@ export default function ViewReportList() {
                   </div>
                 )}
               </div>
-              
+
               {/* Action buttons for pending reports */}
               {(() => {
                 const status = selectedReport.status;
@@ -744,33 +792,101 @@ export default function ViewReportList() {
                 }
                 return normalizedStatus === 'Pending';
               })() && (
-                <div className="flex justify-end space-x-2 mt-6 pt-4 border-t">
-                  <Button
-                    onClick={() => {
-                      handleApprove(selectedReport.id);
-                      setIsViewDialogOpen(false);
-                    }}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <Check className="h-4 w-4 mr-2" />
-                    Chấp nhận báo cáo
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      handleReject(selectedReport.id);
-                      setIsViewDialogOpen(false);
-                    }}
-                    variant="destructive"
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Từ chối báo cáo
-                  </Button>
-                </div>
-              )}
+                  <div className="flex justify-end space-x-2 mt-6 pt-4 border-t">
+                    <Button
+                      onClick={() => {
+                        setIsViewDialogOpen(false);
+                        handleOpenApproveDialog(selectedReport.id);
+                      }}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      Chấp nhận báo cáo
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setIsViewDialogOpen(false);
+                        handleOpenRejectDialog(selectedReport.id);
+                      }}
+                      variant="destructive"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Từ chối báo cáo
+                    </Button>
+                  </div>
+                )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Approve Confirmation Dialog */}
+      <AlertDialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận chấp nhận báo cáo</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn chấp nhận báo cáo này?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setApproveReportId(null);
+              }}
+            >
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleApprove}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Xác nhận chấp nhận
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reject Confirmation Dialog */}
+      <AlertDialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận từ chối báo cáo</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn từ chối báo cáo này? Vui lòng nhập lý do từ chối (tùy chọn).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="reject-reason">Lý do từ chối</Label>
+              <Textarea
+                id="reject-reason"
+                placeholder="Nhập lý do từ chối báo cáo (tùy chọn)..."
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                rows={4}
+                className="resize-none"
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setRejectReason('');
+                setRejectReportId(null);
+              }}
+            >
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReject}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Xác nhận từ chối
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

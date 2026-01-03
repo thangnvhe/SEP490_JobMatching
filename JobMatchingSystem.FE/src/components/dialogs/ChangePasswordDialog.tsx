@@ -94,15 +94,7 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
       }
 
     } catch (error: any) {
-      console.error("Change password error:", error);
-      
-      // Xử lý lỗi từ API trả về
-      const errorMessage = 
-        error.response?.data?.message || 
-        error.response?.data?.errorMessages?.[0] ||
-        "Có lỗi xảy ra khi đổi mật khẩu";
-        
-      toast.error(errorMessage);
+      toast.error(error.response.data.errorMessages[0]);
     } finally {
       setLoading(false);
     }

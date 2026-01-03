@@ -109,8 +109,8 @@ export function LoginDialog({
       navigate(redirectPath);
       
       onLoginSuccess?.(); // Call success callback if provided
-    } catch (error) {
-      toast.error("Đăng nhập thất bại!");
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     }
   };
 

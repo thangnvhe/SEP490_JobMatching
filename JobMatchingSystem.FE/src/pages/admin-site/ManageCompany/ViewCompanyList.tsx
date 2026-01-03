@@ -15,6 +15,7 @@ import { getStatusString, type Company } from "@/models/company";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { PageInfo, PaginationParamsInput } from "@/models/base";
+import { toast } from "sonner";
 
 // Helper function để cắt ngắn text
 const truncateText = (text: string, maxLength: number = 100): string => {
@@ -105,7 +106,7 @@ export function ManageCompanyPage() {
       setCompanies(response.result.items);
       setPaginationInfo(response.result.pageInfo);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Lỗi khi tải dữ liệu công ty');
+      setError(err.response.data.errorMessages[0]);
     } finally {
       setLoading(false);
     }
@@ -176,8 +177,8 @@ export function ManageCompanyPage() {
     try {
       await CompanyServices.changeStatus(String(companyId));
       await getAllWithPagination(paginationInput);
-    } catch (error) {
-      console.error("Error deleting company:", error);
+    } catch (error: any) {
+      toast.error(error.response.data.errorMessages[0]);
     }
   };
 
@@ -186,7 +187,7 @@ export function ManageCompanyPage() {
       await CompanyServices.acceptCompany(String(companyId));
       await getAllWithPagination(paginationInput);
     } catch (error: any) {
-      console.error('Error accepting company:', error);
+      toast.error(error.response.data.errorMessages[0]);
     }
   };
 
@@ -195,7 +196,7 @@ export function ManageCompanyPage() {
       await CompanyServices.rejectCompany(String(companyId), rejectReason);
       await getAllWithPagination(paginationInput);
     } catch (error: any) {
-      console.error('Error rejecting company:', error);
+      toast.error(error.response.data.errorMessages[0]);
     }
   };
 

@@ -174,8 +174,8 @@ export default function ViewJobList() {
         if (response.isSuccess) {
           setSelectedJobCompany(response.result);
         }
-      } catch (error) {
-        console.error("Error fetching company data:", error);
+      } catch (error: any) {
+        toast.error(error.response.data.errorMessages[0]);
       }
     }
   };
@@ -195,8 +195,7 @@ export default function ViewJobList() {
       // Refresh data
       getAllWithPagination(paginationInput);
     } catch (error: any) {
-      console.error("Error toggling job status:", error);
-      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi cập nhật trạng thái");
+      toast.error(error.response.data.errorMessages[0]);
     }
   };
 

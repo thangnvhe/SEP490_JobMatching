@@ -130,9 +130,7 @@ export default function CreateTemplateCvDialog({
       handleOpenChange(false);
       onSuccess?.();
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Có lỗi xảy ra khi tạo template CV"
-      );
+      toast.error(error.response.data.errorMessages[0]);
     } finally {
       setLoading(false);
     }

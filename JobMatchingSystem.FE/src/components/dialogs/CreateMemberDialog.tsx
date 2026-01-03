@@ -137,35 +137,7 @@ export const CreateMemberDialog: React.FC<CreateMemberDialogProps> = ({
     } catch (error: any) {
       console.error("Error creating member:", error);
       
-      // Extract error messages from API response
-      const apiErrorMessages: string[] = [];
-
-      // Case 1: Validation errors from ModelState (errors object with field errors)
-      if (error.response?.data?.errors && typeof error.response.data.errors === 'object') {
-        Object.values(error.response.data.errors).forEach((fieldErrors: any) => {
-          if (Array.isArray(fieldErrors)) {
-            fieldErrors.forEach((msg: string) => {
-              apiErrorMessages.push(msg);
-            });
-          }
-        });
-      }
-
-      // Case 2: Business logic errors (errorMessages array)
-      if (error.response?.data?.errorMessages && Array.isArray(error.response.data.errorMessages)) {
-        error.response.data.errorMessages.forEach((msg: string) => {
-          apiErrorMessages.push(msg);
-        });
-      }
-
-      // Display all collected errors
-      if (apiErrorMessages.length > 0) {
-        apiErrorMessages.forEach((msg: string) => {
-          toast.error(msg);
-        });
-      } else {
-        toast.error(error.message || "Có lỗi xảy ra khi tạo thành viên");
-      }
+      toast.error(error.response.data.errorMessages[0]);
     } finally {
       setLoading(false);
     }
