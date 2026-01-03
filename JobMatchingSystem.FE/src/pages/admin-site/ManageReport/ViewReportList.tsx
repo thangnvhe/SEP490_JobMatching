@@ -215,7 +215,7 @@ export default function ViewReportList() {
     if (!approveReportId) return;
 
     try {
-      const response = await ReportService.updateReportCensor(approveReportId, {
+      await ReportService.updateReportCensor(approveReportId, {
         status: 1, // Approved
         note: "Báo cáo được chấp nhận"
       });
@@ -239,7 +239,7 @@ export default function ViewReportList() {
     if (!rejectReportId) return;
 
     try {
-      const response = await ReportService.updateReportCensor(rejectReportId, {
+      await ReportService.updateReportCensor(rejectReportId, {
         status: 2, // Rejected
         note: rejectReason.trim() || "Báo cáo bị từ chối"
       });
