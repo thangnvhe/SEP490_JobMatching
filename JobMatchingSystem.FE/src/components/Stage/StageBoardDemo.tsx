@@ -5,7 +5,7 @@ import { JobStageServices } from "@/services/job-stage.service";
 import { CandidateStageServices } from "@/services/candidate-stage.service";
 import { CandidateStage } from "@/models/candidate-stage";
 import { JobStage } from "@/models/job-stage";
-import { RefreshCcw, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface StageBoardDemoProps {
