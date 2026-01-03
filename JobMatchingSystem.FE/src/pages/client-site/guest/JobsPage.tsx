@@ -7,6 +7,7 @@ import JobSearchFilter from "@/components/ui/jobs/JobSearchFilter";
 import JobList from "./JobList";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LoginDialog } from "@/pages/client-site/auth/LoginDialog";
 // Services & Types
 import { JobServices } from "@/services/job.service";
 import { CompanyServices } from "@/services/company.service";
@@ -23,11 +24,14 @@ import { Position } from "@/models/position";
 import { PositionService } from "@/services/position.service";
 import { Taxonomy } from "@/models/taxonomy";
 import { TaxonomyService } from "@/services/taxonomy.service";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 
 
 export default function JobsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { isAuthenticated } = useSelector((state: RootState) => state.authState);
 
   const initialSearch = searchParams.get("search") || "";
   // Data
@@ -38,6 +42,7 @@ export default function JobsPage() {
   const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
   // local state 
   const [loading, setLoading] = useState(true);
+  const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
  
   const [keyword, setKeyword] = useState(initialSearch);
   const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
@@ -194,6 +199,13 @@ export default function JobsPage() {
 
 
   const handleSaveJob = async (jobId: number) => {
+    // Kiểm tra đăng nhập trước khi lưu công việc
+    if (!isAuthenticated) {
+      toast.warning("Bạn phải đăng nhập trước khi sử dụng tính năng này");
+      setLoginDialogOpen(true);
+      return;
+    }
+
     try {
       const response = await SaveJobServices.saveJob(jobId);
       if (response.isSuccess) {
@@ -348,6 +360,10 @@ export default function JobsPage() {
           </main>
         </div>
       </div>
+      <LoginDialog
+        isOpen={isLoginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+      />
     </div>
   );
 }

@@ -96,27 +96,7 @@ export function StageBoardDemo({ jobId = 655 }: StageBoardDemoProps) {
 
   return (
     <div className="h-[calc(100vh-100px)] w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-2 ">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">
-            Quy trình tuyển dụng
-          </h1>
-          <p className="text-muted-foreground">
-            Kéo thả ứng viên giữa các vòng để cập nhật trạng thái
-          </p>
-        </div>
-        <Button
-          onClick={handleRefresh}
-          variant="outline"
-          size="icon"
-          aria-label="Làm mới"
-          title="Làm mới dữ liệu"
-          disabled={loading}
-        >
-          <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-        </Button>
-      </div>
+
 
       {/* Content */}
       {loading && !columns.length ? (

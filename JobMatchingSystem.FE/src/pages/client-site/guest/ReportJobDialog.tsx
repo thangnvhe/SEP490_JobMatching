@@ -129,7 +129,7 @@ export function ReportJobDialog({
                 <DialogTitle className="text-xl font-semibold text-gray-900">
                   Báo cáo tin tuyển dụng
                 </DialogTitle>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-gray-600 mt-1 break-all">
                   Báo cáo: "{jobTitle}"
                 </p>
               </div>
@@ -199,7 +199,7 @@ export function ReportJobDialog({
                 rows={6}
                 placeholder="Vui lòng mô tả chi tiết lý do báo cáo..."
                 {...register("reason")}
-                className={`resize-none ${errors.reason ? "border-red-500" : "border-gray-300"} focus:border-red-500 focus:ring-red-500`}
+                className={`resize-none break-all ${errors.reason ? "border-red-500" : "border-gray-300"} focus:border-red-500 focus:ring-red-500`}
               />
               {errors.reason && (
                 <p className="text-sm text-red-500">{errors.reason.message}</p>

@@ -31,10 +31,11 @@ import JobDetailPage from './pages/client-site/guest/JobDetailPage';
 import { ConfirmEmailPage } from './pages/client-site/auth/ConfirmEmailPage';
 import ViewReportList from './pages/admin-site/ManageReport/ViewReportList';
 import ViewOrderList from './pages/admin-site/ManageOrder/ViewOrderList';
-import CandidateViewReportList from './pages/client-site/ManageReport/ViewReportList';
+import CandidateViewReportList from './pages/client-site/candidate/ManageReport/ViewReportList';
 import { StageBoardDemo } from './components/Stage/StageBoardDemo';
-import InterviewSchedule from './pages/client-site/interview-schedule/interview-schedule';
-import EvaluationHistory from './pages/client-site/evaluation-history/evaluation-history';
+import InterviewSchedule from './pages/client-site/hiring-manager/interview-schedule/interview-schedule';
+import EvaluationHistory from './pages/client-site/hiring-manager/evaluation-history/evaluation-history';
+import HiringManagerProfile from './pages/client-site/hiring-manager/profile/profile';
 import PricingPage from './pages/client-site/pricing/pricing';
 import OrderPage from './pages/client-site/order/order';
 import InterviewConfirmPage from './pages/client-site/candidate/InterviewConfirmPage';
@@ -140,6 +141,7 @@ const AppRouter: React.FC = () => {
       }>
         <Route path="interview-schedule" element={<InterviewSchedule />} />
         <Route path="evaluation-history" element={<EvaluationHistory />} />
+        <Route path="profile" element={<HiringManagerProfile />} />
         <Route path="dashboard" element={<HiringManagerDashboardPage />} />
       </Route>
 

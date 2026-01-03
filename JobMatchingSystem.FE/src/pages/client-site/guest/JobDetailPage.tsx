@@ -25,8 +25,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ReportJobDialog } from "@/components/dialogs/ReportJobDialog";
+import { ReportJobDialog } from "@/pages/client-site/guest/ReportJobDialog";
 import ApplyJobDialog from "@/components/dialogs/ApplyJobDialog";
+import { LoginDialog } from "@/pages/client-site/auth/LoginDialog";
 
 // Services & Models
 import { JobServices } from "@/services/job.service";
@@ -37,10 +38,13 @@ import { Job } from "@/models/job";
 import { Company } from "@/models/company";
 import { API_BASE_URL } from "../../../../env";
 import { PaginationParamsInput } from "@/models/base";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 
 export default function JobDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useSelector((state: RootState) => state.authState);
 
   const [job, setJob] = useState<Job | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
@@ -48,15 +52,16 @@ export default function JobDetailPage() {
   const [savingJob, setSavingJob] = useState(false);
   const [isReportDialogOpen, setReportDialogOpen] = useState(false);
   const [isApplyDialogOpen, setApplyDialogOpen] = useState(false);
+  const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
   const [recommendedJobs, setRecommendedJobs] = useState<Job[]>([]);
   const [paginationInput, setPaginationInput] = useState<PaginationParamsInput>({
     page: 1,
     size: 10,
     search: '',
-    sortBy: '',
+    sortBy: 'title',
     isDecending: false,
     salaryMin: null,
-    taxonomyIds: id ? [id] : [],
+    taxonomyIds: [],
 });
   const getLogoUrl = (logoPath?: string) => {
     if (!logoPath) return "https://placehold.co/100x100?text=Logo";
@@ -88,11 +93,14 @@ export default function JobDetailPage() {
         setJob(response.result);
         
         // Cập nhật paginationInput với salaryMin và taxonomyIds từ job
+        // taxonomyIds phải là array của string để serialize đúng format: taxonomyIds=2&taxonomyIds=3
         const taxonomyIds = response.result.taxonomies?.map(t => t.id.toString()) || [];
+        console.log('taxonomyIds:', taxonomyIds);
+        
         const newPaginationInput: PaginationParamsInput = {
           ...paginationInput,
           salaryMin: response.result.salaryMin || null,
-          taxonomyIds: taxonomyIds,
+          taxonomyIds: taxonomyIds.length > 0 ? taxonomyIds : undefined, // Không gửi nếu array rỗng
         };
         setPaginationInput(newPaginationInput);
         
@@ -115,6 +123,7 @@ export default function JobDetailPage() {
       setLoading(false);
     }
   };
+  
   const location = useLocation();
   const getBackPath = () => {
     const from = location.state?.from;
@@ -131,6 +140,14 @@ export default function JobDetailPage() {
 
   const handleSaveJob = async () => {
     if (!job?.jobId || savingJob) return;
+    
+    // Kiểm tra đăng nhập trước khi lưu công việc
+    if (!isAuthenticated) {
+      toast.warning("Bạn phải đăng nhập trước khi sử dụng tính năng này");
+      setLoginDialogOpen(true);
+      return;
+    }
+
     try {
       setSavingJob(true);
       await SaveJobServices.saveJob(job.jobId);
@@ -140,6 +157,16 @@ export default function JobDetailPage() {
     } finally {
       setSavingJob(false);
     }
+  };
+
+  const handleReportClick = () => {
+    // Kiểm tra đăng nhập trước khi mở dialog báo cáo
+    if (!isAuthenticated) {
+      toast.warning("Bạn phải đăng nhập trước khi sử dụng tính năng này");
+      setLoginDialogOpen(true);
+      return;
+    }
+    setReportDialogOpen(true);
   };
 
   const handleSubmitReport = async (reportData: { jobId: number; subject: number; reason: string }) => {
@@ -236,7 +263,7 @@ export default function JobDetailPage() {
                 <Button
                   variant="outline"
                   className="flex-1 border-red-200 bg-white text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 text-base font-semibold transition-all shadow-sm h-10"
-                  onClick={() => setReportDialogOpen(true)}
+                  onClick={handleReportClick}
                 >
                   <Flag className="mr-1.5 h-4 w-4" /> Báo cáo
                 </Button>
@@ -520,6 +547,14 @@ export default function JobDetailPage() {
         jobId={job.jobId}
         jobTitle={job.title}
         onUploadCV={() => navigate("/candidate/cv-management")}
+      />
+      <LoginDialog
+        isOpen={isLoginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        onLoginSuccess={() => {
+          // Sau khi đăng nhập thành công, có thể tự động mở lại dialog báo cáo hoặc lưu công việc
+          // Tuy nhiên, để đơn giản, chỉ đóng login dialog
+        }}
       />
     </div>
   );
