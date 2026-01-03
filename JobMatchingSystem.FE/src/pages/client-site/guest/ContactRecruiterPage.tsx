@@ -50,44 +50,44 @@ const ACCEPTED_MIME_TYPES = ["application/pdf", "image/jpeg", "image/jpg", "imag
 const phoneRegex = /^(0|\+84)[0-9]{8,11}$/;
 
 const companyCreateSchema = z.object({
-  fullName: z.string().min(1, "Full name is required").max(100, "Full name must not exceed 100 characters"),
+  fullName: z.string().min(1, "Vui lòng nhập họ và tên").max(100, "Họ và tên không được vượt quá 100 ký tự"),
   email: z
     .string()
-    .min(1, "Work email is required")
-    .email("Invalid email format"),
+    .min(1, "Vui lòng nhập email")
+    .email("Email không hợp lệ"),
   phoneContact: z
     .string()
-    .min(1, "Phone number is required")
+    .min(1, "Vui lòng nhập số điện thoại")
     .regex(
       phoneRegex,
-      "Invalid phone number format"
+      "Số điện thoại không hợp lệ"
     )
-    .min(8, "Phone number must be between 8–15 digits")
-    .max(15, "Phone number must be between 8–15 digits"),
-  name: z.string().min(1, "Company name is required").max(150, "Company name must not exceed 150 characters"),
+    .min(8, "Số điện thoại phải có từ 8-15 chữ số")
+    .max(15, "Số điện thoại phải có từ 8-15 chữ số"),
+  name: z.string().min(1, "Vui lòng nhập tên công ty").max(150, "Tên công ty không được vượt quá 150 ký tự"),
   website: z
     .string()
-    .min(1, "Website URL is required")
-    .url("Invalid website URL format"),
-  taxCode: z.string().min(1, "Tax code is required"),
-  province: z.string().min(1, "Address is required"),
-  ward: z.string().min(1, "Address is required"),
-  street: z.string().min(1, "Address is required"),
-  description: z.string().min(1, "Description is required").max(255, "Description must not exceed 255 characters"),
+    .min(1, "Vui lòng nhập website")
+    .url("Địa chỉ website không hợp lệ"),
+  taxCode: z.string().min(1, "Vui lòng nhập mã số thuế"),
+  province: z.string().min(1, "Vui lòng chọn tỉnh/thành phố"),
+  ward: z.string().min(1, "Vui lòng chọn phường/xã"),
+  street: z.string().min(1, "Vui lòng nhập số nhà, tên đường"),
+  description: z.string().min(1, "Vui lòng nhập mô tả").max(255, "Mô tả không được vượt quá 255 ký tự"),
   licenseFile: z
     .custom<FileList>(
       (val) => val instanceof FileList,
-      "License file is required"
+      "Vui lòng tải lên giấy phép kinh doanh"
     )
-    .refine((files) => files.length > 0, "License file is required")
-    .refine((files) => files.length <= 1, "Only one file allowed")
+    .refine((files) => files.length > 0, "Vui lòng tải lên giấy phép kinh doanh")
+    .refine((files) => files.length <= 1, "Chỉ được chọn một file")
     .refine(
       (files) => ACCEPTED_MIME_TYPES.includes(files[0]?.type),
-      "Invalid file format. Only PDF, JPG, JPEG, PNG allowed"
+      "Định dạng file không hợp lệ. Chỉ chấp nhận PDF, JPG, JPEG, PNG"
     )
     .refine(
       (files) => files[0]?.size <= MAX_FILE_SIZE,
-      "File size must not exceed 5MB"
+      "Kích thước file không được vượt quá 5MB"
     ),
 });
 
