@@ -48,7 +48,7 @@ namespace JobMatchingSystem.API.Configuration
 
             var password = "Admin123@";
 
-            for (int i = 1; i <= 3; i++)
+            for (int i = 1; i <= 1; i++)
             {
                 var email = $"admin{i}@gmail.com";
                 var existingUser = await userManager.FindByEmailAsync(email);

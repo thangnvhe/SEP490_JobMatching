@@ -8,13 +8,13 @@ namespace JobMatchingSystem.API.Data.SeedData
         public static async Task SeedAllData(this WebApplication webApplication)
         {
             // Roles are already seeded in ConfigurationService.SeedAdminUserAsync()
-            await CompanySeeder.SeedCompaniesAsync(webApplication);
-            await RecruiterSeeder.SeedRecruitersAsync(webApplication);
-            await CandidateSeeder.SeedCandidatesAsync(webApplication);
+            //await CompanySeeder.SeedCompaniesAsync(webApplication);
+            //await RecruiterSeeder.SeedRecruitersAsync(webApplication);
+            //await CandidateSeeder.SeedCandidatesAsync(webApplication);
             await TaxonomySeeder.SeedTaxonomiesAsync(webApplication);          
-            await JobSeeder.SeedJobAsync(webApplication);
-            await JobQuotaSeeder.SeedJobQuotasAsync(webApplication);
-            await CVSeeder.SeedCVUploadsAsync(webApplication);
+            //await JobSeeder.SeedJobAsync(webApplication);
+            //await JobQuotaSeeder.SeedJobQuotasAsync(webApplication);
+            //await CVSeeder.SeedCVUploadsAsync(webApplication);
             await PositionSeeder.SeedPositionsAsync(webApplication);
         }
     }
