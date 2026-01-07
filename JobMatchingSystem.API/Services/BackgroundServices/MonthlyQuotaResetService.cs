@@ -1,4 +1,5 @@
-﻿using JobMatchingSystem.API.Data;
+﻿using HandlebarsDotNet;
+using JobMatchingSystem.API.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace JobMatchingSystem.API.Services.BackgroundServices
@@ -47,16 +48,13 @@ namespace JobMatchingSystem.API.Services.BackgroundServices
                 using var scope = _serviceProvider.CreateScope();
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
+                var systemConfig = await dbContext.SystemConfigs.FirstAsync();
+
                 // Cách 1: Dùng raw SQL - nhanh nhất (khuyên dùng)
                 var affectedRows = await dbContext.Database
-                    .ExecuteSqlRawAsync("UPDATE JobQuotas SET MonthlyQuota = 5");
+                                  .ExecuteSqlRawAsync($"UPDATE JobQuotas SET MonthlyQuota = {systemConfig.JobQuota}");
 
-                // Nếu muốn ghi log chi tiết hơn:
-                // var quotas = await dbContext.JobQuotas.ToListAsync();
-                // foreach (var q in quotas) q.MonthlyQuota = 5;
-                // await dbContext.SaveChangesAsync();
-
-                _logger.LogInformation("ĐÃ RESET THÀNH CÔNG MonthlyQuota = 5 cho {Count} nhà tuyển dụng vào {Now}",
+                _logger.LogInformation("ĐÃ RESET THÀNH CÔNG MonthlyQuota cho {Count} nhà tuyển dụng vào {Now}",
                     affectedRows, DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"));
             }
             catch (Exception ex)

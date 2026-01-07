@@ -40,6 +40,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IHighlightJobRepository, HighlightJobRepository>();
             services.AddScoped<IExtensionJobRepository, ExtensionJobRepository>();
             services.AddScoped<IPositionRepository, PositionRepository>();
+            services.AddScoped<ISystemConfigRepository, SystemConfigRepository>();
             return services;
         }
 
@@ -96,6 +97,7 @@ namespace JobMatchingSystem.API.Configuration
             services.AddScoped<IRecruiterDashboardService, RecruiterDashboardService>();
             services.AddScoped<ICandidateDashboardService, CandidateDashboardService>();
             services.AddScoped<IHiringManagerDashboardService, HiringManagerDashboardService>();
+            services.AddScoped<ISystemConfigService, SystemConfigService>();
             return services;
         }
 

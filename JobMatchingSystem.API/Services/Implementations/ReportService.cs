@@ -202,25 +202,27 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         private int CalculateCompanyPenalty(ReportType reportType)
         {
+            var systemConfig = _context.SystemConfigs.FirstOrDefault(x => x.Id == 1);
             return reportType switch
             {
-                ReportType.FraudulentJobPosting => 15,  // Tin tuyển dụng gian lận (giảm từ 25)
-                ReportType.Spam => 5,                    // Spam (giảm từ 10)
-                ReportType.InappropriateContent => 8,    // Nội dung không phù hợp (giảm từ 15)
-                ReportType.Other => 6,                   // Khác (giảm từ 12)
-                _ => 8                                    // Mặc định
+                ReportType.FraudulentJobPosting => systemConfig.CompanyFraudulentPenalty,
+                ReportType.Spam => systemConfig.CompanySpamPenalty,
+                ReportType.InappropriateContent => systemConfig.CompanyInappropriatePenalty,
+                ReportType.Other => systemConfig.CompanyOtherPenalty,
+                _ => systemConfig.CompanyOtherPenalty,
             };
         }
 
         private int CalculateReporterPenalty(ReportType reportType)
         {
+            var systemConfig = _context.SystemConfigs.FirstOrDefault(x => x.Id == 1);
             return reportType switch
             {
-                ReportType.FraudulentJobPosting => 8,   // Báo cáo sai về gian lận
-                ReportType.Spam => 3,                    // Báo cáo sai về spam
-                ReportType.InappropriateContent => 5,    // Báo cáo sai về nội dung
-                ReportType.Other => 4,                   // Báo cáo sai khác
-                _ => 5                                    // Mặc định
+                ReportType.FraudulentJobPosting => systemConfig.ReporterFraudulentPenalty,
+                ReportType.Spam => systemConfig.ReporterSpamPenalty,
+                ReportType.InappropriateContent => systemConfig.ReporterInappropriatePenalty,
+                ReportType.Other => systemConfig.ReporterOtherPenalty,
+                _ => systemConfig.ReporterOtherPenalty,
             };
         }
 

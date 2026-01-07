@@ -57,7 +57,8 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error AssignRoleFailed() => new("Gán vai trò cho người dùng thất bại.", HttpStatusCode.InternalServerError);
         public static Error NotFoundServicePlan() => new("Không tìm thấy gói dịch vụ", HttpStatusCode.NotFound);
         public static Error NotFoundJobQuota() => new("Không tìm thấy hạn mức đăng tin", HttpStatusCode.NotFound);
-        
+        public static Error NotFoundSystemConfig() => new("Không tìm thấy SystemConfig", HttpStatusCode.NotFound);
+
         // UpdateResult specific errors
         public static Error InvalidResultValue() => new("Giá trị Result chỉ được phép là 'Pass' hoặc 'Fail'", HttpStatusCode.BadRequest);
         public static Error InvalidStageProgression() => new("Chỉ được phép chuyển ứng viên đến giai đoạn tiếp theo", HttpStatusCode.BadRequest);
