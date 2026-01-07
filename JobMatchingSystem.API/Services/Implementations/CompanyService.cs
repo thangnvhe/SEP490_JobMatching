@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Azure.Core;
+using JobMatchingSystem.API.Data;
 using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Enums;
@@ -11,6 +12,7 @@ using JobMatchingSystem.API.Repositories.Implementations;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System.Web;
 
 
@@ -25,7 +27,8 @@ namespace JobMatchingSystem.API.Services.Implementations
         protected readonly IEmailService _emailService;
         protected readonly ITaxCodeValidationService _taxCodeValidationService;
         protected readonly IBlobStorageService _blobStorageService;
-        
+        private readonly ApplicationDbContext _context;
+
         public CompanyService(
             IUnitOfWork unitOfWork, 
             IWebHostEnvironment env,
@@ -33,7 +36,8 @@ namespace JobMatchingSystem.API.Services.Implementations
             UserManager<ApplicationUser> userManager,
             IEmailService emailService,
             ITaxCodeValidationService taxCodeValidationService,
-            IBlobStorageService blobStorageService) 
+            IBlobStorageService blobStorageService,
+            ApplicationDbContext context) 
         {
             _unitOfWork = unitOfWork;
             _env = env;
@@ -42,11 +46,14 @@ namespace JobMatchingSystem.API.Services.Implementations
             _emailService = emailService;
             _taxCodeValidationService = taxCodeValidationService;
             _blobStorageService = blobStorageService;
+            _context = context;
         }
 
         public async Task AcceptCompany(int id,int verifyBy)
         {
-            var company= await _unitOfWork.CompanyRepository.GetByIdAsync(id);
+            var systemConfig = await _context.SystemConfigs.FirstAsync();
+
+            var company = await _unitOfWork.CompanyRepository.GetByIdAsync(id);
             if (company == null)
             {
                 throw new AppException(ErrorCode.NotFoundCompany());
@@ -63,7 +70,30 @@ namespace JobMatchingSystem.API.Services.Implementations
             user.FullName ?? user.Email,
             encodedToken,
             company.Name
-    );
+            );
+
+            // ✅ NEW: tạo JobQuota cho recruiter
+            var existingQuota = await _context.JobQuotas
+                .FirstOrDefaultAsync(x => x.RecruiterId == user.Id);
+
+            if (existingQuota == null)
+            {
+                var jobQuota = new JobQuota
+                {
+                    RecruiterId = user.Id,
+                    MonthlyQuota = systemConfig.JobQuota,
+                    ExtraQuota = 0
+                };
+
+                _context.JobQuotas.Add(jobQuota);
+            }
+
+            var userUpdate = await _context.ApplicationUsers
+                .FirstOrDefaultAsync(x => x.Id == user.Id);
+
+            userUpdate.SaveCVCount = systemConfig.SaveCV;
+
+            await _context.SaveChangesAsync();
         }
 
         public async Task Add(CreateCompanyRequest request)

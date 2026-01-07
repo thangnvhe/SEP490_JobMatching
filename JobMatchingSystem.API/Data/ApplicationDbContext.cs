@@ -42,6 +42,7 @@ namespace JobMatchingSystem.API.Data
         public DbSet<ExtensionJob> ExtensionJobs { get; set; }
         public DbSet<Position> Positions { get; set; }
         public DbSet<EducationLevel> EducationLevels { get; set; }
+        public DbSet<SystemConfig> SystemConfigs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
