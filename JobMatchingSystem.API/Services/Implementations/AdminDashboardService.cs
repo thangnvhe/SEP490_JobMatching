@@ -122,6 +122,47 @@ public class AdminDashboardService : IAdminDashboardService
             })
             .ToListAsync();
 
+        // ===== SERVICE PLAN PERCENTAGE =====
+        var servicePlanStats = await _context.Orders
+            .Where(o => o.Status == OrderStatus.Success &&
+                        o.CreatedAt >= startDate &&
+                        o.CreatedAt < endDate)
+            .GroupBy(o => o.ServiceId)
+            .Select(g => new
+            {
+                ServiceId = g.Key,
+                PurchaseCount = g.Count()
+            })
+            .Join(_context.ServicePlans,
+                  o => o.ServiceId,
+                  sp => sp.Id,
+                  (o, sp) => new
+                  {
+                      ServiceId = sp.Id,
+                      Name = sp.Name,
+                      PurchaseCount = o.PurchaseCount
+                  })
+            .OrderByDescending(x => x.PurchaseCount)
+            .ToListAsync();
+
+        // Tổng số gói bán trong tháng
+        dashboard.TotalServicePlansSold = servicePlanStats.Sum(x => x.PurchaseCount);
+
+        // Tính % cho từng gói
+        dashboard.ServicePlanPercentages = servicePlanStats
+            .Select(x => new ServicePlanPercentageDto
+            {
+                ServiceId = x.ServiceId,
+                Name = x.Name,
+                PurchaseCount = x.PurchaseCount,
+                Percentage = dashboard.TotalServicePlansSold == 0
+                    ? 0
+                    : Math.Round(
+                        (double)x.PurchaseCount / dashboard.TotalServicePlansSold * 100,
+                        2)
+            })
+            .ToList();
+
         return dashboard;
     }
 }

@@ -21,6 +21,9 @@ namespace JobMatchingSystem.API.DTOs.Response
         public List<RecentCompanyDto> RecentApprovedCompanies { get; set; } = new();
         public List<RecentOrderDto> RecentOrders { get; set; } = new();
         public List<RecentJobDto> RecentJobs { get; set; } = new();
+
+        public int TotalServicePlansSold { get; set; }
+        public List<ServicePlanPercentageDto> ServicePlanPercentages { get; set; } = new();
     }
 
     public class TopServicePlanDto
@@ -51,4 +54,13 @@ namespace JobMatchingSystem.API.DTOs.Response
         public string Title { get; set; }
         public DateTime CreatedAt { get; set; }
     }
+
+    public class ServicePlanPercentageDto
+    {
+        public int ServiceId { get; set; }
+        public string Name { get; set; }
+        public int PurchaseCount { get; set; }
+        public double Percentage { get; set; }
+    }
+
 }
