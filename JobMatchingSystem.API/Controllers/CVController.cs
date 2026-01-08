@@ -166,46 +166,7 @@ namespace JobMatchingSystem.API.Controllers
                 .Build());
         }
 
-        /// <summary>
-        /// Validate if uploaded file is a valid CV using AI
-        /// </summary>
-        /// <param name="file">PDF, DOCX, or Image file to validate</param>
-        /// <returns>CV validation result with confidence score</returns>
-        [HttpPost("validate")]
-        [Consumes("multipart/form-data")]
-        [RequestSizeLimit(10 * 1024 * 1024)] // 10MB limit for multiple file types
-        [ProducesResponseType(typeof(APIResponse<CVValidationResponse>), 200)]
-        [ProducesResponseType(typeof(APIResponse<string>), 400)]
-        [ProducesResponseType(typeof(APIResponse<string>), 500)]
-        public async Task<ActionResult<APIResponse<CVValidationResponse>>> ValidateCV(IFormFile file)
-        {
-            try
-            {
-                if (file == null)
-                {
-                    return BadRequest(APIResponse<string>.Builder()
-                        .WithStatusCode(HttpStatusCode.BadRequest)
-                        .WithSuccess(false)
-                        .WithResult("File là bắt buộc")
-                        .Build());
-                }
 
-                var result = await _cvService.ValidateCVAsync(file);
-                return Ok(APIResponse<CVValidationResponse>.Builder()
-                    .WithStatusCode(HttpStatusCode.OK)
-                    .WithSuccess(true)
-                    .WithResult(result)
-                    .Build());
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, APIResponse<string>.Builder()
-                    .WithStatusCode(HttpStatusCode.InternalServerError)
-                    .WithSuccess(false)
-                    .WithResult($"Validation thất bại: {ex.Message}")
-                    .Build());
-            }
-        }
 
         /// <summary>
         /// Validate CV file type and size

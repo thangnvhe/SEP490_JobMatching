@@ -8,7 +8,7 @@ import type { RootState } from '@/store';
 import { UserServices } from '@/services/user.service';
 import { CVServices } from '@/services/cv.service';
 import { User } from '@/models/user';
-import { CV, CVValidate } from '@/models/cv';
+import { CV } from '@/models/cv';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileText, Upload, Download, Star, Trash2, Eye, File, CheckCircle, X, AlertCircle } from "lucide-react";
@@ -39,8 +39,6 @@ export default function CVManagement() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [cvName, setCvName] = useState('');
   const [isUploading, setIsUploading] = useState(false);
-  const [isValidating, setIsValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState<CVValidate | null>(null);
   const [userProfile, setUserProfile] = useState<User>();
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -110,29 +108,6 @@ export default function CVManagement() {
     }
   }, [isLoadingProfile, userId, fetchCVs]);
 
-  const validateCV = async (file: File) => {
-    try {
-      setIsValidating(true);
-      setValidationResult(null);
-
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await CVServices.validate(formData);
-
-      if (response.isSuccess) {
-        setValidationResult(response.result);
-      } else {
-        console.error('Validation failed:', response.errorMessages);
-        toast.error(`Lỗi validate CV: ${response.errorMessages?.join(', ')}`);
-      }
-    } catch (error: any) {
-      toast.error(error.response.data.errorMessages[0]);
-    } finally {
-      setIsValidating(false);
-    }
-  };
-
   const processFile = useCallback((file: File) => {
     const allowedTypes = [
       'application/pdf',
@@ -155,8 +130,6 @@ export default function CVManagement() {
       const nameWithoutExt = file.name.replace(/\.(pdf|docx|doc)$/i, '');
       setCvName(nameWithoutExt);
     }
-
-    validateCV(file);
   }, [cvName]);
 
   const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,20 +148,6 @@ export default function CVManagement() {
     if (!userId) {
       toast.error("Lỗi: Không thể xác định người dùng. Vui lòng đăng nhập lại.");
       return;
-    }
-
-    // Kiểm tra validation result - chỉ cho upload nếu AI xác nhận đây là CV
-    if (validationResult?.is_cv === false) {
-      toast.error("Lỗi: File này không được AI xác nhận là CV hợp lệ. Vui lòng chọn file CV khác.");
-      return;
-    }
-
-    // Cảnh báo nếu chưa có validation result
-    if (!validationResult) {
-      const confirmUpload = confirm("Chưa thể xác thực file này bằng AI. Bạn có chắc chắn muốn upload không?");
-      if (!confirmUpload) {
-        return;
-      }
     }
 
     setIsUploading(true);
@@ -210,7 +169,6 @@ export default function CVManagement() {
         // Reset form
         setSelectedFile(null);
         setCvName('');
-        setValidationResult(null);
         setIsUploadDialogOpen(false);
 
         // Refresh CV list
@@ -756,7 +714,6 @@ export default function CVManagement() {
                             className="h-8 w-8 shrink-0"
                             onClick={() => {
                               setSelectedFile(null);
-                              setValidationResult(null);
                             }}
                           >
                             <X className="h-4 w-4" />
@@ -765,68 +722,7 @@ export default function CVManagement() {
                       </div>
                     )}
 
-                    {/* Validation Loading */}
-                    {isValidating && (
-                      <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-4 animate-in fade-in slide-in-from-top-2">
-                        <div className="flex items-center gap-3">
-                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-emerald-600 border-t-transparent" />
-                          <div>
-                            <p className="text-sm font-medium text-emerald-800">
-                              Đang kiểm tra CV bằng AI...
-                            </p>
-                            <p className="text-xs text-emerald-600 mt-0.5">
-                              Vui lòng đợi trong giây lát
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
-                    {/* Validation Result */}
-                    {validationResult && (
-                      <div className={`rounded-lg border-2 p-4 animate-in fade-in slide-in-from-top-2 ${
-                        validationResult.is_cv
-                          ? 'bg-green-50 border-green-200'
-                          : 'bg-red-50 border-red-200'
-                      }`}>
-                        <div className="flex items-start gap-3">
-                          {validationResult.is_cv ? (
-                            <>
-                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 shrink-0">
-                                <CheckCircle className="h-5 w-5 text-green-600" />
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-sm font-semibold text-green-800">
-                                  ✅ Đây là CV hợp lệ
-                                </p>
-                                <p className="text-xs text-green-700 mt-1">
-                                  {validationResult.reason}
-                                </p>
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 shrink-0">
-                                <AlertCircle className="h-5 w-5 text-red-600" />
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-sm font-semibold text-red-800">
-                                  ⚠️ File này không phải CV hợp lệ
-                                </p>
-                                <p className="text-xs text-red-700 mt-1">
-                                  {validationResult.reason}
-                                </p>
-                                <div className="mt-3 p-3 bg-red-100 rounded-md border-l-4 border-red-500">
-                                  <p className="text-xs text-red-800 font-medium">
-                                    📋 Hướng dẫn: Vui lòng chọn file CV chứa thông tin cá nhân (tên, email, kinh nghiệm, học vấn...) để tiếp tục upload.
-                                  </p>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </div>
                   <DialogFooter className="gap-2">
                     <Button 
@@ -835,7 +731,6 @@ export default function CVManagement() {
                         setIsUploadDialogOpen(false);
                         setSelectedFile(null);
                         setCvName('');
-                        setValidationResult(null);
                       }}
                       disabled={isUploading}
                     >
@@ -846,9 +741,7 @@ export default function CVManagement() {
                       disabled={
                         !selectedFile ||
                         !cvName.trim() ||
-                        isUploading ||
-                        isValidating ||
-                        (validationResult?.is_cv === false)
+                        isUploading
                       }
                       className="bg-emerald-600 hover:bg-emerald-700 text-white"
                     >
@@ -856,16 +749,6 @@ export default function CVManagement() {
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
                           Đang upload...
-                        </>
-                      ) : isValidating ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-                          Đang kiểm tra...
-                        </>
-                      ) : (validationResult?.is_cv === false) ? (
-                        <>
-                          <AlertCircle className="h-4 w-4 mr-2" />
-                          File không hợp lệ
                         </>
                       ) : (
                         <>

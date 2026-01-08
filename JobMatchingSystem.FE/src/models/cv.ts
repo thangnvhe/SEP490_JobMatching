@@ -26,16 +26,3 @@ export interface CVDetail {
         phoneNumber: string;
     };
 }
-
-export interface CVValidate {
-    is_cv: boolean,
-    confidence: number,
-    reason: string,
-    file_info: {
-        filename: string,
-        file_size_mb: number,
-        num_pages: number,
-        text_length: number,
-        error: string
-    }
-}
