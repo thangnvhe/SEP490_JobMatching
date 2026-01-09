@@ -51,36 +51,6 @@ var app = builder.Build();
 await app.AutoMigration();
 await app.SeedAdminUserAsync();
 await app.SeedAllData();
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-    // Nếu bảng SystemConfigs chưa có dữ liệu
-    if (!await context.SystemConfigs.AnyAsync())
-    {
-        context.SystemConfigs.Add(new SystemConfig
-        {
-            // ===== BASIC CONFIG =====
-            JobQuota = 5,
-            SaveCV = 100,
-
-            // ===== COMPANY PENALTY =====
-            CompanyFraudulentPenalty = 15,
-            CompanySpamPenalty = 5,
-            CompanyInappropriatePenalty = 8,
-            CompanyOtherPenalty = 6,
-
-            // ===== REPORTER PENALTY =====
-            ReporterFraudulentPenalty = 8,
-            ReporterSpamPenalty = 3,
-            ReporterInappropriatePenalty = 5,
-            ReporterOtherPenalty = 4
-        });
-
-        await context.SaveChangesAsync();
-    }
-}
-
 
 app.UseExceptionHandler();
 

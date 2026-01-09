@@ -202,27 +202,63 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         private int CalculateCompanyPenalty(ReportType reportType)
         {
-            var systemConfig = _context.SystemConfigs.FirstOrDefault(x => x.Id == 1);
             return reportType switch
             {
-                ReportType.FraudulentJobPosting => systemConfig.CompanyFraudulentPenalty,
-                ReportType.Spam => systemConfig.CompanySpamPenalty,
-                ReportType.InappropriateContent => systemConfig.CompanyInappropriatePenalty,
-                ReportType.Other => systemConfig.CompanyOtherPenalty,
-                _ => systemConfig.CompanyOtherPenalty,
+                ReportType.FraudulentJobPosting => _context.SystemConfigs
+                    .Where(x => x.Type == "report_company" && x.Name == "Fraudulent")
+                    .Select(x => int.Parse(x.Value))
+                    .First(),
+
+                ReportType.Spam => _context.SystemConfigs
+                    .Where(x => x.Type == "report_company" && x.Name == "Spam")
+                    .Select(x => int.Parse(x.Value))
+                    .First(),
+
+                ReportType.InappropriateContent => _context.SystemConfigs
+                    .Where(x => x.Type == "report_company" && x.Name == "Inappropriate")
+                    .Select(x => int.Parse(x.Value))
+                    .First(),
+
+                ReportType.Other => _context.SystemConfigs
+                    .Where(x => x.Type == "report_company" && x.Name == "Other")
+                    .Select(x => int.Parse(x.Value))
+                    .First(),
+
+                _ => _context.SystemConfigs
+                    .Where(x => x.Type == "report_company" && x.Name == "Other")
+                    .Select(x => int.Parse(x.Value))
+                    .First(),
             };
         }
 
         private int CalculateReporterPenalty(ReportType reportType)
         {
-            var systemConfig = _context.SystemConfigs.FirstOrDefault(x => x.Id == 1);
             return reportType switch
             {
-                ReportType.FraudulentJobPosting => systemConfig.ReporterFraudulentPenalty,
-                ReportType.Spam => systemConfig.ReporterSpamPenalty,
-                ReportType.InappropriateContent => systemConfig.ReporterInappropriatePenalty,
-                ReportType.Other => systemConfig.ReporterOtherPenalty,
-                _ => systemConfig.ReporterOtherPenalty,
+                ReportType.FraudulentJobPosting => _context.SystemConfigs
+                    .Where(x => x.Type == "report_reporter" && x.Name == "Fraudulent")
+                    .Select(x => int.Parse(x.Value))
+                    .First(),
+
+                ReportType.Spam => _context.SystemConfigs
+                    .Where(x => x.Type == "report_reporter" && x.Name == "Spam")
+                    .Select(x => int.Parse(x.Value))
+                    .First(),
+
+                ReportType.InappropriateContent => _context.SystemConfigs
+                    .Where(x => x.Type == "report_reporter" && x.Name == "Inappropriate")
+                    .Select(x => int.Parse(x.Value))
+                    .First(),
+
+                ReportType.Other => _context.SystemConfigs
+                    .Where(x => x.Type == "report_reporter" && x.Name == "Other")
+                    .Select(x => int.Parse(x.Value))
+                    .First(),
+
+                _ => _context.SystemConfigs
+                    .Where(x => x.Type == "report_reporter" && x.Name == "Other")
+                    .Select(x => int.Parse(x.Value))
+                    .First(),
             };
         }
 

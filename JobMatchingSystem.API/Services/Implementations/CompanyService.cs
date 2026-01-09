@@ -51,8 +51,6 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         public async Task AcceptCompany(int id,int verifyBy)
         {
-            var systemConfig = await _context.SystemConfigs.FirstAsync();
-
             var company = await _unitOfWork.CompanyRepository.GetByIdAsync(id);
             if (company == null)
             {
@@ -72,26 +70,37 @@ namespace JobMatchingSystem.API.Services.Implementations
             company.Name
             );
 
+            var jobQuota = await _context.SystemConfigs
+                .Where(x => x.Type == "job" && x.Name == "JobQuota")
+                .Select(x => int.Parse(x.Value))
+                .FirstAsync();
+
+            var saveCv = await _context.SystemConfigs
+                .Where(x => x.Type == "job" && x.Name == "SaveCV")
+                .Select(x => int.Parse(x.Value))
+                .FirstAsync();
+
+
             // ✅ NEW: tạo JobQuota cho recruiter
             var existingQuota = await _context.JobQuotas
                 .FirstOrDefaultAsync(x => x.RecruiterId == user.Id);
 
+            // tạo JobQuota
             if (existingQuota == null)
             {
-                var jobQuota = new JobQuota
+                _context.JobQuotas.Add(new JobQuota
                 {
                     RecruiterId = user.Id,
-                    MonthlyQuota = systemConfig.JobQuota,
+                    MonthlyQuota = jobQuota,
                     ExtraQuota = 0
-                };
-
-                _context.JobQuotas.Add(jobQuota);
+                });
             }
 
             var userUpdate = await _context.ApplicationUsers
                 .FirstOrDefaultAsync(x => x.Id == user.Id);
 
-            userUpdate.SaveCVCount = systemConfig.SaveCV;
+            // set SaveCV
+            userUpdate.SaveCVCount = saveCv;
 
             await _context.SaveChangesAsync();
         }

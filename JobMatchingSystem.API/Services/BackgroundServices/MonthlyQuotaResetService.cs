@@ -48,11 +48,13 @@ namespace JobMatchingSystem.API.Services.BackgroundServices
                 using var scope = _serviceProvider.CreateScope();
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-                var systemConfig = await dbContext.SystemConfigs.FirstAsync();
+                var jobQuota = await dbContext.SystemConfigs
+                       .Where(x => x.Type == "job" && x.Name == "JobQuota")
+                       .Select(x => int.Parse(x.Value))
+                       .FirstAsync();
 
-                // Cách 1: Dùng raw SQL - nhanh nhất (khuyên dùng)
                 var affectedRows = await dbContext.Database
-                                  .ExecuteSqlRawAsync($"UPDATE JobQuotas SET MonthlyQuota = {systemConfig.JobQuota}");
+                       .ExecuteSqlRawAsync($"UPDATE JobQuotas SET MonthlyQuota = {jobQuota}");
 
                 _logger.LogInformation("ĐÃ RESET THÀNH CÔNG MonthlyQuota cho {Count} nhà tuyển dụng vào {Now}",
                     affectedRows, DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"));
