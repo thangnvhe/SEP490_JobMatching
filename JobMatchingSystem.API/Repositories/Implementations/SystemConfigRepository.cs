@@ -14,11 +14,22 @@ namespace JobMatchingSystem.API.Repositories.Implementations
             _context = context;
         }
 
-        public async Task<SystemConfig?> GetDefaultAsync()
+        public async Task<SystemConfig?> GetByIdAsync(int id)
         {
             return await _context.SystemConfigs
-                                 .FirstOrDefaultAsync(x => x.Id == 1);
+                .FirstOrDefaultAsync(x => x.Id == id);
         }
+
+        public async Task<List<SystemConfig>> GetAllAsync()
+        {
+            return await _context.SystemConfigs.ToListAsync();
+        }
+        public async Task CreateAsync(SystemConfig config)
+        {
+            _context.SystemConfigs.Add(config);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task UpdateAsync(SystemConfig config)
         {
             _context.SystemConfigs.Update(config);

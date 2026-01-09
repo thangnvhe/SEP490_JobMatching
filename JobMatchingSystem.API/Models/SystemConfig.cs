@@ -7,19 +7,8 @@ namespace JobMatchingSystem.API.Models
         [Key]
         public int Id { get; set; }
 
-        public int JobQuota { get; set; }
-        public int SaveCV { get; set; }
-
-        // ===== COMPANY PENALTY =====
-        public int CompanyFraudulentPenalty { get; set; } 
-        public int CompanySpamPenalty { get; set; } 
-        public int CompanyInappropriatePenalty { get; set; } 
-        public int CompanyOtherPenalty { get; set; } 
-
-        // ===== REPORTER PENALTY =====
-        public int ReporterFraudulentPenalty { get; set; } 
-        public int ReporterSpamPenalty { get; set; } 
-        public int ReporterInappropriatePenalty { get; set; } 
-        public int ReporterOtherPenalty { get; set; } 
+        public string Type { get; set; }   // vd: job, report_company, report_reporter
+        public string Name { get; set; }   // vd: JobQuota, Fraudulent
+        public string Value { get; set; }  // lưu string, parse khi dùng
     }
 }

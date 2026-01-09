@@ -1,6 +1,6 @@
 ﻿using JobMatchingSystem.API.DTOs;
 using JobMatchingSystem.API.DTOs.Request;
-using JobMatchingSystem.API.Models;
+using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -20,24 +20,48 @@ namespace JobMatchingSystem.API.Controllers
             _service = service;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetDefault()
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            var result = await _service.GetDefaultAsync();
+            var result = await _service.GetByIdAsync(id);
 
-            return Ok(APIResponse<SystemConfig>.Builder()
+            return Ok(APIResponse<SystemConfigResponse>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
                 .WithSuccess(true)
                 .WithResult(result)
                 .Build());
         }
 
-        [HttpPut]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateDefault(
-            [FromBody] UpdateSystemConfigRequest request)
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
         {
-            await _service.UpdateDefaultAsync(request);
+            var result = await _service.GetAllAsync();
+
+            return Ok(APIResponse<List<SystemConfigResponse>>.Builder()
+                .WithStatusCode(HttpStatusCode.OK)
+                .WithSuccess(true)
+                .WithResult(result)
+                .Build());
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Create([FromBody] CreateSystemConfigRequest request)
+        {
+            await _service.CreateAsync(request);
+
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.Created)
+                .WithSuccess(true)
+                .WithResult("System config created successfully")
+                .Build());
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateSystemConfigRequest request)
+        {
+            await _service.UpdateAsync(id, request);
 
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.OK)
