@@ -37,8 +37,8 @@ export function ClientHeader() {
       toast.success("Đăng xuất thành công!");
       // Chuyển về homepage sau khi logout thành công
       navigate("/");
-    } catch (error) {
-      console.error("Logout error:", error);
+    } catch (error: any) {
+      toast.error(error);
     }
   };
 

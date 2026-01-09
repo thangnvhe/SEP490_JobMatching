@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { MapPin, Briefcase, Bookmark, Clock } from "lucide-react";
+import { IconBookmark, IconBookmarkFilled } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -196,10 +197,19 @@ export const JobCard: React.FC<JobCardProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => onSaveJob(job.jobId)}
-                className="p-1 hover:bg-gray-100"
-                aria-label="Lưu việc làm"
+                className={`p-1 transition-all ${
+                  job.isSave 
+                    ? 'hover:bg-emerald-100 hover:text-emerald-700' 
+                    : 'hover:bg-emerald-50 hover:text-emerald-600'
+                }`}
+                aria-label={job.isSave ? "Bỏ lưu việc làm" : "Lưu việc làm"}
+                title={job.isSave ? "Bỏ lưu" : "Lưu công việc"}
               >
-                <Bookmark className="h-4 w-4 text-gray-400" />
+                {job.isSave ? (
+                  <IconBookmarkFilled className="h-4 w-4 text-emerald-600" />
+                ) : (
+                  <IconBookmark className="h-4 w-4 text-gray-400" />
+                )}
               </Button>
             )}
           </div>

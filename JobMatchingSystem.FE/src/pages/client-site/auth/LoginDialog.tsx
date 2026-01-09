@@ -110,7 +110,7 @@ export function LoginDialog({
       
       onLoginSuccess?.(); // Call success callback if provided
     } catch (error: any) {
-      toast.error(error.response.data.errorMessages[0]);
+      toast.error(error);
     }
   };
 

@@ -33,7 +33,31 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const formSchema = z.object({
   fullName: z.string().min(1, "Vui lòng nhập họ và tên"),
   email: z.string().email("Email không hợp lệ").optional(),
-  phoneNumber: z.string().optional(),
+  phoneNumber: z
+    .string()
+    .optional()
+    .refine(
+      (value) => {
+        // Nếu không có giá trị thì cho phép (optional)
+        if (!value || value.trim() === "") return true;
+        // Chỉ cho phép số
+        return /^\d+$/.test(value);
+      },
+      {
+        message: "Số điện thoại chỉ được chứa số, không được chứa chữ cái hoặc ký tự đặc biệt",
+      }
+    )
+    .refine(
+      (value) => {
+        // Nếu không có giá trị thì cho phép (optional)
+        if (!value || value.trim() === "") return true;
+        // Độ dài hợp lệ cho số điện thoại Việt Nam (10-11 số)
+        return value.length >= 10 && value.length <= 11;
+      },
+      {
+        message: "Số điện thoại phải có từ 10 đến 11 chữ số",
+      }
+    ),
   address: z.string().optional(),
   gender: z.boolean({ required_error: "Vui lòng chọn giới tính" }),
   birthday: z
@@ -144,9 +168,14 @@ export function DialogCVInformation({
       } else {
         toast.error("Cập nhật hồ sơ thất bại: " + (response.errorMessages?.[0] || "Lỗi không xác định"));
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error("Có lỗi xảy ra khi cập nhật");
+      let errorMessage = "Có lỗi xảy ra khi cập nhật";
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { errorMessages?: string[] } } };
+        errorMessage = axiosError.response?.data?.errorMessages?.[0] || errorMessage;
+      }
+      toast.error(errorMessage);
     } finally {
       setActionLoading(false);
     }
@@ -266,12 +295,35 @@ export function DialogCVInformation({
                 <Label className="text-sm font-medium">
                   Số điện thoại
                 </Label>
-                <Input
-                  {...register("phoneNumber")}
-                  placeholder="Nhập số điện thoại"
-                  className="w-full mt-1"
-                  disabled={actionLoading}
+                <Controller
+                  control={control}
+                  name="phoneNumber"
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      type="tel"
+                      placeholder="Nhập số điện thoại (chỉ số, 10-11 chữ số)"
+                      className={`w-full mt-1 ${errors.phoneNumber ? "border-red-500" : ""}`}
+                      disabled={actionLoading}
+                      onChange={(e) => {
+                        // Chỉ giữ lại các ký tự số
+                        const value = e.target.value.replace(/\D/g, "");
+                        field.onChange(value);
+                      }}
+                      onKeyPress={(e) => {
+                        // Chỉ cho phép nhập số
+                        if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete" && e.key !== "Tab" && e.key !== "ArrowLeft" && e.key !== "ArrowRight") {
+                          e.preventDefault();
+                        }
+                      }}
+                    />
+                  )}
                 />
+                {errors.phoneNumber && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.phoneNumber.message}
+                  </p>
+                )}
               </div>
 
               {/* Gender */}

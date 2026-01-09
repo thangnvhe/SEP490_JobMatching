@@ -207,14 +207,43 @@ export default function JobsPage() {
     }
 
     try {
-      const response = await SaveJobServices.saveJob(jobId);
-      if (response.isSuccess) {
-        toast.success(`Đã lưu công việc bạn quan tâm`);
+      const job = jobs.find(j => j.jobId === jobId);
+      
+      // Nếu đã lưu rồi thì bỏ lưu
+      if (job?.isSave) {
+        // Tìm savedJobId từ danh sách saved jobs
+        const savedJobsResponse = await SaveJobServices.getMySavedJobs();
+        if (savedJobsResponse.isSuccess && savedJobsResponse.result) {
+          const savedJob = savedJobsResponse.result.find(sj => sj.jobId === jobId);
+          if (savedJob) {
+            await SaveJobServices.deleteSavedJob(savedJob.id);
+            toast.success("Đã bỏ lưu công việc");
+            // Cập nhật trạng thái isSave trong danh sách jobs
+            setJobs(prevJobs => 
+              prevJobs.map(j => j.jobId === jobId ? { ...j, isSave: false } : j)
+            );
+            return;
+          }
+        }
       } else {
-        toast.error(response.errorMessages[0]);
+        // Lưu công việc
+        const response = await SaveJobServices.saveJob(jobId);
+        if (response.isSuccess) {
+          toast.success(`Đã lưu công việc bạn quan tâm`);
+          // Cập nhật trạng thái isSave trong danh sách jobs
+          setJobs(prevJobs => 
+            prevJobs.map(j => j.jobId === jobId ? { ...j, isSave: true } : j)
+          );
+        } else {
+          toast.error(response.errorMessages[0]);
+        }
       }
-    } catch (error) {
-      toast.error("Công việc này đẫ được lưu");
+    } catch (error: any) {
+      if (error.response?.status === 400) {
+        toast.error("Công việc này đã được lưu");
+      } else {
+        toast.error("Có lỗi xảy ra khi thực hiện thao tác");
+      }
     }
   };
 

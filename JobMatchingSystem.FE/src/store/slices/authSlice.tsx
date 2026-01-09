@@ -61,6 +61,7 @@ export const loginAsync = createAsyncThunk(
         rememberMe,
       };
     } catch (error: any) {
+      console.log(error);
       return rejectWithValue(error.response?.data?.errorMessages?.[0] || 'Đăng nhập thất bại');
     }
   }

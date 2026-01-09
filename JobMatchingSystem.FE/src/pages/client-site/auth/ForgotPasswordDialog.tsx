@@ -63,7 +63,7 @@ export function ForgotPasswordDialog({ isOpen, onOpenChange, onOpenLogin }: Forg
         toast.error("Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại.");
       }
     } catch (error: any) {
-      toast.error(error.response.data.errorMessages[0]);
+      toast.error(error);
     }
   };
 
