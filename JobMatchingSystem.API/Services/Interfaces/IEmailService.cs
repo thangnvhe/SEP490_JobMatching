@@ -17,5 +17,7 @@
         Task SendJobClosedDueToReportAsync(string toEmail, string fullName, string jobTitle, string companyName, string reason);
         Task SendInterviewScheduleNotificationAsync(string toEmail, string candidateName, string jobTitle, string companyName, DateTime interviewDate, TimeOnly? startTime, TimeOnly? endTime, string? location, string? googleMeetLink, string confirmationToken);
         Task SendJobInvitationEmailAsync(string toEmail, string jobTitle, string companyName, string jobApplicationUrl, string? message);
+        Task SendCvPassedEmailAsync(string toEmail, string jobTitle);
+        Task SendCvFailedEmailAsync(string toEmail, string jobTitle);
     }
 }
