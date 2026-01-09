@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using JobMatchingSystem.API.Data;
 using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Exceptions;
@@ -6,6 +7,7 @@ using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Repositories.Interfaces;
 using JobMatchingSystem.API.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.Design;
 
 namespace JobMatchingSystem.API.Services.Implementations
@@ -14,10 +16,14 @@ namespace JobMatchingSystem.API.Services.Implementations
     {
         protected readonly IUnitOfWork _unitOfWork;
         protected readonly IMapper _mapper;
-        public CandidateJobService(IUnitOfWork unitOfWork,IMapper mapper)
+        protected readonly ApplicationDbContext _dbContext;
+        protected readonly IEmailService _emailService;
+        public CandidateJobService(IUnitOfWork unitOfWork,IMapper mapper,ApplicationDbContext dbContext,IEmailService emailService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _dbContext = dbContext;
+            _emailService= emailService;
         }
         public async Task Add(CreateCandidateJobRequest request)
         {
@@ -67,7 +73,12 @@ namespace JobMatchingSystem.API.Services.Implementations
                 candidatejob.Status = Enums.CandidateJobStatus.Processing;
                 await _unitOfWork.CandidateStageRepository.Add(candidateStage);
             }
-            
+            var cvId = _dbContext.CandidateJobs.Where(x => x.Id == id).Select(x=>x.CVId).FirstOrDefault();
+            var userId= _dbContext.CVUploads.Where(x=>x.Id==cvId).Select(x=>x.UserId).FirstOrDefault();
+            var user=_dbContext.Users.Where(x=>x.Id==userId).FirstOrDefault();
+            var email = user.Email;
+            var jobName=_dbContext.Jobs.Where(x=>x.JobId==candidatejob.JobId).Select(x=>x.Title).FirstOrDefault();
+            await _emailService.SendCvPassedEmailAsync(email, jobName);
             await _unitOfWork.CandidateJobRepository.Update(candidatejob);
             await _unitOfWork.SaveAsync();
         }
@@ -138,6 +149,12 @@ namespace JobMatchingSystem.API.Services.Implementations
                 throw new AppException(ErrorCode.NotFoundCandidateJob());
             }
             candidatejob.Status = Enums.CandidateJobStatus.RejectCv;
+            var cvId = _dbContext.CandidateJobs.Where(x => x.Id == id).Select(x => x.CVId).FirstOrDefault();
+            var userId = _dbContext.CVUploads.Where(x => x.Id == cvId).Select(x => x.UserId).FirstOrDefault();
+            var user = _dbContext.Users.Where(x => x.Id == userId).FirstOrDefault();
+            var email = user.Email;
+            var jobName = _dbContext.Jobs.Where(x => x.JobId == candidatejob.JobId).Select(x => x.Title).FirstOrDefault();
+            await _emailService.SendCvFailedEmailAsync(email, jobName);
             await _unitOfWork.CandidateJobRepository.Update(candidatejob);
             await _unitOfWork.SaveAsync();
         }

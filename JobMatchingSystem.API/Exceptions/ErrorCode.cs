@@ -58,6 +58,8 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundServicePlan() => new("Không tìm thấy gói dịch vụ", HttpStatusCode.NotFound);
         public static Error NotFoundJobQuota() => new("Không tìm thấy hạn mức đăng tin", HttpStatusCode.NotFound);
         public static Error NotFoundSystemConfig() => new("Không tìm thấy SystemConfig", HttpStatusCode.NotFound);
+        public static Error Reported() => new("Report này đã báo cáo", HttpStatusCode.BadRequest);
+
 
         // UpdateResult specific errors
         public static Error InvalidResultValue() => new("Giá trị Result chỉ được phép là 'Pass' hoặc 'Fail'", HttpStatusCode.BadRequest);
