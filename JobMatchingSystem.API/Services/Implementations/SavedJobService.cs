@@ -72,10 +72,15 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (!jobExists)
                 throw new AppException(ErrorCode.NotFoundJob());
 
-            // Check if already saved
-            bool exists = await _savedJobRepository.ExistsAsync(userId, jobId);
-            if (exists)
-                throw new AppException(ErrorCode.CantCreate());
+            var existingSavedJob = await _context.SavedJobs
+               .FirstOrDefaultAsync(x => x.UserId == userId && x.JobId == jobId);
+
+            if (existingSavedJob != null)
+            {
+                // Đã save → unsave
+                await _savedJobRepository.DeleteAsync(existingSavedJob);
+                return;
+            }
 
             var savedJob = new SavedJob
             {
