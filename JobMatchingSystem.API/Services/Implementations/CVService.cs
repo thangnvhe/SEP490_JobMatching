@@ -80,8 +80,8 @@ namespace JobMatchingSystem.API.Services.Implementations
         {
             var cvs = await _cvRepository.GetCVsByUserIdAsync(userId);
             if (cvs == null || !cvs.Any())
-                throw new AppException(ErrorCode.NotFoundCV());
-            
+                return cvs;
+                            
             // Generate secure URLs with SAS tokens for all CVs
             foreach (var cv in cvs)
             {

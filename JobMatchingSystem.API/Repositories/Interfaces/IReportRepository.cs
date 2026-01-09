@@ -9,5 +9,6 @@ namespace JobMatchingSystem.API.Repositories.Interfaces
         Task<Report?> GetByIdAsync(int id);
         Task UpdateAsync(Report report);
         Task<List<Report>> GetAllReportsPagedAsync(GetReportPagedRequest request);
+        Task<bool> CheckIsReport(int userid, int jobid);
     }
 }
