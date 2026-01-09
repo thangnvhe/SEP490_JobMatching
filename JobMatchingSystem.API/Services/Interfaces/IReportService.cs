@@ -10,6 +10,6 @@ namespace JobMatchingSystem.API.Services.Interfaces
         Task<Report> GetReportByIdAsync(int id);
         Task CensorReportAsync(int id, int adminId, CensorReportRequest request);
         Task CreateReportAsync(CreateReportRequest request, int userId);
-        Task<PagedResult<ReportDetailResponse>> GetReportsPagedAsync(GetReportPagedRequest request);
+        Task<PagedResult<ReportDetailResponse>> GetReportsPagedAsync(GetReportPagedRequest request);       
     }
 }

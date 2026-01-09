@@ -89,5 +89,11 @@ namespace JobMatchingSystem.API.Repositories.Implementations
 
             return await query.ToListAsync();
         }
+
+        public async Task<bool> CheckIsReport(int userId, int jobId)
+        {
+            return await _context.Reports
+                .AnyAsync(x => x.ReporterId == userId && x.JobId == jobId);
+        }
     }
 }
