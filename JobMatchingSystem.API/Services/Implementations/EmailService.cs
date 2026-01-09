@@ -573,5 +573,81 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             await SendEmailAsync(toEmail, subject, body);
         }
+        public async Task SendCvFailedEmailAsync(string toEmail, string jobTitle)
+        {
+            string subject = "Kết quả ứng tuyển - JobMatching System";
+
+            string body = $@"
+<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
+    <div style='background-color: #ffffff; padding: 30px; border-radius: 10px; border-left: 4px solid #dc3545;'>
+        <h2 style='color:#dc3545;'>📄 Thông báo kết quả vòng CV</h2>
+
+        <p>Cảm ơn bạn đã quan tâm và ứng tuyển cho vị trí:</p>
+
+        <div style='background-color:#fbeaea; padding:15px; border-radius:8px; margin:20px 0;'>
+            <p style='margin:0; font-size:16px;'>
+                <strong>💼 Vị trí ứng tuyển:</strong> {WebUtility.HtmlEncode(jobTitle)}
+            </p>
+            <p style='margin-top:8px; color:#dc3545; font-weight:bold;'>
+                Trạng thái: Chưa phù hợp ở vòng CV
+            </p>
+        </div>
+
+        <p>Sau quá trình xem xét, rất tiếc hồ sơ của bạn <strong>chưa phù hợp với yêu cầu hiện tại</strong> của vị trí này.</p>
+
+        <p>Điều này không phản ánh đầy đủ năng lực của bạn. Chúng tôi khuyến khích bạn tiếp tục theo dõi và ứng tuyển các cơ hội khác phù hợp hơn trên hệ thống.</p>
+
+        <p>Chúc bạn sớm tìm được cơ hội nghề nghiệp phù hợp.</p>
+
+        <hr>
+        <p style='font-size: 14px; color:#6c757d;'>
+            Trân trọng,<br/>
+            <strong>JobMatching System</strong>
+        </p>
+        <p style='font-size: 12px; color:#adb5bd;'>
+            Đây là email tự động, vui lòng không trả lời email này.
+        </p>
+    </div>
+</div>";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
+        public async Task SendCvPassedEmailAsync(string toEmail, string jobTitle)
+        {
+            string subject = "Chúc mừng! Bạn đã qua vòng CV - JobMatching System";
+
+            string body = $@"
+<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
+    <div style='background-color: #ffffff; padding: 30px; border-radius: 10px; border-left: 4px solid #28a745;'>
+        <h2 style='color:#28a745;'>🎉 Chúc mừng bạn!</h2>
+
+        <p>Chúng tôi xin chúc mừng bạn đã <strong>qua vòng sàng lọc CV</strong> cho vị trí:</p>
+
+        <div style='background-color:#e9f7ef; padding:15px; border-radius:8px; margin:20px 0;'>
+            <p style='margin:0; font-size:16px;'>
+                <strong>💼 Vị trí ứng tuyển:</strong> {WebUtility.HtmlEncode(jobTitle)}
+            </p>
+            <p style='margin-top:8px; color:#28a745; font-weight:bold;'>
+                Trạng thái: Qua vòng CV
+            </p>
+        </div>
+
+        <p>Bộ phận tuyển dụng sẽ sớm liên hệ với bạn để thông báo về <strong>vòng tiếp theo</strong>.</p>
+
+        <p>Vui lòng theo dõi email thường xuyên để không bỏ lỡ thông tin quan trọng.</p>
+
+        <hr>
+        <p style='font-size: 14px; color:#6c757d;'>
+            Trân trọng,<br/>
+            <strong>JobMatching System</strong>
+        </p>
+        <p style='font-size: 12px; color:#adb5bd;'>
+            Đây là email tự động, vui lòng không trả lời email này.
+        </p>
+    </div>
+</div>";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
     }
 }

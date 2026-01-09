@@ -361,7 +361,11 @@ namespace JobMatchingSystem.API.Services.Implementations
             var job = await _context.Jobs.FirstOrDefaultAsync(x => x.JobId == request.JobId);
             if (job == null)
                 throw new AppException(ErrorCode.NotFoundJob());
-
+            // Check isReport
+            if ( await _reportRepository.CheckIsReport(userId, request.JobId))
+            {
+                throw new AppException(ErrorCode.Reported());
+            }
             var report = new Report
             {
                 JobId = request.JobId,
