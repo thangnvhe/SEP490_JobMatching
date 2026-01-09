@@ -648,6 +648,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                                 cj.CVUpload != null && 
                                 cj.CVUpload.UserId == userId.Value)
                     .Select(cj => cj.JobId)
+                    .Distinct()
                     .ToListAsync();
                 userApplied = appliedJobIds.ToDictionary(id => id, _ => true);
 
@@ -655,6 +656,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 var savedJobIds = await _context.SavedJobs
                     .Where(sj => jobIds.Contains(sj.JobId) && sj.UserId == userId.Value)
                     .Select(sj => sj.JobId)
+                    .Distinct()
                     .ToListAsync();
                 userSaved = savedJobIds.ToDictionary(id => id, _ => true);
 
@@ -662,6 +664,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 var reportedJobIds = await _context.Reports
                     .Where(r => jobIds.Contains(r.JobId) && r.ReporterId == userId.Value)
                     .Select(r => r.JobId)
+                    .Distinct()
                     .ToListAsync();
                 userReported = reportedJobIds.ToDictionary(id => id, _ => true);
             }
