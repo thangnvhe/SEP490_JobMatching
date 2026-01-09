@@ -1,4 +1,6 @@
-﻿using JobMatchingSystem.API.DTOs.Request;
+﻿using HandlebarsDotNet;
+using JobMatchingSystem.API.Data;
+using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Extensions;
@@ -20,18 +22,28 @@ namespace JobMatchingSystem.API.Services.Implementations
         private readonly ICVRepository _cvRepository;
         private readonly IWebHostEnvironment _env;
         private readonly IBlobStorageService _blobStorageService;
+        private readonly ApplicationDbContext _context;
 
-        public CVService(ICVRepository cvRepository, IWebHostEnvironment env, IBlobStorageService blobStorageService, IConfiguration configuration)
+        public CVService(ICVRepository cvRepository, IWebHostEnvironment env, IBlobStorageService blobStorageService, IConfiguration configuration, ApplicationDbContext context)
         {
             _cvRepository = cvRepository;
             _env = env;
             _blobStorageService = blobStorageService;
+            _context = context;
         }
 
         public async Task UploadCVAsync(UploadCVRequest request, int userId)
         {
             // Lấy danh sách CV cũ của user
             var existingCVs = await _cvRepository.GetCVsByUserIdAsync(userId);
+
+            var maxCvCount = await _context.SystemConfigs
+               .Where(x => x.Type == "save_cv" && x.Name == "SaveCVCount")
+               .Select(x => int.Parse(x.Value))
+               .FirstAsync();
+
+            if (existingCVs.Count >= maxCvCount)
+                throw new AppException(ErrorCode.CvUploadLimitExceeded());
 
             if (request.File == null)
                 throw new AppException(ErrorCode.InvalidFile());

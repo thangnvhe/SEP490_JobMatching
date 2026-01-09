@@ -17,6 +17,7 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error EmailExist() => new("Email đã tồn tại trong hệ thống. Vui lòng sử dụng email khác hoặc đăng nhập nếu đây là tài khoản của bạn.", HttpStatusCode.BadRequest);
         public static Error NotFoundRecruiter() => new("Không tìm thấy nhà tuyển dụng", HttpStatusCode.NotFound);
         public static Error InvalidStatus() => new("Trạng thái không hợp lệ", HttpStatusCode.BadRequest);
+        public static Error CvUploadLimitExceeded() => new("Hết số lượng tải cv", HttpStatusCode.BadRequest);
         public static Error NotFoundJob() => new("Không tìm thấy công việc", HttpStatusCode.NotFound);
         public static Error NotFoundJobStage() => new("Không tìm thấy giai đoạn tuyển dụng", HttpStatusCode.NotFound);
         public static Error SalaryError() => new("Mức lương tối thiểu phải nhỏ hơn mức lương tối đa", HttpStatusCode.BadRequest);
