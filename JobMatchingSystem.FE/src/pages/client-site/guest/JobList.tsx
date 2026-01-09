@@ -19,7 +19,7 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination";
 import { MapPin, Clock, DollarSign, Briefcase, Building2, ChevronRight } from "lucide-react";
-import { IconBookmark } from "@tabler/icons-react";
+import { IconBookmark, IconBookmarkFilled } from "@tabler/icons-react";
 import { Job } from "@/models/job";
 import { Company } from "@/models/company";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -227,18 +227,27 @@ const JobCard = ({ job, company, onJobDetails, onSaveJob }: {
                                 variant="ghost"
                                 size="icon"
                                 className={cn(
-                                    "h-9 w-9 rounded-full text-muted-foreground",
-                                    isHighlight 
+                                    "h-9 w-9 rounded-full transition-all",
+                                    job.isSave
+                                        ? isHighlight
+                                            ? "text-amber-600 hover:bg-amber-200 hover:text-amber-700"
+                                            : "text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700"
+                                        : "text-muted-foreground",
+                                    !job.isSave && isHighlight 
                                         ? "hover:text-amber-600 hover:bg-amber-100" 
-                                        : "hover:text-emerald-600 hover:bg-emerald-50"
+                                        : !job.isSave && "hover:text-emerald-600 hover:bg-emerald-50"
                                 )}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onSaveJob(job.jobId);
                                 }}
-                                title="Lưu công việc"
+                                title={job.isSave ? "Bỏ lưu công việc" : "Lưu công việc"}
                             >
-                                <IconBookmark className="w-5 h-5" />
+                                {job.isSave ? (
+                                    <IconBookmarkFilled className="w-5 h-5" />
+                                ) : (
+                                    <IconBookmark className="w-5 h-5" />
+                                )}
                             </Button>
                             <Button
                                 size="sm"

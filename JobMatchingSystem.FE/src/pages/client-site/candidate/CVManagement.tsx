@@ -11,7 +11,7 @@ import { User } from '@/models/user';
 import { CV } from '@/models/cv';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, Upload, Download, Star, Trash2, Eye, File, CheckCircle, X, AlertCircle } from "lucide-react";
+import { FileText, Upload, Download, Star, Trash2, File, CheckCircle, X, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Tooltip,
@@ -259,19 +259,49 @@ export default function CVManagement() {
     }
   }, [processFile]);
 
-  const handleDownload = (cv: CV) => {
-    const link = document.createElement('a');
-    link.href = `${cv.fileUrl}`;
-    link.download = cv.fileName;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async (cv: CV) => {
+    try {
+      // Hiển thị thông báo đang tải
+      toast.loading('Đang tải file...', { id: `download-${cv.id}` });
+
+      // Fetch file từ Azure Blob Storage
+      const response = await fetch(cv.fileUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/octet-stream',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Chuyển response thành Blob
+      const blob = await response.blob();
+
+      // Tạo Object URL từ Blob
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      // Tạo thẻ <a> để download
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = cv.fileName;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup: xóa thẻ <a> và revoke Object URL
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+
+      // Thông báo thành công
+      toast.success('Tải xuống thành công!', { id: `download-${cv.id}` });
+    } catch (error: unknown) {
+      console.error('Download error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Không thể tải xuống file';
+      toast.error(`Lỗi: ${errorMessage}. Vui lòng thử lại.`, { id: `download-${cv.id}` });
+    }
   };
 
-  const handlePreview = (cv: CV) => {
-    window.open(`${cv.fileUrl}`, '_blank');
-  };
 
   const LoadingSkeleton = () => (
     <div className="flex flex-1 flex-col">
@@ -531,25 +561,6 @@ export default function CVManagement() {
                               className="h-9 w-9 hover:text-emerald-600 hover:bg-emerald-50"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handlePreview(cv);
-                              }}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Xem trước</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-9 w-9 hover:text-emerald-600 hover:bg-emerald-50"
-                              onClick={(e) => {
-                                e.stopPropagation();
                                 handleDownload(cv);
                               }}
                             >
@@ -615,7 +626,6 @@ export default function CVManagement() {
             if (!open) {
               setSelectedFile(null);
               setCvName('');
-              setValidationResult(null);
               setIsDragging(false);
             }
           }}

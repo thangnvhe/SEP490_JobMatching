@@ -91,7 +91,7 @@ export function RegisterDialog({ isOpen, onOpenChange, onOpenLogin }: RegisterDi
         onOpenChange(false);
       }, 1500);
     } catch (error: any) {
-      toast.error(error.response.data.errorMessages[0]);
+      toast.error(error);
     }
   };
 

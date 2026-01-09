@@ -16,9 +16,9 @@ import {
   Calendar,
   Users,
   ArrowLeft,
-  Bookmark,
   Flag
 } from "lucide-react";
+import { IconBookmark, IconBookmarkFilled } from "@tabler/icons-react";
 
 // Components
 import { Button } from "@/components/ui/button";
@@ -150,10 +150,34 @@ export default function JobDetailPage() {
 
     try {
       setSavingJob(true);
-      await SaveJobServices.saveJob(job.jobId);
-      toast.success("Đã lưu tin tuyển dụng");
+      
+      // Nếu đã lưu rồi thì bỏ lưu
+      if (job.isSave) {
+        // Tìm savedJobId từ danh sách saved jobs
+        const savedJobsResponse = await SaveJobServices.getMySavedJobs();
+        if (savedJobsResponse.isSuccess && savedJobsResponse.result) {
+          const savedJob = savedJobsResponse.result.find(sj => sj.jobId === job.jobId);
+          if (savedJob) {
+            await SaveJobServices.deleteSavedJob(savedJob.id);
+            toast.success("Đã bỏ lưu tin tuyển dụng");
+            // Refresh job data để cập nhật isSave
+            await fetchJobData();
+            return;
+          }
+        }
+      } else {
+        // Lưu công việc
+        await SaveJobServices.saveJob(job.jobId);
+        toast.success("Đã lưu tin tuyển dụng");
+        // Refresh job data để cập nhật isSave
+        await fetchJobData();
+      }
     } catch (error: any) {
-      toast.error("Tin tuyển dụng đã được lưu");
+      if (job.isSave) {
+        toast.error("Không thể bỏ lưu tin tuyển dụng");
+      } else {
+        toast.error("Công việc này đã được lưu");
+      }
     } finally {
       setSavingJob(false);
     }
@@ -269,11 +293,20 @@ export default function JobDetailPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 font-medium h-10 w-10 p-0 flex items-center justify-center rounded-lg disabled:opacity-60"
+                  className={`border-emerald-200 font-medium h-10 w-10 p-0 flex items-center justify-center rounded-lg disabled:opacity-60 transition-all ${
+                    job.isSave 
+                      ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-600 hover:text-white hover:border-emerald-600" 
+                      : "text-emerald-700 hover:bg-emerald-600 hover:text-white hover:border-emerald-600"
+                  }`}
                   onClick={handleSaveJob}
                   disabled={savingJob}
+                  title={job.isSave ? "Bỏ lưu công việc" : "Lưu công việc"}
                 >
-                  <Bookmark className="h-4 w-4" />
+                  {job.isSave ? (
+                    <IconBookmarkFilled className="h-4 w-4" />
+                  ) : (
+                    <IconBookmark className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>
