@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
+import { SwitchWithConfirm } from "@/components/ui/switch-with-confirm"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { CalendarEvent, CalendarEventInput } from "./calendar-types"
@@ -136,7 +136,17 @@ export function EventDialog({
           </div>
 
           <div className="flex items-center gap-2">
-            <Switch id="all-day" checked={allDay} onCheckedChange={setAllDay} />
+            <SwitchWithConfirm
+              id="all-day"
+              checked={allDay}
+              onCheckedChange={setAllDay}
+              confirmTitle="Xác nhận thay đổi"
+              confirmMessage={
+                allDay
+                  ? "Bạn có chắc chắn muốn tắt chế độ cả ngày? Thời gian sẽ được hiển thị."
+                  : "Bạn có chắc chắn muốn bật chế độ cả ngày? Thời gian sẽ bị ẩn."
+              }
+            />
             <Label htmlFor="all-day">Cả ngày</Label>
           </div>
 

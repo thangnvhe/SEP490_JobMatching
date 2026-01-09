@@ -278,18 +278,32 @@ export default function JobDetailPage() {
 
             <div className="flex flex-col gap-3 w-full md:w-auto min-w-[220px]">
               <Button
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-lg py-6 shadow-lg shadow-emerald-600/20 font-bold transition-transform hover:scale-[1.02]"
-                onClick={() => setApplyDialogOpen(true)}
+                className={`w-full text-lg py-6 shadow-lg font-bold transition-transform ${
+                  job.isApply
+                    ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed shadow-gray-400/20"
+                    : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20 hover:scale-[1.02]"
+                }`}
+                onClick={() => {
+                  if (!job.isApply) {
+                    setApplyDialogOpen(true);
+                  }
+                }}
+                disabled={job.isApply}
               >
-                Ứng tuyển ngay
+                {job.isApply ? "Đã ứng tuyển" : "Ứng tuyển ngay"}
               </Button>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  className="flex-1 border-red-200 bg-white text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 text-base font-semibold transition-all shadow-sm h-10"
+                  className={`flex-1 text-base font-semibold transition-all shadow-sm h-10 ${
+                    job.isReport
+                      ? "border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed hover:bg-gray-100 hover:text-gray-500"
+                      : "border-red-200 bg-white text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600"
+                  }`}
                   onClick={handleReportClick}
+                  disabled={job.isReport}
                 >
-                  <Flag className="mr-1.5 h-4 w-4" /> Báo cáo
+                  <Flag className="mr-1.5 h-4 w-4" /> {job.isReport ? "Đã báo cáo" : "Báo cáo"}
                 </Button>
                 <Button
                   variant="outline"
@@ -427,10 +441,19 @@ export default function JobDetailPage() {
             {/* Action Buttons Footer */}
             <div className="flex gap-4 mt-8">
               <Button
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-lg py-6 shadow-md font-bold"
-                onClick={() => setApplyDialogOpen(true)}
+                className={`flex-1 text-lg py-6 shadow-md font-bold ${
+                  job.isApply
+                    ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed"
+                    : "bg-emerald-600 hover:bg-emerald-700"
+                }`}
+                onClick={() => {
+                  if (!job.isApply) {
+                    setApplyDialogOpen(true);
+                  }
+                }}
+                disabled={job.isApply}
               >
-                Ứng tuyển ngay
+                {job.isApply ? "Đã ứng tuyển" : "Ứng tuyển ngay"}
               </Button>
               <Button
                 variant="outline"
@@ -573,6 +596,7 @@ export default function JobDetailPage() {
         jobId={job.jobId}
         jobTitle={job.title}
         onSubmitReport={handleSubmitReport}
+        onReportSuccess={fetchJobData}
       />
       <ApplyJobDialog
         isOpen={isApplyDialogOpen}
@@ -580,6 +604,7 @@ export default function JobDetailPage() {
         jobId={job.jobId}
         jobTitle={job.title}
         onUploadCV={() => navigate("/candidate/cv-management")}
+        onApplySuccess={fetchJobData}
       />
       <LoginDialog
         isOpen={isLoginDialogOpen}

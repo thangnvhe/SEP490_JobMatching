@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Info, Loader2, MapPin, Clock, DollarSign, Briefcase, Building2, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -97,10 +97,19 @@ const getStatusInfo = (status: CandidateJobStatus): { label: string; className: 
 
 export default function MyJobsPage() {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [appliedJobs, setAppliedJobs] = useState<CandidateJob[]>([]);
     const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
     const [loadingApplied, setLoadingApplied] = useState(true);
     const [loadingSaved, setLoadingSaved] = useState(true);
+    
+    // Lấy tab từ query parameter, mặc định là "applied"
+    const activeTab = searchParams.get("tab") || "applied";
+    
+    // Hàm xử lý thay đổi tab
+    const handleTabChange = (value: string) => {
+        setSearchParams({ tab: value });
+    };
 
     // Fetch data
     const fetchAppliedJobs = async () => {
@@ -158,7 +167,7 @@ export default function MyJobsPage() {
                 <p className="text-muted-foreground">Quản lý danh sách việc làm đã ứng tuyển và đã lưu</p>
             </div>
 
-            <Tabs defaultValue="applied" className="w-full">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                 <TabsList className="w-full justify-start bg-transparent border-b rounded-none h-auto p-0 gap-8 mb-6">
                     <TabsTrigger
                         value="applied"
@@ -305,18 +314,34 @@ const SavedJobItemWithFetch = ({ savedJob, onToggleSave, onNavigate }: { savedJo
         return null;
     }
 
+    // Kiểm tra xem job có đang mở không (chỉ cho phép xem chi tiết nếu status là "Opened")
+    const isJobOpened = job.status === 'Opened';
+    const handleCardClick = () => {
+        if (isJobOpened) {
+            onNavigate(job.jobId);
+        }
+    };
+
     return (
         <Card
-            className="group relative p-5 hover:shadow-lg hover:shadow-emerald-500/10 hover:border-emerald-200 transition-all duration-300 cursor-pointer bg-white border border-gray-100 overflow-hidden"
-            onClick={() => onNavigate(job.jobId)}
+            className={`group relative p-5 transition-all duration-300 bg-white border border-gray-100 overflow-hidden ${
+                isJobOpened 
+                    ? 'hover:shadow-lg hover:shadow-emerald-500/10 hover:border-emerald-200 cursor-pointer' 
+                    : 'opacity-60 cursor-not-allowed'
+            }`}
+            onClick={handleCardClick}
         >
             {/* Hover indicator line */}
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top" />
+            <div className={`absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 scale-y-0 transition-transform duration-300 origin-top ${
+                isJobOpened ? 'group-hover:scale-y-100' : ''
+            }`} />
 
             <div className="flex gap-5 items-start">
                 {/* Company Logo */}
                 <div className="shrink-0">
-                    <div className="w-20 h-20 border border-gray-100 rounded-xl flex items-center justify-center bg-white shadow-xs overflow-hidden group-hover:border-emerald-100 transition-colors">
+                    <div className={`w-20 h-20 border border-gray-100 rounded-xl flex items-center justify-center bg-white shadow-xs overflow-hidden transition-colors ${
+                        isJobOpened ? 'group-hover:border-emerald-100' : ''
+                    }`}>
                         <img
                             src={getLogoUrl(company?.logo)}
                             alt={`${company?.name || 'Company'} logo`}
@@ -332,7 +357,9 @@ const SavedJobItemWithFetch = ({ savedJob, onToggleSave, onNavigate }: { savedJo
                 <div className="flex-1 min-w-0 flex flex-col h-full">
                     <div className="flex justify-between items-start gap-2">
                         <div className="space-y-1">
-                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-600 transition-colors line-clamp-2 leading-tight">
+                            <h3 className={`text-lg font-bold text-gray-900 transition-colors line-clamp-2 leading-tight ${
+                                isJobOpened ? 'group-hover:text-emerald-600' : ''
+                            }`}>
                                 {job.title}
                             </h3>
                             <div className="flex items-center gap-2 text-gray-500 text-sm font-medium">
@@ -355,15 +382,21 @@ const SavedJobItemWithFetch = ({ savedJob, onToggleSave, onNavigate }: { savedJo
                     </div>
 
                     <div className="flex flex-wrap gap-1 mt-2">
-                        <Badge variant="outline" className="font-normal text-gray-600 border-gray-200 bg-gray-50/50 group-hover:bg-white group-hover:border-emerald-100 transition-colors">
+                        <Badge variant="outline" className={`font-normal text-gray-600 border-gray-200 bg-gray-50/50 transition-colors ${
+                            isJobOpened ? 'group-hover:bg-white group-hover:border-emerald-100' : ''
+                        }`}>
                             <MapPin className="w-3 h-3 mr-1.5 text-gray-400" />
                             {formatLocation(job.location || '') || 'Toàn quốc'}
                         </Badge>
-                        <Badge variant="outline" className="font-normal text-gray-600 border-gray-200 bg-gray-50/50 group-hover:bg-white group-hover:border-emerald-100 transition-colors">
+                        <Badge variant="outline" className={`font-normal text-gray-600 border-gray-200 bg-gray-50/50 transition-colors ${
+                            isJobOpened ? 'group-hover:bg-white group-hover:border-emerald-100' : ''
+                        }`}>
                             <Clock className="w-3 h-3 mr-1.5 text-gray-400" />
                             {job.experienceYear ? `${job.experienceYear} năm` : 'Không yêu cầu'}
                         </Badge>
-                        <Badge variant="outline" className="font-normal text-gray-600 border-gray-200 bg-gray-50/50 group-hover:bg-white group-hover:border-emerald-100 transition-colors">
+                        <Badge variant="outline" className={`font-normal text-gray-600 border-gray-200 bg-gray-50/50 transition-colors ${
+                            isJobOpened ? 'group-hover:bg-white group-hover:border-emerald-100' : ''
+                        }`}>
                             <Briefcase className="w-3 h-3 mr-1.5 text-gray-400" />
                             {job.jobType || 'Full-time'}
                         </Badge>
@@ -396,9 +429,17 @@ const SavedJobItemWithFetch = ({ savedJob, onToggleSave, onNavigate }: { savedJo
                             <Button
                                 size="sm"
                                 variant="ghost"
-                                className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-medium group/btn"
+                                disabled={!isJobOpened}
+                                className={`font-medium group/btn ${
+                                    isJobOpened 
+                                        ? 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50' 
+                                        : 'text-gray-400 cursor-not-allowed'
+                                }`}
+                                title={!isJobOpened ? 'Công việc này không còn mở' : 'Xem chi tiết'}
                             >
-                                Chi tiết <ChevronRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
+                                Chi tiết <ChevronRight className={`w-4 h-4 ml-1 ${
+                                    isJobOpened ? 'group-hover/btn:translate-x-1 transition-transform' : ''
+                                }`} />
                             </Button>
                         </div>
                     </div>
@@ -459,18 +500,34 @@ const AppliedJobItemWithFetch = ({ candidateJob, onNavigate }: { candidateJob: C
         return null;
     }
 
+    // Kiểm tra xem job có đang mở không (chỉ cho phép xem chi tiết nếu status là "Opened")
+    const isJobOpened = job.status === 'Opened';
+    const handleCardClick = () => {
+        if (isJobOpened) {
+            onNavigate(job.jobId);
+        }
+    };
+
     return (
         <Card
-            className="group relative p-5 hover:shadow-lg hover:shadow-emerald-500/10 hover:border-emerald-200 transition-all duration-300 cursor-pointer bg-white border border-gray-100 overflow-hidden"
-            onClick={() => onNavigate(job.jobId)}
+            className={`group relative p-5 transition-all duration-300 bg-white border border-gray-100 overflow-hidden ${
+                isJobOpened 
+                    ? 'hover:shadow-lg hover:shadow-emerald-500/10 hover:border-emerald-200 cursor-pointer' 
+                    : 'opacity-60 cursor-not-allowed'
+            }`}
+            onClick={handleCardClick}
         >
             {/* Hover indicator line */}
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top" />
+            <div className={`absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 scale-y-0 transition-transform duration-300 origin-top ${
+                isJobOpened ? 'group-hover:scale-y-100' : ''
+            }`} />
 
             <div className="flex gap-5 items-start">
                 {/* Company Logo */}
                 <div className="shrink-0">
-                    <div className="w-20 h-20 border border-gray-100 rounded-xl flex items-center justify-center bg-white shadow-xs overflow-hidden group-hover:border-emerald-100 transition-colors">
+                    <div className={`w-20 h-20 border border-gray-100 rounded-xl flex items-center justify-center bg-white shadow-xs overflow-hidden transition-colors ${
+                        isJobOpened ? 'group-hover:border-emerald-100' : ''
+                    }`}>
                         <img
                             src={getLogoUrl(company?.logo)}
                             alt={`${company?.name || 'Company'} logo`}
@@ -486,7 +543,9 @@ const AppliedJobItemWithFetch = ({ candidateJob, onNavigate }: { candidateJob: C
                 <div className="flex-1 min-w-0 flex flex-col h-full">
                     <div className="flex justify-between items-start gap-2">
                         <div className="space-y-1">
-                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-600 transition-colors line-clamp-2 leading-tight">
+                            <h3 className={`text-lg font-bold text-gray-900 transition-colors line-clamp-2 leading-tight ${
+                                isJobOpened ? 'group-hover:text-emerald-600' : ''
+                            }`}>
                                 {job.title}
                             </h3>
                             <div className="flex items-center gap-2 text-gray-500 text-sm font-medium">
@@ -513,15 +572,21 @@ const AppliedJobItemWithFetch = ({ candidateJob, onNavigate }: { candidateJob: C
                     </div>
 
                     <div className="flex flex-wrap gap-1 mt-2">
-                        <Badge variant="outline" className="font-normal text-gray-600 border-gray-200 bg-gray-50/50 group-hover:bg-white group-hover:border-emerald-100 transition-colors">
+                        <Badge variant="outline" className={`font-normal text-gray-600 border-gray-200 bg-gray-50/50 transition-colors ${
+                            isJobOpened ? 'group-hover:bg-white group-hover:border-emerald-100' : ''
+                        }`}>
                             <MapPin className="w-3 h-3 mr-1.5 text-gray-400" />
                             {formatLocation(job.location || '') || 'Toàn quốc'}
                         </Badge>
-                        <Badge variant="outline" className="font-normal text-gray-600 border-gray-200 bg-gray-50/50 group-hover:bg-white group-hover:border-emerald-100 transition-colors">
+                        <Badge variant="outline" className={`font-normal text-gray-600 border-gray-200 bg-gray-50/50 transition-colors ${
+                            isJobOpened ? 'group-hover:bg-white group-hover:border-emerald-100' : ''
+                        }`}>
                             <Clock className="w-3 h-3 mr-1.5 text-gray-400" />
                             {job.experienceYear ? `${job.experienceYear} năm` : 'Không yêu cầu'}
                         </Badge>
-                        <Badge variant="outline" className="font-normal text-gray-600 border-gray-200 bg-gray-50/50 group-hover:bg-white group-hover:border-emerald-100 transition-colors">
+                        <Badge variant="outline" className={`font-normal text-gray-600 border-gray-200 bg-gray-50/50 transition-colors ${
+                            isJobOpened ? 'group-hover:bg-white group-hover:border-emerald-100' : ''
+                        }`}>
                             <Briefcase className="w-3 h-3 mr-1.5 text-gray-400" />
                             {job.jobType || 'Full-time'}
                         </Badge>
@@ -541,9 +606,17 @@ const AppliedJobItemWithFetch = ({ candidateJob, onNavigate }: { candidateJob: C
                         <Button
                             size="sm"
                             variant="ghost"
-                            className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-medium group/btn"
+                            disabled={!isJobOpened}
+                            className={`font-medium group/btn ${
+                                isJobOpened 
+                                    ? 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50' 
+                                    : 'text-gray-400 cursor-not-allowed'
+                            }`}
+                            title={!isJobOpened ? 'Công việc này không còn mở' : 'Xem chi tiết'}
                         >
-                            Chi tiết <ChevronRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
+                            Chi tiết <ChevronRight className={`w-4 h-4 ml-1 ${
+                                isJobOpened ? 'group-hover/btn:translate-x-1 transition-transform' : ''
+                            }`} />
                         </Button>
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { MapPin, Briefcase, Bookmark, Clock } from "lucide-react";
+import { MapPin, Briefcase, Clock } from "lucide-react";
 import { IconBookmark, IconBookmarkFilled } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

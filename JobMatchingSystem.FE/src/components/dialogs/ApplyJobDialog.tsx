@@ -22,6 +22,7 @@ interface ApplyJobDialogProps {
   jobId: number;
   jobTitle: string;
   onUploadCV?: () => void;
+  onApplySuccess?: () => void;
 }
 
 const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({
@@ -29,7 +30,8 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({
   onOpenChange,
   jobId,
   jobTitle,
-  onUploadCV
+  onUploadCV,
+  onApplySuccess
 }) => {
   const [cvs, setCvs] = useState<CV[]>([]);
   const [selectedCvId, setSelectedCvId] = useState<number | null>(null);
@@ -91,6 +93,7 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({
       if (response.isSuccess) {
         toast.success("Ứng tuyển thành công!");
         onOpenChange(false);
+        onApplySuccess?.();
       } else {
         toast.error(response.errorMessages?.[0] || 'Không thể ứng tuyển');
       }
