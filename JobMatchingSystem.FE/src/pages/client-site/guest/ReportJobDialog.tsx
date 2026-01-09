@@ -63,6 +63,7 @@ interface ReportJobDialogProps {
   jobId: number;
   jobTitle: string;
   onSubmitReport: (reportData: ReportCreateInput) => Promise<void>;
+  onReportSuccess?: () => void;
 }
 
 export function ReportJobDialog({
@@ -70,7 +71,8 @@ export function ReportJobDialog({
   onOpenChange,
   jobId,
   jobTitle,
-  onSubmitReport
+  onSubmitReport,
+  onReportSuccess
 }: ReportJobDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -108,6 +110,7 @@ export function ReportJobDialog({
 
       toast.success("Báo cáo đã được gửi thành công!");
       handleOpenChange(false);
+      onReportSuccess?.();
     } catch (error) {
       console.error("Error submitting report:", error);
       toast.error("Có lỗi xảy ra khi gửi báo cáo. Vui lòng thử lại!");

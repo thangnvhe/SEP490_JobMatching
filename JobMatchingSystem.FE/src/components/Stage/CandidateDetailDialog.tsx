@@ -28,16 +28,17 @@ interface CandidateDetailDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Chỉ còn 4 trạng thái: Draft, Schedule, Passed, Failed
 const statusColors: Record<string, { bg: string; text: string; border: string }> = {
+  Draft: {
+    bg: "bg-gray-100 dark:bg-gray-900/30",
+    text: "text-gray-700 dark:text-gray-300",
+    border: "border-gray-200 dark:border-gray-800",
+  },
   Schedule: {
     bg: "bg-blue-100 dark:bg-blue-900/30",
     text: "text-blue-700 dark:text-blue-300",
     border: "border-blue-200 dark:border-blue-800",
-  },
-  Pending: {
-    bg: "bg-amber-100 dark:bg-amber-900/30",
-    text: "text-amber-700 dark:text-amber-300",
-    border: "border-amber-200 dark:border-amber-800",
   },
   Passed: {
     bg: "bg-emerald-100 dark:bg-emerald-900/30",
@@ -48,11 +49,6 @@ const statusColors: Record<string, { bg: string; text: string; border: string }>
     bg: "bg-rose-100 dark:bg-rose-900/30",
     text: "text-rose-700 dark:text-rose-300",
     border: "border-rose-200 dark:border-rose-800",
-  },
-  InProgress: {
-    bg: "bg-violet-100 dark:bg-violet-900/30",
-    text: "text-violet-700 dark:text-violet-300",
-    border: "border-violet-200 dark:border-violet-800",
   },
 };
 
@@ -65,8 +61,8 @@ export function CandidateDetailDialog({
 
   const user = candidate.user;
   const cv = candidate.cv;
-  const status = candidate.status || "Pending";
-  const statusStyle = statusColors[status] || statusColors.Pending;
+  const status = candidate.status || "Draft";
+  const statusStyle = statusColors[status] || statusColors.Draft;
 
   const getInitials = (name: string) => {
     if (!name) return "?";

@@ -43,6 +43,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ProvincesService, type Province, type Ward, type DistrictWithWards } from "@/services/provinces.service";
 
 // --- validation/schema ---
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -103,12 +104,10 @@ const ContactRecruiterPage: React.FC = () => {
   const [submittedCompanyName, setSubmittedCompanyName] = useState("");
   const navigate = useNavigate();
   // address data
-  const [provinces, setProvinces] = useState<any[]>([]);
-  const [wards, setWards] = useState<any[]>([]);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [wards, setWards] = useState<Ward[]>([]);
   const [isProvincesLoading, setIsProvincesLoading] = useState(false);
   const [isWardsLoading, setIsWardsLoading] = useState(false);
-
-  const API_BASE_URL = "https://provinces.open-api.vn/api/v2";
 
   const form = useForm<CompanyCreateForm>({
     resolver: zodResolver(companyCreateSchema),
@@ -131,11 +130,11 @@ const ContactRecruiterPage: React.FC = () => {
     const fetchProvinces = async () => {
       setIsProvincesLoading(true);
       try {
-        const res = await fetch(`${API_BASE_URL}/p?depth=1`);
-        const data = await res.json();
+        const data = await ProvincesService.getAllProvinces(1);
         setProvinces(data || []);
       } catch (err) {
         console.error("Lỗi tải tỉnh:", err);
+        toast.error("Không thể tải danh sách tỉnh/thành phố");
       } finally {
         setIsProvincesLoading(false);
       }
@@ -151,11 +150,25 @@ const ContactRecruiterPage: React.FC = () => {
     setWards([]);
     setIsWardsLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/p/${provinceCode}?depth=2`);
-      const data = await res.json();
-      setWards(data?.wards || []);
+      // Lấy thông tin tỉnh với depth=3 để có districts và wards
+      const provinceData = await ProvincesService.getProvinceByCode(provinceCode, 3);
+      
+      // Thu thập tất cả wards từ các districts
+      const allWards: Ward[] = [];
+      if (provinceData.districts && provinceData.districts.length > 0) {
+        provinceData.districts.forEach((district) => {
+          // Khi depth=3, district sẽ có wards
+          const districtWithWards = district as DistrictWithWards;
+          if (districtWithWards.wards && Array.isArray(districtWithWards.wards)) {
+            allWards.push(...districtWithWards.wards);
+          }
+        });
+      }
+      setWards(allWards);
     } catch (err) {
-      console.error("Lỗi tải xã:", err);
+      console.error("Lỗi tải phường/xã:", err);
+      toast.error("Không thể tải danh sách phường/xã");
+      setWards([]);
     } finally {
       setIsWardsLoading(false);
     }

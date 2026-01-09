@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+import { SwitchWithConfirm } from "@/components/ui/switch-with-confirm";
 import {
   Select,
   SelectContent,
@@ -249,13 +249,19 @@ export default function ViewUserList() {
           const isToggling = togglingUserId === user.id;
           return (
             <div className="flex items-center space-x-2">
-              <Switch
+              <SwitchWithConfirm
                 checked={isActive}
                 onCheckedChange={(checked) =>
                   handleToggleStatus(user, checked)
                 }
                 disabled={isToggling}
                 title={isActive ? "Vô hiệu hóa người dùng" : "Kích hoạt người dùng"}
+                confirmTitle="Xác nhận thay đổi trạng thái người dùng"
+                confirmMessage={
+                  isActive
+                    ? `Bạn có chắc chắn muốn vô hiệu hóa người dùng "${user.fullName}"?`
+                    : `Bạn có chắc chắn muốn kích hoạt người dùng "${user.fullName}"?`
+                }
               />
               <span className="text-sm text-muted-foreground">
                 {isActive ? "Hoạt động" : "Vô hiệu hóa"}

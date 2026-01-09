@@ -231,7 +231,7 @@ export default function CandidateDashboardPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Đơn Ứng Tuyển Gần Nhất</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/jobs")}>
+              <Button variant="ghost" size="sm" onClick={() => navigate("/candidate/my-jobs")}>
                 Xem tất cả <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
@@ -306,7 +306,7 @@ export default function CandidateDashboardPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Công Việc Yêu Thích ({dashboard.totalSavedJobs})</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/saved-jobs")}>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/candidate/my-jobs?tab=saved")}>
               Xem tất cả <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>

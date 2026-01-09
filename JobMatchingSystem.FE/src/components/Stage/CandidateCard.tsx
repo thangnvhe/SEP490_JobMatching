@@ -16,12 +16,12 @@ interface CandidateCardProps {
   onCandidateUpdated?: (updatedCandidate: CandidateStage) => void;
 }
 
+// Chỉ còn 4 trạng thái: Draft, Schedule, Passed, Failed
 const statusColors: Record<string, { bg: string; text: string }> = {
+  Draft: { bg: "bg-gray-100 dark:bg-gray-900/30", text: "text-gray-700 dark:text-gray-300" },
   Schedule: { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-700 dark:text-blue-300" },
-  Pending: { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-300" },
   Passed: { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-300" },
   Failed: { bg: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-700 dark:text-rose-300" },
-  InProgress: { bg: "bg-violet-100 dark:bg-violet-900/30", text: "text-violet-700 dark:text-violet-300" },
 };
 
 export function CandidateCard({
@@ -109,27 +109,8 @@ function CandidateContent({
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   
   const user = candidate.user;
-  const status = candidate.status || "Pending";
-  const statusStyle = statusColors[status] || statusColors.Pending;
-
-  // Check if candidate has valid schedule
-  const hasValidSchedule = () => {
-    const hasValidDate = candidate.interviewDate && 
-        candidate.interviewDate !== "0001-01-01" && 
-        candidate.interviewDate.trim() !== "";
-    
-    const hasValidStartTime = candidate.interviewStartTime && 
-        candidate.interviewStartTime !== "00:00:00" && 
-        candidate.interviewStartTime.trim() !== "";
-    
-    const hasValidEndTime = candidate.interviewEndTime && 
-        candidate.interviewEndTime !== "00:00:00" && 
-        candidate.interviewEndTime.trim() !== "";
-    
-    return hasValidDate && hasValidStartTime && hasValidEndTime;
-  };
-
-  const hasSchedule = hasValidSchedule();
+  const status = candidate.status || "Draft";
+  const statusStyle = statusColors[status] || statusColors.Draft;
 
   // Get initials from fullName
   const getInitials = (name: string) => {
@@ -213,18 +194,38 @@ function CandidateContent({
 
       {/* Action Buttons */}
       <div className="flex gap-2 mt-1">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1 h-8 text-xs"
-          onClick={(e) => {
-            e.stopPropagation();
-            setScheduleDialogOpen(true);
-          }}
-        >
-          <CalendarPlus className="h-3.5 w-3.5 mr-1.5" />
-          {hasSchedule ? "Chỉnh sửa lịch" : "Đặt lịch"}
-        </Button>
+        {/* Hiển thị nút đặt lịch/chỉnh sửa lịch dựa trên trạng thái */}
+        {/* Draft (chưa có lịch) -> Đặt lịch */}
+        {status === "Draft" && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-8 text-xs"
+            onClick={(e) => {
+              e.stopPropagation();
+              setScheduleDialogOpen(true);
+            }}
+          >
+            <CalendarPlus className="h-3.5 w-3.5 mr-1.5" />
+            Đặt lịch
+          </Button>
+        )}
+        {/* Schedule (đã có lịch) -> Chỉnh sửa lịch */}
+        {status === "Schedule" && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-8 text-xs"
+            onClick={(e) => {
+              e.stopPropagation();
+              setScheduleDialogOpen(true);
+            }}
+          >
+            <CalendarPlus className="h-3.5 w-3.5 mr-1.5" />
+            Chỉnh sửa lịch
+          </Button>
+        )}
+        {/* Nút xem chi tiết luôn hiển thị */}
         <Button
           variant="outline"
           size="sm"

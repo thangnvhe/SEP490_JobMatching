@@ -257,6 +257,17 @@ const RecruitmentProcessManagement = () => {
     }
   }, [fetchCandidateJobs, paginationInput]);
 
+  // Tìm job được chọn để kiểm tra status
+  const selectedJob = useMemo(() => {
+    if (!selectedJobId) return null;
+    return jobs.find(job => job.jobId.toString() === selectedJobId) || null;
+  }, [selectedJobId, jobs]);
+
+  // Kiểm tra job đã đóng hay chưa
+  const isJobClosed = useMemo(() => {
+    return selectedJob?.status === 'Closed';
+  }, [selectedJob]);
+
   // Load all CVs to map cvId -> CV detail (file + user name)
   const fetchCVs = useCallback(async () => {
     try {
@@ -481,7 +492,7 @@ const RecruitmentProcessManagement = () => {
                 ) : (
                   jobs.map((job) => (
                     <SelectItem key={job.jobId} value={job.jobId.toString()}>
-                      {job.title} {job.status === 'Opened' && '(Đang mở)'}
+                      {job.title} - {job.status === 'Opened' ? 'Đang mở' : 'Đã đóng'}
                     </SelectItem>
                   ))
                 )}
@@ -525,7 +536,8 @@ const RecruitmentProcessManagement = () => {
                       variant="default"
                       size="sm"
                       className="bg-blue-600 hover:bg-blue-700 text-white"
-                      title="Tìm kiếm ứng viên cho công việc này"
+                      title={isJobClosed ? "Không thể tìm ứng viên cho tin tuyển dụng đã đóng" : "Tìm kiếm ứng viên cho công việc này"}
+                      disabled={isJobClosed}
                     >
                       <Search className="h-4 w-4 mr-2" />
                       Tìm ứng viên

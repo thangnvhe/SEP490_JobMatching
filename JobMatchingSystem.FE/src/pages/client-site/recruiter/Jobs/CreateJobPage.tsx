@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,7 +14,9 @@ import {
   Plus,
   Trash2,
   User as UserIcon,
-  CheckCircle
+  CheckCircle,
+  MapPin,
+  Loader2
 } from "lucide-react";
 
 // Import UI components
@@ -29,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
@@ -51,6 +53,8 @@ import { type User } from "@/models/user";
 import { type ExtensionJob } from "@/models/extension-job";
 import { type HighlightJob } from "@/models/highlight-job";
 import { toast } from "sonner";
+import { useDebounce } from "@/hooks/useDebounce";
+import { VIETMAP_API_KEY } from "@/../env";
 
 // Types
 interface HiringManager {
@@ -64,6 +68,15 @@ interface JobStage {
   stageNumber: number;
   name: string;
   hiringManagerId?: number;
+}
+
+interface LocationSuggestion {
+  ref_id: string;
+  address: string;
+  name: string;
+  display: string;
+  boundaries?: number[];
+  categories?: string[];
 }
 
 // Step 1: Job Information Schema
@@ -80,7 +93,7 @@ const step1Schema = z.object({
   positionId: z.number().min(1, "Vị trí tuyển dụng là bắt buộc"),
   openedAt: z.date({ required_error: "Ngày mở tuyển dụng là bắt buộc" }),
   expiredAt: z.date({ required_error: "Ngày hết hạn là bắt buộc" }),
-  taxonomyIds: z.array(z.number()).optional(), // Cho phép optional, sẽ validate bằng logic
+  taxonomyIds: z.array(z.number()).min(1, "Phải chọn ít nhất 1 kỹ năng"), // Bắt buộc ít nhất 1, không giới hạn trên
 });
 
 type Step1FormData = z.infer<typeof step1Schema>;
@@ -109,6 +122,14 @@ export default function CreateJobPage() {
   const [selectedPositionId, setSelectedPositionId] = useState<number | null>(null);
   const [searchPosition, setSearchPosition] = useState("");
   const [openPositionPopover, setOpenPositionPopover] = useState(false);
+  
+  // Location autocomplete
+  const [locationInput, setLocationInput] = useState("");
+  const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [loadingLocationSuggestions, setLoadingLocationSuggestions] = useState(false);
+  const debouncedLocationInput = useDebounce(locationInput, 500);
+  const locationInputRef = useRef<HTMLInputElement>(null);
   
   // Extension and Highlight Jobs
   const [extensionJobs, setExtensionJobs] = useState<ExtensionJob[]>([]);
@@ -315,6 +336,80 @@ export default function CreateJobPage() {
     setValueStep1("positionId", selectedPositionId || 0);
   }, [selectedPositionId, setValueStep1]);
 
+  // Fetch location suggestions from Vietmap API
+  useEffect(() => {
+    const fetchLocationSuggestions = async () => {
+      if (!debouncedLocationInput || debouncedLocationInput.trim().length < 2) {
+        setLocationSuggestions([]);
+        return;
+      }
+
+      setLoadingLocationSuggestions(true);
+      try {
+        // Sử dụng Vietmap API để tìm kiếm địa chỉ ở Việt Nam
+        const response = await fetch(
+          `https://maps.vietmap.vn/api/autocomplete/v3?` +
+          `apikey=${VIETMAP_API_KEY}` +
+          `&text=${encodeURIComponent(debouncedLocationInput)}` +
+          `&focus=16.047079,108.206230`, // Tọa độ trung tâm Việt Nam (Đà Nẵng) để ưu tiên kết quả gần
+          {
+            headers: {
+              'Accept': 'application/json',
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          // Vietmap trả về array trực tiếp
+          if (Array.isArray(data) && data.length > 0) {
+            setLocationSuggestions(data.slice(0, 5)); // Giới hạn 5 kết quả
+            setShowLocationSuggestions(true);
+          } else {
+            setLocationSuggestions([]);
+          }
+        } else {
+          console.error("Error fetching location suggestions from Vietmap");
+          setLocationSuggestions([]);
+        }
+      } catch (error) {
+        console.error("Error fetching location suggestions:", error);
+        setLocationSuggestions([]);
+      } finally {
+        setLoadingLocationSuggestions(false);
+      }
+    };
+
+    fetchLocationSuggestions();
+  }, [debouncedLocationInput]);
+
+  // Close location suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (locationInputRef.current && !locationInputRef.current.contains(event.target as Node)) {
+        const suggestionDropdown = document.querySelector('.location-suggestions-dropdown');
+        if (suggestionDropdown && !suggestionDropdown.contains(event.target as Node)) {
+          setShowLocationSuggestions(false);
+        }
+      }
+    };
+
+    if (showLocationSuggestions) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showLocationSuggestions]);
+
+  // Sync locationInput with form value when navigating between steps
+  useEffect(() => {
+    const currentLocation = watchStep1("location");
+    if (currentLocation && !locationInput) {
+      setLocationInput(currentLocation);
+    }
+  }, [currentStep, watchStep1, locationInput]);
+
   // Steps configuration
   const steps = [
     { number: 1, title: "Thông tin công việc", description: "Điền thông tin cơ bản của công việc" },
@@ -344,11 +439,6 @@ export default function CreateJobPage() {
     // Validate taxonomies - kiểm tra selectedTaxonomies
     if (selectedTaxonomies.length === 0) {
       toast.error("Phải chọn ít nhất 1 kỹ năng");
-      return;
-    }
-
-    if (selectedTaxonomies.length > 5) {
-      toast.error("Chỉ được chọn tối đa 5 kỹ năng");
       return;
     }
 
@@ -572,513 +662,568 @@ export default function CreateJobPage() {
     switch (currentStep) {
       case 1:
         return (
-          <form onSubmit={handleSubmitStep1(onStep1Submit)} className="space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left Column */}
-              <div className="space-y-8">
-                {/* Thông tin cơ bản */}
-                <Card className="border-green-200 shadow-lg">
-                  <CardHeader className="bg-green-50 border-b border-green-200">
-                    <CardTitle className="text-green-800 text-lg">Thông tin cơ bản</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6 p-6">
-                    {/* Title */}
-                    <div className="space-y-3">
-                      <Label htmlFor="title" className="text-base font-medium text-gray-700">Tiêu đề công việc *</Label>
-                      <Input
-                        id="title"
-                        {...registerStep1("title")}
-                        placeholder="Nhập tiêu đề công việc..."
-                        className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.title ? "border-red-500" : "border-gray-300"}`}
-                      />
-                      {errorsStep1.title && (
-                        <p className="text-sm text-red-500">{errorsStep1.title.message}</p>
-                      )}
-                    </div>
+          <form onSubmit={handleSubmitStep1(onStep1Submit)} className="space-y-10">
+            {/* Thông tin cơ bản */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-gray-900">Thông tin cơ bản</h3>
+                <p className="text-sm text-gray-500">Điền các thông tin cơ bản về vị trí tuyển dụng</p>
+              </div>
+              <Separator />
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-5">
+                  {/* Title */}
+                  <div className="space-y-2">
+                    <Label htmlFor="title" className="text-sm font-medium">Tiêu đề công việc *</Label>
+                    <Input
+                      id="title"
+                      {...registerStep1("title")}
+                      placeholder="VD: Senior Frontend Developer"
+                      className={errorsStep1.title ? "border-red-500" : ""}
+                    />
+                    {errorsStep1.title && (
+                      <p className="text-sm text-red-500">{errorsStep1.title.message}</p>
+                    )}
+                  </div>
 
-                    {/* Location */}
-                    <div className="space-y-3">
-                      <Label htmlFor="location" className="text-base font-medium text-gray-700">Địa điểm làm việc *</Label>
-                      <Input
-                        id="location"
-                        {...registerStep1("location")}
-                        placeholder="Nhập địa điểm làm việc..."
-                        className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.location ? "border-red-500" : "border-gray-300"}`}
-                      />
-                      {errorsStep1.location && (
-                        <p className="text-sm text-red-500">{errorsStep1.location.message}</p>
-                      )}
-                    </div>
+                  {/* Location with Autocomplete */}
+                  <div className="space-y-2">
+                    <Label htmlFor="location" className="text-sm font-medium">
+                      Địa điểm làm việc *
+                    </Label>
+                    <div className="relative">
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          ref={locationInputRef}
+                          id="location"
+                          type="text"
+                          value={locationInput || watchStep1("location") || ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setLocationInput(value);
+                            setValueStep1("location", value);
+                            if (value.trim().length >= 2) {
+                              setShowLocationSuggestions(true);
+                            } else {
+                              setShowLocationSuggestions(false);
+                            }
+                          }}
+                          onFocus={() => {
+                            if (locationInput.trim().length >= 2 && locationSuggestions.length > 0) {
+                              setShowLocationSuggestions(true);
+                            }
+                          }}
+                          onBlur={() => {
+                            // Delay để cho phép click vào suggestion
+                            setTimeout(() => {
+                              setShowLocationSuggestions(false);
+                            }, 200);
+                          }}
+                          placeholder="VD: Đường Lê Duẩn, Quận 1, TP.HCM..."
+                          className={`pl-10 ${errorsStep1.location ? "border-red-500" : ""}`}
+                        />
+                        {loadingLocationSuggestions && (
+                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 animate-spin" />
+                        )}
+                      </div>
 
-                    {/* Job Type */}
-                    <div className="space-y-3">
-                      <Label htmlFor="jobType" className="text-base font-medium text-gray-700">Loại công việc *</Label>
-                      <Select
-                        value={watchStep1("jobType")}
-                        onValueChange={(value) => setValueStep1("jobType", value)}
-                      >
-                        <SelectTrigger className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.jobType ? "border-red-500" : "border-gray-300"}`}>
-                          <SelectValue placeholder="Chọn loại công việc" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="FullTime">Toàn thời gian</SelectItem>
-                          <SelectItem value="PartTime">Bán thời gian</SelectItem>
-                          <SelectItem value="Remote">Làm từ xa</SelectItem>
-                          <SelectItem value="Other">Khác</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {errorsStep1.jobType && (
-                        <p className="text-sm text-red-500">{errorsStep1.jobType.message}</p>
-                      )}
-                    </div>
-
-                    {/* Experience Year */}
-                    <div className="space-y-3">
-                      <Label htmlFor="experienceYear" className="text-base font-medium text-gray-700">Số năm kinh nghiệm yêu cầu</Label>
-                      <Input
-                        id="experienceYear"
-                        type="number"
-                        min="0"
-                        max="50"
-                        {...registerStep1("experienceYear", { valueAsNumber: true })}
-                        placeholder="Nhập số năm kinh nghiệm..."
-                        className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.experienceYear ? "border-red-500" : "border-gray-300"}`}
-                      />
-                      {errorsStep1.experienceYear && (
-                        <p className="text-sm text-red-500">{errorsStep1.experienceYear.message}</p>
-                      )}
-                    </div>
-
-                    {/* Vị trí tuyển dụng - Autocomplete */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-medium text-gray-700">Vị trí tuyển dụng *</Label>
-                      
-                      {loadingPositions ? (
-                        <div className="text-sm text-gray-500">Đang tải danh sách vị trí...</div>
-                      ) : (
-                        <>
-                          {/* Direct Input Autocomplete */}
-                          <div className="relative">
-                            <Input
-                              type="text"
-                              value={selectedPositionId ? positions.find(p => p.positionId === selectedPositionId)?.name || searchPosition : searchPosition}
-                              onChange={(e) => {
-                                setSearchPosition(e.target.value);
-                                if (selectedPositionId) {
-                                  setSelectedPositionId(null);
-                                }
-                                setOpenPositionPopover(e.target.value.length > 0);
+                      {/* Location Suggestions Dropdown */}
+                      {showLocationSuggestions && locationSuggestions.length > 0 && (
+                        <div className="location-suggestions-dropdown absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-auto">
+                          {locationSuggestions.map((suggestion, index) => (
+                            <div
+                              key={suggestion.ref_id || index}
+                              onClick={() => {
+                                const address = suggestion.display || suggestion.address;
+                                setLocationInput(address);
+                                setValueStep1("location", address);
+                                setShowLocationSuggestions(false);
+                                setLocationSuggestions([]);
                               }}
-                              onFocus={() => {
-                                if (!selectedPositionId && searchPosition.length > 0) {
-                                  setOpenPositionPopover(true);
-                                }
-                              }}
-                              placeholder="Nhập để tìm kiếm vị trí tuyển dụng..."
-                              className={`h-12 text-base border-2 ${
-                                !selectedPositionId ? "border-red-300" : "border-gray-300"
-                              } focus:border-green-400`}
-                            />
-                            
-                            {/* Dropdown Suggestions */}
-                            {openPositionPopover && !selectedPositionId && searchPosition.length > 0 && (
-                              <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-64 overflow-auto">
-                                {positions
-                                  .filter(position => 
-                                    position.name.toLowerCase().includes(searchPosition.toLowerCase())
-                                  )
-                                  .length > 0 ? (
-                                  positions
-                                    .filter(position => 
-                                      position.name.toLowerCase().includes(searchPosition.toLowerCase())
-                                    )
-                                    .map((position) => (
-                                      <div
-                                        key={position.positionId}
-                                        onClick={() => {
-                                          setSelectedPositionId(position.positionId);
-                                          setSearchPosition("");
-                                          setOpenPositionPopover(false);
-                                        }}
-                                        className="px-4 py-3 hover:bg-green-50 cursor-pointer flex items-center gap-2 border-b border-gray-100 last:border-b-0"
-                                      >
-                                        <span className="text-sm">{position.name}</span>
-                                      </div>
-                                    ))
-                                ) : (
-                                  <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                                    Không tìm thấy vị trí phù hợp
-                                  </div>
+                              className="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 flex items-start gap-2"
+                            >
+                              <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                {suggestion.name && suggestion.name !== suggestion.address && (
+                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                    {suggestion.name}
+                                  </p>
                                 )}
+                                <p className={`text-sm text-gray-600 ${suggestion.name ? 'text-xs' : ''}`}>
+                                  {suggestion.display || suggestion.address}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* No results message */}
+                      {showLocationSuggestions && 
+                       locationInput.trim().length >= 2 && 
+                       !loadingLocationSuggestions && 
+                       locationSuggestions.length === 0 && (
+                        <div className="location-suggestions-dropdown absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg">
+                          <div className="px-4 py-3 text-sm text-muted-foreground text-center">
+                            Không tìm thấy địa chỉ phù hợp
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {errorsStep1.location && (
+                      <p className="text-sm text-red-500">{errorsStep1.location.message}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Tìm kiếm địa chỉ theo Vietmap - Nhập tối thiểu 2 ký tự
+                    </p>
+                  </div>
+
+                  {/* Experience Year */}
+                  <div className="space-y-2">
+                    <Label htmlFor="experienceYear" className="text-sm font-medium">Số năm kinh nghiệm yêu cầu</Label>
+                    <Input
+                      id="experienceYear"
+                      type="number"
+                      min="0"
+                      max="50"
+                      {...registerStep1("experienceYear", { valueAsNumber: true })}
+                      placeholder="VD: 2"
+                      className={errorsStep1.experienceYear ? "border-red-500" : ""}
+                    />
+                    {errorsStep1.experienceYear && (
+                      <p className="text-sm text-red-500">{errorsStep1.experienceYear.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-5">
+                  {/* Job Type */}
+                  <div className="space-y-2">
+                    <Label htmlFor="jobType" className="text-sm font-medium">Loại công việc *</Label>
+                    <Select
+                      value={watchStep1("jobType")}
+                      onValueChange={(value) => setValueStep1("jobType", value)}
+                    >
+                      <SelectTrigger className={errorsStep1.jobType ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Chọn loại công việc" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="FullTime">Toàn thời gian</SelectItem>
+                        <SelectItem value="PartTime">Bán thời gian</SelectItem>
+                        <SelectItem value="Remote">Làm từ xa</SelectItem>
+                        <SelectItem value="Other">Khác</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errorsStep1.jobType && (
+                      <p className="text-sm text-red-500">{errorsStep1.jobType.message}</p>
+                    )}
+                  </div>
+
+                  {/* Opened Date */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Ngày mở tuyển dụng *</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={`w-full justify-start text-left font-normal ${
+                            !watchStep1("openedAt") ? "text-muted-foreground" : ""
+                          } ${errorsStep1.openedAt ? "border-red-500" : ""}`}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {watchStep1("openedAt") ? (
+                            format(watchStep1("openedAt"), "PPP", { locale: vi })
+                          ) : (
+                            <span>Chọn ngày mở tuyển dụng</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={watchStep1("openedAt")}
+                          onSelect={(date) => {
+                            setValueStep1("openedAt", date || new Date());
+                            if (date) {
+                              const expiredDate = new Date(date);
+                              expiredDate.setDate(expiredDate.getDate() + 30);
+                              setValueStep1("expiredAt", expiredDate);
+                            }
+                          }}
+                          disabled={(date) => {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            return date < today;
+                          }}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    {errorsStep1.openedAt && (
+                      <p className="text-sm text-red-500">{errorsStep1.openedAt.message}</p>
+                    )}
+                  </div>
+
+                  {/* Expired Date */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Ngày hết hạn *</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={`w-full justify-start text-left font-normal ${
+                            !watchStep1("expiredAt") ? "text-muted-foreground" : ""
+                          } ${errorsStep1.expiredAt ? "border-red-500" : ""}`}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {watchStep1("expiredAt") ? (
+                            format(watchStep1("expiredAt"), "PPP", { locale: vi })
+                          ) : (
+                            <span>Chọn ngày hết hạn</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={watchStep1("expiredAt")}
+                          onSelect={(date) => setValueStep1("expiredAt", date || new Date())}
+                          disabled={(date) => {
+                            const openedDate = watchStep1("openedAt");
+                            if (!openedDate) return true;
+                            const minDate = new Date(openedDate);
+                            minDate.setDate(minDate.getDate() + 1);
+                            const maxDate = new Date(openedDate);
+                            maxDate.setDate(maxDate.getDate() + 30);
+                            return date <= openedDate || date > maxDate;
+                          }}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    {errorsStep1.expiredAt && (
+                      <p className="text-sm text-red-500">{errorsStep1.expiredAt.message}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Ngày hết hạn phải trong vòng 30 ngày kể từ ngày mở tuyển dụng
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Vị trí và Kỹ năng */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-gray-900">Vị trí và Kỹ năng</h3>
+                <p className="text-sm text-gray-500">Chọn vị trí tuyển dụng và kỹ năng yêu cầu</p>
+              </div>
+              <Separator />
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Vị trí tuyển dụng */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Vị trí tuyển dụng *</Label>
+                  {loadingPositions ? (
+                    <div className="text-sm text-muted-foreground">Đang tải...</div>
+                  ) : (
+                    <>
+                      <div className="relative">
+                        <Input
+                          type="text"
+                          value={selectedPositionId ? positions.find(p => p.positionId === selectedPositionId)?.name || searchPosition : searchPosition}
+                          onChange={(e) => {
+                            setSearchPosition(e.target.value);
+                            if (selectedPositionId) {
+                              setSelectedPositionId(null);
+                            }
+                            setOpenPositionPopover(e.target.value.length > 0);
+                          }}
+                          onFocus={() => {
+                            if (!selectedPositionId && searchPosition.length > 0) {
+                              setOpenPositionPopover(true);
+                            }
+                          }}
+                          placeholder="Tìm kiếm vị trí..."
+                          className={!selectedPositionId ? "border-red-300" : ""}
+                        />
+                        
+                        {openPositionPopover && !selectedPositionId && searchPosition.length > 0 && (
+                          <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-auto">
+                            {positions
+                              .filter(position => 
+                                position.name.toLowerCase().includes(searchPosition.toLowerCase())
+                              )
+                              .length > 0 ? (
+                              positions
+                                .filter(position => 
+                                  position.name.toLowerCase().includes(searchPosition.toLowerCase())
+                                )
+                                .map((position) => (
+                                  <div
+                                    key={position.positionId}
+                                    onClick={() => {
+                                      setSelectedPositionId(position.positionId);
+                                      setSearchPosition("");
+                                      setOpenPositionPopover(false);
+                                    }}
+                                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                                  >
+                                    {position.name}
+                                  </div>
+                                ))
+                            ) : (
+                              <div className="px-4 py-2 text-sm text-muted-foreground text-center">
+                                Không tìm thấy vị trí phù hợp
                               </div>
                             )}
                           </div>
+                        )}
+                      </div>
 
-                          {/* Selected Position Display */}
-                          {selectedPositionId && (
-                            <div className="flex items-center gap-2 p-3 border-2 border-green-200 rounded-lg bg-green-50">
+                      {selectedPositionId && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            {positions.find(p => p.positionId === selectedPositionId)?.name}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedPositionId(null);
+                                setSearchPosition("");
+                              }}
+                              className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        </div>
+                      )}
+                      
+                      {!selectedPositionId && (
+                        <p className="text-sm text-red-500">Vui lòng chọn vị trí tuyển dụng</p>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* Kỹ năng yêu cầu */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Kỹ năng yêu cầu *</Label>
+                  {loadingTaxonomies ? (
+                    <div className="text-sm text-muted-foreground">Đang tải...</div>
+                  ) : (
+                    <>
+                      <div className="relative">
+                        <Input
+                          type="text"
+                          value={searchTaxonomy}
+                          onChange={(e) => {
+                            setSearchTaxonomy(e.target.value);
+                            setOpenTaxonomyPopover(e.target.value.length > 0);
+                          }}
+                          onFocus={() => {
+                            if (searchTaxonomy.length > 0) {
+                              setOpenTaxonomyPopover(true);
+                            }
+                          }}
+                          placeholder="Tìm kiếm kỹ năng..."
+                          className={selectedTaxonomies.length === 0 ? "border-red-300" : ""}
+                        />
+                        
+                        {openTaxonomyPopover && searchTaxonomy.length > 0 && (
+                          <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-auto">
+                            {taxonomies
+                              .filter(taxonomy => 
+                                !selectedTaxonomies.includes(taxonomy.id) &&
+                                taxonomy.name.toLowerCase().includes(searchTaxonomy.toLowerCase())
+                              )
+                              .length > 0 ? (
+                              taxonomies
+                                .filter(taxonomy => 
+                                  !selectedTaxonomies.includes(taxonomy.id) &&
+                                  taxonomy.name.toLowerCase().includes(searchTaxonomy.toLowerCase())
+                                )
+                                .map((taxonomy) => (
+                                  <div
+                                    key={taxonomy.id}
+                                    onClick={() => {
+                                      const newTaxonomies = [...selectedTaxonomies, taxonomy.id];
+                                      setSelectedTaxonomies(newTaxonomies);
+                                      setValueStep1("taxonomyIds", newTaxonomies);
+                                      setSearchTaxonomy("");
+                                      setOpenTaxonomyPopover(false);
+                                    }}
+                                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                                  >
+                                    {taxonomy.name}
+                                  </div>
+                                ))
+                            ) : (
+                              <div className="px-4 py-2 text-sm text-muted-foreground text-center">
+                                Không tìm thấy kỹ năng phù hợp
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {selectedTaxonomies.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {selectedTaxonomies.map((taxonomyId) => {
+                            const taxonomy = taxonomies.find(t => t.id === taxonomyId);
+                            return (
                               <Badge 
+                                key={taxonomyId} 
                                 variant="secondary"
-                                className="px-3 py-1.5 bg-green-100 text-green-800 hover:bg-green-200 text-sm flex items-center gap-2"
+                                className="flex items-center gap-1"
                               >
-                                {positions.find(p => p.positionId === selectedPositionId)?.name || `ID: ${selectedPositionId}`}
+                                {taxonomy?.name || `ID: ${taxonomyId}`}
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setSelectedPositionId(null);
-                                    setSearchPosition("");
+                                    const newTaxonomies = selectedTaxonomies.filter(id => id !== taxonomyId);
+                                    setSelectedTaxonomies(newTaxonomies);
+                                    setValueStep1("taxonomyIds", newTaxonomies);
                                   }}
-                                  className="ml-1 hover:bg-green-300 rounded-full p-0.5"
+                                  className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
                                 >
                                   <X className="h-3 w-3" />
                                 </button>
                               </Badge>
-                            </div>
-                          )}
-                          
-                          {errorsStep1.positionId && (
-                            <p className="text-sm text-red-500">{errorsStep1.positionId.message}</p>
-                          )}
-                          
-                          {!selectedPositionId && (
-                            <p className="text-sm text-red-500">Vui lòng chọn vị trí tuyển dụng</p>
-                          )}
-                        </>
+                            );
+                          })}
+                        </div>
                       )}
-                    </div>
-
-                    {/* Taxonomies/Skills - Direct Autocomplete */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-medium text-gray-700">Kỹ năng yêu cầu (1-5 kỹ năng) *</Label>
                       
-                      {loadingTaxonomies ? (
-                        <div className="text-sm text-gray-500">Đang tải danh sách kỹ năng...</div>
-                      ) : (
-                        <>
-                          {/* Direct Input Autocomplete */}
-                          <div className="relative">
-                            <Input
-                              type="text"
-                              value={searchTaxonomy}
-                              onChange={(e) => {
-                                setSearchTaxonomy(e.target.value);
-                                setOpenTaxonomyPopover(e.target.value.length > 0);
-                              }}
-                              onFocus={() => {
-                                if (searchTaxonomy.length > 0) {
-                                  setOpenTaxonomyPopover(true);
-                                }
-                              }}
-                              placeholder={selectedTaxonomies.length >= 5 ? "Đã chọn tối đa 5 kỹ năng" : "Nhập để tìm kiếm kỹ năng..."}
-                              disabled={selectedTaxonomies.length >= 5}
-                              className={`h-12 text-base border-2 ${
-                                selectedTaxonomies.length === 0 ? "border-red-300" : "border-gray-300"
-                              } focus:border-green-400`}
-                            />
-                            
-                            {/* Dropdown Suggestions */}
-                            {openTaxonomyPopover && searchTaxonomy.length > 0 && (
-                              <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-64 overflow-auto">
-                                {taxonomies
-                                  .filter(taxonomy => 
-                                    !selectedTaxonomies.includes(taxonomy.id) &&
-                                    taxonomy.name.toLowerCase().includes(searchTaxonomy.toLowerCase())
-                                  )
-                                  .length > 0 ? (
-                                  taxonomies
-                                    .filter(taxonomy => 
-                                      !selectedTaxonomies.includes(taxonomy.id) &&
-                                      taxonomy.name.toLowerCase().includes(searchTaxonomy.toLowerCase())
-                                    )
-                                    .map((taxonomy) => (
-                                      <div
-                                        key={taxonomy.id}
-                                        onClick={() => {
-                                          if (selectedTaxonomies.length < 5) {
-                                            const newTaxonomies = [...selectedTaxonomies, taxonomy.id];
-                                            setSelectedTaxonomies(newTaxonomies);
-                                            setValueStep1("taxonomyIds", newTaxonomies);
-                                            setSearchTaxonomy("");
-                                            setOpenTaxonomyPopover(false);
-                                          }
-                                        }}
-                                        className="px-4 py-3 hover:bg-green-50 cursor-pointer flex items-center gap-2 border-b border-gray-100 last:border-b-0"
-                                      >
-                                        <Check className="h-4 w-4 text-green-600 opacity-0" />
-                                        <span className="text-sm">{taxonomy.name}</span>
-                                      </div>
-                                    ))
-                                ) : (
-                                  <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                                    Không tìm thấy kỹ năng phù hợp
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Selected Taxonomies as Badges */}
-                          {selectedTaxonomies.length > 0 && (
-                            <div className="flex flex-wrap gap-2 p-3 border-2 border-gray-200 rounded-lg bg-gray-50">
-                              {selectedTaxonomies.map((taxonomyId) => {
-                                const taxonomy = taxonomies.find(t => t.id === taxonomyId);
-                                return (
-                                  <Badge 
-                                    key={taxonomyId} 
-                                    variant="secondary"
-                                    className="px-3 py-1.5 bg-green-100 text-green-800 hover:bg-green-200 text-sm flex items-center gap-2"
-                                  >
-                                    {taxonomy?.name || `ID: ${taxonomyId}`}
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const newTaxonomies = selectedTaxonomies.filter(id => id !== taxonomyId);
-                                        setSelectedTaxonomies(newTaxonomies);
-                                        setValueStep1("taxonomyIds", newTaxonomies);
-                                      }}
-                                      className="ml-1 hover:bg-green-300 rounded-full p-0.5"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </button>
-                                  </Badge>
-                                );
-                              })}
-                            </div>
-                          )}
-
-                          {/* Validation Messages
-                          {selectedTaxonomies.length === 0 && (
-                            <p className="text-sm text-red-500 flex items-center gap-1">
-                              <span className="font-medium">⚠️</span> Phải chọn ít nhất 1 kỹ năng
-                            </p>
-                          )}
-                          {selectedTaxonomies.length >= 5 && (
-                            <p className="text-sm text-orange-500 flex items-center gap-1">
-                              <span className="font-medium">ℹ️</span> Đã chọn tối đa 5 kỹ năng
-                            </p>
-                          )} */}
-                          
-                          {/* Counter */}
-                          <div className="text-sm font-medium text-gray-600">
-                            Đã chọn: <span className={selectedTaxonomies.length === 0 ? "text-red-500" : "text-green-600"}>
-                              {selectedTaxonomies.length}
-                            </span>/5 kỹ năng
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Opened Date */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-medium text-gray-700">Ngày mở tuyển dụng *</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={`w-full h-12 justify-start text-left font-normal border-2 ${
-                              !watchStep1("openedAt") ? "text-muted-foreground" : ""
-                            } ${errorsStep1.openedAt ? "border-red-500" : "border-gray-300"}`}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {watchStep1("openedAt") ? (
-                              format(watchStep1("openedAt"), "PPP", { locale: vi })
-                            ) : (
-                              <span>Chọn ngày mở tuyển dụng</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={watchStep1("openedAt")}
-                            onSelect={(date) => {
-                              setValueStep1("openedAt", date || new Date());
-                              // Auto-set expired date to 30 days later
-                              if (date) {
-                                const expiredDate = new Date(date);
-                                expiredDate.setDate(expiredDate.getDate() + 30);
-                                setValueStep1("expiredAt", expiredDate);
-                              }
-                            }}
-                            disabled={(date) => {
-                              const today = new Date();
-                              today.setHours(0, 0, 0, 0);
-                              return date < today;
-                            }}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      {errorsStep1.openedAt && (
-                        <p className="text-sm text-red-500">{errorsStep1.openedAt.message}</p>
-                      )}
-                    </div>
-
-                    {/* Expired Date */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-medium text-gray-700">Ngày hết hạn *</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={`w-full h-12 justify-start text-left font-normal border-2 ${
-                              !watchStep1("expiredAt") ? "text-muted-foreground" : ""
-                            } ${errorsStep1.expiredAt ? "border-red-500" : "border-gray-300"}`}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {watchStep1("expiredAt") ? (
-                              format(watchStep1("expiredAt"), "PPP", { locale: vi })
-                            ) : (
-                              <span>Chọn ngày hết hạn</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={watchStep1("expiredAt")}
-                            onSelect={(date) => setValueStep1("expiredAt", date || new Date())}
-                            disabled={(date) => {
-                              const openedDate = watchStep1("openedAt");
-                              if (!openedDate) return true;
-                              const minDate = new Date(openedDate);
-                              minDate.setDate(minDate.getDate() + 1);
-                              const maxDate = new Date(openedDate);
-                              maxDate.setDate(maxDate.getDate() + 30);
-                              return date <= openedDate || date > maxDate;
-                            }}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      {errorsStep1.expiredAt && (
-                        <p className="text-sm text-red-500">{errorsStep1.expiredAt.message}</p>
-                      )}
-                      <p className="text-xs text-gray-500">
-                        💡 Ngày hết hạn phải trong vòng 30 ngày kể từ ngày mở tuyển dụng
+                      <p className="text-sm text-muted-foreground">
+                        Đã chọn: {selectedTaxonomies.length} kỹ năng
                       </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </>
+                  )}
+                </div>
               </div>
+            </div>
 
-              {/* Right Column */}
-              <div className="space-y-8">
-                {/* Mô tả chi tiết */}
-                <Card className="border-green-200 shadow-lg">
-                  <CardHeader className="bg-green-50 border-b border-green-200">
-                    <CardTitle className="text-green-800 text-lg">Mô tả chi tiết</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6 p-6">
-                    {/* Description */}
-                    <div className="space-y-3">
-                      <Label htmlFor="description" className="text-base font-medium text-gray-700">Mô tả công việc *</Label>
-                      <Textarea
-                        id="description"
-                        rows={5}
-                        {...registerStep1("description")}
-                        placeholder="Mô tả chi tiết về công việc..."
-                        className={`text-base border-2 focus:border-green-400 resize-none ${errorsStep1.description ? "border-red-500" : "border-gray-300"}`}
+            {/* Mô tả chi tiết */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-gray-900">Mô tả chi tiết</h3>
+                <p className="text-sm text-gray-500">Mô tả công việc, yêu cầu và quyền lợi</p>
+              </div>
+              <Separator />
+              
+              <div className="space-y-5">
+                {/* Description */}
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-sm font-medium">Mô tả công việc *</Label>
+                  <Textarea
+                    id="description"
+                    rows={5}
+                    {...registerStep1("description")}
+                    placeholder="Mô tả chi tiết về công việc, trách nhiệm chính..."
+                    className={errorsStep1.description ? "border-red-500 resize-none" : "resize-none"}
+                  />
+                  {errorsStep1.description && (
+                    <p className="text-sm text-red-500">{errorsStep1.description.message}</p>
+                  )}
+                </div>
+
+                {/* Requirements */}
+                <div className="space-y-2">
+                  <Label htmlFor="requirements" className="text-sm font-medium">Yêu cầu công việc *</Label>
+                  <Textarea
+                    id="requirements"
+                    rows={5}
+                    {...registerStep1("requirements")}
+                    placeholder="Các yêu cầu về kỹ năng, kinh nghiệm, trình độ..."
+                    className={errorsStep1.requirements ? "border-red-500 resize-none" : "resize-none"}
+                  />
+                  {errorsStep1.requirements && (
+                    <p className="text-sm text-red-500">{errorsStep1.requirements.message}</p>
+                  )}
+                </div>
+
+                {/* Benefits */}
+                <div className="space-y-2">
+                  <Label htmlFor="benefits" className="text-sm font-medium">Quyền lợi</Label>
+                  <Textarea
+                    id="benefits"
+                    rows={4}
+                    {...registerStep1("benefits")}
+                    placeholder="Các quyền lợi và phúc lợi cho ứng viên..."
+                    className={errorsStep1.benefits ? "border-red-500 resize-none" : "resize-none"}
+                  />
+                  {errorsStep1.benefits && (
+                    <p className="text-sm text-red-500">{errorsStep1.benefits.message}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Mức lương */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-gray-900">Mức lương</h3>
+                <p className="text-sm text-gray-500">Thiết lập mức lương cho vị trí này</p>
+              </div>
+              <Separator />
+              
+              <div className="space-y-5">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="negotiableSalary"
+                    checked={isNegotiableSalary}
+                    onCheckedChange={handleNegotiableSalaryChange}
+                  />
+                  <Label htmlFor="negotiableSalary" className="text-sm font-medium cursor-pointer">
+                    Lương thỏa thuận
+                  </Label>
+                </div>
+                
+                {!isNegotiableSalary && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="salaryMin" className="text-sm font-medium">Lương tối thiểu (VND)</Label>
+                      <Input
+                        id="salaryMin"
+                        type="number"
+                        min="0"
+                        {...registerStep1("salaryMin", { valueAsNumber: true })}
+                        placeholder="VD: 10000000"
+                        className={errorsStep1.salaryMin ? "border-red-500" : ""}
                       />
-                      {errorsStep1.description && (
-                        <p className="text-sm text-red-500">{errorsStep1.description.message}</p>
+                      {errorsStep1.salaryMin && (
+                        <p className="text-sm text-red-500">{errorsStep1.salaryMin.message}</p>
                       )}
-                    </div>
-
-                    {/* Requirements */}
-                    <div className="space-y-3">
-                      <Label htmlFor="requirements" className="text-base font-medium text-gray-700">Yêu cầu công việc *</Label>
-                      <Textarea
-                        id="requirements"
-                        rows={5}
-                        {...registerStep1("requirements")}
-                        placeholder="Các yêu cầu về kỹ năng, kinh nghiệm..."
-                        className={`text-base border-2 focus:border-green-400 resize-none ${errorsStep1.requirements ? "border-red-500" : "border-gray-300"}`}
-                      />
-                      {errorsStep1.requirements && (
-                        <p className="text-sm text-red-500">{errorsStep1.requirements.message}</p>
-                      )}
-                    </div>
-
-                    {/* Benefits */}
-                    <div className="space-y-3">
-                      <Label htmlFor="benefits" className="text-base font-medium text-gray-700">Quyền lợi</Label>
-                      <Textarea
-                        id="benefits"
-                        rows={4}
-                        {...registerStep1("benefits")}
-                        placeholder="Các quyền lợi và phúc lợi..."
-                        className={`text-base border-2 focus:border-green-400 resize-none ${errorsStep1.benefits ? "border-red-500" : "border-gray-300"}`}
-                      />
-                      {errorsStep1.benefits && (
-                        <p className="text-sm text-red-500">{errorsStep1.benefits.message}</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Mức lương */}
-                <Card className="border-green-200 shadow-lg">
-                  <CardHeader className="bg-green-50 border-b border-green-200">
-                    <CardTitle className="text-green-800 text-lg">Mức lương</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6 p-6">
-                    {/* Lương thỏa thuận checkbox */}
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        id="negotiableSalary"
-                        checked={isNegotiableSalary}
-                        onCheckedChange={handleNegotiableSalaryChange}
-                        className="h-5 w-5 text-green-600"
-                      />
-                      <Label htmlFor="negotiableSalary" className="text-base font-medium text-gray-700 cursor-pointer">
-                        Lương thỏa thuận
-                      </Label>
                     </div>
                     
-                    {!isNegotiableSalary && (
-                      <>
-                        <div className="space-y-3">
-                          <Label htmlFor="salaryMin" className="text-base font-medium text-gray-700">Lương tối thiểu (VND)</Label>
-                          <Input
-                            id="salaryMin"
-                            type="number"
-                            min="0"
-                            {...registerStep1("salaryMin", { valueAsNumber: true })}
-                            placeholder="Nhập lương tối thiểu..."
-                            className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.salaryMin ? "border-red-500" : "border-gray-300"}`}
-                          />
-                          {errorsStep1.salaryMin && (
-                            <p className="text-sm text-red-500">{errorsStep1.salaryMin.message}</p>
-                          )}
-                        </div>
-                        
-                        <div className="space-y-3">
-                          <Label htmlFor="salaryMax" className="text-base font-medium text-gray-700">Lương tối đa (VND)</Label>
-                          <Input
-                            id="salaryMax"
-                            type="number"
-                            min="0"
-                            {...registerStep1("salaryMax", { valueAsNumber: true })}
-                            placeholder="Nhập lương tối đa..."
-                            className={`h-12 text-base border-2 focus:border-green-400 ${errorsStep1.salaryMax ? "border-red-500" : "border-gray-300"}`}
-                          />
-                          {errorsStep1.salaryMax && (
-                            <p className="text-sm text-red-500">{errorsStep1.salaryMax.message}</p>
-                          )}
-                        </div>
-                      </>
-                    )}
-                    
-                    {isNegotiableSalary && (
-                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                        <p className="text-sm text-green-800 font-medium">
-                          💼 Mức lương sẽ được thỏa thuận trong quá trình phỏng vấn
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                    <div className="space-y-2">
+                      <Label htmlFor="salaryMax" className="text-sm font-medium">Lương tối đa (VND)</Label>
+                      <Input
+                        id="salaryMax"
+                        type="number"
+                        min="0"
+                        {...registerStep1("salaryMax", { valueAsNumber: true })}
+                        placeholder="VD: 20000000"
+                        className={errorsStep1.salaryMax ? "border-red-500" : ""}
+                      />
+                      {errorsStep1.salaryMax && (
+                        <p className="text-sm text-red-500">{errorsStep1.salaryMax.message}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {isNegotiableSalary && (
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <p className="text-sm text-blue-800">
+                      💼 Mức lương sẽ được thỏa thuận trong quá trình phỏng vấn
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </form>
@@ -1086,327 +1231,307 @@ export default function CreateJobPage() {
 
       case 2:
         return (
-          <div className="space-y-8">
-            <Card className="border-green-200 shadow-lg">
-              <CardHeader className="bg-green-50 border-b border-green-200 flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="text-green-800 text-lg">Quy trình tuyển dụng</CardTitle>
-                  <p className="text-sm text-gray-600 mt-2">Thiết lập các giai đoạn tuyển dụng cho vị trí này</p>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addJobStage}
-                  className="flex items-center space-x-2 border-2 border-green-300 hover:bg-green-50 hover:border-green-400 text-green-700"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Thêm giai đoạn</span>
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-6 p-6">
-                {jobStages.map((stage) => (
-                  <div key={stage.stageNumber} className="border-2 border-green-100 rounded-lg p-5 space-y-4 bg-green-50">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-green-800 text-lg">Giai đoạn {stage.stageNumber}</h4>
-                      {jobStages.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeJobStage(stage.stageNumber)}
-                          className="text-red-500 hover:bg-red-500 hover:text-white"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+          <div className="space-y-10">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-gray-900">Quy trình tuyển dụng</h3>
+                <p className="text-sm text-gray-500">Thiết lập các giai đoạn tuyển dụng cho vị trí này</p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addJobStage}
+                className="flex items-center space-x-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Thêm giai đoạn</span>
+              </Button>
+            </div>
+            <Separator />
+            
+            <div className="space-y-6">
+              {jobStages.map((stage, index) => (
+                <div key={stage.stageNumber} className="border rounded-lg p-6 space-y-4 bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-base flex items-center gap-2">
+                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm">
+                        {index + 1}
+                      </span>
+                      Giai đoạn {stage.stageNumber}
+                    </h4>
+                    {jobStages.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeJobStage(stage.stageNumber)}
+                        className="text-red-500 hover:bg-red-100 hover:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Tên giai đoạn */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Tên giai đoạn *</Label>
+                      <Input
+                        value={stage.name}
+                        onChange={(e) => updateJobStage(stage.stageNumber, 'name', e.target.value)}
+                        placeholder="VD: Phỏng vấn sơ bộ"
+                      />
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {/* Tên giai đoạn */}
-                      <div className="space-y-3">
-                        <Label className="text-base font-medium text-gray-700">Tên giai đoạn *</Label>
-                        <Input
-                          value={stage.name}
-                          onChange={(e) => updateJobStage(stage.stageNumber, 'name', e.target.value)}
-                          placeholder="Nhập tên giai đoạn..."
-                          className="h-12 text-base border-2 focus:border-green-400"
-                        />
-                      </div>
-
-                      {/* Hiring Manager */}
-                      <div className="space-y-3">
-                        <Label className="text-base font-medium text-gray-700">Hiring Manager (Tùy chọn)</Label>
-                        <Select
-                          value={stage.hiringManagerId?.toString() || "none"}
-                          onValueChange={(value) => updateJobStage(stage.stageNumber, 'hiringManagerId', value === "none" ? undefined : parseInt(value))}
-                        >
-                          <SelectTrigger className="h-12 text-base border-2 focus:border-green-400">
-                            <SelectValue placeholder="Chọn hiring manager" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Không chọn</SelectItem>
-                            {loadingHiringManagers ? (
-                              <SelectItem value="loading" disabled>Đang tải...</SelectItem>
-                            ) : hiringManagers.length === 0 ? (
-                              <SelectItem value="empty" disabled>Không có hiring manager</SelectItem>
-                            ) : (
-                              hiringManagers.map(manager => (
-                                <SelectItem key={manager.id} value={manager.id.toString()}>
-                                  <div className="flex items-center space-x-2">
-                                    <UserIcon className="h-4 w-4" />
-                                    <div>
-                                      <div className="font-medium">{manager.name}</div>
-                                      <div className="text-sm text-gray-500">{manager.email}</div>
-                                    </div>
+                    {/* Hiring Manager */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Hiring Manager (Tùy chọn)</Label>
+                      <Select
+                        value={stage.hiringManagerId?.toString() || "none"}
+                        onValueChange={(value) => updateJobStage(stage.stageNumber, 'hiringManagerId', value === "none" ? undefined : parseInt(value))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn hiring manager" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Không chọn</SelectItem>
+                          {loadingHiringManagers ? (
+                            <SelectItem value="loading" disabled>Đang tải...</SelectItem>
+                          ) : hiringManagers.length === 0 ? (
+                            <SelectItem value="empty" disabled>Không có hiring manager</SelectItem>
+                          ) : (
+                            hiringManagers.map(manager => (
+                              <SelectItem key={manager.id} value={manager.id.toString()}>
+                                <div className="flex items-center space-x-2">
+                                  <UserIcon className="h-4 w-4" />
+                                  <div>
+                                    <div className="font-medium">{manager.name}</div>
+                                    <div className="text-sm text-gray-500">{manager.email}</div>
                                   </div>
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                        <p className="text-xs text-gray-500">
-                          💡 Có thể để trống nếu chưa xác định được người phụ trách
-                        </p>
-                      </div>
+                                </div>
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Có thể để trống nếu chưa xác định được người phụ trách
+                      </p>
                     </div>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                </div>
+              ))}
+            </div>
           </div>
         );
 
       case 3:
         return (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Job Information Review */}
-              <Card className="border-green-200 shadow-lg">
-                <CardHeader className="bg-green-50 border-b border-green-200">
-                  <CardTitle className="flex items-center space-x-2 text-green-800 text-lg">
-                    <CheckCircle className="h-6 w-6 text-green-600" />
-                    <span>Thông tin công việc</span>
-                  </CardTitle>
-                  <p className="text-sm text-gray-600 mt-2">Xem lại thông tin cơ bản của công việc</p>
-                </CardHeader>
-                <CardContent className="space-y-4 p-6">
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium text-gray-700">Tiêu đề:</Label>
-                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">{jobData.title}</p>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium text-gray-700">Địa điểm:</Label>
-                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">{jobData.location}</p>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium text-gray-700">Loại công việc:</Label>
-                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">{getJobTypeLabel(jobData.jobType)}</p>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium text-gray-700">Kinh nghiệm:</Label>
-                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">{jobData.experienceYear} năm</p>
-                  </div>
-                  
-                  {/* Vị trí tuyển dụng */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium text-gray-700">Vị trí tuyển dụng:</Label>
-                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">
-                      {positions.find(p => p.positionId === selectedPositionId)?.name || "Chưa chọn"}
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium text-gray-700">Kỹ năng yêu cầu:</Label>
-                    <div className="bg-gray-50 p-3 rounded">
-                      <div className="flex flex-wrap gap-2">
-                        {(selectedTaxonomies || []).map((taxonomyId) => {
-                          const taxonomy = taxonomies.find(t => t.id === taxonomyId);
-                          return (
-                            <span key={taxonomyId} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                              {taxonomy?.name || `ID: ${taxonomyId}`}
-                            </span>
-                          );
-                        })}
-                        {selectedTaxonomies.length === 0 && (
-                          <span className="text-gray-500 text-sm">Chưa chọn kỹ năng</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium text-gray-700">Mức lương:</Label>
-                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">
-                      {isNegotiableSalary 
-                        ? "Thỏa thuận" 
-                        : (jobData.salaryMin && jobData.salaryMax 
-                          ? `${jobData.salaryMin.toLocaleString()} - ${jobData.salaryMax.toLocaleString()} VND`
-                          : "Thỏa thuận"
-                        )
-                      }
-                    </p>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium text-gray-700">Ngày mở tuyển dụng:</Label>
-                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">
-                      {jobData.openedAt instanceof Date ? jobData.openedAt.toLocaleDateString('vi-VN') : new Date(jobData.openedAt).toLocaleDateString('vi-VN')}
-                    </p>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium text-gray-700">Ngày hết hạn:</Label>
-                    <p className="text-base text-gray-800 bg-gray-50 p-3 rounded">
-                      {jobData.expiredAt instanceof Date ? jobData.expiredAt.toLocaleDateString('vi-VN') : new Date(jobData.expiredAt).toLocaleDateString('vi-VN')}
-                    </p>
-                  </div>
-                  
-                  {/* Highlight and Extension Job Selection */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium text-gray-700">Gói nổi bật:</Label>
-                    <div className="bg-gray-50 p-3 rounded">
-                      {selectedHighlightId ? (
-                        <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
-                          {(() => {
-                            const pkg = highlightJobs.find(j => j.id === selectedHighlightId);
-                            return pkg ? `Gói nổi bật ${pkg.highlightJobDays} ngày` : `Gói #${selectedHighlightId}`;
-                          })()}
+          <div className="space-y-10">
+            {/* Thông tin công việc */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                  Thông tin công việc
+                </h3>
+                <p className="text-sm text-gray-500">Xem lại thông tin cơ bản của công việc</p>
+              </div>
+              <Separator />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">Tiêu đề</Label>
+                  <p className="text-base">{jobData.title}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">Địa điểm</Label>
+                  <p className="text-base">{jobData.location}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">Loại công việc</Label>
+                  <p className="text-base">{getJobTypeLabel(jobData.jobType)}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">Kinh nghiệm</Label>
+                  <p className="text-base">{jobData.experienceYear} năm</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">Vị trí tuyển dụng</Label>
+                  <p className="text-base">
+                    {positions.find(p => p.positionId === selectedPositionId)?.name || "Chưa chọn"}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">Mức lương</Label>
+                  <p className="text-base">
+                    {isNegotiableSalary 
+                      ? "Thỏa thuận" 
+                      : (jobData.salaryMin && jobData.salaryMax 
+                        ? `${jobData.salaryMin.toLocaleString()} - ${jobData.salaryMax.toLocaleString()} VND`
+                        : "Thỏa thuận"
+                      )
+                    }
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">Ngày mở tuyển dụng</Label>
+                  <p className="text-base">
+                    {jobData.openedAt instanceof Date ? jobData.openedAt.toLocaleDateString('vi-VN') : new Date(jobData.openedAt).toLocaleDateString('vi-VN')}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">Ngày hết hạn</Label>
+                  <p className="text-base">
+                    {jobData.expiredAt instanceof Date ? jobData.expiredAt.toLocaleDateString('vi-VN') : new Date(jobData.expiredAt).toLocaleDateString('vi-VN')}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-muted-foreground">Kỹ năng yêu cầu</Label>
+                <div className="flex flex-wrap gap-2">
+                  {(selectedTaxonomies || []).map((taxonomyId) => {
+                    const taxonomy = taxonomies.find(t => t.id === taxonomyId);
+                    return (
+                      <Badge key={taxonomyId} variant="secondary">
+                        {taxonomy?.name || `ID: ${taxonomyId}`}
+                      </Badge>
+                    );
+                  })}
+                  {selectedTaxonomies.length === 0 && (
+                    <span className="text-sm text-muted-foreground">Chưa chọn kỹ năng</span>
+                  )}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-muted-foreground">Mô tả công việc</Label>
+                <div className="text-base bg-gray-50 p-4 rounded-lg border max-h-32 overflow-y-auto whitespace-pre-wrap">
+                  {jobData.description}
+                </div>
+              </div>
+            </div>
+
+            {/* Gói nâng cấp */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                  Gói nâng cấp (Tùy chọn)
+                </h3>
+                <p className="text-sm text-gray-500">Chọn gói nổi bật hoặc gia hạn cho tin tuyển dụng</p>
+              </div>
+              <Separator />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Highlight Job Selection */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Gói nổi bật</Label>
+                  {loadingHighlights ? (
+                    <p className="text-sm text-muted-foreground">Đang tải...</p>
+                  ) : (
+                    <>
+                      <Select
+                        value={selectedHighlightId?.toString() || "none"}
+                        onValueChange={(value) => setSelectedHighlightId(value === "none" ? undefined : parseInt(value))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn gói nổi bật" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Không chọn</SelectItem>
+                          {highlightJobs.length === 0 ? (
+                            <SelectItem value="empty" disabled>Không có gói khả dụng</SelectItem>
+                          ) : (
+                            highlightJobs.map(job => (
+                              <SelectItem 
+                                key={job.id} 
+                                value={job.id.toString()}
+                                disabled={job.highlightJobDaysCount <= 0}
+                              >
+                                Gói nổi bật {job.highlightJobDays} ngày (còn {job.highlightJobDaysCount} lượt)
+                                {job.highlightJobDaysCount <= 0 && " - Đã hết"}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">Giúp tin tuyển dụng nổi bật hơn</p>
+                    </>
+                  )}
+                </div>
+
+                {/* Extension Job Selection */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Gói gia hạn</Label>
+                  {loadingExtensions ? (
+                    <p className="text-sm text-muted-foreground">Đang tải...</p>
+                  ) : (
+                    <>
+                      <Select
+                        value={selectedExtensionId?.toString() || "none"}
+                        onValueChange={(value) => setSelectedExtensionId(value === "none" ? undefined : parseInt(value))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn gói gia hạn" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Không chọn</SelectItem>
+                          {extensionJobs.length === 0 ? (
+                            <SelectItem value="empty" disabled>Không có gói khả dụng</SelectItem>
+                          ) : (
+                            extensionJobs.map(job => (
+                              <SelectItem 
+                                key={job.id} 
+                                value={job.id.toString()}
+                                disabled={job.extensionJobDaysCount <= 0}
+                              >
+                                Gói gia hạn {job.extensionJobDays} ngày (còn {job.extensionJobDaysCount} lượt)
+                                {job.extensionJobDaysCount <= 0 && " - Đã hết"}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">Kéo dài thời gian hiển thị tin tuyển dụng</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Quy trình tuyển dụng */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                  Quy trình tuyển dụng
+                </h3>
+                <p className="text-sm text-gray-500">Xem lại các giai đoạn tuyển dụng</p>
+              </div>
+              <Separator />
+              
+              <div className="space-y-4">
+                {jobStages.map((stage, index) => {
+                  const manager = hiringManagers.find(m => m.id === stage.hiringManagerId);
+                  return (
+                    <div key={stage.stageNumber} className="border rounded-lg p-4 bg-gray-50">
+                      <div className="flex items-start gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm shrink-0">
+                          {index + 1}
                         </span>
-                      ) : (
-                        <span className="text-gray-500 text-sm">Không chọn</span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium text-gray-700">Gói gia hạn:</Label>
-                    <div className="bg-gray-50 p-3 rounded">
-                      {selectedExtensionId ? (
-                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                          {(() => {
-                            const pkg = extensionJobs.find(j => j.id === selectedExtensionId);
-                            return pkg ? `Gói gia hạn ${pkg.extensionJobDays} ngày` : `Gói #${selectedExtensionId}`;
-                          })()}
-                        </span>
-                      ) : (
-                        <span className="text-gray-500 text-sm">Không chọn</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium text-gray-700">Mô tả:</Label>
-                    <div className="text-base text-gray-800 bg-gray-50 p-4 rounded max-h-32 overflow-y-auto">
-                      {jobData.description}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Process Review and Additional Options */}
-              <div className="space-y-8">
-                {/* Highlight and Extension Job Selection */}
-                <Card className="border-green-200 shadow-lg">
-                  <CardHeader className="bg-green-50 border-b border-green-200">
-                    <CardTitle className="flex items-center space-x-2 text-green-800 text-lg">
-                      <CheckCircle className="h-6 w-6 text-green-600" />
-                      <span>Gói nâng cấp (Tùy chọn)</span>
-                    </CardTitle>
-                    <p className="text-sm text-gray-600 mt-2">Chọn gói nổi bật hoặc gia hạn cho tin tuyển dụng</p>
-                  </CardHeader>
-                  <CardContent className="space-y-6 p-6">
-                    {/* Highlight Job Selection */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-medium text-gray-700">Gói nổi bật</Label>
-                      {loadingHighlights ? (
-                        <p className="text-sm text-gray-500">Đang tải...</p>
-                      ) : (
-                        <Select
-                          value={selectedHighlightId?.toString() || "none"}
-                          onValueChange={(value) => setSelectedHighlightId(value === "none" ? undefined : parseInt(value))}
-                        >
-                          <SelectTrigger className="h-12 text-base border-2 focus:border-green-400">
-                            <SelectValue placeholder="Chọn gói nổi bật" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Không chọn</SelectItem>
-                            {highlightJobs.length === 0 ? (
-                              <SelectItem value="empty" disabled>Không có gói khả dụng</SelectItem>
-                            ) : (
-                              highlightJobs.map(job => (
-                                <SelectItem 
-                                  key={job.id} 
-                                  value={job.id.toString()}
-                                  disabled={job.highlightJobDaysCount <= 0}
-                                >
-                                  Gói nổi bật {job.highlightJobDays} ngày (còn {job.highlightJobDaysCount} lượt)
-                                  {job.highlightJobDaysCount <= 0 && " - Đã hết"}
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                      )}
-                      <p className="text-xs text-gray-500">💡 Giúp tin tuyển dụng nổi bật hơn</p>
-                    </div>
-
-                    {/* Extension Job Selection */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-medium text-gray-700">Gói gia hạn</Label>
-                      {loadingExtensions ? (
-                        <p className="text-sm text-gray-500">Đang tải...</p>
-                      ) : (
-                        <Select
-                          value={selectedExtensionId?.toString() || "none"}
-                          onValueChange={(value) => setSelectedExtensionId(value === "none" ? undefined : parseInt(value))}
-                        >
-                          <SelectTrigger className="h-12 text-base border-2 focus:border-green-400">
-                            <SelectValue placeholder="Chọn gói gia hạn" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Không chọn</SelectItem>
-                            {extensionJobs.length === 0 ? (
-                              <SelectItem value="empty" disabled>Không có gói khả dụng</SelectItem>
-                            ) : (
-                              extensionJobs.map(job => (
-                                <SelectItem 
-                                  key={job.id} 
-                                  value={job.id.toString()}
-                                  disabled={job.extensionJobDaysCount <= 0}
-                                >
-                                  Gói gia hạn {job.extensionJobDays} ngày (còn {job.extensionJobDaysCount} lượt)
-                                  {job.extensionJobDaysCount <= 0 && " - Đã hết"}
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                      )}
-                      <p className="text-xs text-gray-500">💡 Kéo dài thời gian hiển thị tin tuyển dụng</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Process Review */}
-                <Card className="border-green-200 shadow-lg">
-                  <CardHeader className="bg-green-50 border-b border-green-200">
-                    <CardTitle className="flex items-center space-x-2 text-green-800 text-lg">
-                      <CheckCircle className="h-6 w-6 text-green-600" />
-                      <span>Quy trình tuyển dụng</span>
-                    </CardTitle>
-                    <p className="text-sm text-gray-600 mt-2">Xem lại các giai đoạn tuyển dụng</p>
-                  </CardHeader>
-                  <CardContent className="space-y-4 p-6">
-                    {jobStages.map(stage => {
-                      const manager = hiringManagers.find(m => m.id === stage.hiringManagerId);
-                      return (
-                        <div key={stage.stageNumber} className="border-2 border-green-100 rounded-lg p-4 bg-green-50">
-                          <p className="font-medium text-base text-green-800">Giai đoạn {stage.stageNumber}: {stage.name}</p>
-                          <p className="text-sm text-gray-600 mt-2">
+                        <div className="flex-1">
+                          <p className="font-medium text-base">{stage.name}</p>
+                          <p className="text-sm text-muted-foreground mt-1">
                             Phụ trách: {manager ? manager.name : 'Chưa xác định'}
                           </p>
                         </div>
-                      );
-                    })}
-                  </CardContent>
-                </Card>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -1418,119 +1543,129 @@ export default function CreateJobPage() {
   };
 
   return (
-    <div className="p-8 space-y-8 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-green-200">
-        <div className="flex items-center space-x-4">
+    <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
+      <div className="max-w-6xl mx-auto p-6 space-y-8">
+        {/* Header */}
+        <div className="space-y-4">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => navigate("/recruiter/jobs")}
-            className="flex items-center space-x-2 border-2 border-green-300 hover:bg-green-50 hover:border-green-400 text-green-700"
+            className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Quay lại</span>
+            Quay lại
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-green-800">Tạo tin tuyển dụng mới</h1>
-            <p className="text-gray-600 text-lg mt-2">
+            <h1 className="text-3xl font-bold tracking-tight">Tạo tin tuyển dụng mới</h1>
+            <p className="text-muted-foreground mt-2">
               Hoàn thành 3 bước để tạo tin tuyển dụng
             </p>
           </div>
         </div>
-      </div>
 
-      {/* Steps Navigation */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-green-200">
-        <div className="flex items-center justify-center space-x-8 py-4">
-        {steps.map((step, index) => (
-          <div key={step.number} className="flex items-center">
-            <div className="flex flex-col items-center space-y-2">
-              <div className={`
-                w-12 h-12 rounded-full border-2 flex items-center justify-center text-base font-medium transition-all
-                ${currentStep === step.number 
-                  ? 'bg-green-600 border-green-600 text-white shadow-lg' 
-                  : currentStep > step.number
-                    ? 'bg-green-500 border-green-500 text-white'
-                    : 'border-gray-300 text-gray-500 bg-white'
-                }
-              `}>
-                {currentStep > step.number ? (
-                  <Check className="h-6 w-6" />
-                ) : (
-                  step.number
-                )}
+        {/* Steps Navigation */}
+        <div className="relative">
+          <div className="flex items-center justify-between">
+            {steps.map((step, index) => (
+              <div key={step.number} className="flex flex-col items-center flex-1">
+                <div className="flex items-center w-full">
+                  {/* Left connector */}
+                  <div className={`h-0.5 flex-1 transition-all ${
+                    index === 0 
+                      ? 'bg-transparent' 
+                      : (currentStep > index ? 'bg-primary' : 'bg-gray-200')
+                  }`} />
+
+                  <div className={`
+                    relative z-10 w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all
+                    ${currentStep === step.number 
+                      ? 'bg-primary text-primary-foreground ring-4 ring-primary/20' 
+                      : currentStep > step.number
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-gray-200 text-gray-500'
+                    }
+                  `}>
+                    {currentStep > step.number ? (
+                      <Check className="h-5 w-5" />
+                    ) : (
+                      step.number
+                    )}
+                  </div>
+
+                  {/* Right connector */}
+                  <div className={`h-0.5 flex-1 transition-all ${
+                    index === steps.length - 1 
+                      ? 'bg-transparent' 
+                      : (currentStep > step.number ? 'bg-primary' : 'bg-gray-200')
+                  }`} />
+                </div>
+                <div className="text-center mt-3">
+                  <p className={`text-sm font-medium ${
+                    currentStep >= step.number ? 'text-foreground' : 'text-muted-foreground'
+                  }`}>
+                    {step.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1 hidden md:block">
+                    {step.description}
+                  </p>
+                </div>
               </div>
-              <div className="text-center">
-                <p className={`text-sm font-medium ${currentStep >= step.number ? 'text-green-800' : 'text-gray-500'}`}>
-                  {step.title}
-                </p>
-                <p className="text-xs text-gray-500">{step.description}</p>
-              </div>
-            </div>
-            {index < steps.length - 1 && (
-              <div className={`
-                w-20 h-1 mx-6 mt-5 rounded transition-all
-                ${currentStep > step.number ? 'bg-green-500' : 'bg-gray-300'}
-              `} />
-            )}
+            ))}
           </div>
-        ))}
         </div>
-      </div>
 
-      {/* Step Content */}
-      <div className="bg-white rounded-lg shadow-sm border border-green-200 min-h-[600px] p-6">
-        {renderStepContent()}
-      </div>
+        {/* Step Content */}
+        <div className="bg-white rounded-xl border shadow-sm p-8 min-h-[600px]">
+          {renderStepContent()}
+        </div>
 
-      {/* Navigation Buttons */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-green-200">
-        <div className="flex items-center justify-between">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={currentStep === 1 ? handleCancel : goToPrevStep}
-          className="flex items-center space-x-2 border-2 border-gray-300 hover:border-gray-400"
-        >
-          {currentStep === 1 ? (
-            <>
-              <X className="h-4 w-4" />
-              <span>Hủy</span>
-            </>
-          ) : (
-            <>
-              <ArrowLeft className="h-4 w-4" />
-              <span>Quay lại</span>
-            </>
-          )}
-        </Button>
+        {/* Navigation Buttons */}
+        <div className="flex items-center justify-between sticky bottom-0 bg-white/95 backdrop-blur-sm border-t p-4 rounded-lg shadow-lg">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={currentStep === 1 ? handleCancel : goToPrevStep}
+            className="flex items-center gap-2"
+          >
+            {currentStep === 1 ? (
+              <>
+                <X className="h-4 w-4" />
+                <span>Hủy</span>
+              </>
+            ) : (
+              <>
+                <ArrowLeft className="h-4 w-4" />
+                <span>Quay lại</span>
+              </>
+            )}
+          </Button>
 
-        <Button
-          type="button"
-          onClick={() => {
-            console.log("Next button clicked, current step:", currentStep);
-            if (currentStep === 3) {
-              createJob();
-            } else {
-              goToNextStep();
-            }
-          }}
-          disabled={isLoading}
-          className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-base font-medium"
-        >
-          {currentStep === 3 ? (
-            <>
-              <Save className="h-5 w-5" />
-              <span>{isLoading ? "Đang tạo..." : "Tạo tin tuyển dụng"}</span>
-            </>
-          ) : (
-            <>
-              <span>Tiếp theo</span>
-              <ArrowRight className="h-5 w-5" />
-            </>
-          )}
-        </Button>
+          <Button
+            type="button"
+            onClick={() => {
+              console.log("Next button clicked, current step:", currentStep);
+              if (currentStep === 3) {
+                createJob();
+              } else {
+                goToNextStep();
+              }
+            }}
+            disabled={isLoading}
+            className="flex items-center gap-2"
+          >
+            {currentStep === 3 ? (
+              <>
+                <Save className="h-5 w-5" />
+                <span>{isLoading ? "Đang tạo..." : "Tạo tin tuyển dụng"}</span>
+              </>
+            ) : (
+              <>
+                <span>Tiếp theo</span>
+                <ArrowRight className="h-5 w-5" />
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </div>

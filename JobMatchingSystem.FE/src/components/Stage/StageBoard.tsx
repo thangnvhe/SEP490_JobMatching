@@ -214,8 +214,8 @@ export function StageBoard({
       return;
     }
 
-    // Validate: Candidates with "Failed" status cannot be moved
-    if (draggedCandidate?.status === "Failed") {
+    // Validate: Candidates with "Failed" or "Passed" status cannot be moved
+    if (draggedCandidate?.status === "Failed" || draggedCandidate?.status === "Passed") {
       const isMoveToDifferentColumn = fromColumn.id !== toColumn.id;
       // Check reorder condition: dropped on another item in same column
       const isReorderInSameColumn = 
@@ -225,7 +225,10 @@ export function StageBoard({
 
       if (isMoveToDifferentColumn || isReorderInSameColumn) {
         setColumns(columnsBeforeDragRef.current);
-        toast.error("Ứng viên đã bị loại, không thể chuyển giai đoạn.");
+        const statusMessage = draggedCandidate?.status === "Failed" 
+          ? "Ứng viên đã bị loại, không thể chuyển giai đoạn."
+          : "Ứng viên đã đạt, không thể chuyển giai đoạn.";
+        toast.error(statusMessage);
         return;
       }
     }
