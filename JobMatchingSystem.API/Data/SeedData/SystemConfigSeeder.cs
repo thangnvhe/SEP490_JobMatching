@@ -42,6 +42,9 @@ namespace JobMatchingSystem.API.Data.SeedData
                 new() { Type = "education_level", Name = "Cử nhân", Value = "2" },
                 new() { Type = "education_level", Name = "Thạc sĩ", Value = "3" },
                 new() { Type = "education_level", Name = "Tiến sĩ", Value = "4" },
+
+                // ===== EducationLevel =====
+                new() { Type = "save_cv", Name = "SaveCVCount", Value = "3" },
             };
 
             await db.SystemConfigs.AddRangeAsync(systemConfigs);
