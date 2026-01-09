@@ -69,9 +69,21 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (!cvExists)
                 throw new AppException(ErrorCode.NotFoundCV());
 
-            bool exists = await _savedCVRepository.ExistsAsync(recruiterId, cvId);
-            if (exists)
-                throw new AppException(ErrorCode.CantCreate());
+            var existingSavedCV = await _context.SavedCVs
+               .FirstOrDefaultAsync(x => x.RecruiterId == recruiterId && x.CVId == cvId);
+
+            if (existingSavedCV != null)
+            {
+                // Đã save → unsave
+                await _savedCVRepository.DeleteAsync(existingSavedCV);
+
+                // hoàn lại lượt lưu
+                recruiter.SaveCVCount += 1;
+                await _userManager.UpdateAsync(recruiter);
+
+                return;
+            }
+
 
             if (recruiter.SaveCVCount <= 0)
                 throw new AppException(ErrorCode.NoMoreSaveCVCount()); // hoặc ErrorCode phù hợp

@@ -60,7 +60,7 @@ namespace JobMatchingSystem.API.Controllers
             return Ok(APIResponse<string>.Builder()
                 .WithStatusCode(HttpStatusCode.Created)
                 .WithSuccess(true)
-                .WithResult("Lưu công việc thành công")
+                .WithResult("Lưu / Bỏ lưu công việc thành công")
                 .Build());
         }
 
