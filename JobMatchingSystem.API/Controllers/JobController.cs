@@ -91,7 +91,7 @@ namespace JobMatchingSystem.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Recruiter")]
         public async Task<IActionResult> DeleteJob(int id)
         {
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");

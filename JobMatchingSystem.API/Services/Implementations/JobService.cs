@@ -490,7 +490,25 @@ namespace JobMatchingSystem.API.Services.Implementations
             
             // Handle cascade effects when job is deleted
             await HandleJobDeletionAsync(jobId, job.Title, job.Company?.Name ?? "Unknown Company");
-            
+
+            // Update CandidateJob & CandidateStage status when job is deleted
+            var candidateJobs = await _context.CandidateJobs
+                .Include(cj => cj.CandidateStages)
+                .Where(cj => cj.JobId == jobId)
+                .ToListAsync();
+
+            foreach (var candidateJob in candidateJobs)
+            {
+                candidateJob.Status = CandidateJobStatus.Fail;
+
+                foreach (var stage in candidateJob.CandidateStages)
+                {
+                    stage.Status = CandidateStageStatus.Failed;
+                }
+            }
+
+            _context.CandidateJobs.UpdateRange(candidateJobs);
+
             job.IsDeleted = true;
 
             // Sử dụng _context.SaveChangesAsync() thay vì _jobRepository.UpdateAsync() để tránh double save
