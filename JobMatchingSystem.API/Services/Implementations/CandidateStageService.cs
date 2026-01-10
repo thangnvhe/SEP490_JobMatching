@@ -1,4 +1,5 @@
-﻿using JobMatchingSystem.API.DTOs.Request;
+﻿using JobMatchingSystem.API.Data;
+using JobMatchingSystem.API.DTOs.Request;
 using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Exceptions;
 using JobMatchingSystem.API.Extensions;
@@ -15,12 +16,14 @@ namespace JobMatchingSystem.API.Services.Implementations
         protected readonly IUnitOfWork _unitOfWork;
         private readonly IBlobStorageService _blobStorageService;
         private readonly IEmailService _emailService;
+        private readonly ApplicationDbContext _dbcontext;
 
-        public CandidateStageService(IUnitOfWork unitOfWork, IBlobStorageService blobStorageService, IEmailService emailService) 
+        public CandidateStageService(IUnitOfWork unitOfWork, IBlobStorageService blobStorageService, IEmailService emailService,ApplicationDbContext dbContext) 
         {
             _unitOfWork = unitOfWork;
             _blobStorageService = blobStorageService;
             _emailService = emailService;
+            _dbcontext = dbContext;
         }
 
         public async Task<CandidateStageDetailResponse?> UpdateResult(int id,UpdateResultCandidateStage request)
@@ -63,11 +66,15 @@ namespace JobMatchingSystem.API.Services.Implementations
             
             // Tìm stage hiện tại trong danh sách
             var currentStageIndex = orderedStages.FindIndex(x => x.Id == candidateStage.JobStageId);
+            var stageName = candidateStage.JobStage.Name;
             if (currentStageIndex == -1)
             {
                 throw new AppException(ErrorCode.NotFoundJobStage());
             }
-            
+            var jobName = candidateJob.Job.Title;
+            var userId = _dbcontext.CVUploads.Where(X => X.Id == candidateJob.CVId).Select(x => x.UserId).FirstOrDefault();
+            var email = _dbcontext.Users.Where(x => x.Id == userId).Select(x => x.Email).FirstOrDefault();
+
             CandidateStage? nextCandidateStage = null;
             
             if (request.Result.Equals("Pass", StringComparison.OrdinalIgnoreCase))
@@ -113,7 +120,8 @@ namespace JobMatchingSystem.API.Services.Implementations
                     if (currentStageIndex == orderedStages.Count - 1)
                     {
                         // Đây là stage cuối cùng
-                        candidateJob.Status = Enums.CandidateJobStatus.Pass;
+                        candidateJob.Status = Enums.CandidateJobStatus.Pass;                      
+                        await _emailService.SendJobPassedEmailAsync(email,jobName);
                     }
                     else
                     {
@@ -125,6 +133,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                             JobStageId = nextStage.Id,
                             Status = Enums.CandidateStageStatus.Draft
                         };
+                        await _emailService.SendInterviewPassedEmailAsync(email, jobName, stageName);
                         await _unitOfWork.CandidateStageRepository.Add(nextCandidateStage);
                     }
                 }
@@ -133,9 +142,11 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 candidateStage.Status = Enums.CandidateStageStatus.Failed;
                 candidateJob.Status = Enums.CandidateJobStatus.Fail;
+                await _emailService.SendInterviewFailedEmailAsync(email, jobName, stageName);
             }
             
             await _unitOfWork.CandidateStageRepository.Update(candidateStage);
+            
             await _unitOfWork.SaveAsync();
             
             // Trả về thông tin của stage mới được tạo (nếu có), hoặc stage hiện tại

@@ -649,5 +649,119 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             await SendEmailAsync(toEmail, subject, body);
         }
+        public async Task SendInterviewFailedEmailAsync(
+    string toEmail,
+    string jobTitle,
+    string interviewStageName)
+        {
+            string subject = "Kết quả phỏng vấn - JobMatching System";
+
+            string body = $@"
+<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
+    <div style='background-color: #ffffff; padding: 30px; border-radius: 10px; border-left: 4px solid #dc3545;'>
+        <h2 style='color:#dc3545;'>Kết quả phỏng vấn</h2>
+
+        <p>Cảm ơn bạn đã tham gia <strong>{WebUtility.HtmlEncode(interviewStageName)}</strong> cho vị trí:</p>
+
+        <div style='background-color:#fcebea; padding:15px; border-radius:8px; margin:20px 0;'>
+            <p style='margin:0; font-size:16px;'>
+                <strong>💼 Vị trí ứng tuyển:</strong> {WebUtility.HtmlEncode(jobTitle)}
+            </p>
+            <p style='margin-top:8px; color:#dc3545; font-weight:bold;'>
+                Trạng thái: Không phù hợp ở vòng phỏng vấn
+            </p>
+        </div>
+
+        <p>Rất tiếc, hồ sơ của bạn chưa phù hợp với yêu cầu ở vòng này.</p>
+        <p>Chúng tôi đánh giá cao sự quan tâm của bạn và hy vọng sẽ có cơ hội hợp tác cùng bạn trong tương lai.</p>
+
+        <hr>
+        <p style='font-size: 14px; color:#6c757d;'>
+            Trân trọng,<br/>
+            <strong>JobMatching System</strong>
+        </p>
+        <p style='font-size: 12px; color:#adb5bd;'>
+            Đây là email tự động, vui lòng không trả lời email này.
+        </p>
+    </div>
+</div>";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
+        public async Task SendInterviewPassedEmailAsync(
+    string toEmail,
+    string jobTitle,
+    string interviewStageName)
+        {
+            string subject = "Chúc mừng! Bạn đã qua vòng phỏng vấn - JobMatching System";
+
+            string body = $@"
+<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
+    <div style='background-color: #ffffff; padding: 30px; border-radius: 10px; border-left: 4px solid #28a745;'>
+        <h2 style='color:#28a745;'>🎉 Chúc mừng bạn!</h2>
+
+        <p>Bạn đã <strong>vượt qua {WebUtility.HtmlEncode(interviewStageName)}</strong> cho vị trí:</p>
+
+        <div style='background-color:#e9f7ef; padding:15px; border-radius:8px; margin:20px 0;'>
+            <p style='margin:0; font-size:16px;'>
+                <strong>💼 Vị trí ứng tuyển:</strong> {WebUtility.HtmlEncode(jobTitle)}
+            </p>
+            <p style='margin-top:8px; color:#28a745; font-weight:bold;'>
+                Trạng thái: Qua vòng phỏng vấn
+            </p>
+        </div>
+
+        <p>Bộ phận tuyển dụng sẽ sớm liên hệ để thông báo về <strong>vòng tiếp theo</strong>.</p>
+
+        <hr>
+        <p style='font-size: 14px; color:#6c757d;'>
+            Trân trọng,<br/>
+            <strong>JobMatching System</strong>
+        </p>
+        <p style='font-size: 12px; color:#adb5bd;'>
+            Đây là email tự động, vui lòng không trả lời email này.
+        </p>
+    </div>
+</div>";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
+        public async Task SendJobPassedEmailAsync(string toEmail, string jobTitle)
+        {
+            string subject = "🎉 Chúc mừng! Bạn đã trúng tuyển - JobMatching System";
+
+            string body = $@"
+<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
+    <div style='background-color: #ffffff; padding: 30px; border-radius: 10px; border-left: 4px solid #007bff;'>
+        <h2 style='color:#007bff;'>🎉 Chúc mừng bạn đã trúng tuyển!</h2>
+
+        <p>Bạn đã <strong>vượt qua tất cả các vòng phỏng vấn</strong> cho vị trí:</p>
+
+        <div style='background-color:#e7f1ff; padding:15px; border-radius:8px; margin:20px 0;'>
+            <p style='margin:0; font-size:16px;'>
+                <strong>💼 Vị trí:</strong> {WebUtility.HtmlEncode(jobTitle)}
+            </p>
+            <p style='margin-top:8px; color:#007bff; font-weight:bold;'>
+                Trạng thái: Trúng tuyển
+            </p>
+        </div>
+
+        <p>Bộ phận nhân sự sẽ sớm liên hệ với bạn để trao đổi về <strong>offer & thủ tục tiếp theo</strong>.</p>
+
+        <p>Một lần nữa, chúc mừng bạn và hẹn sớm gặp lại!</p>
+
+        <hr>
+        <p style='font-size: 14px; color:#6c757d;'>
+            Trân trọng,<br/>
+            <strong>JobMatching System</strong>
+        </p>
+        <p style='font-size: 12px; color:#adb5bd;'>
+            Đây là email tự động, vui lòng không trả lời email này.
+        </p>
+    </div>
+</div>";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
     }
 }
