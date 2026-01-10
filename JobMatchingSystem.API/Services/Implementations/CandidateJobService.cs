@@ -69,7 +69,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 CandidateStage candidateStage = new CandidateStage();
                 candidateStage.CandidateJobId = candidatejob.Id ;
                 candidateStage.JobStageId = firstJobStage.Id;
-                candidateStage.Status=Enums.CandidateStageStatus.Schedule;
+                candidateStage.Status=Enums.CandidateStageStatus.Draft;
                 candidatejob.Status = Enums.CandidateJobStatus.Processing;
                 await _unitOfWork.CandidateStageRepository.Add(candidateStage);
             }
