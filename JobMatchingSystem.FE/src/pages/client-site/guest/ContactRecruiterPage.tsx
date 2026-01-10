@@ -43,7 +43,6 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { ProvincesService, type Province, type Ward } from "@/services/provinces.service";
 
 // --- validation/schema ---
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -104,10 +103,12 @@ const ContactRecruiterPage: React.FC = () => {
   const [submittedCompanyName, setSubmittedCompanyName] = useState("");
   const navigate = useNavigate();
   // address data
-  const [provinces, setProvinces] = useState<Province[]>([]);
-  const [wards, setWards] = useState<Ward[]>([]);
+  const [provinces, setProvinces] = useState<any[]>([]);
+  const [wards, setWards] = useState<any[]>([]);
   const [isProvincesLoading, setIsProvincesLoading] = useState(false);
   const [isWardsLoading, setIsWardsLoading] = useState(false);
+
+  const API_BASE_URL = "https://provinces.open-api.vn/api/v2";
 
   const form = useForm<CompanyCreateForm>({
     resolver: zodResolver(companyCreateSchema),
@@ -130,11 +131,11 @@ const ContactRecruiterPage: React.FC = () => {
     const fetchProvinces = async () => {
       setIsProvincesLoading(true);
       try {
-        const data = await ProvincesService.getAllProvinces(1);
+        const res = await fetch(`${API_BASE_URL}/p?depth=1`);
+        const data = await res.json();
         setProvinces(data || []);
       } catch (err) {
         console.error("Lỗi tải tỉnh:", err);
-        toast.error("Không thể tải danh sách tỉnh/thành phố");
       } finally {
         setIsProvincesLoading(false);
       }
@@ -150,27 +151,11 @@ const ContactRecruiterPage: React.FC = () => {
     setWards([]);
     setIsWardsLoading(true);
     try {
-      // Lấy thông tin tỉnh với depth=2 để có districts
-      const provinceData = await ProvincesService.getProvinceByCode(provinceCode, 2);
-      
-      // Thu thập tất cả wards từ các districts bằng cách gọi API riêng cho mỗi district
-      const allWards: Ward[] = [];
-      if (provinceData.districts && provinceData.districts.length > 0) {
-        // Gọi API song song để lấy wards cho tất cả districts
-        const wardsPromises = provinceData.districts.map((district) =>
-          ProvincesService.getWardsByDistrictCode(district.code)
-        );
-        const wardsResults = await Promise.all(wardsPromises);
-        // Gộp tất cả wards lại
-        wardsResults.forEach((wards) => {
-          allWards.push(...wards);
-        });
-      }
-      setWards(allWards);
+      const res = await fetch(`${API_BASE_URL}/p/${provinceCode}?depth=2`);
+      const data = await res.json();
+      setWards(data?.wards || []);
     } catch (err) {
-      console.error("Lỗi tải phường/xã:", err);
-      toast.error("Không thể tải danh sách phường/xã");
-      setWards([]);
+      console.error("Lỗi tải xã:", err);
     } finally {
       setIsWardsLoading(false);
     }
