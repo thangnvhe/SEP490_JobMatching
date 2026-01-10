@@ -64,9 +64,9 @@ export const ProvincesService = {
   /**
    * Lấy danh sách tất cả tỉnh/thành phố
    * Endpoint: GET /api/v2/p
-   * @param depth - Độ sâu dữ liệu (1: chỉ tỉnh, 2: tỉnh + quận/huyện, 3: tỉnh + quận/huyện + phường/xã)
+   * @param depth - Độ sâu dữ liệu (1: chỉ tỉnh, 2: tỉnh + quận/huyện)
    */
-  getAllProvinces: async (depth: 1 | 2 | 3 = 1): Promise<Province[]> => {
+  getAllProvinces: async (depth: 1 | 2 = 1): Promise<Province[]> => {
     try {
       const response = await provincesApiClient.get<Province[]>('/p', {
         params: depth > 1 ? { depth } : undefined,
@@ -82,9 +82,9 @@ export const ProvincesService = {
    * Lấy thông tin chi tiết một tỉnh/thành phố theo mã
    * Endpoint: GET /api/v2/p/{code}
    * @param code - Mã tỉnh/thành phố
-   * @param depth - Độ sâu dữ liệu (1: chỉ tỉnh, 2: tỉnh + quận/huyện, 3: tỉnh + quận/huyện + phường/xã)
+   * @param depth - Độ sâu dữ liệu (1: chỉ tỉnh, 2: tỉnh + quận/huyện)
    */
-  getProvinceByCode: async (code: string, depth: 1 | 2 | 3 = 1): Promise<Province> => {
+  getProvinceByCode: async (code: string, depth: 1 | 2 = 1): Promise<Province> => {
     try {
       const response = await provincesApiClient.get<Province>(`/p/${code}`, {
         params: depth > 1 ? { depth } : undefined,
