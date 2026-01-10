@@ -19,5 +19,8 @@
         Task SendJobInvitationEmailAsync(string toEmail, string jobTitle, string companyName, string jobApplicationUrl, string? message);
         Task SendCvPassedEmailAsync(string toEmail, string jobTitle);
         Task SendCvFailedEmailAsync(string toEmail, string jobTitle);
+        Task SendInterviewFailedEmailAsync(string toEmail, string jobTitle, string interviewStageName);
+        Task SendInterviewPassedEmailAsync(string toEmail, string jobTitle, string interviewStageName);
+        Task SendJobPassedEmailAsync(string toEmail, string jobTitle);
     }
 }
