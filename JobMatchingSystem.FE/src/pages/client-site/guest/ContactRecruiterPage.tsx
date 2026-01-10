@@ -43,7 +43,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { ProvincesService, type Province, type Ward, type DistrictWithWards } from "@/services/provinces.service";
+import { ProvincesService, type Province, type Ward } from "@/services/provinces.service";
 
 // --- validation/schema ---
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
