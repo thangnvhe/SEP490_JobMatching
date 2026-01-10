@@ -150,18 +150,20 @@ const ContactRecruiterPage: React.FC = () => {
     setWards([]);
     setIsWardsLoading(true);
     try {
-      // Lấy thông tin tỉnh với depth=3 để có districts và wards
-      const provinceData = await ProvincesService.getProvinceByCode(provinceCode, 3);
+      // Lấy thông tin tỉnh với depth=2 để có districts
+      const provinceData = await ProvincesService.getProvinceByCode(provinceCode, 2);
       
-      // Thu thập tất cả wards từ các districts
+      // Thu thập tất cả wards từ các districts bằng cách gọi API riêng cho mỗi district
       const allWards: Ward[] = [];
       if (provinceData.districts && provinceData.districts.length > 0) {
-        provinceData.districts.forEach((district) => {
-          // Khi depth=3, district sẽ có wards
-          const districtWithWards = district as DistrictWithWards;
-          if (districtWithWards.wards && Array.isArray(districtWithWards.wards)) {
-            allWards.push(...districtWithWards.wards);
-          }
+        // Gọi API song song để lấy wards cho tất cả districts
+        const wardsPromises = provinceData.districts.map((district) =>
+          ProvincesService.getWardsByDistrictCode(district.code)
+        );
+        const wardsResults = await Promise.all(wardsPromises);
+        // Gộp tất cả wards lại
+        wardsResults.forEach((wards) => {
+          allWards.push(...wards);
         });
       }
       setWards(allWards);
