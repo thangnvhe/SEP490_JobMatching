@@ -37,8 +37,6 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 
 // Import services
 import { JobServices } from "@/services/job.service";
@@ -657,6 +655,16 @@ export default function CreateJobPage() {
     }
   };
 
+  // Format date to dd/MM/yyyy
+  const formatDate = (date: Date | undefined): string => {
+    if (!date) return "";
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   // Render step content
   const renderStepContent = () => {
     switch (currentStep) {
@@ -671,8 +679,9 @@ export default function CreateJobPage() {
               </div>
               <Separator />
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-5">
+              <div className="space-y-6">
+                {/* Dòng 1: Tiêu đề - Loại công việc */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Title */}
                   <div className="space-y-2">
                     <Label htmlFor="title" className="text-sm font-medium">Tiêu đề công việc *</Label>
@@ -680,13 +689,38 @@ export default function CreateJobPage() {
                       id="title"
                       {...registerStep1("title")}
                       placeholder="VD: Senior Frontend Developer"
-                      className={errorsStep1.title ? "border-red-500" : ""}
+                      className={`w-full ${errorsStep1.title ? "border-red-500" : ""}`}
                     />
                     {errorsStep1.title && (
                       <p className="text-sm text-red-500">{errorsStep1.title.message}</p>
                     )}
                   </div>
 
+                  {/* Job Type */}
+                  <div className="space-y-2">
+                    <Label htmlFor="jobType" className="text-sm font-medium">Loại công việc *</Label>
+                    <Select
+                      value={watchStep1("jobType")}
+                      onValueChange={(value) => setValueStep1("jobType", value)}
+                    >
+                      <SelectTrigger className={`w-full ${errorsStep1.jobType ? "border-red-500" : ""}`}>
+                        <SelectValue placeholder="Chọn loại công việc" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="FullTime">Toàn thời gian</SelectItem>
+                        <SelectItem value="PartTime">Bán thời gian</SelectItem>
+                        <SelectItem value="Remote">Làm từ xa</SelectItem>
+                        <SelectItem value="Other">Khác</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errorsStep1.jobType && (
+                      <p className="text-sm text-red-500">{errorsStep1.jobType.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Dòng 2: Địa điểm làm việc - Số năm kinh nghiệm */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Location with Autocomplete */}
                   <div className="space-y-2">
                     <Label htmlFor="location" className="text-sm font-medium">
@@ -722,7 +756,7 @@ export default function CreateJobPage() {
                             }, 200);
                           }}
                           placeholder="VD: Đường Lê Duẩn, Quận 1, TP.HCM..."
-                          className={`pl-10 ${errorsStep1.location ? "border-red-500" : ""}`}
+                          className={`w-full pl-10 ${errorsStep1.location ? "border-red-500" : ""}`}
                         />
                         {loadingLocationSuggestions && (
                           <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 animate-spin" />
@@ -791,7 +825,7 @@ export default function CreateJobPage() {
                       max="50"
                       {...registerStep1("experienceYear", { valueAsNumber: true })}
                       placeholder="VD: 2"
-                      className={errorsStep1.experienceYear ? "border-red-500" : ""}
+                      className={`w-full ${errorsStep1.experienceYear ? "border-red-500" : ""}`}
                     />
                     {errorsStep1.experienceYear && (
                       <p className="text-sm text-red-500">{errorsStep1.experienceYear.message}</p>
@@ -799,29 +833,8 @@ export default function CreateJobPage() {
                   </div>
                 </div>
 
-                <div className="space-y-5">
-                  {/* Job Type */}
-                  <div className="space-y-2">
-                    <Label htmlFor="jobType" className="text-sm font-medium">Loại công việc *</Label>
-                    <Select
-                      value={watchStep1("jobType")}
-                      onValueChange={(value) => setValueStep1("jobType", value)}
-                    >
-                      <SelectTrigger className={errorsStep1.jobType ? "border-red-500" : ""}>
-                        <SelectValue placeholder="Chọn loại công việc" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="FullTime">Toàn thời gian</SelectItem>
-                        <SelectItem value="PartTime">Bán thời gian</SelectItem>
-                        <SelectItem value="Remote">Làm từ xa</SelectItem>
-                        <SelectItem value="Other">Khác</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {errorsStep1.jobType && (
-                      <p className="text-sm text-red-500">{errorsStep1.jobType.message}</p>
-                    )}
-                  </div>
-
+                {/* Dòng 3: Ngày mở - Ngày hết hạn */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Opened Date */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Ngày mở tuyển dụng *</Label>
@@ -835,7 +848,7 @@ export default function CreateJobPage() {
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {watchStep1("openedAt") ? (
-                            format(watchStep1("openedAt"), "PPP", { locale: vi })
+                            formatDate(watchStep1("openedAt"))
                           ) : (
                             <span>Chọn ngày mở tuyển dụng</span>
                           )}
@@ -846,11 +859,14 @@ export default function CreateJobPage() {
                           mode="single"
                           selected={watchStep1("openedAt")}
                           onSelect={(date) => {
-                            setValueStep1("openedAt", date || new Date());
                             if (date) {
+                              setValueStep1("openedAt", date);
+                              // Tự động cập nhật ngày hết hạn khi chọn ngày mở
                               const expiredDate = new Date(date);
                               expiredDate.setDate(expiredDate.getDate() + 30);
                               setValueStep1("expiredAt", expiredDate);
+                            } else {
+                              setValueStep1("openedAt", new Date());
                             }
                           }}
                           disabled={(date) => {
@@ -880,7 +896,7 @@ export default function CreateJobPage() {
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {watchStep1("expiredAt") ? (
-                            format(watchStep1("expiredAt"), "PPP", { locale: vi })
+                            formatDate(watchStep1("expiredAt"))
                           ) : (
                             <span>Chọn ngày hết hạn</span>
                           )}
@@ -890,7 +906,20 @@ export default function CreateJobPage() {
                         <Calendar
                           mode="single"
                           selected={watchStep1("expiredAt")}
-                          onSelect={(date) => setValueStep1("expiredAt", date || new Date())}
+                          onSelect={(date) => {
+                            if (date) {
+                              setValueStep1("expiredAt", date);
+                            } else {
+                              const openedDate = watchStep1("openedAt");
+                              if (openedDate) {
+                                const expiredDate = new Date(openedDate);
+                                expiredDate.setDate(expiredDate.getDate() + 30);
+                                setValueStep1("expiredAt", expiredDate);
+                              } else {
+                                setValueStep1("expiredAt", new Date());
+                              }
+                            }
+                          }}
                           disabled={(date) => {
                             const openedDate = watchStep1("openedAt");
                             if (!openedDate) return true;
