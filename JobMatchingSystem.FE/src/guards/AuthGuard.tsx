@@ -76,16 +76,16 @@ export const GuestGuard: React.FC<{
     
     switch (userRole) {
       case 'Admin':
-        defaultRedirect = '/admin';
+        defaultRedirect = '/admin/dashboard';
         break;
       case 'Recruiter':
-        defaultRedirect = '/recruiter';
+        defaultRedirect = '/recruiter/dashboard';
         break;
       case 'Candidate':
         defaultRedirect = '/candidate';
         break;
       case 'Hiringmanager':
-        defaultRedirect = '/hiringmanager';
+        defaultRedirect = '/hiringmanager/dashboard';
         break;
       default:
         defaultRedirect = redirectTo;

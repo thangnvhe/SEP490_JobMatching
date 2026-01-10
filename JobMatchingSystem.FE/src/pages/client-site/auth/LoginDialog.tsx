@@ -50,13 +50,13 @@ interface LoginDialogProps {
 const getRedirectPathByRole = (role: string): string => {
   switch (role?.toLowerCase()) {
     case 'admin':
-      return '/admin';
+      return '/admin/dashboard';
     case 'recruiter':
-      return '/recruiter';
+      return '/recruiter/dashboard';
     case 'candidate':
       return '/candidate';
     case 'hiringmanager':
-      return '/hiringmanager';
+      return '/hiringmanager/dashboard';
     default:
       return '/';
   }
