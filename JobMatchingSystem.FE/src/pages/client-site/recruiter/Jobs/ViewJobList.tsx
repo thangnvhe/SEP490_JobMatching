@@ -31,6 +31,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { useDebounce } from "@/hooks/useDebounce";
 
@@ -66,6 +76,8 @@ export default function ViewJobList() {
   const [selectedJobCompany, setSelectedJobCompany] = useState<Company | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCloseJobDialogOpen, setIsCloseJobDialogOpen] = useState(false);
+  const [jobToClose, setJobToClose] = useState<Job | null>(null);
   
   const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
       currentPage: 1,
@@ -185,15 +197,26 @@ export default function ViewJobList() {
     setIsEditDialogOpen(true);
   };
 
-  const handleToggleJobStatus = async (job: Job) => {
+  const handleToggleJobStatus = (job: Job) => {
+    setJobToClose(job);
+    setIsCloseJobDialogOpen(true);
+  };
+
+  const confirmCloseJob = async () => {
+    if (!jobToClose) return;
+
     try {
       const newStatus = 4;
 
-      await JobServices.censorJob(job.jobId.toString(), { status: newStatus });
+      await JobServices.censorJob(jobToClose.jobId.toString(), { status: newStatus });
       toast.success("Tin tuyển dụng đã được đóng");
 
       // Refresh data
       getAllWithPagination(paginationInput);
+      
+      // Close dialog and reset state
+      setIsCloseJobDialogOpen(false);
+      setJobToClose(null);
     } catch (error: any) {
       toast.error(error.response.data.errorMessages[0]);
     }
@@ -712,6 +735,35 @@ export default function ViewJobList() {
           }}
         />
       )}
+
+      {/* Close Job Confirmation Dialog */}
+      <AlertDialog open={isCloseJobDialogOpen} onOpenChange={setIsCloseJobDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận đóng tin tuyển dụng</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn đóng tin tuyển dụng "{jobToClose?.title}"?
+              Sau khi đóng, tin tuyển dụng này sẽ không còn nhận đơn ứng tuyển mới.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setIsCloseJobDialogOpen(false);
+                setJobToClose(null);
+              }}
+            >
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmCloseJob}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Đóng tin tuyển dụng
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

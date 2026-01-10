@@ -45,7 +45,12 @@ export function StageBoardDemo({ jobId = 655 }: StageBoardDemoProps) {
               );
 
             if (candidatesResponse.isSuccess && candidatesResponse.result) {
-              candidatesByStage.set(stage.id, candidatesResponse.result);
+              // Filter out candidates with "Failed" status
+              // These will be shown in the screening list instead
+              const filteredCandidates = candidatesResponse.result.filter(
+                (candidate: CandidateStage) => candidate.status !== "Failed"
+              );
+              candidatesByStage.set(stage.id, filteredCandidates);
             } else {
               candidatesByStage.set(stage.id, []);
             }

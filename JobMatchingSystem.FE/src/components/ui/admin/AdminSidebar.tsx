@@ -100,6 +100,21 @@ function AdminNav() {
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
+                isActive={useIsActivePath("/admin/manage-system-config")}
+                tooltip="Manage System Config"
+                size="default"
+                className="h-9 px-3"
+              >
+                <Link to="/admin/manage-system-config">
+                  <Settings className="size-4" />
+                  <span className="font-medium text-sm">Cấu hình hệ thống</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
                 isActive={useIsActivePath("/admin/manage-user")}
                 tooltip="Manage Users"
                 size="default"
