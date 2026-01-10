@@ -96,7 +96,27 @@ namespace JobMatchingSystem.API.Services.Implementations
             // Close the reported job
             job.Status = JobStatus.Closed;
             _context.Jobs.Update(job);
-            
+
+            // Get all candidate jobs of this job
+            var candidateJobs = await _context.CandidateJobs
+                .Include(cj => cj.CandidateStages)
+                .Where(cj => cj.JobId == job.JobId)
+                .ToListAsync();
+
+            foreach (var candidateJob in candidateJobs)
+            {
+                // Update CandidateJob status
+                candidateJob.Status = CandidateJobStatus.Fail;
+
+                // Update all related CandidateStages
+                foreach (var stage in candidateJob.CandidateStages)
+                {
+                    stage.Status = CandidateStageStatus.Failed;
+                }
+            }
+
+            _context.CandidateJobs.UpdateRange(candidateJobs);
+
             await _context.SaveChangesAsync();
 
             // Send notification to recruiter about job closure
