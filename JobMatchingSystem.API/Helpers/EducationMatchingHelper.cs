@@ -7,10 +7,10 @@ namespace JobMatchingSystem.API.Helpers
         /// <summary>
         /// Kiểm tra xem candidate có đáp ứng yêu cầu về bằng cấp của job không
         /// </summary>
-        /// <param name="candidateEducationLevel">Bằng cấp cao nhất của candidate</param>
-        /// <param name="jobRequiredEducationLevel">Bằng cấp yêu cầu của job</param>
+        /// <param name="candidateEducationLevel">SystemConfig của education cao nhất của candidate</param>
+        /// <param name="jobRequiredEducationLevel">SystemConfig của education yêu cầu của job</param>
         /// <returns>True nếu candidate đáp ứng yêu cầu</returns>
-        public static bool IsEducationMatch(EducationLevel? candidateEducationLevel, EducationLevel? jobRequiredEducationLevel)
+        public static bool IsEducationMatch(SystemConfig? candidateEducationLevel, SystemConfig? jobRequiredEducationLevel)
         {
             // Nếu job không yêu cầu bằng cấp cụ thể, accept tất cả
             if (jobRequiredEducationLevel == null)
@@ -21,13 +21,15 @@ namespace JobMatchingSystem.API.Helpers
                 return false;
 
             // Candidate có bằng cấp >= yêu cầu job (RankScore cao hơn = bằng cấp cao hơn)
-            return candidateEducationLevel.RankScore >= jobRequiredEducationLevel.RankScore;
+            var candidateScore = int.TryParse(candidateEducationLevel.Value, out var candScore) ? candScore : 0;
+            var requiredScore = int.TryParse(jobRequiredEducationLevel.Value, out var reqScore) ? reqScore : 0;
+            return candidateScore >= requiredScore;
         }
 
         /// <summary>
         /// Tính điểm matching cho education (0-100)
         /// </summary>
-        public static int CalculateEducationMatchScore(EducationLevel? candidateEducationLevel, EducationLevel? jobRequiredEducationLevel)
+        public static int CalculateEducationMatchScore(SystemConfig? candidateEducationLevel, SystemConfig? jobRequiredEducationLevel)
         {
             if (jobRequiredEducationLevel == null)
                 return 100; // Perfect match nếu job không yêu cầu bằng cấp
@@ -36,7 +38,9 @@ namespace JobMatchingSystem.API.Helpers
                 return 0; // No match nếu candidate không có bằng cấp
 
             // Tính điểm dựa trên độ chênh lệch RankScore
-            int scoreDifference = candidateEducationLevel.RankScore - jobRequiredEducationLevel.RankScore;
+            var candidateScore = int.TryParse(candidateEducationLevel.Value, out var candScore) ? candScore : 0;
+            var requiredScore = int.TryParse(jobRequiredEducationLevel.Value, out var reqScore) ? reqScore : 0;
+            int scoreDifference = candidateScore - requiredScore;
 
             if (scoreDifference < 0)
                 return 0; // Candidate không đủ yêu cầu
@@ -51,11 +55,11 @@ namespace JobMatchingSystem.API.Helpers
         /// <summary>
         /// Lấy bằng cấp cao nhất của candidate
         /// </summary>
-        public static EducationLevel? GetHighestEducationLevel(IEnumerable<CVEducation> educations)
+        public static SystemConfig? GetHighestEducationLevel(IEnumerable<CVEducation> educations)
         {
             return educations
                 .Where(e => e.EducationLevel != null)
-                .OrderByDescending(e => e.EducationLevel!.RankScore)
+                .OrderByDescending(e => int.TryParse(e.EducationLevel!.Value, out var score) ? score : 0)
                 .FirstOrDefault()?.EducationLevel;
         }
     }
