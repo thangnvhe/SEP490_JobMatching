@@ -380,29 +380,30 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             await _context.SaveChangesAsync();
 
-            // Send email notification to recruiter if needed
-            if (job.Recruiter != null)
-            {
-                string recruiterEmail = job.Recruiter.Email!;
-                string recruiterName = job.Recruiter.FullName!;
-                string companyName = job.Company?.Name ?? "your company";
+            var recruiter = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == job.RecuiterId);
 
-                if (job.Status == JobStatus.Moderated)
-                {
-                    await _emailService.SendEmailAsync(
-                        recruiterEmail,
-                        "Job Approved - JobMatching System",
-                        $"Chúc mừng {recruiterName}, công việc \"{job.Title}\" của công ty {companyName} đã được duyệt."
-                    );
-                }
-                else if (job.Status == JobStatus.Rejected)
-                {
-                    await _emailService.SendEmailAsync(
-                        recruiterEmail,
-                        "Job Rejected - JobMatching System",
-                        $"Xin lỗi {recruiterName}, công việc \"{job.Title}\" của công ty {companyName} đã bị từ chối."
-                    );
-                }
+            if (recruiter == null || string.IsNullOrEmpty(recruiter.Email))
+                throw new AppException(ErrorCode.NotFoundRecruiter());
+
+            string recruiterEmail = recruiter.Email;
+            string recruiterName = recruiter.FullName;
+
+            if (job.Status == JobStatus.Moderated)
+            {
+                await _emailService.SendEmailAsync(
+                    recruiterEmail,
+                    "Job Approved - JobMatching System",
+                    $"Chúc mừng {recruiterName}, công việc \"{job.Title}\" của công ty bạn đã được duyệt."
+                );
+            }
+            else if (job.Status == JobStatus.Rejected)
+            {
+                await _emailService.SendEmailAsync(
+                    recruiterEmail,
+                    "Job Rejected - JobMatching System",
+                    $"Xin lỗi {recruiterName}, công việc \"{job.Title}\" của công ty bạn đã bị từ chối."
+                );
             }
         }
 
