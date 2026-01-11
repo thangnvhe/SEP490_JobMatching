@@ -156,7 +156,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                     FullName = request.FullName,
                     Email = request.Email,
                     UserName = request.Email,
-                    EmailConfirmed = false,
+                    EmailConfirmed = true,
                     CompanyId = company.Id,
                 };
 
