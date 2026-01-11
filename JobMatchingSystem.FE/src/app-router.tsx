@@ -33,7 +33,6 @@ import { ConfirmEmailPage } from './pages/client-site/auth/ConfirmEmailPage';
 import ViewReportList from './pages/admin-site/ManageReport/ViewReportList';
 import ViewOrderList from './pages/admin-site/ManageOrder/ViewOrderList';
 import CandidateViewReportList from './pages/client-site/candidate/ManageReport/ViewReportList';
-import { StageBoardDemo } from './components/Stage/StageBoardDemo';
 import InterviewSchedule from './pages/client-site/hiring-manager/interview-schedule/interview-schedule';
 import EvaluationHistory from './pages/client-site/hiring-manager/evaluation-history/evaluation-history';
 import HiringManagerProfile from './pages/client-site/hiring-manager/profile/profile';
@@ -118,7 +117,6 @@ const AppRouter: React.FC = () => {
         <Route path="members" element={<CompanyMembersPage />} />
         <Route path="service-packages" element={<ViewServicePackageList />} />
         <Route path="orders" element={<ViewOrderListForRecruiter />} />
-        <Route path="stage-board" element={<StageBoardDemo />} />
       </Route>
 
       {/* Candidate routes - Protected */}
