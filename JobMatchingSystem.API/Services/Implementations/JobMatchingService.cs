@@ -153,7 +153,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 foreach (var candidate in candidatesWithCV)
                 {
                     var hasEducation = await _context.CVEducations
-                        .AnyAsync(ed => ed.UserId == candidate.Id && ed.EducationLevelId == educationLevelId.Value);
+                        .AnyAsync(ed => ed.UserId == candidate.Id && ed.SystemConfigId == educationLevelId.Value);
                     
                     if (hasEducation)
                     {
@@ -521,13 +521,13 @@ namespace JobMatchingSystem.API.Services.Implementations
             var requiredEducation = job.RequiredEducationLevel;
             var candidateHighestEducation = candidate.CVEducations
                 .Where(e => e.EducationLevel != null)
-                .OrderByDescending(e => e.EducationLevel!.RankScore)
+                .OrderByDescending(e => int.Parse(e.EducationLevel!.Value))
                 .FirstOrDefault()?.EducationLevel;
 
-            details.RequiredLevel = requiredEducation?.LevelName ?? "Không yêu cầu";
-            details.CandidateLevel = candidateHighestEducation?.LevelName ?? "Không có thông tin";
-            details.RequiredRankScore = requiredEducation?.RankScore ?? 0;
-            details.CandidateRankScore = candidateHighestEducation?.RankScore ?? 0;
+            details.RequiredLevel = requiredEducation?.Name ?? "Không yêu cầu";
+            details.CandidateLevel = candidateHighestEducation?.Name ?? "Không có thông tin";
+            details.RequiredRankScore = int.TryParse(requiredEducation?.Value, out var reqScore) ? reqScore : 0;
+            details.CandidateRankScore = int.TryParse(candidateHighestEducation?.Value, out var candScore) ? candScore : 0;
 
             // If no education required
             if (requiredEducation == null)
@@ -798,19 +798,20 @@ namespace JobMatchingSystem.API.Services.Implementations
                     .ToListAsync(),
 
                 // Education
-                Educations = await _context.CVEducations
+                Educations = (await _context.CVEducations
                     .Include(ed => ed.EducationLevel)
                     .Where(ed => ed.UserId == candidate.Id)
+                    .ToListAsync())
                     .Select(ed => new CandidateEducationInfo
                     {
                         SchoolName = ed.SchoolName,
-                        EducationLevelName = ed.EducationLevel.LevelName,
-                        RankScore = ed.EducationLevel.RankScore,
+                        EducationLevelName = ed.EducationLevel.Name,
+                        RankScore = int.TryParse(ed.EducationLevel.Value, out var score) ? score : 0,
                         Major = ed.Major,
                         StartDate = ed.StartDate,
                         EndDate = ed.EndDate
                     })
-                    .ToListAsync()
+                    .ToList()
             };
 
             return result;

@@ -41,7 +41,6 @@ namespace JobMatchingSystem.API.Data
         public DbSet<HighlightJob> HighlightJobs { get; set; }
         public DbSet<ExtensionJob> ExtensionJobs { get; set; }
         public DbSet<Position> Positions { get; set; }
-        public DbSet<EducationLevel> EducationLevels { get; set; }
         public DbSet<SystemConfig> SystemConfigs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -235,8 +234,8 @@ namespace JobMatchingSystem.API.Data
                       .OnDelete(DeleteBehavior.NoAction);
                       
                 entity.HasOne(e => e.RequiredEducationLevel)
-                      .WithMany(e => e.Jobs)
-                      .HasForeignKey(e => e.EducationLevelId)
+                      .WithMany()
+                      .HasForeignKey(e => e.SystemConfigEducationLevelId)
                       .OnDelete(DeleteBehavior.SetNull);
             });
 
@@ -353,8 +352,8 @@ namespace JobMatchingSystem.API.Data
                       .OnDelete(DeleteBehavior.NoAction);
                       
                 entity.HasOne(e => e.EducationLevel)
-                      .WithMany(e => e.CVEducations)
-                      .HasForeignKey(e => e.EducationLevelId)
+                      .WithMany()
+                      .HasForeignKey(e => e.SystemConfigId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -437,15 +436,15 @@ namespace JobMatchingSystem.API.Data
                         .OnDelete(DeleteBehavior.NoAction);
             });
             
-            // Seed data cho EducationLevels
-            builder.Entity<EducationLevel>().HasData(
-                new EducationLevel { Id = 1, LevelName = "Cao đẳng", RankScore = 1, IsActive = true },
-                new EducationLevel { Id = 2, LevelName = "Đại học", RankScore = 2, IsActive = true },
-                new EducationLevel { Id = 3, LevelName = "Kỹ sư", RankScore = 2, IsActive = true },
-                new EducationLevel { Id = 4, LevelName = "Cử nhân", RankScore = 2, IsActive = true },
-                new EducationLevel { Id = 5, LevelName = "Thạc sĩ", RankScore = 3, IsActive = true },
-                new EducationLevel { Id = 6, LevelName = "Tiến sĩ", RankScore = 4, IsActive = true }
-            );
+            // // Seed data cho Education Levels via SystemConfig
+            // builder.Entity<SystemConfig>().HasData(
+            //     new SystemConfig { Id = 1, Type = "education_level", Name = "Cao đẳng", Value = "1" },
+            //     new SystemConfig { Id = 2, Type = "education_level", Name = "Đại học", Value = "2" },
+            //     new SystemConfig { Id = 3, Type = "education_level", Name = "Kỹ sư", Value = "2" },
+            //     new SystemConfig { Id = 4, Type = "education_level", Name = "Cử nhân", Value = "2" },
+            //     new SystemConfig { Id = 5, Type = "education_level", Name = "Thạc sĩ", Value = "3" },
+            //     new SystemConfig { Id = 6, Type = "education_level", Name = "Tiến sĩ", Value = "4" }
+            // );
         }
     }
 }
