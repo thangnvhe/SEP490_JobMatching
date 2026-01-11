@@ -130,6 +130,7 @@ namespace JobMatchingSystem.API.Services.Implementations
                 ExperienceYear = request.ExperienceYear,
                 JobType = request.JobType,
                 PositionId = request.PositionId,
+                SystemConfigEducationLevelId = request.SystemConfigEducationLevelId,
                 CompanyId = user.CompanyId.Value,
                 RecuiterId = user.Id,
                 VerifiedBy = null,
@@ -258,6 +259,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             job.ExperienceYear = request.ExperienceYear ?? job.ExperienceYear;
             job.JobType = request.JobType ?? job.JobType;
             job.PositionId = request.PositionId ?? job.PositionId;
+            job.SystemConfigEducationLevelId = request.SystemConfigEducationLevelId ?? job.SystemConfigEducationLevelId;
 
             // Lấy giá trị hiện tại để tính toán
             DateTime currentOpenedAt = job.OpenedAt ?? DateTime.UtcNow;

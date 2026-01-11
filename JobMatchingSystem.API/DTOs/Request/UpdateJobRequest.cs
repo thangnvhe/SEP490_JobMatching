@@ -41,6 +41,9 @@ namespace JobMatchingSystem.API.DTOs.Request
 
         public int? PositionId { get; set; }
 
+        // Yêu cầu bằng cấp tối thiểu từ SystemConfig (Có thể null)
+        public int? SystemConfigEducationLevelId { get; set; }
+
         // Ngày mở đăng tuyển (Có thể null)
         // Không cần validation đặc biệt, chỉ cần kiểu dữ liệu hợp lệ (DateTime)
         public DateTime? OpenedAt { get; set; }
