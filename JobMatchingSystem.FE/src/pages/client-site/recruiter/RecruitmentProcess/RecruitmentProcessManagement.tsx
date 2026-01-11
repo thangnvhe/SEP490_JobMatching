@@ -35,7 +35,7 @@ import { PageInfo, PaginationParamsInput } from "@/models/base";
 import { JobServices } from "@/services/job.service";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Input } from "@/components/ui/input";
-import { StageBoardDemo } from "@/components/Stage/StageBoardDemo";
+import { StageBoardDemo } from "./StageBoardDemo";
 import { CV } from "@/models/cv";
 import { CVServices } from "@/services/cv.service";
 import {
