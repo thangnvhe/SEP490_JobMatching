@@ -38,7 +38,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             var existingCVs = await _cvRepository.GetCVsByUserIdAsync(userId);
 
             var maxCvCount = await _context.SystemConfigs
-               .Where(x => x.Type == "save_cv" && x.Name == "SaveCVCount")
+               .Where(x => x.Type == "upload_cv" && x.Name == "UploadCVCount")
                .Select(x => int.Parse(x.Value))
                .FirstAsync();
 
