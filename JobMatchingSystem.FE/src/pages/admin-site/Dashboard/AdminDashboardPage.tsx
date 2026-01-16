@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
-  ArrowRight, 
   Building2, 
   Briefcase, 
   AlertCircle, 
@@ -19,7 +17,6 @@ import type { AdminDashboard } from "@/models/dashboard";
 import { toast } from "sonner";
 
 export default function AdminDashboardPage() {
-  const navigate = useNavigate();
   const [dashboard, setDashboard] = useState<AdminDashboard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -249,12 +246,7 @@ export default function AdminDashboardPage() {
         {/* Recent Companies */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Công Ty Mới</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/admin/companies")}>
-                Xem tất cả <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+            <CardTitle>Công Ty Mới</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading ? (
@@ -284,12 +276,7 @@ export default function AdminDashboardPage() {
         {/* Approved Companies */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Công Ty Đã Duyệt</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/admin/companies")}>
-                Xem tất cả <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+            <CardTitle>Công Ty Đã Duyệt</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading ? (
@@ -321,12 +308,7 @@ export default function AdminDashboardPage() {
         {/* Recent Jobs */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Việc Làm Mới</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/admin/jobs")}>
-                Xem tất cả <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+            <CardTitle>Việc Làm Mới</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading ? (
@@ -355,12 +337,7 @@ export default function AdminDashboardPage() {
         {/* Recent Orders */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Đơn Hàng Gần Nhất</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/admin/orders")}>
-                Xem tất cả <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+            <CardTitle>Đơn Hàng Gần Nhất</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading ? (

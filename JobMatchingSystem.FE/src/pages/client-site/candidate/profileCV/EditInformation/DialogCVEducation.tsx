@@ -5,7 +5,9 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { CVEducationServices } from "@/services/cv-education.service";
+import { SystemConfigService } from "@/services/system-config.service";
 import { type CVEducation } from "@/models/cv-education";
+import { type SystemConfig } from "@/models/system-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CalendarIcon, X, GraduationCap, ChevronDown } from "lucide-react";
+import { CalendarIcon, X, GraduationCap, ChevronDown, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDisableBodyScroll } from "@/hooks/useDisableBodyScroll";
@@ -24,7 +26,7 @@ const formSchema = z.object({
   schoolName: z.string().min(1, "Vui lòng nhập tên trường"),
   educationLevelId: z.number({
     required_error: "Vui lòng chọn trình độ học vấn",
-  }).min(1).max(6),
+  }).min(1, "Vui lòng chọn trình độ học vấn"),
   major: z.string().min(1, "Vui lòng nhập chuyên ngành"),
   startDate: z.date({ required_error: "Vui lòng nhập ngày bắt đầu" }),
   endDate: z.date({ required_error: "Vui lòng nhập ngày kết thúc" }),
@@ -34,7 +36,14 @@ const formSchema = z.object({
   path: ["endDate"],
 });
 
-type FormData = z.infer<typeof formSchema>;
+type FormData = {
+  schoolName: string;
+  educationLevelId: number;
+  major: string;
+  startDate: Date;
+  endDate: Date;
+  description?: string;
+};
 
 interface DialogCVEducationProps {
   open: boolean;
@@ -42,15 +51,6 @@ interface DialogCVEducationProps {
   onSuccess?: () => void;
   educationToEdit?: CVEducation | null;
 }
-
-const EDUCATION_LEVEL_OPTIONS: { value: number; label: string }[] = [
-  { value: 1, label: "Cao đẳng" },
-  { value: 2, label: "Đại học" },
-  { value: 3, label: "Kỹ sư" },
-  { value: 4, label: "Cử nhân" },
-  { value: 5, label: "Thạc sĩ" },
-  { value: 6, label: "Tiến sĩ" },
-];
 
 export function DialogCVEducation({
   open,
@@ -63,12 +63,16 @@ export function DialogCVEducation({
   const [endDateOpen, setEndDateOpen] = useState(false);
   const modalContentRef = useRef<HTMLDivElement>(null);
   const isInitialMount = useRef(true);
+  
+  // Education levels từ System Config
+  const [educationLevels, setEducationLevels] = useState<SystemConfig[]>([]);
+  const [loadingEducationLevels, setLoadingEducationLevels] = useState(true);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       schoolName: "",
-      educationLevelId: 2, // Đại học
+      educationLevelId: 0,
       major: "",
       description: "",
     },
@@ -86,14 +90,52 @@ export function DialogCVEducation({
   // Disable body scroll when dialog is open
   useDisableBodyScroll(open);
 
+  // Fetch education levels từ System Config
+  useEffect(() => {
+    const fetchEducationLevels = async () => {
+      try {
+        setLoadingEducationLevels(true);
+        const response = await SystemConfigService.getAllConfigs();
+        
+        if (response.isSuccess && response.result) {
+          // Lọc các config có type là "education_level"
+          const educationLevelConfigs = response.result.filter(
+            (config: SystemConfig) => config.type === "education_level"
+          );
+          // Sắp xếp theo id để đảm bảo thứ tự
+          educationLevelConfigs.sort((a, b) => a.id - b.id);
+          setEducationLevels(educationLevelConfigs);
+          
+          // Set giá trị mặc định nếu form chưa có giá trị và có dữ liệu
+          if (educationLevelConfigs.length > 0 && !educationToEdit) {
+            const defaultLevel = educationLevelConfigs[0];
+            form.setValue("educationLevelId", defaultLevel.id);
+          }
+        } else {
+          console.warn("Could not load education levels");
+          setEducationLevels([]);
+        }
+      } catch (error) {
+        console.warn("Error loading education levels:", error);
+        setEducationLevels([]);
+      } finally {
+        setLoadingEducationLevels(false);
+      }
+    };
+
+    if (open) {
+      fetchEducationLevels();
+    }
+  }, [open, educationToEdit, form]);
+
   // Reset form when dialog opens
   useEffect(() => {
-    if (open) {
+    if (open && !loadingEducationLevels) {
       isInitialMount.current = true;
       if (educationToEdit) {
         reset({
           schoolName: educationToEdit.schoolName,
-          educationLevelId: educationToEdit.educationLevelId || 2,
+          educationLevelId: educationToEdit.educationLevelId || (educationLevels.length > 0 ? educationLevels[0].id : 0),
           major: educationToEdit.major,
           description: educationToEdit.description || "",
           startDate: new Date(educationToEdit.startDate),
@@ -102,7 +144,7 @@ export function DialogCVEducation({
       } else {
         reset({
           schoolName: "",
-          educationLevelId: 2, // Đại học
+          educationLevelId: educationLevels.length > 0 ? educationLevels[0].id : 0,
           major: "",
           description: "",
           startDate: undefined,
@@ -113,7 +155,7 @@ export function DialogCVEducation({
         isInitialMount.current = false;
       }, 100);
     }
-  }, [open, educationToEdit, reset]);
+  }, [open, educationToEdit, reset, loadingEducationLevels, educationLevels]);
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -212,51 +254,67 @@ export function DialogCVEducation({
                 <Label className="text-sm font-medium">
                   Trình độ học vấn <span className="text-red-500">*</span>
                 </Label>
-                <Controller
-                  control={control}
-                  name="educationLevelId"
-                  render={({ field }) => {
-                    const selectValue = field.value !== undefined && field.value !== null 
-                      ? field.value.toString() 
-                      : "";
-                    
-                    return (
-                      <Select
-                        value={selectValue}
-                        onValueChange={(value) => {
-                          // Bỏ qua nếu đang trong quá trình initial mount
-                          if (isInitialMount.current) {
-                            return;
-                          }
-                          
-                          // Chỉ update nếu giá trị không rỗng và hợp lệ
-                          if (value && value.trim() !== "") {
-                            const numValue = Number(value);
-                            const isValidValue = EDUCATION_LEVEL_OPTIONS.some(opt => opt.value === numValue);
-                            if (isValidValue) {
-                              field.onChange(numValue);
+                {loadingEducationLevels ? (
+                  <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Đang tải trình độ học vấn...</span>
+                  </div>
+                ) : (
+                  <Controller
+                    control={control}
+                    name="educationLevelId"
+                    render={({ field }) => {
+                      const selectValue = field.value !== undefined && field.value !== null 
+                        ? field.value.toString() 
+                        : "";
+                      
+                      return (
+                        <Select
+                          value={selectValue}
+                          onValueChange={(value) => {
+                            // Bỏ qua nếu đang trong quá trình initial mount
+                            if (isInitialMount.current) {
+                              return;
                             }
-                          }
-                        }}
-                        disabled={actionLoading}
-                      >
-                        <SelectTrigger className={`w-full mt-1 ${errors.educationLevelId ? "border-red-500" : ""}`}>
-                          <SelectValue placeholder="Chọn trình độ học vấn" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {EDUCATION_LEVEL_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value.toString()}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    );
-                  }}
-                />
+                            
+                            // Chỉ update nếu giá trị không rỗng và hợp lệ
+                            if (value && value.trim() !== "") {
+                              const numValue = Number(value);
+                              const isValidValue = educationLevels.some(level => level.id === numValue);
+                              if (isValidValue) {
+                                field.onChange(numValue);
+                              }
+                            }
+                          }}
+                          disabled={actionLoading || educationLevels.length === 0}
+                        >
+                          <SelectTrigger className={`w-full mt-1 ${errors.educationLevelId ? "border-red-500" : ""}`}>
+                            <SelectValue placeholder="Chọn trình độ học vấn" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {educationLevels.length === 0 ? (
+                              <SelectItem value="empty" disabled>Không có dữ liệu trình độ</SelectItem>
+                            ) : (
+                              educationLevels.map((level) => (
+                                <SelectItem key={level.id} value={level.id.toString()}>
+                                  {level.name}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      );
+                    }}
+                  />
+                )}
                 {errors.educationLevelId && (
                   <p className="text-sm text-red-500 mt-1">
                     {errors.educationLevelId.message}
+                  </p>
+                )}
+                {!loadingEducationLevels && educationLevels.length === 0 && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Không có dữ liệu trình độ học vấn
                   </p>
                 )}
               </div>

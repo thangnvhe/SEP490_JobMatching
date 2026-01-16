@@ -11,7 +11,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { 
-  ArrowRight, 
   Briefcase, 
   CheckCircle, 
   Clock, 
@@ -85,12 +84,13 @@ export default function RecruiterDashboardPage() {
     }
     
     // Nếu là number, convert sang string
+    // Mapping: 1=Draft, 2=Rejected, 3=Moderated, 4=Opened, 5=Closed
     const statusMap: { [key: number]: string } = {
-      0: 'Đang chờ duyệt',
-      1: 'Đã kiểm duyệt',
-      2: 'Đang mở',
-      3: 'Đã đóng',
-      4: 'Bị từ chối'
+      1: 'Đang chờ duyệt',
+      2: 'Bị từ chối',
+      3: 'Đã kiểm duyệt',
+      4: 'Đang mở',
+      5: 'Đã đóng'
     };
     return statusMap[status] || 'Không xác định';
   };
@@ -114,16 +114,17 @@ export default function RecruiterDashboardPage() {
     }
     
     // Nếu là number
+    // Mapping: 1=Draft, 2=Rejected, 3=Moderated, 4=Opened, 5=Closed
     switch (status) {
-      case 2: // Opened
+      case 4: // Opened
         return 'default';
-      case 1: // Moderated
+      case 3: // Moderated
         return 'secondary';
-      case 0: // Draft
+      case 1: // Draft
         return 'outline';
-      case 3: // Closed
+      case 5: // Closed
         return 'secondary';
-      case 4: // Rejected
+      case 2: // Rejected
         return 'destructive';
       default:
         return 'outline';
@@ -344,12 +345,7 @@ export default function RecruiterDashboardPage() {
         {/* Recent Created Jobs */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Công Việc Đã Tạo Gần Đây ({dashboard.recentCreatedJobs.length})</CardTitle>
-              <Button variant="ghost" size="sm">
-                Xem tất cả <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+            <CardTitle>Công Việc Đã Tạo Gần Đây ({dashboard.recentCreatedJobs.length})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading ? (
@@ -382,12 +378,7 @@ export default function RecruiterDashboardPage() {
         {/* Recent Approved Jobs */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Công Việc Đã Duyệt Gần Đây ({dashboard.recentApprovedJobs.length})</CardTitle>
-              <Button variant="ghost" size="sm">
-                Xem tất cả <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+            <CardTitle>Công Việc Đã Duyệt Gần Đây ({dashboard.recentApprovedJobs.length})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading ? (
@@ -420,12 +411,7 @@ export default function RecruiterDashboardPage() {
         {/* Purchased Plans */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Gói Dịch Vụ Đã Mua ({dashboard.purchasedPlans.length})</CardTitle>
-              <Button variant="ghost" size="sm">
-                Xem tất cả <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+            <CardTitle>Gói Dịch Vụ Đã Mua ({dashboard.purchasedPlans.length})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading ? (
@@ -458,12 +444,7 @@ export default function RecruiterDashboardPage() {
         {/* Recent Candidates */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Ứng Viên Gần Đây ({dashboard.recentCandidates.length})</CardTitle>
-              <Button variant="ghost" size="sm">
-                Xem tất cả <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+            <CardTitle>Ứng Viên Gần Đây ({dashboard.recentCandidates.length})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading ? (

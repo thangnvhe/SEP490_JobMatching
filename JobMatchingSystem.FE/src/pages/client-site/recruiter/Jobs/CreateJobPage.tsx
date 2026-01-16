@@ -45,11 +45,13 @@ import { TaxonomyService } from "@/services/taxonomy.service";
 import { PositionService } from "@/services/position.service";
 import { ExtensionJobServices } from "@/services/extension-job.service";
 import { HighlightJobServices } from "@/services/highlight-job.service";
+import { SystemConfigService } from "@/services/system-config.service";
 import { type Taxonomy } from "@/models/taxonomy";
 import { type Position } from "@/models/position";
 import { type User } from "@/models/user";
 import { type ExtensionJob } from "@/models/extension-job";
 import { type HighlightJob } from "@/models/highlight-job";
+import { type SystemConfig } from "@/models/system-config";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/useDebounce";
 import { VIETMAP_API_KEY } from "@/../env";
@@ -87,6 +89,7 @@ const step1Schema = z.object({
   salaryMin: z.number().min(0, "Lương tối thiểu phải lớn hơn 0").optional().nullable(),
   salaryMax: z.number().min(0, "Lương tối đa phải lớn hơn 0").optional().nullable(),
   experienceYear: z.number().min(0, "Số năm kinh nghiệm không được âm").max(50, "Số năm kinh nghiệm không được quá 50"),
+  educationLevel: z.string().min(1, "Trình độ là bắt buộc"),
   jobType: z.string().min(1, "Loại công việc là bắt buộc"),
   positionId: z.number().min(1, "Vị trí tuyển dụng là bắt buộc"),
   openedAt: z.date({ required_error: "Ngày mở tuyển dụng là bắt buộc" }),
@@ -137,6 +140,10 @@ export default function CreateJobPage() {
   const [selectedExtensionId, setSelectedExtensionId] = useState<number | undefined>(undefined);
   const [selectedHighlightId, setSelectedHighlightId] = useState<number | undefined>(undefined);
   
+  // Education Levels
+  const [educationLevels, setEducationLevels] = useState<SystemConfig[]>([]);
+  const [loadingEducationLevels, setLoadingEducationLevels] = useState(true);
+  
   // Step 1: Job Information
   const [jobData, setJobData] = useState<Step1FormData>({
     title: "",
@@ -147,6 +154,7 @@ export default function CreateJobPage() {
     salaryMin: null,
     salaryMax: null,
     experienceYear: 0,
+    educationLevel: "",
     jobType: "",
     positionId: 0,
     openedAt: new Date(),
@@ -171,6 +179,7 @@ export default function CreateJobPage() {
     defaultValues: {
       ...jobData,
       benefits: jobData.benefits || "", // Ensure benefits is always a string
+      educationLevel: "",
       openedAt: new Date(),
       expiredAt: new Date(new Date().setDate(new Date().getDate() + 30)),
       taxonomyIds: [] // Initialize with empty array
@@ -303,6 +312,29 @@ export default function CreateJobPage() {
       }
     };
 
+    const fetchEducationLevels = async () => {
+      try {
+        setLoadingEducationLevels(true);
+        const response = await SystemConfigService.getAllConfigs();
+        
+        if (response.isSuccess && response.result) {
+          // Lọc các config có type là "education_level"
+          const educationLevelConfigs = response.result.filter(
+            (config: SystemConfig) => config.type === "education_level"
+          );
+          setEducationLevels(educationLevelConfigs);
+        } else {
+          console.warn("Could not load education levels");
+          setEducationLevels([]);
+        }
+      } catch (error) {
+        console.warn("Error loading education levels:", error);
+        setEducationLevels([]);
+      } finally {
+        setLoadingEducationLevels(false);
+      }
+    };
+
     // Only fetch if user is authenticated, otherwise just set loading to false
     if (authState.isAuthenticated) {
       fetchHiringManagers();
@@ -310,17 +342,20 @@ export default function CreateJobPage() {
       fetchPositions();
       fetchExtensionJobs();
       fetchHighlightJobs();
+      fetchEducationLevels();
     } else {
       setLoadingHiringManagers(false);
       setLoadingTaxonomies(false);
       setLoadingPositions(false);
       setLoadingExtensions(false);
       setLoadingHighlights(false);
+      setLoadingEducationLevels(false);
       setHiringManagers([]);
       setTaxonomies([]);
       setPositions([]);
       setExtensionJobs([]);
       setHighlightJobs([]);
+      setEducationLevels([]);
     }
   }, [authState.isAuthenticated]);
 
@@ -541,6 +576,7 @@ export default function CreateJobPage() {
         salaryMin: isNegotiableSalary ? undefined : (jobData.salaryMin || undefined),
         salaryMax: isNegotiableSalary ? undefined : (jobData.salaryMax || undefined),
         experienceYear: jobData.experienceYear,
+        educationLevel: jobData.educationLevel,
         jobType: jobData.jobType,
         positionId: selectedPositionId || 0,
         openedAt: jobData.openedAt instanceof Date ? jobData.openedAt.toISOString() : new Date(jobData.openedAt).toISOString(),
@@ -719,8 +755,8 @@ export default function CreateJobPage() {
                   </div>
                 </div>
 
-                {/* Dòng 2: Địa điểm làm việc - Số năm kinh nghiệm */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Dòng 2: Địa điểm làm việc (full width) */}
+                <div className="grid grid-cols-1 gap-6">
                   {/* Location with Autocomplete */}
                   <div className="space-y-2">
                     <Label htmlFor="location" className="text-sm font-medium">
@@ -814,6 +850,42 @@ export default function CreateJobPage() {
                       Tìm kiếm địa chỉ theo Vietmap - Nhập tối thiểu 2 ký tự
                     </p>
                   </div>
+                </div>
+
+                {/* Dòng 3: Trình độ - Số năm kinh nghiệm */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Education Level */}
+                  <div className="space-y-2">
+                    <Label htmlFor="educationLevel" className="text-sm font-medium">Trình độ *</Label>
+                    {loadingEducationLevels ? (
+                      <div className="text-sm text-muted-foreground">Đang tải...</div>
+                    ) : (
+                      <>
+                        <Select
+                          value={watchStep1("educationLevel")}
+                          onValueChange={(value) => setValueStep1("educationLevel", value)}
+                        >
+                          <SelectTrigger className={`w-full ${errorsStep1.educationLevel ? "border-red-500" : ""}`}>
+                            <SelectValue placeholder="Chọn trình độ" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {educationLevels.length === 0 ? (
+                              <SelectItem value="empty" disabled>Không có dữ liệu trình độ</SelectItem>
+                            ) : (
+                              educationLevels.map((level) => (
+                                <SelectItem key={level.id} value={level.value}>
+                                  {level.name}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        {errorsStep1.educationLevel && (
+                          <p className="text-sm text-red-500">{errorsStep1.educationLevel.message}</p>
+                        )}
+                      </>
+                    )}
+                  </div>
 
                   {/* Experience Year */}
                   <div className="space-y-2">
@@ -833,7 +905,7 @@ export default function CreateJobPage() {
                   </div>
                 </div>
 
-                {/* Dòng 3: Ngày mở - Ngày hết hạn */}
+                {/* Dòng 4: Ngày mở - Ngày hết hạn */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Opened Date */}
                   <div className="space-y-2">
@@ -1375,16 +1447,34 @@ export default function CreateJobPage() {
                   <p className="text-base">{jobData.title}</p>
                 </div>
                 <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">Loại công việc</Label>
+                  <p className="text-base">{getJobTypeLabel(jobData.jobType)}</p>
+                </div>
+                <div className="space-y-2 md:col-span-2">
                   <Label className="text-sm font-medium text-muted-foreground">Địa điểm</Label>
                   <p className="text-base">{jobData.location}</p>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-muted-foreground">Loại công việc</Label>
-                  <p className="text-base">{getJobTypeLabel(jobData.jobType)}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Trình độ</Label>
+                  <p className="text-base">
+                    {educationLevels.find(e => e.value === jobData.educationLevel)?.name || jobData.educationLevel}
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-muted-foreground">Kinh nghiệm</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">Số năm kinh nghiệm</Label>
                   <p className="text-base">{jobData.experienceYear} năm</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">Ngày mở tuyển dụng</Label>
+                  <p className="text-base">
+                    {jobData.openedAt instanceof Date ? jobData.openedAt.toLocaleDateString('vi-VN') : new Date(jobData.openedAt).toLocaleDateString('vi-VN')}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">Ngày hết hạn</Label>
+                  <p className="text-base">
+                    {jobData.expiredAt instanceof Date ? jobData.expiredAt.toLocaleDateString('vi-VN') : new Date(jobData.expiredAt).toLocaleDateString('vi-VN')}
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-muted-foreground">Vị trí tuyển dụng</Label>
@@ -1402,18 +1492,6 @@ export default function CreateJobPage() {
                         : "Thỏa thuận"
                       )
                     }
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-muted-foreground">Ngày mở tuyển dụng</Label>
-                  <p className="text-base">
-                    {jobData.openedAt instanceof Date ? jobData.openedAt.toLocaleDateString('vi-VN') : new Date(jobData.openedAt).toLocaleDateString('vi-VN')}
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-muted-foreground">Ngày hết hạn</Label>
-                  <p className="text-base">
-                    {jobData.expiredAt instanceof Date ? jobData.expiredAt.toLocaleDateString('vi-VN') : new Date(jobData.expiredAt).toLocaleDateString('vi-VN')}
                   </p>
                 </div>
               </div>

@@ -60,6 +60,7 @@ import { CVExperienceServices } from "@/services/cv-experience.service";
 import { CVProjectServices } from "@/services/cv-project.service";
 import { CandidateTaxonomyService } from "@/services/candidate-taxonomy.service";
 import { UserServices } from "@/services/user.service";
+import { SystemConfigService } from "@/services/system-config.service";
 import { DialogCVInformation } from "./EditInformation/DialogCVInformation";
 import { DialogCVProfile } from "./EditInformation/DialogCVProfile";
 import { User } from "@/models/user";
@@ -67,16 +68,13 @@ import { CVProfile } from "@/models/cv-profile";
 import { CVProfileService } from "@/services/cv-profile.service";
 import { CVAchievement } from "@/models/cv-achievement";
 import { CVCertificate } from "@/models/cv-certificate";
-import { CVEducation, EducationLevel as EducationLevelMap } from "@/models/cv-education";
+import { CVEducation } from "@/models/cv-education";
 import { CVExperience } from "@/models/cv-experience";
 import { CVProject } from "@/models/cv-project";
 import { CandidateTaxonomy } from "@/models/candidate-taxonomy";
+import { type SystemConfig } from "@/models/system-config";
 import { toast } from "sonner";
 import { format } from "date-fns";
-
-const getEducationLevelLabel = (educationLevelId: number): string => {
-    return EducationLevelMap[educationLevelId as keyof typeof EducationLevelMap] || "Khác";
-};
 
 const ProfileCvPage = () => {
     const navigate = useNavigate();
@@ -110,6 +108,8 @@ const ProfileCvPage = () => {
     const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
     const [cvProfile, setCvProfile] = useState<CVProfile | null>(null);
 
+    // Education levels từ System Config
+    const [educationLevels, setEducationLevels] = useState<SystemConfig[]>([]);
 
     // Alert Dialog state for delete confirmation
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -248,6 +248,29 @@ const ProfileCvPage = () => {
         }
     };
 
+    const fetchEducationLevels = async () => {
+        try {
+            const response = await SystemConfigService.getAllConfigs();
+            if (response.isSuccess && response.result) {
+                // Lọc các config có type là "education_level"
+                const educationLevelConfigs = response.result.filter(
+                    (config: SystemConfig) => config.type === "education_level"
+                );
+                // Sắp xếp theo id để đảm bảo thứ tự
+                educationLevelConfigs.sort((a, b) => a.id - b.id);
+                setEducationLevels(educationLevelConfigs);
+            }
+        } catch (error) {
+            console.error("Failed to fetch education levels", error);
+        }
+    };
+
+    // Hàm lấy label của trình độ học vấn từ System Config
+    const getEducationLevelLabel = (educationLevelId: number): string => {
+        const level = educationLevels.find(level => level.id === educationLevelId);
+        return level?.name || "Khác";
+    };
+
     useEffect(() => {
         fetchAchievements();
         fetchCertificates();
@@ -257,6 +280,7 @@ const ProfileCvPage = () => {
         fetchTaxonomies();
         fetchUserProfile();
         fetchCVProfile();
+        fetchEducationLevels();
     }, []);
 
     // Achievement handlers
