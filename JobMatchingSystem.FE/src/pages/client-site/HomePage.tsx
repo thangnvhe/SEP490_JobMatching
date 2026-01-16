@@ -85,6 +85,7 @@ const HomePage = () => {
             page: 1,
             size: 6,
             isHighlight: true,
+            status: "Opened",
           }), // Assuming featured jobs
           CompanyServices.getAllCompaniesWithPagination({
             page: 1,
@@ -586,46 +587,7 @@ const HomePage = () => {
         </section>
       )}
 
-      {/* Categories Section */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-end mb-8">
-            <div>
-              <h2 className="text-3xl font-bold text-slate-900 mb-2">
-                Khám Phá Theo Danh Mục
-              </h2>
-              <p className="text-lg text-slate-600">
-                Tìm vị trí phù hợp dựa trên chuyên môn của bạn
-              </p>
-            </div>
-            {/* <Button variant="outline" className="hidden md:flex text-emerald-600 hover:bg-emerald-600 hover:text-white border-emerald-200 hover:border-emerald-600">Xem Tất Cả</Button> */}
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {taxonomies.map((category, index) => {
-              const Icon = getCategoryIcon(index);
-              return (
-                <Card
-                  key={category.id}
-                  className="group hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border-slate-200 cursor-pointer bg-slate-50/50 hover:bg-white"
-                >
-                  <CardContent className="p-4 flex flex-col items-center text-center">
-                    <div className="mb-3 p-3 bg-white rounded-xl shadow-sm group-hover:bg-emerald-600 transition-colors duration-300">
-                      <Icon className="h-6 w-6 text-emerald-600 group-hover:text-white transition-colors duration-300" />
-                    </div>
-                    <h3 className="font-semibold text-slate-800 group-hover:text-emerald-600 transition-colors truncate w-full">
-                      {category.name}
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-1">100+ Việc Làm</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Jobs Section (Old style, kept as is or can be removed if user wants replacement) */}
+      {/* Featured Jobs Section */}
       <section className="py-16 bg-white relative overflow-hidden">
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-12">
@@ -637,85 +599,95 @@ const HomePage = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {jobs.map((job) => (
-              <Card
-                key={job.jobId}
-                className="group hover:shadow-xl hover:shadow-emerald-900/10 hover:-translate-y-1 transition-all duration-300 border-slate-200 overflow-hidden bg-white relative h-full flex flex-col cursor-pointer"
-                onClick={() => {
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                  navigate(`/jobs/${job.jobId}`, {
-                    state: { from: "/" },
-                  });
-                }}
-              >
-                <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-emerald-500 via-teal-500 to-emerald-500" />
-                <CardContent className="p-6 flex flex-col flex-1">
-                  <div className="flex gap-5 flex-1">
-                    <div className="relative shrink-0">
-                      <Avatar className="h-16 w-16 rounded-xl border-2 border-emerald-100 shadow-md group-hover:border-emerald-200 transition-colors">
-                        <AvatarImage
-                          src={`https://api.dicebear.com/7.x/initials/svg?seed=${job.title}`}
-                        />
-                        <AvatarFallback className="rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 text-white font-bold text-xl">
-                          {job.title.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
+          {jobs.length === 0 ? (
+            <div className="text-center py-16 bg-slate-50 rounded-lg border border-slate-200">
+              <p className="text-lg text-slate-600">
+                Hiện chưa có việc làm mới
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {jobs.map((job) => (
+                  <Card
+                    key={job.jobId}
+                    className="group hover:shadow-xl hover:shadow-emerald-900/10 hover:-translate-y-1 transition-all duration-300 border-slate-200 overflow-hidden bg-white relative h-full flex flex-col cursor-pointer"
+                    onClick={() => {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                      navigate(`/jobs/${job.jobId}`, {
+                        state: { from: "/" },
+                      });
+                    }}
+                  >
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-emerald-500 via-teal-500 to-emerald-500" />
+                    <CardContent className="p-6 flex flex-col flex-1">
+                      <div className="flex gap-5 flex-1">
+                        <div className="relative shrink-0">
+                          <Avatar className="h-16 w-16 rounded-xl border-2 border-emerald-100 shadow-md group-hover:border-emerald-200 transition-colors">
+                            <AvatarImage
+                              src={`https://api.dicebear.com/7.x/initials/svg?seed=${job.title}`}
+                            />
+                            <AvatarFallback className="rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 text-white font-bold text-xl">
+                              {job.title.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
 
-                    <div className="flex-1 min-w-0 flex flex-col">
-                      <div className="flex justify-between items-start mb-1">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition-colors mb-2 line-clamp-1">
-                            {job.title}
-                          </h3>
-                          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 mb-2">
-                            <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded-lg">
-                              <MapPin className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                              <span className="truncate max-w-[200px]">
-                                {shortenAddress(job.location)}
-                              </span>
-                            </span>
-                            <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded-lg">
-                              <Briefcase className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                              <span className="truncate">{job.jobType}</span>
-                            </span>
+                        <div className="flex-1 min-w-0 flex flex-col">
+                          <div className="flex justify-between items-start mb-1">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition-colors mb-2 line-clamp-1">
+                                {job.title}
+                              </h3>
+                              <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 mb-2">
+                                <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded-lg">
+                                  <MapPin className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                  <span className="truncate max-w-[200px]">
+                                    {shortenAddress(job.location)}
+                                  </span>
+                                </span>
+                                <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded-lg">
+                                  <Briefcase className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                  <span className="truncate">{job.jobType}</span>
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Footer */}
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-100 mt-auto">
+                            <div className="text-sm font-semibold text-emerald-700">
+                              {job.salaryMin && job.salaryMax ? `${(job.salaryMin / 1000000).toLocaleString()} - ${(job.salaryMax / 1000000).toLocaleString()} triệu` : "Thỏa thuận"}
+                            </div>
+                            <Button
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 h-8 text-xs font-semibold"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/jobs/${job.jobId}`);
+                              }}
+                            >
+                              Ứng Tuyển
+                            </Button>
                           </div>
                         </div>
                       </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
 
-                      {/* Footer */}
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-100 mt-auto">
-                        <div className="text-sm font-semibold text-emerald-700">
-                          {job.salaryMin && job.salaryMax ? `${(job.salaryMin / 1000000).toLocaleString()} - ${(job.salaryMax / 1000000).toLocaleString()} triệu` : "Thỏa thuận"}
-                        </div>
-                        <Button
-                          size="sm"
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 h-8 text-xs font-semibold"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/jobs/${job.jobId}`);
-                          }}
-                        >
-                          Ứng Tuyển
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center mt-10">
-            <Button
-              variant="outline"
-              className="px-8"
-              onClick={() => navigate("/jobs")}
-            >
-              Xem Tất Cả Việc Làm
-            </Button>
-          </div>
+              <div className="text-center mt-10">
+                <Button
+                  variant="outline"
+                  className="px-8"
+                  onClick={() => navigate("/jobs")}
+                >
+                  Xem Tất Cả Việc Làm
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </section>
 

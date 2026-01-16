@@ -32,9 +32,15 @@ import { cn } from "@/lib/utils";
 import { JobServices } from "@/services/job.service";
 import { TaxonomyService } from "@/services/taxonomy.service";
 import { PositionService } from "@/services/position.service";
+import { ExtensionJobServices } from "@/services/extension-job.service";
+import { HighlightJobServices } from "@/services/highlight-job.service";
+import { SystemConfigService } from "@/services/system-config.service";
 import { type Job } from "@/models/job";
 import { type Taxonomy } from "@/models/taxonomy";
 import { type Position } from "@/models/position";
+import { type ExtensionJob } from "@/models/extension-job";
+import { type HighlightJob } from "@/models/highlight-job";
+import { type SystemConfig } from "@/models/system-config";
 
 // ===================== TYPES =====================
 
@@ -54,6 +60,7 @@ interface JobFormData {
   salaryMin: number | null;
   salaryMax: number | null;
   experienceYear: number;
+  educationLevel: string;
   jobType: string;
   positionId: number;
   taxonomyIds: number[];
@@ -88,6 +95,10 @@ const validateForm = (formData: JobFormData): string[] => {
     errors.push("Số năm kinh nghiệm phải từ 0 đến 50");
   }
 
+  if (!formData.educationLevel || !formData.educationLevel.trim()) {
+    errors.push("Trình độ là bắt buộc");
+  }
+
   if (!formData.jobType) {
     errors.push("Loại công việc là bắt buộc");
   }
@@ -118,10 +129,16 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
   const [isLoading, setIsLoading] = useState(false);
   const [loadingTaxonomies, setLoadingTaxonomies] = useState(true);
   const [loadingPositions, setLoadingPositions] = useState(true);
+  const [loadingExtensions, setLoadingExtensions] = useState(true);
+  const [loadingHighlights, setLoadingHighlights] = useState(true);
+  const [loadingEducationLevels, setLoadingEducationLevels] = useState(true);
 
   // Data states
   const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
+  const [extensionJobs, setExtensionJobs] = useState<ExtensionJob[]>([]);
+  const [highlightJobs, setHighlightJobs] = useState<HighlightJob[]>([]);
+  const [educationLevels, setEducationLevels] = useState<SystemConfig[]>([]);
 
   // Form states
   const [formData, setFormData] = useState<JobFormData>({
@@ -133,6 +150,7 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
     salaryMin: null,
     salaryMax: null,
     experienceYear: 0,
+    educationLevel: "",
     jobType: "FullTime",
     positionId: 0,
     taxonomyIds: [],
@@ -147,6 +165,8 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
   const [selectedPositionId, setSelectedPositionId] = useState<number | null>(null);
   const [searchPosition, setSearchPosition] = useState("");
   const [openPositionPopover, setOpenPositionPopover] = useState(false);
+  const [selectedExtensionId, setSelectedExtensionId] = useState<number | undefined>(undefined);
+  const [selectedHighlightId, setSelectedHighlightId] = useState<number | undefined>(undefined);
 
   // Load form data when job changes
   useEffect(() => {
@@ -160,6 +180,7 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
         salaryMin: job.salaryMin || null,
         salaryMax: job.salaryMax || null,
         experienceYear: job.experienceYear || 0,
+        educationLevel: (job as any).educationLevel || "",
         jobType: job.jobType || "FullTime",
         positionId: job.positionId || 0,
         taxonomyIds: job.taxonomies ? job.taxonomies.map(t => t.id) : [],
@@ -197,6 +218,46 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
         console.warn("Error loading positions:", error);
       } finally {
         setLoadingPositions(false);
+      }
+
+      try {
+        setLoadingExtensions(true);
+        const extensionResponse = await ExtensionJobServices.getMyExtensionJobs();
+        if (extensionResponse.isSuccess && extensionResponse.result) {
+          setExtensionJobs(extensionResponse.result);
+        }
+      } catch (error) {
+        console.warn("Error loading extension jobs:", error);
+      } finally {
+        setLoadingExtensions(false);
+      }
+
+      try {
+        setLoadingHighlights(true);
+        const highlightResponse = await HighlightJobServices.getMyHighlightJobs();
+        if (highlightResponse.isSuccess && highlightResponse.result) {
+          setHighlightJobs(highlightResponse.result);
+        }
+      } catch (error) {
+        console.warn("Error loading highlight jobs:", error);
+      } finally {
+        setLoadingHighlights(false);
+      }
+
+      try {
+        setLoadingEducationLevels(true);
+        const educationResponse = await SystemConfigService.getAllConfigs();
+        if (educationResponse.isSuccess && educationResponse.result) {
+          // Lọc các config có type là "education_level"
+          const educationLevelConfigs = educationResponse.result.filter(
+            (config: SystemConfig) => config.type === "education_level"
+          );
+          setEducationLevels(educationLevelConfigs);
+        }
+      } catch (error) {
+        console.warn("Error loading education levels:", error);
+      } finally {
+        setLoadingEducationLevels(false);
       }
     };
 
@@ -267,6 +328,7 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
         requirements: formData.requirements.trim(),
         location: formData.location.trim(),
         experienceYear: formData.experienceYear,
+        educationLevel: formData.educationLevel,
         jobType: formData.jobType,
         positionId: selectedPositionId || formData.positionId,
         taxonomyIds: formData.taxonomyIds,
@@ -285,6 +347,15 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
 
       if (formData.salaryMax !== null && formData.salaryMax !== undefined) {
         updateRequest.salaryMax = formData.salaryMax;
+      }
+
+      // Include upgrade packages if selected
+      if (selectedHighlightId !== undefined && selectedHighlightId !== 0) {
+        updateRequest.highlightJobId = selectedHighlightId;
+      }
+
+      if (selectedExtensionId !== undefined && selectedExtensionId !== 0) {
+        updateRequest.extensionJobId = selectedExtensionId;
       }
 
       // Call API
@@ -351,8 +422,8 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
           <div className="px-6 overflow-y-auto flex-1">
             <div className="grid grid-cols-2 gap-4 pb-4">
-          {/* Title - Full width */}
-          <div className="col-span-2">
+          {/* Dòng 1: Tiêu đề - Loại công việc */}
+          <div className="col-span-1">
             <Label htmlFor="title" className="text-sm font-medium text-gray-900">
               Tiêu đề công việc <span className="text-red-500">*</span>
             </Label>
@@ -367,23 +438,6 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
             />
           </div>
 
-          {/* Location - Full width */}
-          <div className="col-span-2">
-            <Label htmlFor="location" className="text-sm font-medium text-gray-900">
-              Địa điểm làm việc <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="location"
-              type="text"
-              value={formData.location}
-              onChange={(e) => handleInputChange('location', e.target.value)}
-              placeholder="VD: Hà Nội, Hồ Chí Minh"
-              className="mt-1"
-              required
-            />
-          </div>
-
-          {/* Job Type */}
           <div className="col-span-1">
             <Label htmlFor="jobType" className="text-sm font-medium text-gray-900">
               Loại công việc <span className="text-red-500">*</span>
@@ -404,7 +458,52 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
             </Select>
           </div>
 
-          {/* Experience Year */}
+          {/* Dòng 2: Địa điểm - Full width */}
+          <div className="col-span-2">
+            <Label htmlFor="location" className="text-sm font-medium text-gray-900">
+              Địa điểm làm việc <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="location"
+              type="text"
+              value={formData.location}
+              onChange={(e) => handleInputChange('location', e.target.value)}
+              placeholder="VD: Hà Nội, Hồ Chí Minh"
+              className="mt-1"
+              required
+            />
+          </div>
+
+          {/* Dòng 3: Trình độ - Số năm kinh nghiệm */}
+          <div className="col-span-1">
+            <Label htmlFor="educationLevel" className="text-sm font-medium text-gray-900">
+              Trình độ <span className="text-red-500">*</span>
+            </Label>
+            {loadingEducationLevels ? (
+              <div className="text-sm text-muted-foreground mt-1">Đang tải...</div>
+            ) : (
+              <Select
+                value={formData.educationLevel}
+                onValueChange={(value) => handleInputChange('educationLevel', value)}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Chọn trình độ" />
+                </SelectTrigger>
+                <SelectContent>
+                  {educationLevels.length === 0 ? (
+                    <SelectItem value="empty" disabled>Không có dữ liệu trình độ</SelectItem>
+                  ) : (
+                    educationLevels.map((level) => (
+                      <SelectItem key={level.id} value={level.value}>
+                        {level.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
           <div className="col-span-1">
             <Label htmlFor="experienceYear" className="text-sm font-medium text-gray-900">
               Số năm kinh nghiệm
@@ -420,6 +519,8 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
               className="mt-1"
             />
           </div>
+
+          {/* Dòng 4: Ngày mở - Ngày hết hạn */}
 
           {/* Position - Autocomplete */}
           <div className="col-span-2">
@@ -785,6 +886,102 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
               className="mt-1"
               rows={4}
             />
+          </div>
+
+          {/* Upgrade Packages Section */}
+          <div className="col-span-2">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-900">
+                Gói nâng cấp (Tùy chọn)
+              </Label>
+              <p className="text-xs text-muted-foreground mb-3">
+                Chọn gói nổi bật hoặc gia hạn cho tin tuyển dụng
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Highlight Job Selection */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700">
+                    Gói nổi bật
+                  </Label>
+                  {loadingHighlights ? (
+                    <div className="text-sm text-muted-foreground">Đang tải...</div>
+                  ) : (
+                    <>
+                      <Select
+                        value={selectedHighlightId?.toString() || "none"}
+                        onValueChange={(value) => setSelectedHighlightId(value === "none" ? undefined : parseInt(value))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn gói nổi bật" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Không chọn</SelectItem>
+                          {highlightJobs.length === 0 ? (
+                            <SelectItem value="empty" disabled>Không có gói khả dụng</SelectItem>
+                          ) : (
+                            highlightJobs.map(job => (
+                              <SelectItem 
+                                key={job.id} 
+                                value={job.id.toString()}
+                                disabled={job.highlightJobDaysCount <= 0}
+                              >
+                                Gói nổi bật {job.highlightJobDays} ngày 
+                                {job.highlightJobDaysCount <= 0 && " - Đã hết"}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Giúp tin tuyển dụng nổi bật hơn
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                {/* Extension Job Selection */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700">
+                    Gói gia hạn
+                  </Label>
+                  {loadingExtensions ? (
+                    <div className="text-sm text-muted-foreground">Đang tải...</div>
+                  ) : (
+                    <>
+                      <Select
+                        value={selectedExtensionId?.toString() || "none"}
+                        onValueChange={(value) => setSelectedExtensionId(value === "none" ? undefined : parseInt(value))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn gói gia hạn" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Không chọn</SelectItem>
+                          {extensionJobs.length === 0 ? (
+                            <SelectItem value="empty" disabled>Không có gói khả dụng</SelectItem>
+                          ) : (
+                            extensionJobs.map(job => (
+                              <SelectItem 
+                                key={job.id} 
+                                value={job.id.toString()}
+                                disabled={job.extensionJobDaysCount <= 0}
+                              >
+                                Gói gia hạn {job.extensionJobDays} ngày 
+                                {job.extensionJobDaysCount <= 0 && " - Đã hết"}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Kéo dài thời gian hiển thị tin tuyển dụng
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
             </div>

@@ -24,6 +24,48 @@ import { UpdateResultDialog } from "./UpdateResultDialog";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 
+// Helper function để parse date và time thành Date object
+const parseDateTime = (dateStr: string, timeStr: string): Date => {
+  const date = new Date(dateStr);
+  if (timeStr) {
+    const timeParts = timeStr.split(':').map(Number);
+    const hours = timeParts[0] || 0;
+    const minutes = timeParts[1] || 0;
+    date.setHours(hours, minutes, 0, 0);
+  }
+  return date;
+};
+
+// Helper function để kiểm tra xem thời gian phỏng vấn đã đến chưa
+const isInterviewTimePassed = (candidate: CandidateStage): boolean => {
+  // Nếu không có interviewDate hoặc interviewStartTime, cho phép update
+  if (!candidate.interviewDate || !candidate.interviewStartTime) {
+    return true;
+  }
+
+  // Kiểm tra giá trị mặc định (có thể là "0001-01-01" hoặc "00:00:00")
+  if (
+    candidate.interviewDate === "0001-01-01" ||
+    candidate.interviewStartTime === "00:00:00" ||
+    !candidate.interviewDate.trim() ||
+    !candidate.interviewStartTime.trim()
+  ) {
+    return true;
+  }
+
+  try {
+    const interviewDateTime = parseDateTime(candidate.interviewDate, candidate.interviewStartTime);
+    const now = new Date();
+
+    // So sánh: thời gian hiện tại phải >= thời gian phỏng vấn
+    return now >= interviewDateTime;
+  } catch (error) {
+    // Nếu có lỗi khi parse, cho phép update (fallback)
+    console.error("Error parsing interview date/time:", error);
+    return true;
+  }
+};
+
 // Interface for pending move operation
 interface PendingMoveOperation {
   candidate: CandidateStage;
@@ -229,6 +271,23 @@ export function StageBoard({
           ? "Ứng viên đã bị loại, không thể chuyển giai đoạn."
           : "Ứng viên đã đạt, không thể chuyển giai đoạn.";
         toast.error(statusMessage);
+        return;
+      }
+    }
+
+    // Validate: Candidates with "Schedule" status cannot be moved if interview time hasn't passed
+    if (draggedCandidate?.status === "Schedule" && fromColumn.id !== toColumn.id) {
+      if (!isInterviewTimePassed(draggedCandidate)) {
+        setColumns(columnsBeforeDragRef.current);
+        const interviewDate = draggedCandidate.interviewDate
+          ? new Date(draggedCandidate.interviewDate).toLocaleDateString('vi-VN')
+          : '';
+        const interviewTime = draggedCandidate.interviewStartTime
+          ? draggedCandidate.interviewStartTime.slice(0, 5)
+          : '';
+        toast.error(
+          `Chưa đến thời gian phỏng vấn. Vui lòng đợi đến ${interviewDate} ${interviewTime} mới có thể cập nhật kết quả.`
+        );
         return;
       }
     }

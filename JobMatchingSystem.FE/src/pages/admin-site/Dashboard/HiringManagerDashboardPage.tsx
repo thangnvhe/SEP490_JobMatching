@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
-  ArrowRight, 
   CheckCircle, 
   Clock, 
   Users, 
@@ -220,12 +219,7 @@ export default function HiringManagerDashboardPage() {
         {/* Pending Reviews */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Chờ Đánh Giá ({dashboard.pendingReviewCount})</CardTitle>
-              <Button variant="ghost" size="sm">
-                Xem tất cả <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+            <CardTitle>Chờ Đánh Giá ({dashboard.pendingReviewCount})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading ? (
@@ -280,12 +274,7 @@ export default function HiringManagerDashboardPage() {
         {/* Upcoming Interviews */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Phỏng Vấn Sắp Tới ({dashboard.upcomingInterviewCount})</CardTitle>
-              <Button variant="ghost" size="sm">
-                Xem tất cả <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+            <CardTitle>Phỏng Vấn Sắp Tới ({dashboard.upcomingInterviewCount})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading ? (

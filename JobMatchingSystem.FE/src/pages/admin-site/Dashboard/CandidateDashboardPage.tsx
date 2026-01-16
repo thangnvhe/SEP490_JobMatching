@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
-  ArrowRight, 
   Briefcase, 
   Clock, 
   Heart, 
@@ -18,7 +16,6 @@ import type { CandidateDashboard } from "@/models/dashboard";
 import { toast } from "sonner";
 
 export default function CandidateDashboardPage() {
-  const navigate = useNavigate();
   const [dashboard, setDashboard] = useState<CandidateDashboard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -229,12 +226,7 @@ export default function CandidateDashboardPage() {
         {/* Recent Applied Jobs */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Đơn Ứng Tuyển Gần Nhất</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/candidate/my-jobs")}>
-                Xem tất cả <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+            <CardTitle>Đơn Ứng Tuyển Gần Nhất</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading ? (
@@ -263,12 +255,7 @@ export default function CandidateDashboardPage() {
         {/* Upcoming Interviews */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Lịch Phỏng Vấn Sắp Tới</CardTitle>
-              <Button variant="ghost" size="sm">
-                Xem tất cả <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+            <CardTitle>Lịch Phỏng Vấn Sắp Tới</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading ? (
@@ -304,12 +291,7 @@ export default function CandidateDashboardPage() {
       {/* Saved Jobs */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Công Việc Yêu Thích ({dashboard.totalSavedJobs})</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/candidate/my-jobs?tab=saved")}>
-              Xem tất cả <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          </div>
+          <CardTitle>Công Việc Yêu Thích ({dashboard.totalSavedJobs})</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
