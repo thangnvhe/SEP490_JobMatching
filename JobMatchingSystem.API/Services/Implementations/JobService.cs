@@ -377,6 +377,18 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (job == null || job.IsDeleted == true)
                 throw new AppException(ErrorCode.NotFoundJob());
 
+            // Nếu trạng thái là Closed, cần kiểm tra xem có ứng viên đang chờ xử lý hoặc đang xử lý không
+            if (statusEnum == JobStatus.Closed)
+            {
+                bool hasPendingOrProcessingCandidates = await _context.CandidateJobs
+                    .Where(cj => cj.JobId == jobId && 
+                        (cj.Status == CandidateJobStatus.Pending || cj.Status == CandidateJobStatus.Processing))
+                    .AnyAsync();
+
+                if (hasPendingOrProcessingCandidates)
+                    throw new AppException(ErrorCode.CantClosedJobWithProcessingCandidates());
+            }
+
             job.Status = statusEnum;
             job.VerifiedBy = userId;
 
