@@ -74,5 +74,6 @@ namespace JobMatchingSystem.API.Exceptions
         public static Error NotFoundPosition() => new("Không tìm thấy vị trí", HttpStatusCode.NotFound);
         public static Error DuplicatePosition() => new("Vị trí với tên này đã tồn tại", HttpStatusCode.BadRequest);
         public static Error AlreadyExists() => new("Tên đã tồn tại ở cấp độ này", HttpStatusCode.BadRequest);
+        public static Error CantClosedJobWithProcessingCandidates() => new("Không thể đóng công việc khi còn ứng viên đang chờ xử lý hoặc đang xử lý. Vui lòng hoàn thành quá trình xử lý ứng viên trước khi đóng công việc.", HttpStatusCode.BadRequest);
     }
 }
