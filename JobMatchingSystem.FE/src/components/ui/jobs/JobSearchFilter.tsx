@@ -52,11 +52,11 @@ const JOB_TYPE_OPTIONS = [
 
 const SALARY_OPTIONS = [
   { min: null, max: null, label: "Tất cả" },
-  { min: 0, max: 10, label: "Dưới 10 triệu" },
-  { min: 10, max: 15, label: "10-15 triệu" },
-  { min: 15, max: 20, label: "15-20 triệu" },
-  { min: 20, max: 25, label: "20-25 triệu" },
-  { min: 25, max: null, label: "Trên 25 triệu" },
+  { min: 0, max: 10000000, label: `Dưới ${(10000000).toLocaleString('vi-VN')} ` },
+  { min: 10000000, max: 15000000, label: `${(10000000).toLocaleString('vi-VN')} - ${(15000000).toLocaleString('vi-VN')} ` },
+  { min: 15000000, max: 20000000, label: `${(15000000).toLocaleString('vi-VN')} - ${(20000000).toLocaleString('vi-VN')} ` },
+  { min: 20000000, max: 25000000, label: `${(20000000).toLocaleString('vi-VN')} - ${(25000000).toLocaleString('vi-VN')} ` },
+  { min: 25000000, max: null, label: `Trên ${(25000000).toLocaleString('vi-VN')} ` },
   { min: -1, max: -1, label: "Thỏa Thuận" },
 ];
 
@@ -348,7 +348,7 @@ const JobSearchFilter: React.FC<JobSearchFilterProps> = ({
                 min="0"
                 step="0.1"
               />
-              <span className="text-gray-600">triệu</span>
+              <span className="text-gray-600">đồng</span>
             </div>
           </div>
         </div>

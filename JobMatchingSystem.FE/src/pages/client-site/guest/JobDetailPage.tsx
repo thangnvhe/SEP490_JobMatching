@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import {
   MapPin,
-  DollarSign,
   Briefcase,
   Clock,
   Building2,
@@ -250,12 +249,11 @@ export default function JobDetailPage() {
 
               <div className="flex flex-wrap gap-y-3 gap-x-6 text-sm md:text-base text-gray-600 mt-4">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-md font-semibold">
-                  <DollarSign className="h-5 w-5" />
                   <span>
                     {job.salaryMin && job.salaryMax
-                      ? `${job.salaryMin / 1000000} - ${
-                          job.salaryMax / 1000000
-                        } Triệu`
+                      ? `${job.salaryMin.toLocaleString('vi-VN')} - ${
+                          job.salaryMax.toLocaleString('vi-VN')
+                        } đồng`
                       : "Thỏa thuận"}
                   </span>
                 </div>
@@ -345,17 +343,6 @@ export default function JobDetailPage() {
                   </div>
                 </div>
               </Card>
-              <Card className="p-4 bg-white shadow-sm border-l-4 border-l-orange-500">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-orange-50 rounded-lg text-orange-600">
-                    <Users className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Số lượng tuyển</p>
-                    <p className="font-semibold text-gray-900">5 người</p>
-                  </div>
-                </div>
-              </Card>
               <Card className="p-4 bg-white shadow-sm border-l-4 border-l-purple-500">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
@@ -398,7 +385,7 @@ export default function JobDetailPage() {
                   <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-gray-900">
                     Mô tả công việc
                   </h3>
-                  <div className="text-gray-700 whitespace-pre-line leading-relaxed bg-gray-50/50 p-4 rounded-lg border border-gray-100">
+                  <div className="text-gray-700 whitespace-pre-line leading-relaxed bg-gray-50/50 p-4 rounded-lg border border-gray-100 wrap-break-word">
                     {job.description || "Đang cập nhật..."}
                   </div>
                 </section>
@@ -408,7 +395,7 @@ export default function JobDetailPage() {
                   <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-gray-900">
                     Yêu cầu ứng viên
                   </h3>
-                  <div className="text-gray-700 whitespace-pre-line leading-relaxed bg-gray-50/50 p-4 rounded-lg border border-gray-100">
+                  <div className="text-gray-700 whitespace-pre-line leading-relaxed bg-gray-50/50 p-4 rounded-lg border border-gray-100 wrap-break-word">
                     {job.requirements || "Đang cập nhật..."}
                   </div>
                 </section>
@@ -418,7 +405,7 @@ export default function JobDetailPage() {
                   <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-gray-900">
                     Quyền lợi
                   </h3>
-                  <div className="text-gray-700 whitespace-pre-line leading-relaxed bg-gray-50/50 p-4 rounded-lg border border-gray-100">
+                  <div className="text-gray-700 whitespace-pre-line leading-relaxed bg-gray-50/50 p-4 rounded-lg border border-gray-100 wrap-break-word">
                     {job.benefits || "Đang cập nhật..."}
                   </div>
                 </section>
@@ -428,7 +415,7 @@ export default function JobDetailPage() {
                   <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-gray-900">
                     Địa điểm làm việc
                   </h3>
-                  <div className="flex items-start gap-3 text-gray-700 bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-start gap-3 text-gray-700 bg-gray-50 p-4 rounded-lg wrap-break-word">
                     <MapPin className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
                     <span>{job.location}</span>
                   </div>
@@ -559,9 +546,9 @@ export default function JobDetailPage() {
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
                               {rJob.salaryMin && rJob.salaryMax
-                                ? `${rJob.salaryMin / 1000000} - ${
-                                    rJob.salaryMax / 1000000
-                                  } triệu`
+                                ? `${rJob.salaryMin.toLocaleString('vi-VN')} - ${
+                                    rJob.salaryMax.toLocaleString('vi-VN')
+                                  } đồng`
                                 : "Thỏa thuận"}
                             </span>
                             <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-1 rounded-full">

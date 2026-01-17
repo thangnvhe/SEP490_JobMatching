@@ -49,22 +49,19 @@ const JobCard = ({ job, company, onJobDetails, onSaveJob }: {
 }) => {
 
     const formatSalary = () => {
-        const toMillions = (value?: number | null) => {
+        const formatAmount = (value?: number | null) => {
             if (value == null) return null;
-            const millions = value / 1_000_000;
-            return millions % 1 === 0
-                ? `${millions}`
-                : `${millions.toFixed(1)}`;
+            return value.toLocaleString('vi-VN');
         };
 
-        const min = toMillions(job.salaryMin);
-        const max = toMillions(job.salaryMax);
+        const min = formatAmount(job.salaryMin);
+        const max = formatAmount(job.salaryMax);
 
         if (!min && !max) return "Thoả thuận";
 
-        if (min && max) return `${min} – ${max} triệu`;
-        if (min) return `Từ ${min} triệu`;
-        if (max) return `Đến ${max} triệu`;
+        if (min && max) return `${min} – ${max} đồng`;
+        if (min) return `Từ ${min} đồng`;
+        if (max) return `Đến ${max} đồng`;
 
         return "Thoả thuận";
     }

@@ -343,10 +343,7 @@ export default function ViewJobList() {
         if (!job.salaryMin && !job.salaryMax) return 'Thỏa thuận';
 
         const formatSalary = (amount: number) => {
-          if (amount >= 1000000) {
-            return (amount / 1000000).toFixed(amount % 1000000 === 0 ? 0 : 1) + ' triệu';
-          }
-          return amount.toLocaleString();
+          return amount.toLocaleString('vi-VN') + ' đồng';
         };
 
         if (job.salaryMin === job.salaryMax) {
@@ -398,6 +395,7 @@ export default function ViewJobList() {
         const job = row.original;
         const statusNum = normalizeStatus(job.status);
         const isOpened = statusNum === 3; // Chỉ hiển thị nút đóng khi status = 3
+        const isPendingApproval = statusNum === 0; // Chỉ cho phép edit khi status = 0 (đang chờ duyệt)
         
         return (
           <div className="flex items-center space-x-1">
@@ -410,14 +408,16 @@ export default function ViewJobList() {
               <Eye className="h-4 w-4" />
             </Button>
             
-            <Button
-              onClick={() => handleEdit(job)}
-              variant="outline"
-              size="sm"
-              title="Chỉnh sửa"
-            >
-              <Edit3 className="h-4 w-4" />
-            </Button>
+            {isPendingApproval && (
+              <Button
+                onClick={() => handleEdit(job)}
+                variant="outline"
+                size="sm"
+                title="Chỉnh sửa"
+              >
+                <Edit3 className="h-4 w-4" />
+              </Button>
+            )}
 
             {isOpened && (
               <Button
@@ -643,10 +643,12 @@ export default function ViewJobList() {
                 {/* Thông tin cơ bản */}
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold">Thông tin cơ bản</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <span className="text-sm font-medium text-gray-600">Địa điểm:</span>
-                      <p className="text-sm">{selectedJob.location}</p>
+                      <p className="text-sm wrap-break-word max-h-32 overflow-y-auto pr-2">
+                        {selectedJob.location}
+                      </p>
                     </div>
                     <div>
                       <span className="text-sm font-medium text-gray-600">Mức lương:</span>
@@ -663,7 +665,7 @@ export default function ViewJobList() {
                 {/* Mô tả công việc */}
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold">Mô tả công việc</h3>
-                  <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                  <div className="text-sm text-gray-700 whitespace-pre-wrap wrap-break-word max-h-64 overflow-y-auto pr-2 rounded-md p-3 bg-gray-50 border border-gray-200">
                     {selectedJob.description}
                   </div>
                 </div>
@@ -671,7 +673,7 @@ export default function ViewJobList() {
                 {/* Yêu cầu công việc */}
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold">Yêu cầu công việc</h3>
-                  <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                  <div className="text-sm text-gray-700 whitespace-pre-wrap wrap-break-word max-h-64 overflow-y-auto pr-2 rounded-md p-3 bg-gray-50 border border-gray-200">
                     {selectedJob.requirements}
                   </div>
                 </div>
@@ -680,7 +682,7 @@ export default function ViewJobList() {
                 {selectedJob.benefits && (
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold">Quyền lợi</h3>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                    <div className="text-sm text-gray-700 whitespace-pre-wrap wrap-break-word max-h-64 overflow-y-auto pr-2 rounded-md p-3 bg-gray-50 border border-gray-200">
                       {selectedJob.benefits}
                     </div>
                   </div>

@@ -13,6 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface StageColumnProps {
   column: StageColumnType;
   candidates: CandidateStage[];
+  isLastStage?: boolean; // Đánh dấu đây có phải là vòng cuối cùng không
   onViewDetail?: (candidate: CandidateStage) => void;
   onCandidateUpdated?: (updatedCandidate: CandidateStage) => void;
   className?: string;
@@ -32,6 +33,7 @@ const columnColors: Record<string, string> = {
 export function StageColumnContainer({
   column,
   candidates,
+  isLastStage = false,
   onViewDetail,
   onCandidateUpdated,
   className,
@@ -88,6 +90,7 @@ export function StageColumnContainer({
                 <CandidateCard
                   key={candidate.id}
                   candidate={candidate}
+                  isInLastStage={isLastStage}
                   onViewDetail={() => onViewDetail?.(candidate)}
                   onCandidateUpdated={onCandidateUpdated}
                 />

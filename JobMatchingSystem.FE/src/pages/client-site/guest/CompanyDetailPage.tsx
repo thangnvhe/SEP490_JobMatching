@@ -232,9 +232,9 @@ export default function CompanyDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50/30 pb-20 font-sans">
       {/* Banner Section - Green Nature Theme */}
-      <div className="h-48 md:h-64 w-full bg-gradient-to-r from-emerald-900 via-green-800 to-emerald-900 relative overflow-hidden">
+      <div className="h-48 md:h-64 w-full bg-linear-to-r from-emerald-900 via-green-800 to-emerald-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1501854140884-074bf64cad1c?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-20 mix-blend-overlay" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
 
         <div className="container mx-auto px-4 h-full relative z-10">
           <Button

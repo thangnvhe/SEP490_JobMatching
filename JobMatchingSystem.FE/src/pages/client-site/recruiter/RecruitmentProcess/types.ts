@@ -13,6 +13,7 @@ export interface StageColumn {
 
 export interface StageBoardProps {
   columns: StageColumn[];
+  lastStageId?: number; // ID của stage cuối cùng (có stageNumber cao nhất)
   onColumnsChange?: (columns: StageColumn[]) => void;
   onCandidateMoved?: (
     candidateId: number,

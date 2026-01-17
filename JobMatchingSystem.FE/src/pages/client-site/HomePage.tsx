@@ -5,14 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Briefcase,
-  Building2,
   MapPin,
   Search,
-  Settings2,
-  TrendingUp,
-  Users,
-  Warehouse,
-  Layers,
   ChevronLeft,
   ChevronRight,
   Heart,
@@ -47,7 +41,7 @@ const HomePage = () => {
 
   // Companies & Taxonomies State
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
+  const [, setTaxonomies] = useState<Taxonomy[]>([]);
 
   // Best Jobs State (Refactored Pattern)
   const [bestJobs, setBestJobs] = useState<Job[]>([]);
@@ -493,8 +487,8 @@ const HomePage = () => {
                               </span>
                               <span className="text-sm font-bold text-emerald-700">
                                 {job.salaryMin && job.salaryMax
-                                  ? `${job.salaryMin / 1000000} - ${job.salaryMax / 1000000
-                                  } triệu`
+                                  ? `${job.salaryMin.toLocaleString('vi-VN')} - ${job.salaryMax.toLocaleString('vi-VN')
+                                  } đồng`
                                   : "Thoả thuận"}
                               </span>
                             </div>
@@ -646,7 +640,7 @@ const HomePage = () => {
                           {/* Footer */}
                           <div className="flex items-center justify-between pt-2 border-t border-slate-100 mt-auto">
                             <div className="text-sm font-semibold text-emerald-700">
-                              {job.salaryMin && job.salaryMax ? `${(job.salaryMin / 1000000).toLocaleString()} - ${(job.salaryMax / 1000000).toLocaleString()} triệu` : "Thỏa thuận"}
+                              {job.salaryMin && job.salaryMax ? `${job.salaryMin.toLocaleString('vi-VN')} - ${job.salaryMax.toLocaleString('vi-VN')} đồng` : "Thỏa thuận"}
                             </div>
                             <Button
                               size="sm"
