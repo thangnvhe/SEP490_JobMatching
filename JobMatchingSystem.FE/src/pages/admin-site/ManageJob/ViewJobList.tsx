@@ -13,6 +13,7 @@ import {
   ChevronsLeft,
   ChevronsRight
 } from "lucide-react";
+import { toast } from "sonner";
 
 // Import các UI components
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -27,6 +28,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Import types và services
 import { JobServices } from "@/services/job.service";
@@ -67,6 +78,15 @@ export default function ViewJobList() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedJobCompany, setSelectedJobCompany] = useState<Company | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  
+  // State cho Alert Dialog
+  const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
+  const [approveJobId, setApproveJobId] = useState<number | null>(null);
+  const [approveJobTitle, setApproveJobTitle] = useState<string>('');
+  
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [rejectJobId, setRejectJobId] = useState<number | null>(null);
+  const [rejectJobTitle, setRejectJobTitle] = useState<string>('');
   const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
     currentPage: 1,
     pageSize: 10,
@@ -180,21 +200,59 @@ export default function ViewJobList() {
     }
   };
 
-  const handleApprove = async (jobId: number) => {
+  // Handler để mở dialog xác nhận duyệt
+  const openApproveDialog = (jobId: number, jobTitle?: string) => {
+    setApproveJobId(jobId);
+    setApproveJobTitle(jobTitle || `ID: ${jobId}`);
+    setIsApproveDialogOpen(true);
+  };
+
+  // Handler để mở dialog xác nhận từ chối
+  const openRejectDialog = (jobId: number, jobTitle?: string) => {
+    setRejectJobId(jobId);
+    setRejectJobTitle(jobTitle || `ID: ${jobId}`);
+    setIsRejectDialogOpen(true);
+  };
+
+  // Handler thực hiện duyệt công việc
+  const handleApprove = async () => {
+    if (!approveJobId) return;
+    
     try {
-      await JobServices.censorJob(jobId.toString(), { status: 2 }); // Moderated
+      await JobServices.censorJob(approveJobId.toString(), { status: 2 }); // Moderated
+      setIsApproveDialogOpen(false);
+      setApproveJobId(null);
+      setApproveJobTitle('');
+      // Đóng dialog chi tiết nếu đang mở
+      setIsViewDialogOpen(false);
+      setSelectedJobCompany(null);
       handleRefresh(); // Refresh data
-    } catch (error) {
+      toast.success('Duyệt công việc thành công!');
+    } catch (error: any) {
       console.error("Error approving job:", error);
+      const errorMessage = error?.response?.data?.message || "Lỗi khi duyệt công việc";
+      toast.error(`Lỗi: ${errorMessage}`);
     }
   };
 
-  const handleReject = async (jobId: number) => {
+  // Handler thực hiện từ chối công việc
+  const handleReject = async () => {
+    if (!rejectJobId) return;
+    
     try {
-      await JobServices.censorJob(jobId.toString(), { status: 1 }); // Rejected
+      await JobServices.censorJob(rejectJobId.toString(), { status: 1 }); // Rejected
+      setIsRejectDialogOpen(false);
+      setRejectJobId(null);
+      setRejectJobTitle('');
+      // Đóng dialog chi tiết nếu đang mở
+      setIsViewDialogOpen(false);
+      setSelectedJobCompany(null);
       handleRefresh(); // Refresh data
-    } catch (error) {
+      toast.success('Từ chối công việc thành công!');
+    } catch (error: any) {
       console.error("Error rejecting job:", error);
+      const errorMessage = error?.response?.data?.message || "Lỗi khi từ chối công việc";
+      toast.error(`Lỗi: ${errorMessage}`);
     }
   };
 
@@ -217,11 +275,11 @@ export default function ViewJobList() {
     try {
       await JobServices.delete(job.jobId.toString());
       handleRefresh(); // Refresh data
-      alert('Xóa công việc thành công!');
+      toast.success('Xóa công việc thành công!');
     } catch (error: any) {
       console.error("Error soft deleting job:", error);
       const errorMessage = error?.response?.data?.message || "Lỗi khi xóa công việc";
-      alert(`Lỗi: ${errorMessage}`);
+      toast.error(`Lỗi: ${errorMessage}`);
     }
   };
 
@@ -343,10 +401,7 @@ export default function ViewJobList() {
         if (!job.salaryMin && !job.salaryMax) return 'Thỏa thuận';
         
         const formatSalary = (amount: number) => {
-          if (amount >= 1000000) {
-            return (amount / 1000000).toFixed(amount % 1000000 === 0 ? 0 : 1) + ' triệu';
-          }
-          return amount.toLocaleString();
+          return amount.toLocaleString('vi-VN') + ' đồng';
         };
         
         if (job.salaryMin === job.salaryMax) {
@@ -417,17 +472,28 @@ export default function ViewJobList() {
             {/* Chỉ hiển thị các nút cho jobs chưa bị xóa mềm */}
             {!job.isDeleted && (
               <>
-                {/* Nút Accept cho jobs đang chờ duyệt (Draft) */}
+                {/* Nút Duyệt và Từ chối cho jobs đang chờ duyệt (Draft) */}
                 {job.status === 'Draft' && (
-                  <Button
-                    onClick={() => handleApprove(job.jobId)}
-                    variant="outline"
-                    size="sm"
-                    className="text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600"
-                    title="Duyệt công việc"
-                  >
-                    <CheckCircle className="h-4 w-4" />
-                  </Button>
+                  <>
+                    <Button
+                      onClick={() => openApproveDialog(job.jobId, job.title)}
+                      variant="outline"
+                      size="sm"
+                      className="text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600"
+                      title="Duyệt công việc"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      onClick={() => openRejectDialog(job.jobId, job.title)}
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600"
+                      title="Từ chối công việc"
+                    >
+                      <XCircle className="h-4 w-4" />
+                    </Button>
+                  </>
                 )}
                 
                 {/* Nút Xóa mềm cho jobs đã duyệt hoặc đã mở/đóng */}
@@ -732,7 +798,7 @@ export default function ViewJobList() {
                     <label className="text-sm font-medium text-muted-foreground">
                       Mô tả công việc
                     </label>
-                    <div className="text-sm mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap">
+                    <div className="text-sm mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap wrap-break-word overflow-wrap-anywhere max-w-full">
                       {selectedJob.description}
                     </div>
                   </div>
@@ -741,7 +807,7 @@ export default function ViewJobList() {
                     <label className="text-sm font-medium text-muted-foreground">
                       Yêu cầu
                     </label>
-                    <div className="text-sm mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap">
+                    <div className="text-sm mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap wrap-break-word overflow-wrap-anywhere max-w-full">
                       {selectedJob.requirements}
                     </div>
                   </div>
@@ -751,7 +817,7 @@ export default function ViewJobList() {
                       <label className="text-sm font-medium text-muted-foreground">
                         Quyền lợi
                       </label>
-                      <div className="text-sm mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap">
+                      <div className="text-sm mt-1 p-3 bg-gray-50 rounded-md whitespace-pre-wrap wrap-break-word overflow-wrap-anywhere max-w-full">
                         {selectedJob.benefits}
                       </div>
                     </div>
@@ -788,8 +854,7 @@ export default function ViewJobList() {
                         <>
                           <Button
                             onClick={() => {
-                              handleApprove(selectedJob.jobId);
-                              setIsViewDialogOpen(false);
+                              openApproveDialog(selectedJob.jobId, selectedJob.title);
                             }}
                             className="bg-green-600 hover:bg-green-700"
                           >
@@ -798,8 +863,7 @@ export default function ViewJobList() {
                           </Button>
                           <Button
                             onClick={() => {
-                              handleReject(selectedJob.jobId);
-                              setIsViewDialogOpen(false);
+                              openRejectDialog(selectedJob.jobId, selectedJob.title);
                             }}
                             variant="destructive"
                           >
@@ -830,6 +894,52 @@ export default function ViewJobList() {
           </div>
         </div>
       )}
+
+      {/* Alert Dialog cho Duyệt công việc */}
+      <AlertDialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận duyệt công việc</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn duyệt công việc <strong>"{approveJobTitle}"</strong> không?
+              <br />
+              Sau khi duyệt, công việc sẽ được chuyển sang trạng thái "Đã kiểm duyệt".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleApprove}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Xác nhận duyệt
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Alert Dialog cho Từ chối công việc */}
+      <AlertDialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận từ chối công việc</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn từ chối công việc <strong>"{rejectJobTitle}"</strong> không?
+              <br />
+              Sau khi từ chối, công việc sẽ được chuyển sang trạng thái "Bị từ chối".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReject}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Xác nhận từ chối
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

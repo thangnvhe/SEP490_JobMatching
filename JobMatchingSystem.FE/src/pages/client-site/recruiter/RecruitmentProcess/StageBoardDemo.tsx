@@ -15,6 +15,7 @@ interface StageBoardDemoProps {
 export function StageBoardDemo({ jobId = 655 }: StageBoardDemoProps) {
   // Khai báo local state
   const [columns, setColumns] = useState<StageColumn[]>([]);
+  const [lastStageId, setLastStageId] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,6 +64,16 @@ export function StageBoardDemo({ jobId = 655 }: StageBoardDemoProps) {
       // 3. Map to StageColumn[]
       const stageColumns = mapToStageColumns(jobStages, candidatesByStage);
       setColumns(stageColumns);
+
+      // 4. Tìm stage cuối cùng (có stageNumber cao nhất)
+      const lastStage = jobStages.reduce((max, stage) => 
+        stage.stageNumber > max.stageNumber ? stage : max
+      , jobStages[0]);
+      
+      console.log("📊 [StageBoardDemo] All job stages:", jobStages.map(s => ({ id: s.id, stageNumber: s.stageNumber, name: s.name })));
+      console.log("🎯 [StageBoardDemo] Last stage ID (highest stageNumber):", lastStage?.id);
+      
+      setLastStageId(lastStage?.id);
     } catch (err: any) {
       setError(
         err.response?.data?.message ||
@@ -130,6 +141,7 @@ export function StageBoardDemo({ jobId = 655 }: StageBoardDemoProps) {
       ) : (
         <StageBoard
           columns={columns}
+          lastStageId={lastStageId}
           onColumnsChange={handleColumnsChange}
           onCandidateMoved={handleCandidateMoved}
           onRefreshData={fetchStagesAndCandidates}

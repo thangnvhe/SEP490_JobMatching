@@ -77,6 +77,7 @@ interface PendingMoveOperation {
 
 export function StageBoard({
   columns: initialColumns,
+  lastStageId,
   onColumnsChange,
   onCandidateMoved,
   onCandidateUpdated,
@@ -416,16 +417,22 @@ export function StageBoard({
       >
         <ScrollArea className="h-full w-full">
           <div className="flex gap-4 p-4 min-h-full">
-            {columns.map((column) => (
-              <StageColumnContainer
-                key={column.id}
-                column={column}
-                candidates={column.candidates}
-                onViewDetail={handleViewDetail}
-                onCandidateUpdated={handleCandidateUpdated}
-                className="flex-1 w-full"
-              />
-            ))}
+            {columns.map((column) => {
+              const isLast = column.stageId === lastStageId;
+              console.log(`📂 [StageBoard] Column: ${column.title} | stageId: ${column.stageId} | lastStageId: ${lastStageId} | isLastStage: ${isLast}`);
+              
+              return (
+                <StageColumnContainer
+                  key={column.id}
+                  column={column}
+                  candidates={column.candidates}
+                  isLastStage={isLast}
+                  onViewDetail={handleViewDetail}
+                  onCandidateUpdated={handleCandidateUpdated}
+                  className="flex-1 w-full"
+                />
+              );
+            })}
           </div>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>

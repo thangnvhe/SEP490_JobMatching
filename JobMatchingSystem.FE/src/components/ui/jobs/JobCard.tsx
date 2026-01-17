@@ -51,26 +51,24 @@ const formatTimeAgo = (dateString: string) => {
 };
 
 const formatSalary = (salaryMin?: number, salaryMax?: number) => {
-  // Display salaries in millions without currency symbol, e.g. "8 - 12 triệu"
+  // Display salaries in đồng (VND)
   if (!salaryMin && !salaryMax) return "Thương lượng";
 
-  const toMillions = (value?: number) => {
+  const formatAmount = (value?: number) => {
     if (!value) return undefined;
-    const m = value / 1_000_000;
-    // Show integer when whole number, otherwise one decimal
-    return Number.isInteger(m) ? `${m}` : `${m.toFixed(1)}`;
+    return value.toLocaleString('vi-VN');
   };
 
-  const minM = toMillions(salaryMin);
-  const maxM = toMillions(salaryMax);
+  const minFormatted = formatAmount(salaryMin);
+  const maxFormatted = formatAmount(salaryMax);
 
-  if (minM && maxM) {
-    if (minM === maxM) return `${minM} triệu VND`;
-    return `${minM} - ${maxM} triệu VND`;
+  if (minFormatted && maxFormatted) {
+    if (salaryMin === salaryMax) return `${minFormatted} đồng`;
+    return `${minFormatted} - ${maxFormatted} đồng`;
   }
 
-  if (minM) return `Từ ${minM} triệu VND`;
-  if (maxM) return `Lên đến ${maxM} triệu VND`;
+  if (minFormatted) return `Từ ${minFormatted} đồng`;
+  if (maxFormatted) return `Lên đến ${maxFormatted} đồng`;
 
   return "Thương lượng";
 };

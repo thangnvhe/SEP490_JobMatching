@@ -84,10 +84,18 @@ const step1Schema = z.object({
   title: z.string().min(1, "Tiêu đề công việc là bắt buộc").max(200, "Tiêu đề không được quá 200 ký tự"),
   description: z.string().min(50, "Mô tả công việc phải có ít nhất 50 ký tự"),
   requirements: z.string().min(1, "Yêu cầu công việc là bắt buộc"),
-  benefits: z.string(),
+  benefits: z.string().min(1, "Quyền lợi là bắt buộc"),
   location: z.string().min(1, "Địa điểm làm việc là bắt buộc"),
-  salaryMin: z.number().min(0, "Lương tối thiểu phải lớn hơn 0").optional().nullable(),
-  salaryMax: z.number().min(0, "Lương tối đa phải lớn hơn 0").optional().nullable(),
+  salaryMin: z.number()
+    .min(0, "Lương tối thiểu phải lớn hơn hoặc bằng 0")
+    .max(999999999, "Lương tối thiểu không được vượt quá 999,999,999 VND")
+    .optional()
+    .nullable(),
+  salaryMax: z.number()
+    .min(0, "Lương tối đa phải lớn hơn hoặc bằng 0")
+    .max(999999999, "Lương tối đa không được vượt quá 999,999,999 VND")
+    .optional()
+    .nullable(),
   experienceYear: z.number().min(0, "Số năm kinh nghiệm không được âm").max(50, "Số năm kinh nghiệm không được quá 50"),
   educationLevel: z.string().min(1, "Trình độ là bắt buộc"),
   jobType: z.string().min(1, "Loại công việc là bắt buộc"),
@@ -151,8 +159,8 @@ export default function CreateJobPage() {
     requirements: "",
     benefits: "",
     location: "",
-    salaryMin: null,
-    salaryMax: null,
+    salaryMin: 0,
+    salaryMax: 0,
     experienceYear: 0,
     educationLevel: "",
     jobType: "",
@@ -174,6 +182,7 @@ export default function CreateJobPage() {
     formState: { errors: errorsStep1 },
     setValue: setValueStep1,
     watch: watchStep1,
+    trigger: triggerStep1,
   } = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
@@ -182,9 +191,12 @@ export default function CreateJobPage() {
       educationLevel: "",
       openedAt: new Date(),
       expiredAt: new Date(new Date().setDate(new Date().getDate() + 30)),
-      taxonomyIds: [] // Initialize with empty array
+      taxonomyIds: [], // Initialize with empty array
+      salaryMin: 0, // Default value for minimum salary
+      salaryMax: 0, // Default value for maximum salary
     },
-    mode: "onChange",
+    mode: "onChange", // Validate khi onChange để clear lỗi ngay khi nhập đúng
+    reValidateMode: "onChange", // Re-validate khi onChange
   });
 
   // Load hiring managers on component mount
@@ -318,10 +330,10 @@ export default function CreateJobPage() {
         const response = await SystemConfigService.getAllConfigs();
         
         if (response.isSuccess && response.result) {
-          // Lọc các config có type là "education_level"
           const educationLevelConfigs = response.result.filter(
             (config: SystemConfig) => config.type === "education_level"
           );
+          console.log(educationLevelConfigs);
           setEducationLevels(educationLevelConfigs);
         } else {
           console.warn("Could not load education levels");
@@ -506,16 +518,10 @@ export default function CreateJobPage() {
 
   // Handle navigation between steps
   const goToNextStep = () => {
-    console.log("goToNextStep called, current step:", currentStep);
-    
     if (currentStep < 3) {
       if (currentStep === 1) {
-        console.log("Triggering step 1 form validation");
-        // Validate step 1 form
         handleSubmitStep1(onStep1Submit)();
       } else if (currentStep === 2) {
-        console.log("Moving from step 2 to step 3");
-        // No validation required for step 2 since hiring manager is optional
         setCurrentStep(3);
       }
     }
@@ -559,6 +565,10 @@ export default function CreateJobPage() {
       // Clear salary values when negotiable is selected
       setValueStep1("salaryMin", null);
       setValueStep1("salaryMax", null);
+    } else {
+      // Set default values to 0 when negotiable is unselected
+      setValueStep1("salaryMin", 0);
+      setValueStep1("salaryMax", 0);
     }
   };
 
@@ -723,7 +733,9 @@ export default function CreateJobPage() {
                     <Label htmlFor="title" className="text-sm font-medium">Tiêu đề công việc *</Label>
                     <Input
                       id="title"
-                      {...registerStep1("title")}
+                      {...registerStep1("title", {
+                        onBlur: () => triggerStep1("title")
+                      })}
                       placeholder="VD: Senior Frontend Developer"
                       className={`w-full ${errorsStep1.title ? "border-red-500" : ""}`}
                     />
@@ -737,7 +749,10 @@ export default function CreateJobPage() {
                     <Label htmlFor="jobType" className="text-sm font-medium">Loại công việc *</Label>
                     <Select
                       value={watchStep1("jobType")}
-                      onValueChange={(value) => setValueStep1("jobType", value)}
+                      onValueChange={(value) => {
+                        setValueStep1("jobType", value);
+                        triggerStep1("jobType");
+                      }}
                     >
                       <SelectTrigger className={`w-full ${errorsStep1.jobType ? "border-red-500" : ""}`}>
                         <SelectValue placeholder="Chọn loại công việc" />
@@ -779,6 +794,10 @@ export default function CreateJobPage() {
                             } else {
                               setShowLocationSuggestions(false);
                             }
+                            // Trigger validation khi người dùng nhập
+                            if (value.trim().length > 0) {
+                              triggerStep1("location");
+                            }
                           }}
                           onFocus={() => {
                             if (locationInput.trim().length >= 2 && locationSuggestions.length > 0) {
@@ -786,6 +805,8 @@ export default function CreateJobPage() {
                             }
                           }}
                           onBlur={() => {
+                            // Trigger validation khi blur
+                            triggerStep1("location");
                             // Delay để cho phép click vào suggestion
                             setTimeout(() => {
                               setShowLocationSuggestions(false);
@@ -809,6 +830,7 @@ export default function CreateJobPage() {
                                 const address = suggestion.display || suggestion.address;
                                 setLocationInput(address);
                                 setValueStep1("location", address);
+                                triggerStep1("location");
                                 setShowLocationSuggestions(false);
                                 setLocationSuggestions([]);
                               }}
@@ -863,7 +885,10 @@ export default function CreateJobPage() {
                       <>
                         <Select
                           value={watchStep1("educationLevel")}
-                          onValueChange={(value) => setValueStep1("educationLevel", value)}
+                          onValueChange={(value) => {
+                            setValueStep1("educationLevel", value);
+                            triggerStep1("educationLevel");
+                          }}
                         >
                           <SelectTrigger className={`w-full ${errorsStep1.educationLevel ? "border-red-500" : ""}`}>
                             <SelectValue placeholder="Chọn trình độ" />
@@ -873,7 +898,7 @@ export default function CreateJobPage() {
                               <SelectItem value="empty" disabled>Không có dữ liệu trình độ</SelectItem>
                             ) : (
                               educationLevels.map((level) => (
-                                <SelectItem key={level.id} value={level.value}>
+                                <SelectItem key={level.id} value={level.id.toString()}>
                                   {level.name}
                                 </SelectItem>
                               ))
@@ -895,7 +920,10 @@ export default function CreateJobPage() {
                       type="number"
                       min="0"
                       max="50"
-                      {...registerStep1("experienceYear", { valueAsNumber: true })}
+                      {...registerStep1("experienceYear", { 
+                        valueAsNumber: true,
+                        onBlur: () => triggerStep1("experienceYear")
+                      })}
                       placeholder="VD: 2"
                       className={`w-full ${errorsStep1.experienceYear ? "border-red-500" : ""}`}
                     />
@@ -933,12 +961,15 @@ export default function CreateJobPage() {
                           onSelect={(date) => {
                             if (date) {
                               setValueStep1("openedAt", date);
+                              triggerStep1("openedAt");
                               // Tự động cập nhật ngày hết hạn khi chọn ngày mở
                               const expiredDate = new Date(date);
                               expiredDate.setDate(expiredDate.getDate() + 30);
                               setValueStep1("expiredAt", expiredDate);
+                              triggerStep1("expiredAt");
                             } else {
                               setValueStep1("openedAt", new Date());
+                              triggerStep1("openedAt");
                             }
                           }}
                           disabled={(date) => {
@@ -981,14 +1012,17 @@ export default function CreateJobPage() {
                           onSelect={(date) => {
                             if (date) {
                               setValueStep1("expiredAt", date);
+                              triggerStep1("expiredAt");
                             } else {
                               const openedDate = watchStep1("openedAt");
                               if (openedDate) {
                                 const expiredDate = new Date(openedDate);
                                 expiredDate.setDate(expiredDate.getDate() + 30);
                                 setValueStep1("expiredAt", expiredDate);
+                                triggerStep1("expiredAt");
                               } else {
                                 setValueStep1("expiredAt", new Date());
+                                triggerStep1("expiredAt");
                               }
                             }
                           }}
@@ -1040,6 +1074,8 @@ export default function CreateJobPage() {
                             setSearchPosition(e.target.value);
                             if (selectedPositionId) {
                               setSelectedPositionId(null);
+                              setValueStep1("positionId", 0);
+                              triggerStep1("positionId");
                             }
                             setOpenPositionPopover(e.target.value.length > 0);
                           }}
@@ -1048,8 +1084,12 @@ export default function CreateJobPage() {
                               setOpenPositionPopover(true);
                             }
                           }}
+                          onBlur={() => {
+                            // Trigger validation khi blur
+                            triggerStep1("positionId");
+                          }}
                           placeholder="Tìm kiếm vị trí..."
-                          className={!selectedPositionId ? "border-red-300" : ""}
+                          className={errorsStep1.positionId ? "border-red-500" : ""}
                         />
                         
                         {openPositionPopover && !selectedPositionId && searchPosition.length > 0 && (
@@ -1068,8 +1108,10 @@ export default function CreateJobPage() {
                                     key={position.positionId}
                                     onClick={() => {
                                       setSelectedPositionId(position.positionId);
+                                      setValueStep1("positionId", position.positionId);
                                       setSearchPosition("");
                                       setOpenPositionPopover(false);
+                                      triggerStep1("positionId");
                                     }}
                                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
                                   >
@@ -1094,6 +1136,8 @@ export default function CreateJobPage() {
                               onClick={() => {
                                 setSelectedPositionId(null);
                                 setSearchPosition("");
+                                setValueStep1("positionId", 0);
+                                triggerStep1("positionId");
                               }}
                               className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
                             >
@@ -1103,8 +1147,8 @@ export default function CreateJobPage() {
                         </div>
                       )}
                       
-                      {!selectedPositionId && (
-                        <p className="text-sm text-red-500">Vui lòng chọn vị trí tuyển dụng</p>
+                      {errorsStep1.positionId && (
+                        <p className="text-sm text-red-500">{errorsStep1.positionId.message}</p>
                       )}
                     </>
                   )}
@@ -1130,8 +1174,12 @@ export default function CreateJobPage() {
                               setOpenTaxonomyPopover(true);
                             }
                           }}
+                          onBlur={() => {
+                            // Trigger validation khi blur
+                            triggerStep1("taxonomyIds");
+                          }}
                           placeholder="Tìm kiếm kỹ năng..."
-                          className={selectedTaxonomies.length === 0 ? "border-red-300" : ""}
+                          className={errorsStep1.taxonomyIds ? "border-red-500" : ""}
                         />
                         
                         {openTaxonomyPopover && searchTaxonomy.length > 0 && (
@@ -1156,6 +1204,7 @@ export default function CreateJobPage() {
                                       setValueStep1("taxonomyIds", newTaxonomies);
                                       setSearchTaxonomy("");
                                       setOpenTaxonomyPopover(false);
+                                      triggerStep1("taxonomyIds");
                                     }}
                                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
                                   >
@@ -1188,6 +1237,7 @@ export default function CreateJobPage() {
                                     const newTaxonomies = selectedTaxonomies.filter(id => id !== taxonomyId);
                                     setSelectedTaxonomies(newTaxonomies);
                                     setValueStep1("taxonomyIds", newTaxonomies);
+                                    triggerStep1("taxonomyIds");
                                   }}
                                   className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
                                 >
@@ -1199,9 +1249,13 @@ export default function CreateJobPage() {
                         </div>
                       )}
                       
-                      <p className="text-sm text-muted-foreground">
-                        Đã chọn: {selectedTaxonomies.length} kỹ năng
-                      </p>
+                      {errorsStep1.taxonomyIds ? (
+                        <p className="text-sm text-red-500">{errorsStep1.taxonomyIds.message}</p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Đã chọn: {selectedTaxonomies.length} kỹ năng
+                        </p>
+                      )}
                     </>
                   )}
                 </div>
@@ -1223,7 +1277,9 @@ export default function CreateJobPage() {
                   <Textarea
                     id="description"
                     rows={5}
-                    {...registerStep1("description")}
+                    {...registerStep1("description", {
+                      onBlur: () => triggerStep1("description")
+                    })}
                     placeholder="Mô tả chi tiết về công việc, trách nhiệm chính..."
                     className={errorsStep1.description ? "border-red-500 resize-none" : "resize-none"}
                   />
@@ -1238,7 +1294,9 @@ export default function CreateJobPage() {
                   <Textarea
                     id="requirements"
                     rows={5}
-                    {...registerStep1("requirements")}
+                    {...registerStep1("requirements", {
+                      onBlur: () => triggerStep1("requirements")
+                    })}
                     placeholder="Các yêu cầu về kỹ năng, kinh nghiệm, trình độ..."
                     className={errorsStep1.requirements ? "border-red-500 resize-none" : "resize-none"}
                   />
@@ -1249,11 +1307,13 @@ export default function CreateJobPage() {
 
                 {/* Benefits */}
                 <div className="space-y-2">
-                  <Label htmlFor="benefits" className="text-sm font-medium">Quyền lợi</Label>
+                  <Label htmlFor="benefits" className="text-sm font-medium">Quyền lợi *</Label>
                   <Textarea
                     id="benefits"
                     rows={4}
-                    {...registerStep1("benefits")}
+                    {...registerStep1("benefits", {
+                      onBlur: () => triggerStep1("benefits")
+                    })}
                     placeholder="Các quyền lợi và phúc lợi cho ứng viên..."
                     className={errorsStep1.benefits ? "border-red-500 resize-none" : "resize-none"}
                   />
@@ -1292,7 +1352,11 @@ export default function CreateJobPage() {
                         id="salaryMin"
                         type="number"
                         min="0"
-                        {...registerStep1("salaryMin", { valueAsNumber: true })}
+                        max="999999999"
+                        {...registerStep1("salaryMin", { 
+                          valueAsNumber: true,
+                          onBlur: () => triggerStep1("salaryMin")
+                        })}
                         placeholder="VD: 10000000"
                         className={errorsStep1.salaryMin ? "border-red-500" : ""}
                       />
@@ -1307,7 +1371,11 @@ export default function CreateJobPage() {
                         id="salaryMax"
                         type="number"
                         min="0"
-                        {...registerStep1("salaryMax", { valueAsNumber: true })}
+                        max="999999999"
+                        {...registerStep1("salaryMax", { 
+                          valueAsNumber: true,
+                          onBlur: () => triggerStep1("salaryMax")
+                        })}
                         placeholder="VD: 20000000"
                         className={errorsStep1.salaryMax ? "border-red-500" : ""}
                       />
@@ -1359,7 +1427,7 @@ export default function CreateJobPage() {
                       <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm">
                         {index + 1}
                       </span>
-                      Giai đoạn {stage.stageNumber}
+                    
                     </h4>
                     {jobStages.length > 1 && (
                       <Button
@@ -1457,7 +1525,7 @@ export default function CreateJobPage() {
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-muted-foreground">Trình độ</Label>
                   <p className="text-base">
-                    {educationLevels.find(e => e.value === jobData.educationLevel)?.name || jobData.educationLevel}
+                    {educationLevels.find(e => e.id.toString() === jobData.educationLevel)?.name || jobData.educationLevel}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -1751,7 +1819,6 @@ export default function CreateJobPage() {
           <Button
             type="button"
             onClick={() => {
-              console.log("Next button clicked, current step:", currentStep);
               if (currentStep === 3) {
                 createJob();
               } else {

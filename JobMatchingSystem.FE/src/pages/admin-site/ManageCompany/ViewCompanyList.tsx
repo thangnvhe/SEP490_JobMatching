@@ -177,6 +177,7 @@ export function ManageCompanyPage() {
     try {
       await CompanyServices.changeStatus(String(companyId));
       await getAllWithPagination(paginationInput);
+      toast.success('Vô hiệu hóa công ty thành công!');
     } catch (error: any) {
       toast.error(error.response.data.errorMessages[0]);
     }
@@ -186,6 +187,7 @@ export function ManageCompanyPage() {
     try {
       await CompanyServices.acceptCompany(String(companyId));
       await getAllWithPagination(paginationInput);
+      toast.success('Duyệt công ty thành công!');
     } catch (error: any) {
       toast.error(error.response.data.errorMessages[0]);
     }
@@ -195,6 +197,7 @@ export function ManageCompanyPage() {
     try {
       await CompanyServices.rejectCompany(String(companyId), rejectReason);
       await getAllWithPagination(paginationInput);
+      toast.success('Từ chối công ty thành công!');
     } catch (error: any) {
       toast.error(error.response.data.errorMessages[0]);
     }

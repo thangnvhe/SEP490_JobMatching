@@ -3,13 +3,15 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { CandidateStage } from "@/models/candidate-stage";
-import { GripVertical, Mail, Phone, Calendar, Eye, CalendarPlus, UserCheck } from "lucide-react";
+import { GripVertical, Mail, Phone, Calendar, Eye, CalendarPlus, UserCheck, Award } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScheduleInterviewDialog } from "./ScheduleInterviewDialog";
+import { FinalEvaluationDialog } from "./FinalEvaluationDialog";
 
 interface CandidateCardProps {
   candidate: CandidateStage;
+  isInLastStage?: boolean; // Đánh dấu ứng viên có đang ở vòng cuối cùng không
   isDragging?: boolean;
   isOverlay?: boolean;
   onViewDetail?: () => void;
@@ -26,6 +28,7 @@ const statusColors: Record<string, { bg: string; text: string }> = {
 
 export function CandidateCard({
   candidate,
+  isInLastStage = false,
   isDragging,
   isOverlay,
   onViewDetail,
@@ -90,6 +93,7 @@ export function CandidateCard({
 
       <CandidateContent 
         candidate={candidate} 
+        isInLastStage={isInLastStage}
         onViewDetail={onViewDetail} 
         onCandidateUpdated={onCandidateUpdated}
       />
@@ -99,18 +103,24 @@ export function CandidateCard({
 
 function CandidateContent({
   candidate,
+  isInLastStage = false,
   onViewDetail,
   onCandidateUpdated,
 }: {
   candidate: CandidateStage;
+  isInLastStage?: boolean;
   onViewDetail?: () => void;
   onCandidateUpdated?: (updatedCandidate: CandidateStage) => void;
 }) {
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [finalEvaluationDialogOpen, setFinalEvaluationDialogOpen] = useState(false);
   
   const user = candidate.user;
   const status = candidate.status || "Draft";
   const statusStyle = statusColors[status] || statusColors.Draft;
+
+  // Console log để debug
+  console.log(`👤 [CandidateCard] ${user?.fullName} | jobStageId: ${candidate.jobStageId} | isInLastStage: ${isInLastStage} | status: ${status}`);
 
   // Get initials from fullName
   const getInitials = (name: string) => {
@@ -211,7 +221,7 @@ function CandidateContent({
           </Button>
         )}
         {/* Schedule (đã có lịch) -> Chỉnh sửa lịch */}
-        {status === "Schedule" && (
+        {status === "Schedule" && !isInLastStage && (
           <Button
             variant="outline"
             size="sm"
@@ -224,6 +234,36 @@ function CandidateContent({
             <CalendarPlus className="h-3.5 w-3.5 mr-1.5" />
             Chỉnh sửa lịch
           </Button>
+        )}
+        {/* Nếu ở vòng cuối và đã có lịch, hiển thị cả 2 nút: Chỉnh sửa lịch và Đánh giá cuối */}
+        {status === "Schedule" && isInLastStage && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 h-8 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                setScheduleDialogOpen(true);
+              }}
+            >
+              <CalendarPlus className="h-3.5 w-3.5 mr-1.5" />
+              Chỉnh sửa lịch
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              className="flex-1 h-8 text-xs bg-amber-600 hover:bg-amber-700"
+              onClick={(e) => {
+                e.stopPropagation();
+                setFinalEvaluationDialogOpen(true);
+              }}
+              title="Đánh giá kết quả cuối cùng"
+            >
+              <Award className="h-3.5 w-3.5 mr-1.5" />
+              Đánh giá cuối
+            </Button>
+          </>
         )}
         {/* Nút xem chi tiết luôn hiển thị */}
         <Button
@@ -247,6 +287,16 @@ function CandidateContent({
         onOpenChange={setScheduleDialogOpen}
         onScheduleSuccess={onCandidateUpdated}
       />
+
+      {/* Final Evaluation Dialog - Chỉ hiển thị khi ở vòng cuối */}
+      {isInLastStage && (
+        <FinalEvaluationDialog
+          candidate={candidate}
+          open={finalEvaluationDialogOpen}
+          onOpenChange={setFinalEvaluationDialogOpen}
+          onEvaluationSuccess={onCandidateUpdated}
+        />
+      )}
     </>
   );
 }

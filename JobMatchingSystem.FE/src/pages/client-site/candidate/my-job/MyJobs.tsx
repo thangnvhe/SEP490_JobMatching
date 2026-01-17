@@ -27,19 +27,18 @@ const getLogoUrl = (logoPath?: string): string => {
 };
 
 const formatSalary = (salaryMin?: number, salaryMax?: number): string => {
-    const toMillions = (value?: number | null) => {
+    const formatAmount = (value?: number | null) => {
         if (value == null) return null;
-        const millions = value / 1_000_000;
-        return millions % 1 === 0 ? `${millions}` : `${millions.toFixed(1)}`;
+        return value.toLocaleString('vi-VN');
     };
 
-    const min = toMillions(salaryMin);
-    const max = toMillions(salaryMax);
+    const min = formatAmount(salaryMin);
+    const max = formatAmount(salaryMax);
 
     if (!min && !max) return "Thoả thuận";
-    if (min && max) return `${min} – ${max} triệu`;
-    if (min) return `Từ ${min} triệu`;
-    if (max) return `Đến ${max} triệu`;
+    if (min && max) return `${min} – ${max} đồng`;
+    if (min) return `Từ ${min} đồng`;
+    if (max) return `Đến ${max} đồng`;
     return "Thoả thuận";
 };
 

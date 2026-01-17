@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { Search, MapPin } from "lucide-react";
 
@@ -15,7 +15,6 @@ import { PageInfo, PaginationParamsInput } from "@/models/base";
 // Icons
 import { Job } from "@/models/job";
 import { Company } from "@/models/company";
-import { useDebounce } from "@/hooks/useDebounce";
 import { Input } from "@/components/ui/input";
 import { Province, ProvincesService } from "@/services/provinces.service";
 import { useNavigate, useSearchParams } from "react-router";
@@ -26,14 +25,14 @@ import { Taxonomy } from "@/models/taxonomy";
 import { TaxonomyService } from "@/services/taxonomy.service";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
+import { useDebounce } from "@/hooks/useDebounce";
 
 
 export default function JobsPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [urlSearchParams] = useSearchParams();
   const { isAuthenticated } = useSelector((state: RootState) => state.authState);
 
-  const initialSearch = searchParams.get("search") || "";
   // Data
   const [jobs, setJobs] = useState<Job[]>([]);
   const [companies, setCompanies] = useState<Record<number, Company>>({});
@@ -44,7 +43,13 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(true);
   const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
  
-  const [keyword, setKeyword] = useState(initialSearch);
+  // Đọc search từ URL params khi component mount
+  const urlSearchValue = urlSearchParams.get("search") || "";
+  const [keyword, setKeyword] = useState(urlSearchValue);
+  const [isComposing, setIsComposing] = useState(false);
+  const debouncedKeyword = useDebounce(keyword, 500);
+  const isFirstMount = useRef(true);
+  const previousKeywordRef = useRef<string>("");
   const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
     currentPage: 1,
     pageSize: 10,
@@ -58,7 +63,7 @@ export default function JobsPage() {
   const [paginationInput, setPaginationInput] = useState<PaginationParamsInput>({
     page: 1,
     size: 10,
-    search: initialSearch,
+    search: "",
     sortBy: '',
     isDecending: false,
     title: null,
@@ -78,20 +83,6 @@ export default function JobsPage() {
     positionId: null,
     taxonomyIds: null,
   });
-
-  const debouncedKeyword = useDebounce(keyword, 700);
-
-  useEffect(() => {
-    const searchParam = searchParams.get("search");
-    if (searchParam !== keyword) {
-      setKeyword(searchParam || "");
-      setPaginationInput((prev) => ({
-        ...prev,
-        page: 1,
-        search: searchParam || "",
-      }));
-    }
-  }, [searchParams, keyword]);
 
   const getAllWithPagination = useCallback(async (params: PaginationParamsInput) => {
     try {
@@ -152,6 +143,17 @@ export default function JobsPage() {
     getTaxonomies();
   }, [getPositions, getTaxonomies]);
 
+  // Đọc search từ URL params khi component mount hoặc URL thay đổi
+  useEffect(() => {
+    const urlSearch = urlSearchParams.get("search") || "";
+    // Chỉ cập nhật keyword nếu URL search khác với keyword hiện tại
+    // Điều này đảm bảo khi điều hướng từ HomePage với search param, keyword sẽ được cập nhật
+    if (urlSearch !== keyword) {
+      setKeyword(urlSearch);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlSearchParams]);
+
   const getAllCompanies = useCallback(async () => {
     try {
       const response = await CompanyServices.getAll();
@@ -172,14 +174,48 @@ export default function JobsPage() {
     getAllCompanies();
   }, [getAllCompanies]);
 
+  // Reset filter khi keyword thay đổi
   useEffect(() => {
-    const params = {
-      ...paginationInput,
-      search: debouncedKeyword,
-      status: "Opened", // Đảm bảo chỉ lấy jobs có status = "Opened"
-    };
-    getAllWithPagination(params);
-  }, [getAllWithPagination, debouncedKeyword, paginationInput]);
+    // Bỏ qua lần đầu mount
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      previousKeywordRef.current = debouncedKeyword;
+      return;
+    }
+
+    // Chỉ reset khi keyword thực sự thay đổi (không phải cùng giá trị)
+    if (previousKeywordRef.current !== debouncedKeyword) {
+      previousKeywordRef.current = debouncedKeyword;
+      setPaginationInput((prev) => ({
+        ...prev,
+        // Reset về page 1
+        page: 1,
+        // Reset tất cả filters về null
+        location: null,
+        jobType: null,
+        experienceYearMin: null,
+        experienceYearMax: null,
+        salaryMin: null,
+        salaryMax: null,
+        positionId: null,
+        taxonomyIds: null,
+        // Reset sort về mặc định
+        sortBy: '',
+        isDecending: false,
+      }));
+    }
+  }, [debouncedKeyword]);
+
+  // Memoize các giá trị quan trọng để tránh re-render không cần thiết
+  const searchParams = useMemo(() => ({
+    ...paginationInput,
+    search: debouncedKeyword,
+    status: "Opened" as const,
+  }), [debouncedKeyword, paginationInput.page, paginationInput.size, paginationInput.sortBy, paginationInput.isDecending, paginationInput.location, paginationInput.jobType, paginationInput.experienceYearMin, paginationInput.experienceYearMax, paginationInput.salaryMin, paginationInput.salaryMax, paginationInput.positionId, paginationInput.taxonomyIds]);
+
+  useEffect(() => {
+    getAllWithPagination(searchParams);
+  }, [getAllWithPagination, searchParams]);
 
 
   const handleSaveJob = async (jobId: number) => {
@@ -231,24 +267,76 @@ export default function JobsPage() {
     }
   };
 
-  const handleSortChange = (sortBy: string) => {
-    setPaginationInput({
-      ...paginationInput,
+  const handleSortChange = useCallback((sortBy: string) => {
+    setPaginationInput((prev) => ({
+      ...prev,
       sortBy: sortBy === 'createdAt' ? '' : (sortBy),
       isDecending: sortBy === 'salaryMin' ? true : false,
-    });
-  };
+    }));
+  }, []);
 
-  const handlePageChange = (page: number) => {
-    setPaginationInput({
-      ...paginationInput,
+  const handlePageChange = useCallback((page: number) => {
+    setPaginationInput((prev) => ({
+      ...prev,
       page: page,
-    });
-  };
+    }));
+  }, []);
 
-  const handleJobDetails = (jobId: number) => {
+  const handleJobDetails = useCallback((jobId: number) => {
     navigate(`/jobs/${jobId}`);
-  };
+  }, [navigate]);
+
+  // Handler xử lý composition events cho tiếng Việt
+  // Khi bắt đầu composition (nhập tiếng Việt), set flag để không update state
+  const handleCompositionStart = useCallback(() => {
+    setIsComposing(true);
+  }, []);
+
+  // Khi kết thúc composition, update state và reset flag
+  const handleCompositionEnd = useCallback((e: React.CompositionEvent<HTMLInputElement>) => {
+    setIsComposing(false);
+    // Update state sau khi composition kết thúc
+    setKeyword(e.currentTarget.value);
+  }, []);
+
+  // Handler cho onChange - chỉ update khi không đang composition
+  // Điều này giúp tránh re-render không cần thiết trong quá trình nhập tiếng Việt
+  const handleKeywordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    // Nếu đang trong quá trình composition, không update state
+    // State sẽ được update trong handleCompositionEnd khi hoàn thành từ
+    if (!isComposing) {
+      setKeyword(e.target.value);
+    }
+  }, [isComposing]);
+
+  const handleLocationChange = useCallback((value: string) => {
+    setPaginationInput((prev) => ({ ...prev, location: value }));
+  }, []);
+
+  const handleSearchClick = useCallback(() => {
+    getAllWithPagination(searchParams);
+  }, [getAllWithPagination, searchParams]);
+
+  const handleFiltersChange = useCallback((newFilters: {
+    jobType?: string;
+    experienceYearMin?: number | null;
+    experienceYearMax?: number | null;
+    salaryMin?: number | null;
+    salaryMax?: number | null;
+    positionId?: number | null;
+    taxonomyIds?: number[] | null;
+  }) => {
+    setPaginationInput((prev) => ({
+      ...prev,
+      jobType: newFilters.jobType || '',
+      experienceYearMin: newFilters.experienceYearMin ?? null,
+      experienceYearMax: newFilters.experienceYearMax ?? null,
+      salaryMin: newFilters.salaryMin ?? null,
+      salaryMax: newFilters.salaryMax ?? null,
+      positionId: newFilters.positionId ?? null,
+      taxonomyIds: newFilters.taxonomyIds ?? null,
+    }));
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
@@ -279,7 +367,9 @@ export default function JobsPage() {
                     type="text"
                     placeholder="Vị trí tuyển dụng, tên công ty..."
                     value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
+                    onChange={handleKeywordChange}
+                    onCompositionStart={handleCompositionStart}
+                    onCompositionEnd={handleCompositionEnd}
                     className="border-0 shadow-none focus-visible:ring-0 text-base h-12 bg-transparent placeholder:text-gray-400 flex-1"
                   />
                 </div>
@@ -289,13 +379,13 @@ export default function JobsPage() {
                   <MapPin className="h-5 w-5 text-gray-400 shrink-0 ml-2" />
                   <Select
                     value={paginationInput.location || ''}
-                    onValueChange={(value) => setPaginationInput({ ...paginationInput, location: value })}
+                    onValueChange={handleLocationChange}
                   >
                     <SelectTrigger className="border-0 shadow-none focus:ring-0 text-base h-12 bg-transparent w-full pl-2 focus:ring-offset-0">
                       <SelectValue placeholder="Tất cả địa điểm" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all_locations">Tất cả địa điểm</SelectItem>
+                      <SelectItem value={null as any}>Tất cả địa điểm</SelectItem>
                       {provinces.map((province) => (
                         <SelectItem key={province.code} value={province.name}>
                           {province.name}
@@ -307,7 +397,7 @@ export default function JobsPage() {
 
                 {/* Search Button */}
                 <Button
-                  onClick={() => getAllWithPagination(paginationInput)}
+                  onClick={handleSearchClick}
                   className="w-full md:w-auto rounded-xl px-8 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base shadow-md hover:shadow-lg transition-all"
                 >
                   Tìm kiếm
@@ -336,18 +426,7 @@ export default function JobsPage() {
                   positionId: paginationInput.positionId,
                   taxonomyIds: paginationInput.taxonomyIds,
                 }}
-                onFiltersChange={(newFilters) => {
-                  setPaginationInput({
-                    ...paginationInput,
-                    jobType: newFilters.jobType || '',
-                    experienceYearMin: newFilters.experienceYearMin ?? null,
-                    experienceYearMax: newFilters.experienceYearMax ?? null,
-                    salaryMin: newFilters.salaryMin ?? null,
-                    salaryMax: newFilters.salaryMax ?? null,
-                    positionId: newFilters.positionId ?? null,
-                    taxonomyIds: newFilters.taxonomyIds ?? null,
-                  });
-                }}
+                onFiltersChange={handleFiltersChange}
                 positions={positions}
                 taxonomies={taxonomies}
               />

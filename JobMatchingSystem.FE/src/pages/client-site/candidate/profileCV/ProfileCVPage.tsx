@@ -31,7 +31,6 @@ import {
     Award,
     BadgeCheck,
     Briefcase,
-    Calendar,
     Edit,
     GraduationCap,
     Mail,
