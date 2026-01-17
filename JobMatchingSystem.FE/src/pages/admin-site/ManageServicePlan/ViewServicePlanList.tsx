@@ -13,7 +13,6 @@ import { PageInfo, PaginationParamsInput } from "@/models/base";
 import { ServicePlanServices } from "@/services/service-plan.service";
 import {
   RefreshCcw,
-  Eye,
   Trash2,
   Edit,
   AlertTriangle,
@@ -103,10 +102,7 @@ export default function ViewServicePlanList() {
     getAllWithPagination(paginationInput);
   };
 
-  const handleView = (servicePlan: ServicePlan) => {
-    // TODO: Implement view details modal
-    console.log('Viewing service plan:', servicePlan);
-  };
+
 
   const handleEdit = (servicePlan: ServicePlan) => {
     setSelectedServicePlan(servicePlan);

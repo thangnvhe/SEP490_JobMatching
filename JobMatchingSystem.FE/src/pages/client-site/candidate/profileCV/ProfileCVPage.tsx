@@ -672,33 +672,7 @@ const ProfileCvPage = () => {
     // but we will focus on the linear bar as requested.
     const completionDegree = (profileCompletion / 100) * 360;
 
-    const userSection = [
-        {
-            icon: Mail,
-            value: userProfile?.email || "Chưa cập nhật",
-            label: "Email"
-        },
-        {
-            icon: Phone,
-            value: userProfile?.phoneNumber || "Chưa cập nhật",
-            label: "Phone"
-        },
-        {
-            icon: Calendar,
-            value: userProfile?.birthday ? format(new Date(userProfile.birthday), "dd/MM/yyyy") : "Chưa cập nhật",
-            label: "DOB"
-        },
-        {
-            icon: UserIcon,
-            value: userProfile?.gender === true ? "Nam" : (userProfile?.gender === false ? "Nữ" : "Chưa cập nhật"),
-            label: "Gender"
-        },
-        {
-            icon: MapPin,
-            value: userProfile?.address || "Chưa cập nhật",
-            label: "Address"
-        },
-    ];
+
 
     const profileSections: SectionCardConfig[] = [
         {

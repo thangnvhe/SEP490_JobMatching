@@ -141,18 +141,7 @@ const HomePage = () => {
     setPaginationParamsInput((prev) => ({ ...prev, page: 1 })); // Reset to page 1
   };
 
-  const getCategoryIcon = (index: number) => {
-    const icons = [
-      Users,
-      TrendingUp,
-      Settings2,
-      Warehouse,
-      Building2,
-      Briefcase,
-      Layers,
-    ];
-    return icons[index % icons.length];
-  };
+
 
   // Province State
   const [locations, setLocations] = useState<string[]>([]);
