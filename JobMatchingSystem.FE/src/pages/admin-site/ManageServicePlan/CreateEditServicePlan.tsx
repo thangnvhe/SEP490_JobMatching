@@ -27,42 +27,47 @@ import { ServicePlan } from "@/models/service-plan";
 
 // ===================== ZOD SCHEMA =====================
 
+// Helper function để validate số bắt buộc với thông báo lỗi phù hợp UX
+const requiredNumberSchema = (fieldName: string) =>
+  z
+    .number({
+      invalid_type_error: `${fieldName} phải là số`,
+    })
+    .superRefine((val, ctx) => {
+      // Kiểm tra nếu để trống (NaN)
+      if (isNaN(val)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `${fieldName} là bắt buộc`,
+        });
+        return;
+      }
+      
+      // Kiểm tra giá trị phải lớn hơn 0
+      if (val <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `${fieldName} phải lớn hơn 0`,
+        });
+      }
+    });
+
 const servicePlanSchema = z.object({
   name: z
-    .string()
+    .string({ required_error: "Tên gói dịch vụ là bắt buộc" })
     .min(1, "Tên gói dịch vụ không được để trống")
     .max(100, "Tên gói dịch vụ không được quá 100 ký tự"),
   description: z
-    .string()
+    .string({ required_error: "Mô tả là bắt buộc" })
     .min(1, "Mô tả không được để trống")
     .max(500, "Mô tả không được quá 500 ký tự"),
-  price: z
-    .number({ invalid_type_error: "Giá phải là số" })
-    .min(0, "Giá không được âm"),
-  jobPostAdditional: z
-    .number()
-    .min(0, "Số bài đăng thêm không được âm")
-    .optional(),
-  highlightJobDays: z
-    .number()
-    .min(0, "Số ngày nổi bật không được âm")
-    .optional(),
-  highlightJobDaysCount: z
-    .number()
-    .min(0, "Số lần nổi bật không được âm")
-    .optional(),
-  extensionJobDays: z
-    .number()
-    .min(0, "Số ngày gia hạn không được âm")
-    .optional(),
-  extensionJobDaysCount: z
-    .number()
-    .min(0, "Số lần gia hạn không được âm")
-    .optional(),
-  cvSaveAdditional: z
-    .number()
-    .min(0, "Số CV lưu thêm không được âm")
-    .optional(),
+  price: requiredNumberSchema("Giá"),
+  jobPostAdditional: requiredNumberSchema("Số bài đăng thêm"),
+  highlightJobDays: requiredNumberSchema("Số ngày nổi bật"),
+  highlightJobDaysCount: requiredNumberSchema("Số lần nổi bật"),
+  extensionJobDays: requiredNumberSchema("Số ngày gia hạn"),
+  extensionJobDaysCount: requiredNumberSchema("Số lần gia hạn"),
+  cvSaveAdditional: requiredNumberSchema("Số CV lưu thêm"),
 });
 
 type ServicePlanFormData = z.infer<typeof servicePlanSchema>;
@@ -129,13 +134,13 @@ export default function CreateEditServicePlanDialog({
         reset({
           name: servicePlan.name || "",
           description: servicePlan.description || "",
-          price: servicePlan.price || 0,
-          jobPostAdditional: servicePlan.jobPostAdditional || 0,
-          highlightJobDays: servicePlan.highlightJobDays || 0,
-          highlightJobDaysCount: servicePlan.highlightJobDaysCount || 0,
-          extensionJobDays: servicePlan.extensionJobDays || 0,
-          extensionJobDaysCount: servicePlan.extensionJobDaysCount || 0,
-          cvSaveAdditional: servicePlan.cvSaveAdditional || 0,
+          price: servicePlan.price ?? 0,
+          jobPostAdditional: servicePlan.jobPostAdditional ?? 0,
+          highlightJobDays: servicePlan.highlightJobDays ?? 0,
+          highlightJobDaysCount: servicePlan.highlightJobDaysCount ?? 0,
+          extensionJobDays: servicePlan.extensionJobDays ?? 0,
+          extensionJobDaysCount: servicePlan.extensionJobDaysCount ?? 0,
+          cvSaveAdditional: servicePlan.cvSaveAdditional ?? 0,
         });
       } else {
         reset({
@@ -162,12 +167,12 @@ export default function CreateEditServicePlanDialog({
         name: data.name.trim(),
         description: data.description.trim(),
         price: data.price,
-        jobPostAdditional: data.jobPostAdditional || undefined,
-        highlightJobDays: data.highlightJobDays || undefined,
-        highlightJobDaysCount: data.highlightJobDaysCount || undefined,
-        extensionJobDays: data.extensionJobDays || undefined,
-        extensionJobDaysCount: data.extensionJobDaysCount || undefined,
-        cvSaveAdditional: data.cvSaveAdditional || undefined,
+        jobPostAdditional: data.jobPostAdditional,
+        highlightJobDays: data.highlightJobDays,
+        highlightJobDaysCount: data.highlightJobDaysCount,
+        extensionJobDays: data.extensionJobDays,
+        extensionJobDaysCount: data.extensionJobDaysCount,
+        cvSaveAdditional: data.cvSaveAdditional,
       };
 
       if (isEditMode && servicePlan) {
@@ -282,11 +287,15 @@ export default function CreateEditServicePlanDialog({
                     placeholder="Nhập giá gói dịch vụ"
                     className="mt-1"
                     disabled={loading}
-                    value={value ? value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") : ""}
+                    value={value !== undefined && value !== null && !isNaN(value) ? value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") : ""}
                     onChange={(e) => {
                       const rawValue = e.target.value.replace(/[^\d]/g, "");
-                      const numberValue = rawValue ? parseInt(rawValue, 10) : 0;
-                      onChange(numberValue);
+                      if (rawValue === "") {
+                        onChange(0);
+                      } else {
+                        const numberValue = parseInt(rawValue, 10);
+                        onChange(isNaN(numberValue) ? 0 : numberValue);
+                      }
                     }}
                   />
                 )}
@@ -311,16 +320,32 @@ export default function CreateEditServicePlanDialog({
                   htmlFor="jobPostAdditional"
                   className="text-sm font-medium text-gray-900"
                 >
-                  Số bài đăng thêm
+                  Số bài đăng thêm <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="jobPostAdditional"
-                  type="number"
-                  {...register("jobPostAdditional", { valueAsNumber: true })}
-                  placeholder="0"
-                  className="mt-1"
-                  min={0}
-                  disabled={loading}
+                <Controller
+                  name="jobPostAdditional"
+                  control={control}
+                  render={({ field: { onChange, value, ...field } }) => (
+                    <Input
+                      {...field}
+                      id="jobPostAdditional"
+                      type="number"
+                      placeholder="Nhập số bài đăng thêm"
+                      className="mt-1"
+                      min={0}
+                      disabled={loading}
+                      value={value !== undefined && value !== null && !isNaN(value) ? value : ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "" || val === null) {
+                          onChange(0);
+                        } else {
+                          const numValue = parseInt(val, 10);
+                          onChange(isNaN(numValue) ? 0 : numValue);
+                        }
+                      }}
+                    />
+                  )}
                 />
                 {errors.jobPostAdditional && (
                   <p className="mt-1 text-sm text-red-500">
@@ -334,16 +359,32 @@ export default function CreateEditServicePlanDialog({
                   htmlFor="cvSaveAdditional"
                   className="text-sm font-medium text-gray-900"
                 >
-                  Số CV lưu thêm
+                  Số CV lưu thêm <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="cvSaveAdditional"
-                  type="number"
-                  {...register("cvSaveAdditional", { valueAsNumber: true })}
-                  placeholder="0"
-                  className="mt-1"
-                  min={0}
-                  disabled={loading}
+                <Controller
+                  name="cvSaveAdditional"
+                  control={control}
+                  render={({ field: { onChange, value, ...field } }) => (
+                    <Input
+                      {...field}
+                      id="cvSaveAdditional"
+                      type="number"
+                      placeholder="Nhập số CV lưu thêm"
+                      className="mt-1"
+                      min={0}
+                      disabled={loading}
+                      value={value !== undefined && value !== null && !isNaN(value) ? value : ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "" || val === null) {
+                          onChange(0);
+                        } else {
+                          const numValue = parseInt(val, 10);
+                          onChange(isNaN(numValue) ? 0 : numValue);
+                        }
+                      }}
+                    />
+                  )}
                 />
                 {errors.cvSaveAdditional && (
                   <p className="mt-1 text-sm text-red-500">
@@ -357,16 +398,32 @@ export default function CreateEditServicePlanDialog({
                   htmlFor="highlightJobDays"
                   className="text-sm font-medium text-gray-900"
                 >
-                  Số ngày nổi bật
+                  Số ngày nổi bật <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="highlightJobDays"
-                  type="number"
-                  {...register("highlightJobDays", { valueAsNumber: true })}
-                  placeholder="0"
-                  className="mt-1"
-                  min={0}
-                  disabled={loading}
+                <Controller
+                  name="highlightJobDays"
+                  control={control}
+                  render={({ field: { onChange, value, ...field } }) => (
+                    <Input
+                      {...field}
+                      id="highlightJobDays"
+                      type="number"
+                      placeholder="Nhập số ngày nổi bật"
+                      className="mt-1"
+                      min={0}
+                      disabled={loading}
+                      value={value !== undefined && value !== null && !isNaN(value) ? value : ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "" || val === null) {
+                          onChange(0);
+                        } else {
+                          const numValue = parseInt(val, 10);
+                          onChange(isNaN(numValue) ? 0 : numValue);
+                        }
+                      }}
+                    />
+                  )}
                 />
                 {errors.highlightJobDays && (
                   <p className="mt-1 text-sm text-red-500">
@@ -380,18 +437,32 @@ export default function CreateEditServicePlanDialog({
                   htmlFor="highlightJobDaysCount"
                   className="text-sm font-medium text-gray-900"
                 >
-                  Số lần nổi bật
+                  Số lần nổi bật <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="highlightJobDaysCount"
-                  type="number"
-                  {...register("highlightJobDaysCount", {
-                    valueAsNumber: true,
-                  })}
-                  placeholder="0"
-                  className="mt-1"
-                  min={0}
-                  disabled={loading}
+                <Controller
+                  name="highlightJobDaysCount"
+                  control={control}
+                  render={({ field: { onChange, value, ...field } }) => (
+                    <Input
+                      {...field}
+                      id="highlightJobDaysCount"
+                      type="number"
+                      placeholder="Nhập số lần nổi bật"
+                      className="mt-1"
+                      min={0}
+                      disabled={loading}
+                      value={value !== undefined && value !== null && !isNaN(value) ? value : ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "" || val === null) {
+                          onChange(0);
+                        } else {
+                          const numValue = parseInt(val, 10);
+                          onChange(isNaN(numValue) ? 0 : numValue);
+                        }
+                      }}
+                    />
+                  )}
                 />
                 {errors.highlightJobDaysCount && (
                   <p className="mt-1 text-sm text-red-500">
@@ -405,16 +476,32 @@ export default function CreateEditServicePlanDialog({
                   htmlFor="extensionJobDays"
                   className="text-sm font-medium text-gray-900"
                 >
-                  Số ngày gia hạn
+                  Số ngày gia hạn <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="extensionJobDays"
-                  type="number"
-                  {...register("extensionJobDays", { valueAsNumber: true })}
-                  placeholder="0"
-                  className="mt-1"
-                  min={0}
-                  disabled={loading}
+                <Controller
+                  name="extensionJobDays"
+                  control={control}
+                  render={({ field: { onChange, value, ...field } }) => (
+                    <Input
+                      {...field}
+                      id="extensionJobDays"
+                      type="number"
+                      placeholder="Nhập số ngày gia hạn"
+                      className="mt-1"
+                      min={0}
+                      disabled={loading}
+                      value={value !== undefined && value !== null && !isNaN(value) ? value : ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "" || val === null) {
+                          onChange(0);
+                        } else {
+                          const numValue = parseInt(val, 10);
+                          onChange(isNaN(numValue) ? 0 : numValue);
+                        }
+                      }}
+                    />
+                  )}
                 />
                 {errors.extensionJobDays && (
                   <p className="mt-1 text-sm text-red-500">
@@ -428,18 +515,32 @@ export default function CreateEditServicePlanDialog({
                   htmlFor="extensionJobDaysCount"
                   className="text-sm font-medium text-gray-900"
                 >
-                  Số lần gia hạn
+                  Số lần gia hạn <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="extensionJobDaysCount"
-                  type="number"
-                  {...register("extensionJobDaysCount", {
-                    valueAsNumber: true,
-                  })}
-                  placeholder="0"
-                  className="mt-1"
-                  min={0}
-                  disabled={loading}
+                <Controller
+                  name="extensionJobDaysCount"
+                  control={control}
+                  render={({ field: { onChange, value, ...field } }) => (
+                    <Input
+                      {...field}
+                      id="extensionJobDaysCount"
+                      type="number"
+                      placeholder="Nhập số lần gia hạn"
+                      className="mt-1"
+                      min={0}
+                      disabled={loading}
+                      value={value !== undefined && value !== null && !isNaN(value) ? value : ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "" || val === null) {
+                          onChange(0);
+                        } else {
+                          const numValue = parseInt(val, 10);
+                          onChange(isNaN(numValue) ? 0 : numValue);
+                        }
+                      }}
+                    />
+                  )}
                 />
                 {errors.extensionJobDaysCount && (
                   <p className="mt-1 text-sm text-red-500">

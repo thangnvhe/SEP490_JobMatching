@@ -95,7 +95,7 @@ export function ClientHeader() {
                 to="/pricing"
                 className="text-sm font-medium transition-colors hover:text-green-600 outline-none focus:outline-none focus-visible:outline-none"
               >
-                Bảng Giá
+                Gói dịch vụ
               </Link>
             </RoleGuard>
 
@@ -191,7 +191,7 @@ export function ClientHeader() {
 
               <RoleGuard allowedRoles={["Recruiter"]}>
                 <Link to="/pricing" className="text-sm font-medium transition-colors hover:text-primary">
-                  Bảng Giá
+                  Gói dịch vụ
                 </Link>
               </RoleGuard>
 

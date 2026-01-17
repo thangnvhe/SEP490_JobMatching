@@ -63,6 +63,14 @@ export default function PricingPage() {
     return features;
   };
 
+  // Xác định số cột dựa trên số lượng card
+  const getGridCols = (count: number) => {
+    if (count === 1) return "lg:grid-cols-1";
+    if (count === 2) return "lg:grid-cols-2";
+    if (count === 3) return "lg:grid-cols-3";
+    return "lg:grid-cols-4";
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -75,13 +83,13 @@ export default function PricingPage() {
     <div className="not-prose flex flex-col gap-16 px-8 py-24 text-center container mx-auto">
       <div className="flex flex-col items-center justify-center gap-8">
         <h1 className="mb-0 text-balance font-medium text-5xl tracking-tighter">
-          Bảng giá đơn giản, minh bạch
+          Gói dịch vụ đơn giản, minh bạch
         </h1>
         <p className="mx-auto mt-0 mb-0 max-w-2xl text-balance text-lg text-muted-foreground">
           Chọn gói dịch vụ phù hợp nhất với nhu cầu tuyển dụng của bạn.
         </p>
         
-        <div className="mt-8 grid w-full gap-4 lg:grid-cols-4 items-start">
+        <div className={`mt-8 grid w-full gap-4 grid-cols-1 md:grid-cols-2 ${getGridCols(plans.length)} items-start justify-items-center max-w-7xl mx-auto`}>
           {plans.map((plan) => {
             return (
               <Card
@@ -96,9 +104,9 @@ export default function PricingPage() {
                     <p className="mb-4 min-h-[40px]">{plan.description}</p>
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl font-bold text-foreground">
-                        {new Intl.NumberFormat("en-US", {
+                        {new Intl.NumberFormat("vi-VN", {
                           style: "currency",
-                          currency: "USD",
+                          currency: "VND",
                           maximumFractionDigits: 0,
                         }).format(plan.price)}
                       </span>

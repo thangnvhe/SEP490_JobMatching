@@ -22,12 +22,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CalendarIcon, X, User as UserIcon, ChevronDown, Camera } from "lucide-react";
+import { CalendarIcon, X, User as UserIcon, ChevronDown, Camera, MapPin, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useDisableBodyScroll } from "@/hooks/useDisableBodyScroll";
 import { User } from "@/models/user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useDebounce } from "@/hooks/useDebounce";
+import { VIETMAP_API_KEY } from "@/../env";
+
+// Types
+interface LocationSuggestion {
+  ref_id: string;
+  address: string;
+  name: string;
+  display: string;
+  boundaries?: number[];
+  categories?: string[];
+}
 
 // Zod schema definition
 const formSchema = z.object({
@@ -97,6 +109,14 @@ export function DialogCVInformation({
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
+  // Location autocomplete states
+  const [locationInput, setLocationInput] = useState("");
+  const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [loadingLocationSuggestions, setLoadingLocationSuggestions] = useState(false);
+  const debouncedLocationInput = useDebounce(locationInput, 500);
+  const locationInputRef = useRef<HTMLInputElement>(null);
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -125,6 +145,7 @@ export function DialogCVInformation({
     if (open && userProfileToEdit) {
       setAvatarPreview(userProfileToEdit.avatarUrl || "");
       setAvatarFile(null);
+      setLocationInput(userProfileToEdit.address || "");
       reset({
         fullName: userProfileToEdit.fullName || "",
         email: userProfileToEdit.email || "",
@@ -135,6 +156,69 @@ export function DialogCVInformation({
       });
     }
   }, [open, reset, userProfileToEdit]);
+
+  // Fetch location suggestions from Vietmap API
+  useEffect(() => {
+    const fetchLocationSuggestions = async () => {
+      if (!debouncedLocationInput || debouncedLocationInput.trim().length < 2) {
+        setLocationSuggestions([]);
+        return;
+      }
+
+      setLoadingLocationSuggestions(true);
+      try {
+        const response = await fetch(
+          `https://maps.vietmap.vn/api/autocomplete/v3?` +
+          `apikey=${VIETMAP_API_KEY}` +
+          `&text=${encodeURIComponent(debouncedLocationInput)}` +
+          `&focus=16.047079,108.206230`,
+          {
+            headers: {
+              'Accept': 'application/json',
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setLocationSuggestions(data.slice(0, 5));
+          } else {
+            setLocationSuggestions([]);
+          }
+        } else {
+          console.error("Error fetching location suggestions from Vietmap");
+          setLocationSuggestions([]);
+        }
+      } catch (error) {
+        console.error("Error fetching location suggestions:", error);
+        setLocationSuggestions([]);
+      } finally {
+        setLoadingLocationSuggestions(false);
+      }
+    };
+
+    fetchLocationSuggestions();
+  }, [debouncedLocationInput]);
+
+  // Close location suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (locationInputRef.current && !locationInputRef.current.contains(event.target as Node)) {
+        const suggestionDropdown = document.querySelector('.location-suggestions-dropdown');
+        if (suggestionDropdown && !suggestionDropdown.contains(event.target as Node)) {
+          setShowLocationSuggestions(false);
+        }
+      }
+    };
+
+    if (showLocationSuggestions) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showLocationSuggestions]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -260,8 +344,8 @@ export function DialogCVInformation({
 
           <div className="grid gap-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* FullName */}
-              <div className="md:col-span-2">
+              {/* FullName & Gender */}
+              <div>
                 <Label className="text-sm font-medium">
                   Họ và tên <span className="text-red-500">*</span>
                 </Label>
@@ -278,55 +362,6 @@ export function DialogCVInformation({
                 )}
               </div>
 
-              {/* Email (Read only typically, but let's display) */}
-              <div className="md:col-span-2">
-                <Label className="text-sm font-medium">
-                  Email
-                </Label>
-                <Input
-                  {...register("email")}
-                  disabled={true}
-                  className="w-full mt-1 bg-gray-100 text-gray-500"
-                />
-              </div>
-
-              {/* PhoneNumber */}
-              <div>
-                <Label className="text-sm font-medium">
-                  Số điện thoại
-                </Label>
-                <Controller
-                  control={control}
-                  name="phoneNumber"
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      type="tel"
-                      placeholder="Nhập số điện thoại (chỉ số, 10-11 chữ số)"
-                      className={`w-full mt-1 ${errors.phoneNumber ? "border-red-500" : ""}`}
-                      disabled={actionLoading}
-                      onChange={(e) => {
-                        // Chỉ giữ lại các ký tự số
-                        const value = e.target.value.replace(/\D/g, "");
-                        field.onChange(value);
-                      }}
-                      onKeyPress={(e) => {
-                        // Chỉ cho phép nhập số
-                        if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete" && e.key !== "Tab" && e.key !== "ArrowLeft" && e.key !== "ArrowRight") {
-                          e.preventDefault();
-                        }
-                      }}
-                    />
-                  )}
-                />
-                {errors.phoneNumber && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {errors.phoneNumber.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Gender */}
               <div>
                 <Label className="text-sm font-medium">
                   Giới tính <span className="text-red-500">*</span>
@@ -357,7 +392,141 @@ export function DialogCVInformation({
                 )}
               </div>
 
-              {/* Birthday */}
+              {/* Address */}
+              <div className="md:col-span-2">
+                <Label className="text-sm font-medium">
+                  Địa chỉ
+                </Label>
+                <div className="relative mt-1">
+                  <Controller
+                    control={control}
+                    name="address"
+                    render={({ field }) => (
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          {...field}
+                          ref={(e) => {
+                            field.ref(e);
+                            // @ts-ignore
+                            locationInputRef.current = e;
+                          }}
+                          type="text"
+                          value={locationInput}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setLocationInput(value);
+                            field.onChange(value);
+                            if (value.trim().length >= 2) {
+                              setShowLocationSuggestions(true);
+                            } else {
+                              setShowLocationSuggestions(false);
+                            }
+                          }}
+                          onFocus={() => {
+                            if (locationInput.trim().length >= 2 && locationSuggestions.length > 0) {
+                              setShowLocationSuggestions(true);
+                            }
+                          }}
+                          onBlur={() => {
+                            // Delay to allow clicking on a suggestion
+                            setTimeout(() => {
+                              setShowLocationSuggestions(false);
+                            }, 200);
+                          }}
+                          placeholder="VD: Đường Lê Duẩn, Quận 1, TP.HCM..."
+                          className={cn("pl-10", errors.address && "border-red-500")}
+                          disabled={actionLoading}
+                        />
+                        {loadingLocationSuggestions && (
+                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 animate-spin" />
+                        )}
+                      </div>
+                    )}
+                  />
+
+                  {/* Location Suggestions Dropdown */}
+                  {showLocationSuggestions && locationSuggestions.length > 0 && (
+                    <div className="location-suggestions-dropdown absolute z-[50] w-full mt-1 bg-white border rounded-lg shadow-lg max-h-44 overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full">
+                      {locationSuggestions.map((suggestion, index) => (
+                        <div
+                          key={suggestion.ref_id || index}
+                          onClick={() => {
+                            const address = suggestion.display || suggestion.address;
+                            setLocationInput(address);
+                            form.setValue("address", address);
+                            setShowLocationSuggestions(false);
+                            setLocationSuggestions([]);
+                          }}
+                          className="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 flex items-start gap-2"
+                        >
+                          <MapPin className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+                          <div className="flex-1 min-w-0 text-left">
+                            {suggestion.name && suggestion.name !== suggestion.address && (
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {suggestion.name}
+                              </p>
+                            )}
+                            <p className={`text-sm text-gray-600 ${suggestion.name ? 'text-xs' : ''}`}>
+                              {suggestion.display || suggestion.address}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* No results message */}
+                  {showLocationSuggestions && 
+                   locationInput.trim().length >= 2 && 
+                   !loadingLocationSuggestions && 
+                   locationSuggestions.length === 0 && (
+                    <div className="location-suggestions-dropdown absolute z-[50] w-full mt-1 bg-white border rounded-lg shadow-lg">
+                      <div className="px-4 py-3 text-sm text-muted-foreground text-center">
+                        Không tìm thấy địa chỉ phù hợp
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {errors.address && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.address.message}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Tìm kiếm địa chỉ theo Vietmap - Nhập tối thiểu 2 ký tự
+                </p>
+              </div>
+
+              {/* PhoneNumber & Birthday */}
+              <div>
+                <Label className="text-sm font-medium">
+                  Số điện thoại
+                </Label>
+                <Controller
+                  control={control}
+                  name="phoneNumber"
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      type="tel"
+                      placeholder="Nhập số điện thoại"
+                      className={`w-full mt-1 ${errors.phoneNumber ? "border-red-500" : ""}`}
+                      disabled={actionLoading}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        field.onChange(value);
+                      }}
+                    />
+                  )}
+                />
+                {errors.phoneNumber && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.phoneNumber.message}
+                  </p>
+                )}
+              </div>
+
               <div>
                 <Label className="text-sm font-medium">
                   Ngày sinh <span className="text-red-500">*</span>
@@ -417,16 +586,15 @@ export function DialogCVInformation({
                 )}
               </div>
 
-              {/* Address */}
+              {/* Email */}
               <div className="md:col-span-2">
                 <Label className="text-sm font-medium">
-                  Địa chỉ
+                  Email
                 </Label>
                 <Input
-                  {...register("address")}
-                  placeholder="Nhập địa chỉ"
-                  className="w-full mt-1"
-                  disabled={actionLoading}
+                  {...register("email")}
+                  disabled={true}
+                  className="w-full mt-1 bg-gray-100 text-gray-500"
                 />
               </div>
             </div>

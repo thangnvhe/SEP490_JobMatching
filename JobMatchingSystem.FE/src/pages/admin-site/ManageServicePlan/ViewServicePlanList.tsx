@@ -281,15 +281,6 @@ export default function ViewServicePlanList() {
         return (
           <div className="flex items-center space-x-2">
             <Button
-              onClick={() => handleView(servicePlan)}
-              variant="outline"
-              size="sm"
-              title="Xem chi tiết"
-              disabled={isDeleting}
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-            <Button
               onClick={() => handleEdit(servicePlan)}
               variant="outline"
               size="sm"
