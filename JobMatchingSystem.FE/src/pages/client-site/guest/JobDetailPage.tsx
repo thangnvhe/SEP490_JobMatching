@@ -93,14 +93,12 @@ export default function JobDetailPage() {
         setJob(response.result);
         
         // Cập nhật paginationInput với salaryMin và taxonomyIds từ job
-        // taxonomyIds phải là array của string để serialize đúng format: taxonomyIds=2&taxonomyIds=3
-        const taxonomyIds = response.result.taxonomies?.map(t => t.id.toString()) || [];
-        console.log('taxonomyIds:', taxonomyIds);
+        const taxonomyIds = response.result.taxonomies?.map(t => t.id) || [];
         
         const newPaginationInput: PaginationParamsInput = {
           ...paginationInput,
           salaryMin: response.result.salaryMin || null,
-          taxonomyIds: taxonomyIds.length > 0 ? taxonomyIds : undefined, // Không gửi nếu array rỗng
+          taxonomyIds: taxonomyIds.length > 0 ? taxonomyIds : null,
         };
         setPaginationInput(newPaginationInput);
         

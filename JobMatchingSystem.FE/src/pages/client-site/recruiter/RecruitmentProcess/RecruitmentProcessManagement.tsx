@@ -44,6 +44,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -70,6 +80,9 @@ const RecruitmentProcessManagement = () => {
   const [cvMap, setCvMap] = useState<Record<number, CV>>({});
   const [selectedCandidateJob, setSelectedCandidateJob] = useState<CandidateJob | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isConfirmApproveOpen, setIsConfirmApproveOpen] = useState(false);
+  const [isConfirmRejectOpen, setIsConfirmRejectOpen] = useState(false);
+  const [pendingCandidateJob, setPendingCandidateJob] = useState<CandidateJob | null>(null);
 
   // Loading & Error states
   const [loading, setLoading] = useState(false);
@@ -237,25 +250,41 @@ const RecruitmentProcessManagement = () => {
     setPaginationInput((prev) => ({ ...prev, size: parseInt(size), page: 1 }));
   };
 
-  const handleApprove = useCallback(async (candidateJob: CandidateJob) => {
+  const handleApprove = useCallback(async () => {
+    if (!pendingCandidateJob) return;
     try {
-      await CandidateJobServices.approveCandidateJob(candidateJob.id);
+      await CandidateJobServices.approveCandidateJob(pendingCandidateJob.id);
       toast.success("Đã duyệt ứng viên thành công");
       fetchCandidateJobs(paginationInput);
+      setIsConfirmApproveOpen(false);
+      setPendingCandidateJob(null);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Lỗi khi duyệt ứng viên");
     }
-  }, [fetchCandidateJobs, paginationInput]);
+  }, [fetchCandidateJobs, paginationInput, pendingCandidateJob]);
 
-  const handleReject = useCallback(async (candidateJob: CandidateJob) => {
+  const handleReject = useCallback(async () => {
+    if (!pendingCandidateJob) return;
     try {
-      await CandidateJobServices.rejectCandidateJob(candidateJob.id);
+      await CandidateJobServices.rejectCandidateJob(pendingCandidateJob.id);
       toast.success("Đã từ chối ứng viên");
       fetchCandidateJobs(paginationInput);
+      setIsConfirmRejectOpen(false);
+      setPendingCandidateJob(null);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Lỗi khi từ chối ứng viên");
     }
-  }, [fetchCandidateJobs, paginationInput]);
+  }, [fetchCandidateJobs, paginationInput, pendingCandidateJob]);
+
+  const onApproveClick = (candidateJob: CandidateJob) => {
+    setPendingCandidateJob(candidateJob);
+    setIsConfirmApproveOpen(true);
+  };
+
+  const onRejectClick = (candidateJob: CandidateJob) => {
+    setPendingCandidateJob(candidateJob);
+    setIsConfirmRejectOpen(true);
+  };
 
   // Tìm job được chọn để kiểm tra status
   const selectedJob = useMemo(() => {
@@ -424,7 +453,7 @@ const RecruitmentProcessManagement = () => {
               {isPending && (
                 <>
                   <Button
-                    onClick={() => handleApprove(candidateJob)}
+                    onClick={() => onApproveClick(candidateJob)}
                     variant="outline"
                     size="sm"
                     className="text-green-600 hover:bg-green-600 hover:text-white hover:border-green-600"
@@ -433,7 +462,7 @@ const RecruitmentProcessManagement = () => {
                     <CheckCircle className="h-4 w-4" />
                   </Button>
                   <Button
-                    onClick={() => handleReject(candidateJob)}
+                    onClick={() => onRejectClick(candidateJob)}
                     variant="outline"
                     size="sm"
                     className="text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600"
@@ -459,7 +488,7 @@ const RecruitmentProcessManagement = () => {
         },
       },
     ],
-    [paginationInfo, handleApprove, handleReject, cvMap]
+    [paginationInfo, onApproveClick, onRejectClick, cvMap]
   );
 
   return (
@@ -909,6 +938,50 @@ const RecruitmentProcessManagement = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Confirm Approve Dialog */}
+      <AlertDialog open={isConfirmApproveOpen} onOpenChange={setIsConfirmApproveOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận duyệt ứng viên</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn duyệt CV của ứng viên{" "}
+              <span className="font-semibold text-foreground">
+                {pendingCandidateJob?.cvId && cvMap[pendingCandidateJob.cvId]?.user?.fullName}
+              </span>? 
+              Hành động này sẽ đưa ứng viên vào quy trình tuyển dụng tiếp theo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingCandidateJob(null)}>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleApprove} className="bg-green-600 hover:bg-green-700 text-white border-green-600">
+              Xác nhận duyệt
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm Reject Dialog */}
+      <AlertDialog open={isConfirmRejectOpen} onOpenChange={setIsConfirmRejectOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận từ chối ứng viên</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn từ chối CV của ứng viên{" "}
+              <span className="font-semibold text-foreground">
+                {pendingCandidateJob?.cvId && cvMap[pendingCandidateJob.cvId]?.user?.fullName}
+              </span>? 
+              Hành động này sẽ đánh dấu ứng viên không đạt vòng CV.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingCandidateJob(null)}>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleReject} className="bg-red-600 hover:bg-red-700 text-white border-red-600">
+              Xác nhận từ chối
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

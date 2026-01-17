@@ -81,21 +81,6 @@ export default function JobsPage() {
 
   const debouncedKeyword = useDebounce(keyword, 700);
 
-  // Chuẩn hóa params trước khi gọi API (tránh axios encode array thành taxonomyIds[])
-  const buildRequestParams = useCallback(
-    (params: PaginationParamsInput) => {
-      const { taxonomyIds, ...rest } = params;
-      return {
-        ...rest,
-        taxonomyIds:
-          taxonomyIds && Array.isArray(taxonomyIds) && taxonomyIds.length > 0
-            ? taxonomyIds.join(",")
-            : null,
-      };
-    },
-    []
-  );
-
   useEffect(() => {
     const searchParam = searchParams.get("search");
     if (searchParam !== keyword) {
@@ -111,8 +96,7 @@ export default function JobsPage() {
   const getAllWithPagination = useCallback(async (params: PaginationParamsInput) => {
     try {
       setLoading(true);
-      const requestParams = buildRequestParams(params);
-      const response = await JobServices.getAllWithPagination(requestParams);
+      const response = await JobServices.getAllWithPagination(params);
       setJobs(response.result.items);
       setPaginationInfo(response.result.pageInfo);
     } catch (err: any) {
@@ -120,7 +104,7 @@ export default function JobsPage() {
     } finally {
       setLoading(false);
     }
-  }, [buildRequestParams]);
+  }, []);
 
   const getProvinces = useCallback(async () => {
     try {

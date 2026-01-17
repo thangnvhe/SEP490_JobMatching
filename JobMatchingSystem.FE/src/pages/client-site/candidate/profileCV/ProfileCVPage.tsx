@@ -1144,20 +1144,58 @@ const ProfileCvPage = () => {
                             </Button>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-y-4 gap-x-8 border-t border-gray-100 pt-6 sm:grid-cols-2 lg:grid-cols-3">
-                            {userSection.map(({ icon: Icon, value, label }) => (
-                                <div key={label} className="flex items-center gap-3 text-sm">
-                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
-                                        <Icon className="h-4 w-4" />
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-xs text-gray-400">{label}</span>
-                                        <span className="font-medium text-gray-700 truncate max-w-[200px]">
-                                            {value}
-                                        </span>
-                                    </div>
+                        <div className="grid grid-cols-1 gap-y-4 border-t border-gray-100 pt-6 sm:grid-cols-2 lg:grid-cols-4">
+                            {/* Row 1: Họ tên - giới tính */}
+                            <div className="flex items-center gap-3 text-sm">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
+                                    <UserIcon className="h-4 w-4" />
                                 </div>
-                            ))}
+                                <div className="flex flex-col">
+                                    <span className="text-xs text-gray-400">Họ tên - Giới tính</span>
+                                    <span className="font-medium text-gray-700 truncate max-w-[200px]">
+                                        {userProfile?.fullName || "Chưa cập nhật"} - {userProfile?.gender === true ? "Nam" : (userProfile?.gender === false ? "Nữ" : "Chưa cập nhật")}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Row 2: Địa chỉ */}
+                            <div className="flex items-center gap-3 text-sm">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
+                                    <MapPin className="h-4 w-4" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-xs text-gray-400">Địa chỉ</span>
+                                    <span className="font-medium text-gray-700 truncate max-w-[200px]">
+                                        {userProfile?.address || "Chưa cập nhật"}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Row 3: Điện thoại - ngày sinh */}
+                            <div className="flex items-center gap-3 text-sm">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
+                                    <Phone className="h-4 w-4" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-xs text-gray-400">Điện thoại - Ngày sinh</span>
+                                    <span className="font-medium text-gray-700 truncate max-w-[200px]">
+                                        {userProfile?.phoneNumber || "Chưa cập nhật"} - {userProfile?.birthday ? format(new Date(userProfile.birthday), "dd/MM/yyyy") : "Chưa cập nhật"}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Row 4: Email */}
+                            <div className="flex items-center gap-3 text-sm">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
+                                    <Mail className="h-4 w-4" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-xs text-gray-400">Email</span>
+                                    <span className="font-medium text-gray-700 truncate max-w-[200px]">
+                                        {userProfile?.email || "Chưa cập nhật"}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
