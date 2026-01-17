@@ -37,7 +37,7 @@ namespace JobMatchingSystem.API.DTOs.Response
     {
         public int CompanyId { get; set; }
         public string Name { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
         public CompanyStatus Status { get; set; }
     }
 
@@ -45,14 +45,14 @@ namespace JobMatchingSystem.API.DTOs.Response
     {
         public int Id { get; set; }
         public decimal Amount { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
     }
 
     public class RecentJobDto
     {
         public int JobId { get; set; }
         public string Title { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
     }
 
     public class ServicePlanPercentageDto

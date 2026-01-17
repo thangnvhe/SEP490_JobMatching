@@ -82,7 +82,7 @@ public class AdminDashboardService : IAdminDashboardService
             {
                 CompanyId = c.Id,
                 Name = c.Name,
-                CreatedAt = c.CreatedAt.Value,
+                CreatedAt = c.CreatedAt,
                 Status = c.Status
             })
             .ToListAsync();
@@ -95,7 +95,7 @@ public class AdminDashboardService : IAdminDashboardService
             {
                 CompanyId = c.Id,
                 Name = c.Name,
-                CreatedAt = c.VerifiedAt.Value,
+                CreatedAt = c.VerifiedAt,
                 Status = c.Status
             })
             .ToListAsync();
