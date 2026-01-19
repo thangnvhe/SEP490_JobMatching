@@ -842,7 +842,7 @@ const RecruitmentProcessManagement = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                      {/* <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
                         <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                         <div>
                           <p className="text-xs text-muted-foreground">Cập nhật lần cuối</p>
@@ -856,7 +856,7 @@ const RecruitmentProcessManagement = () => {
                             })}
                           </p>
                         </div>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
 

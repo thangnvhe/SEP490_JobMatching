@@ -84,50 +84,50 @@ export default function RecruiterDashboardPage() {
     }
     
     // Nếu là number, convert sang string
-    // Mapping: 1=Draft, 2=Rejected, 3=Moderated, 4=Opened, 5=Closed
+    // Mapping: 0=Draft, 1=Rejected, 2=Moderated, 3=Opened, 4=Closed
     const statusMap: { [key: number]: string } = {
-      1: 'Đang chờ duyệt',
-      2: 'Bị từ chối',
-      3: 'Đã kiểm duyệt',
-      4: 'Đang mở',
-      5: 'Đã đóng'
+      0: 'Đang chờ duyệt',
+      1: 'Bị từ chối',
+      2: 'Đã kiểm duyệt',
+      3: 'Đang mở',
+      4: 'Đã đóng'
     };
     return statusMap[status] || 'Không xác định';
   };
 
-  const getStatusBadgeVariant = (status: number | string) => {
+  const getStatusBadgeClass = (status: number | string) => {
     if (typeof status === 'string') {
       switch (status) {
         case 'Opened':
-          return 'default';
+          return 'bg-green-100 text-green-800 hover:bg-green-100';
         case 'Moderated':
-          return 'secondary';
+          return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
         case 'Draft':
-          return 'outline';
+          return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100';
         case 'Closed':
-          return 'secondary';
+          return 'bg-red-100 text-red-800 hover:bg-red-100';
         case 'Rejected':
-          return 'destructive';
+          return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
         default:
-          return 'outline';
+          return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
       }
     }
     
     // Nếu là number
-    // Mapping: 1=Draft, 2=Rejected, 3=Moderated, 4=Opened, 5=Closed
+    // Mapping: 0=Draft, 1=Rejected, 2=Moderated, 3=Opened, 4=Closed
     switch (status) {
-      case 4: // Opened
-        return 'default';
-      case 3: // Moderated
-        return 'secondary';
-      case 1: // Draft
-        return 'outline';
-      case 5: // Closed
-        return 'secondary';
-      case 2: // Rejected
-        return 'destructive';
+      case 3: // Opened
+        return 'bg-green-100 text-green-800 hover:bg-green-100';
+      case 2: // Moderated
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
+      case 0: // Draft
+        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100';
+      case 4: // Closed
+        return 'bg-red-100 text-red-800 hover:bg-red-100';
+      case 1: // Rejected
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
       default:
-        return 'outline';
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
     }
   };
 
@@ -361,7 +361,7 @@ export default function RecruiterDashboardPage() {
                 <div key={job.jobId} className="border-l-2 border-border pl-4 py-2 hover:bg-muted/50 rounded-r transition-colors">
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <p className="font-medium flex-1 min-w-0">{job.title}</p>
-                    <Badge variant={getStatusBadgeVariant(job.status)} className="text-xs shrink-0">
+                    <Badge className={`text-xs shrink-0 ${getStatusBadgeClass(job.status)}`}>
                       {getStatusLabel(job.status)}
                     </Badge>
                   </div>
@@ -394,7 +394,7 @@ export default function RecruiterDashboardPage() {
                 <div key={job.jobId} className="border-l-2 border-border pl-4 py-2 hover:bg-muted/50 rounded-r transition-colors">
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <p className="font-medium flex-1 min-w-0">{job.title}</p>
-                    <Badge variant={getStatusBadgeVariant(job.status)} className="text-xs shrink-0">
+                    <Badge className={`text-xs shrink-0 ${getStatusBadgeClass(job.status)}`}>
                       {getStatusLabel(job.status)}
                     </Badge>
                   </div>
@@ -460,7 +460,7 @@ export default function RecruiterDashboardPage() {
                 <div key={candidate.candidateJobId} className="border-l-2 border-border pl-4 py-2 hover:bg-muted/50 rounded-r transition-colors">
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <p className="font-medium flex-1 min-w-0">{candidate.candidateName}</p>
-                    {candidate.cvId && (
+                    {/* {candidate.cvId && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -473,7 +473,7 @@ export default function RecruiterDashboardPage() {
                         <FileText className="h-3 w-3 mr-1" />
                         CV
                       </Button>
-                    )}
+                    )} */}
                   </div>
                   <p className="text-sm text-muted-foreground">{candidate.jobTitle}</p>
                   <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
