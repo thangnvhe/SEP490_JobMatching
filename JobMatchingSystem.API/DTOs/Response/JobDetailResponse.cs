@@ -21,6 +21,7 @@
         public DateTime? OpenedAt { get; set; }
         public DateTime? ExpiredAt { get; set; }
         public bool? IsDeleted { get; set; }
+        public int? SystemConfigEducationLevelId { get; set; }
         public List<TaxonomyResponse> Taxonomies { get; set; } = new();
         
         // Các trường mới cho logic FE
