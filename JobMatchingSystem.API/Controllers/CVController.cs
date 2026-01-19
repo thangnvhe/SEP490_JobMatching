@@ -29,36 +29,27 @@ namespace JobMatchingSystem.API.Controllers
         [ProducesResponseType(typeof(APIResponse<string>), 400)]
         public async Task<IActionResult> UploadCV([FromForm] UploadCVRequest request)
         {
-            try
-            {
-                // Validate CV file before upload
-                var validationError = ValidateCVFile(request.File);
-                if (!string.IsNullOrEmpty(validationError))
-                {
-                    return BadRequest(APIResponse<string>.Builder()
-                        .WithStatusCode(HttpStatusCode.BadRequest)
-                        .WithSuccess(false)
-                        .WithResult(validationError)
-                        .Build());
-                }
 
-                int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-                await _cvService.UploadCVAsync(request, userId);
-
-                return Ok(APIResponse<string>.Builder()
-                    .WithStatusCode(HttpStatusCode.Created)
-                    .WithSuccess(true)
-                    .WithResult("Upload CV thành công")
-                    .Build());
-            }
-            catch (Exception ex)
+            // Validate CV file before upload
+            var validationError = ValidateCVFile(request.File);
+            if (!string.IsNullOrEmpty(validationError))
             {
-                return StatusCode(500, APIResponse<string>.Builder()
-                    .WithStatusCode(HttpStatusCode.InternalServerError)
+                return BadRequest(APIResponse<string>.Builder()
+                    .WithStatusCode(HttpStatusCode.BadRequest)
                     .WithSuccess(false)
-                    .WithResult($"Upload thất bại: {ex.Message}")
+                    .WithResult(validationError)
                     .Build());
             }
+
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            await _cvService.UploadCVAsync(request, userId);
+
+            return Ok(APIResponse<string>.Builder()
+                .WithStatusCode(HttpStatusCode.Created)
+                .WithSuccess(true)
+                .WithResult("Upload CV thành công")
+                .Build());
+         
         }
 
         [HttpGet("{id}")]
