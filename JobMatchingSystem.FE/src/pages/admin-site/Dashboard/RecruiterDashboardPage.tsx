@@ -18,7 +18,6 @@ import {
   DollarSign,
   AlertTriangle,
   RefreshCcw,
-  FileText
 } from "lucide-react";
 import { DashboardServices } from "@/services/dashboard.service";
 import type { RecruiterDashboard } from "@/models/dashboard";
