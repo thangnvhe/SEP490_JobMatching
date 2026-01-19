@@ -469,10 +469,16 @@ export default function CreateJobPage() {
     // Cập nhật taxonomyIds từ selectedTaxonomies trước khi validate
     data.taxonomyIds = selectedTaxonomies;
     
-    // Validate salary range
-    if (!isNegotiableSalary && data.salaryMin && data.salaryMax && data.salaryMin >= data.salaryMax) {
-      toast.error("Lương tối thiểu phải nhỏ hơn lương tối đa");
-      return;
+    // Validate salary - phải chọn một trong hai: thỏa thuận hoặc nhập cả min và max
+    if (!isNegotiableSalary) {
+      if (!data.salaryMin || !data.salaryMax) {
+        toast.error("Vui lòng nhập cả lương tối thiểu và lương tối đa, hoặc chọn 'Lương thỏa thuận'");
+        return;
+      }
+      if (data.salaryMin >= data.salaryMax) {
+        toast.error("Lương tối thiểu phải nhỏ hơn lương tối đa");
+        return;
+      }
     }
 
     // Validate position

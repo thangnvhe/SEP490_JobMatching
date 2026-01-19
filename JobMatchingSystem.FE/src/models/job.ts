@@ -26,6 +26,7 @@ export interface Job {
   openedAt?: string;
   expiredAt?: string;
   isDeleted: boolean;
+  systemConfigEducationLevelId?: number;
   taxonomies: Taxonomy[];
   isReport?: boolean;
   isApply?: boolean;

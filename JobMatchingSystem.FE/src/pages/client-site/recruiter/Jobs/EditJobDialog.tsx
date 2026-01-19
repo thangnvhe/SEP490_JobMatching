@@ -60,7 +60,7 @@ interface JobFormData {
   salaryMin: number | null;
   salaryMax: number | null;
   experienceYear: number;
-  educationLevel: string;
+  systemConfigEducationLevelId: number;
   jobType: string;
   positionId: number;
   taxonomyIds: number[];
@@ -81,6 +81,8 @@ const validateForm = (formData: JobFormData): string[] => {
 
   if (!formData.description.trim()) {
     errors.push("Mô tả công việc là bắt buộc");
+  } else if (formData.description.trim().length < 50) {
+    errors.push("Mô tả công việc phải có ít nhất 50 ký tự");
   }
 
   if (!formData.requirements.trim()) {
@@ -95,7 +97,7 @@ const validateForm = (formData: JobFormData): string[] => {
     errors.push("Số năm kinh nghiệm phải từ 0 đến 50");
   }
 
-  if (!formData.educationLevel || !formData.educationLevel.trim()) {
+  if (!formData.systemConfigEducationLevelId || formData.systemConfigEducationLevelId === 0) {
     errors.push("Trình độ là bắt buộc");
   }
 
@@ -150,7 +152,7 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
     salaryMin: null,
     salaryMax: null,
     experienceYear: 0,
-    educationLevel: "",
+    systemConfigEducationLevelId: 0,
     jobType: "FullTime",
     positionId: 0,
     taxonomyIds: [],
@@ -170,7 +172,20 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
 
   // Load form data when job changes
   useEffect(() => {
-    if (job && isOpen) {
+    if (job && isOpen && educationLevels.length > 0) {
+      // Get education level id from job
+      let educationLevelId = job.systemConfigEducationLevelId || 0;
+      
+      // Fallback for backward compatibility if systemConfigEducationLevelId is not set
+      if (!educationLevelId && (job as any).educationLevel) {
+        const matchedLevel = educationLevels.find(
+          level => level.value === (job as any).educationLevel || level.name === (job as any).educationLevel
+        );
+        if (matchedLevel) {
+          educationLevelId = matchedLevel.id;
+        }
+      }
+
       setFormData({
         title: job.title || "",
         description: job.description || "",
@@ -180,7 +195,7 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
         salaryMin: job.salaryMin || null,
         salaryMax: job.salaryMax || null,
         experienceYear: job.experienceYear || 0,
-        educationLevel: (job as any).educationLevel || "",
+        systemConfigEducationLevelId: educationLevelId,
         jobType: job.jobType || "FullTime",
         positionId: job.positionId || 0,
         taxonomyIds: job.taxonomies ? job.taxonomies.map(t => t.id) : [],
@@ -191,7 +206,7 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
       setSelectedPositionId(job.positionId || null);
       setIsNegotiableSalary(!job.salaryMin && !job.salaryMax);
     }
-  }, [job, isOpen]);
+  }, [job, isOpen, educationLevels]);
 
   // Load taxonomies and positions
   useEffect(() => {
@@ -328,7 +343,7 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
         requirements: formData.requirements.trim(),
         location: formData.location.trim(),
         experienceYear: formData.experienceYear,
-        educationLevel: formData.educationLevel,
+        systemConfigEducationLevelId: formData.systemConfigEducationLevelId,
         jobType: formData.jobType,
         positionId: selectedPositionId || formData.positionId,
         taxonomyIds: formData.taxonomyIds,
@@ -483,18 +498,19 @@ export default function EditJobDialog({ job, isOpen, onClose, onSave }: EditJobD
               <div className="text-sm text-muted-foreground mt-1">Đang tải...</div>
             ) : (
               <Select
-                value={formData.educationLevel}
-                onValueChange={(value) => handleInputChange('educationLevel', value)}
+                key={`education-${formData.systemConfigEducationLevelId}`}
+                value={formData.systemConfigEducationLevelId > 0 ? formData.systemConfigEducationLevelId.toString() : undefined}
+                onValueChange={(value) => handleInputChange('systemConfigEducationLevelId', parseInt(value))}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Chọn trình độ" />
                 </SelectTrigger>
                 <SelectContent>
                   {educationLevels.length === 0 ? (
-                    <SelectItem value="empty" disabled>Không có dữ liệu trình độ</SelectItem>
+                    <SelectItem value="0" disabled>Không có dữ liệu trình độ</SelectItem>
                   ) : (
                     educationLevels.map((level) => (
-                      <SelectItem key={level.id} value={level.value}>
+                      <SelectItem key={level.id} value={level.id.toString()}>
                         {level.name}
                       </SelectItem>
                     ))
