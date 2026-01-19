@@ -592,7 +592,7 @@ export default function CreateJobPage() {
         salaryMin: isNegotiableSalary ? undefined : (jobData.salaryMin || undefined),
         salaryMax: isNegotiableSalary ? undefined : (jobData.salaryMax || undefined),
         experienceYear: jobData.experienceYear,
-        educationLevel: jobData.educationLevel,
+        systemConfigEducationLevelId: jobData.educationLevel ? parseInt(jobData.educationLevel, 10) : undefined,
         jobType: jobData.jobType,
         positionId: selectedPositionId || 0,
         openedAt: jobData.openedAt instanceof Date ? jobData.openedAt.toISOString() : new Date(jobData.openedAt).toISOString(),
