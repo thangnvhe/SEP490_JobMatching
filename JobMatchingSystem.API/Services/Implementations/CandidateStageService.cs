@@ -33,7 +33,19 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 throw new AppException(ErrorCode.NotFoundCandidateStage());
             }
-            
+
+            // Kiểm tra thời gian phỏng vấn đã đến chưa
+            if (candidateStage.InterviewDate.HasValue && candidateStage.InterviewStartTime.HasValue)
+            {
+                var interviewDateTime = candidateStage.InterviewDate.Value
+                    .ToDateTime(candidateStage.InterviewStartTime.Value);
+
+                if (DateTime.Now < interviewDateTime)
+                {
+                    throw new AppException(ErrorCode.CannotUpdateBeforeInterviewTime());
+                }
+            }
+
             var candidateJob = await _unitOfWork.CandidateJobRepository.GetDetail(candidateStage.CandidateJobId);
             if (candidateJob == null)
             {
@@ -185,6 +197,20 @@ namespace JobMatchingSystem.API.Services.Implementations
                 {
                     throw new AppException(
                         ErrorCode.InvalidCandidateStageStatus("Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc")
+                    );
+                }
+
+                // ===== CHECK KHÔNG ĐƯỢC ĐẶT LỊCH TRONG QUÁ KHỨ (TRONG NGÀY) =====
+                var now = DateTime.Now;
+                var requestedDateTime = request.InterviewDate.Value
+                    .ToDateTime(request.InterviewStartTime.Value);
+
+                if (requestedDateTime < now)
+                {
+                    throw new AppException(
+                        ErrorCode.InvalidCandidateStageStatus(
+                            "Không thể đặt lịch phỏng vấn trong quá khứ"
+                        )
                     );
                 }
 
