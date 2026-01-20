@@ -4,6 +4,7 @@ namespace JobMatchingSystem.API.Configuration
     {
         public double SkillWeight { get; set; }
         public double EducationWeight { get; set; }
+        public double MinMatchingScore { get; set; } = 30.0;
         public SkillSimilaritySettings SkillSimilarity { get; set; } = new();
     }
 

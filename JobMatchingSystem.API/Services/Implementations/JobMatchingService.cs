@@ -124,13 +124,14 @@ namespace JobMatchingSystem.API.Services.Implementations
                 var filteredByExperience = new List<ApplicationUser>();
                 foreach (var candidate in candidatesWithCV)
                 {
-                    var experiences = await _context.CVExperiences
-                        .Where(exp => exp.UserId == candidate.Id)
-                        .ToListAsync();
+                    // Filter based on experience years in candidate's taxonomy (skills)
+                    // We take the maximum experience year from any of their skills
+                    var maxSkillExperience = candidate.CandidateTaxonomies != null && candidate.CandidateTaxonomies.Any() 
+                        ? candidate.CandidateTaxonomies.Max(ct => ct.ExperienceYear ?? 0) 
+                        : 0;
 
-                    if (experiences.Any(exp =>
-                        (!minExperience.HasValue || CalculateYearsOfExperience(exp.StartDate, exp.EndDate) >= minExperience.Value) &&
-                        (!maxExperience.HasValue || CalculateYearsOfExperience(exp.StartDate, exp.EndDate) <= maxExperience.Value)))
+                    if ((!minExperience.HasValue || maxSkillExperience >= minExperience.Value) &&
+                        (!maxExperience.HasValue || maxSkillExperience <= maxExperience.Value))
                     {
                         filteredByExperience.Add(candidate);
                     }
@@ -163,14 +164,14 @@ namespace JobMatchingSystem.API.Services.Implementations
                 candidatesWithCV = filteredByEducation;
             }
 
-            // Only return candidates with matching score >= 30%
-            const double MIN_MATCHING_SCORE = 30.0;
+            // Only return candidates with matching score >= Minimum Matching Score
+            double minMatchingScore = _settings.MinMatchingScore;
             var matchingResults = new List<CandidateMatchingResult>();
 
             foreach (var candidate in candidatesWithCV)
             {
                 var matchingResult = await CalculateMatchingScoreForCandidateAsync(candidate, job);
-                if (matchingResult != null && matchingResult.TotalScore >= MIN_MATCHING_SCORE)
+                if (matchingResult != null && matchingResult.TotalScore >= minMatchingScore)
                 {
                     matchingResults.Add(matchingResult);
                 }
@@ -232,8 +233,6 @@ namespace JobMatchingSystem.API.Services.Implementations
             {
                 // Calculate individual scores
                 var skillDetails = await CalculateSkillMatchingAsync(candidate, job);
-                var experienceDetails = CalculateExperienceMatching(candidate, job);
-                var positionDetails = CalculatePositionMatching(candidate, job);
                 var educationDetails = CalculateEducationMatching(candidate, job);
 
                 // Calculate weighted total score
@@ -252,8 +251,6 @@ namespace JobMatchingSystem.API.Services.Implementations
                     Details = new MatchingDetails
                     {
                         SkillMatching = skillDetails,
-                        ExperienceMatching = experienceDetails,
-                        PositionMatching = positionDetails,
                         EducationMatching = educationDetails
                     }
                 };
@@ -273,7 +270,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             
             if (!requiredSkills.Any())
             {
-                details.Score = 50; // Default score if no skills required
+                details.Score = 100; // Default score if no skills required
                 return details;
             }
 
@@ -421,101 +418,6 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (similarity >= 0.4) return SkillMatchType.SiblingMatch;
             return SkillMatchType.ExactMatch;
         }
-
-        private ExperienceMatchingDetails CalculateExperienceMatching(ApplicationUser candidate, Job job)
-        {
-            var details = new ExperienceMatchingDetails
-            {
-                RequiredYears = job.ExperienceYear ?? 0
-            };
-
-            if (details.RequiredYears <= 0)
-            {
-                details.Score = 100; // No experience required
-                details.ExperienceRatio = 1.0;
-                return details;
-            }
-
-            // Calculate candidate's maximum experience from CV
-            var maxExperience = 0;
-            if (candidate.CVExperiences.Any())
-            {
-                maxExperience = candidate.CVExperiences
-                    .Select(e => CalculateYearsOfExperience(e.StartDate, e.EndDate))
-                    .Max();
-            }
-
-            details.CandidateMaxYears = maxExperience;
-            details.ExperienceRatio = CalculateExperienceRatio(maxExperience, details.RequiredYears);
-            details.Score = Math.Round(details.ExperienceRatio * 100, 2);
-
-            return details;
-        }
-
-        private PositionMatchingDetails CalculatePositionMatching(ApplicationUser candidate, Job job)
-        {
-            var details = new PositionMatchingDetails
-            {
-                RequiredPosition = job.Position?.Name ?? "",
-                CandidatePosition = candidate.CVProfile?.Position?.Name ?? ""
-            };
-
-            if (string.IsNullOrEmpty(details.RequiredPosition))
-            {
-                details.Score = 50; // Default score if no specific position required
-                details.MatchType = PositionMatchType.ExactMatch;
-                return details;
-            }
-
-            if (string.IsNullOrEmpty(details.CandidatePosition))
-            {
-                details.Score = 25; // Low score if candidate has no specified position
-                details.MatchType = PositionMatchType.NoMatch;
-                return details;
-            }
-
-            // Exact match
-            if (details.RequiredPosition.Equals(details.CandidatePosition, StringComparison.OrdinalIgnoreCase))
-            {
-                details.Score = 100;
-                details.MatchType = PositionMatchType.ExactMatch;
-                return details;
-            }
-
-            // Check for Fullstack match
-            var requiredLower = details.RequiredPosition.ToLower();
-            var candidateLower = details.CandidatePosition.ToLower();
-
-            if (candidateLower.Contains("fullstack") || candidateLower.Contains("full stack"))
-            {
-                if (requiredLower.Contains("backend") || requiredLower.Contains("frontend") || 
-                    requiredLower.Contains("developer") || requiredLower.Contains("engineer"))
-                {
-                    details.Score = 80;
-                    details.MatchType = PositionMatchType.FullstackMatch;
-                    return details;
-                }
-            }
-
-            // Check for related positions (basic keyword matching)
-            var relatedKeywords = new[] { "developer", "engineer", "programmer", "architect" };
-            var hasRelatedKeywords = relatedKeywords.Any(keyword => 
-                requiredLower.Contains(keyword) && candidateLower.Contains(keyword));
-
-            if (hasRelatedKeywords)
-            {
-                details.Score = 30;
-                details.MatchType = PositionMatchType.RelatedMatch;
-            }
-            else
-            {
-                details.Score = 0;
-                details.MatchType = PositionMatchType.NoMatch;
-            }
-
-            return details;
-        }
-
         private EducationMatchingDetails CalculateEducationMatching(ApplicationUser candidate, Job job)
         {
             var details = new EducationMatchingDetails();
@@ -610,14 +512,14 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             var filteredJobs = await query.ToListAsync();
 
-            // Only return jobs with matching score >= 30%
-            const double MIN_MATCHING_SCORE = 30.0;
+            // Only return jobs with matching score >= Minimum Matching Score
+            double minMatchingScore = _settings.MinMatchingScore;
             var jobsWithScores = new List<(Job Job, double Score)>();
 
             foreach (var job in filteredJobs)
             {
                 var matchingResult = await CalculateMatchingScoreInternalAsync(candidate, job);
-                if (matchingResult != null && matchingResult.TotalScore >= MIN_MATCHING_SCORE)
+                if (matchingResult != null && matchingResult.TotalScore >= minMatchingScore)
                 {
                     jobsWithScores.Add((job, matchingResult.TotalScore));
                 }
@@ -780,19 +682,6 @@ namespace JobMatchingSystem.API.Services.Implementations
                     ExperienceYear = ct.ExperienceYear ?? 0
                 }).ToList(),
 
-                // Work Experiences
-                WorkExperiences = await _context.CVExperiences
-                    .Where(exp => exp.UserId == candidate.Id)
-                    .Select(exp => new CandidateExperienceInfo
-                    {
-                        CompanyName = exp.CompanyName,
-                        Position = exp.Position,
-                        StartDate = exp.StartDate,
-                        EndDate = exp.EndDate,
-                        Description = exp.Description
-                    })
-                    .ToListAsync(),
-
                 // Education
                 Educations = (await _context.CVEducations
                     .Include(ed => ed.EducationLevel)
@@ -811,12 +700,6 @@ namespace JobMatchingSystem.API.Services.Implementations
             };
 
             return result;
-        }
-
-        private static int CalculateYearsOfExperience(DateTime startDate, DateTime? endDate)
-        {
-            var endDt = endDate ?? DateTime.Now;
-            return Math.Max(0, endDt.Year - startDate.Year);
         }
     }
 }
