@@ -118,6 +118,8 @@ namespace JobMatchingSystem.API.Services.Implementations
                 .Include(cv => cv.User)
                     .ThenInclude(u => u.CandidateTaxonomies)
                         .ThenInclude(ct => ct.Taxonomy)
+                .Include(cv => cv.User.CVEducations)
+                    .ThenInclude(e => e.EducationLevel)
                 .Include(cv => cv.User.CVProfile)
                     .ThenInclude(cvp => cvp.Position)
                 .Where(cv => cv.IsPrimary == true && cv.User.IsActive)
