@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -218,49 +217,38 @@ export default function CVSearchPage() {
     <div className="flex flex-1 flex-col">
       <div className="flex flex-col gap-4 py-4 px-4 lg:px-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tìm kiếm CV ứng viên</h1>
-          <p className="text-muted-foreground">
-            Tìm kiếm và đánh giá ứng viên phù hợp cho vị trí tuyển dụng
-          </p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Tìm kiếm CV ứng viên</h1>
+            <p className="text-muted-foreground">
+              Tìm kiếm và đánh giá ứng viên phù hợp cho vị trí tuyển dụng
+            </p>
+          </div>
+          
+          <div className="w-full md:w-[400px]">
+            {searchParams.get('jobId') && selectedJob ? (
+              <div className="p-2 border rounded-md bg-blue-50 border-blue-200">
+                <span className="font-medium text-blue-900">Công việc: {selectedJob.title}</span>
+              </div>
+            ) : (
+              <Select value={filters.jobId} onValueChange={(value) => handleFilterChange('jobId', value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn công việc để tìm ứng viên" />
+                </SelectTrigger>
+                <SelectContent>
+                  {jobs.map(job => (
+                    <SelectItem key={job.jobId} value={job.jobId.toString()}>
+                      <span className="font-medium">{job.title}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Filter Panel - Left Side */}
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Bộ lọc tìm kiếm</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Job Selection */}
-              <div className="space-y-2">
-                <Label htmlFor="jobId">Công việc</Label>
-                {searchParams.get('jobId') && selectedJob ? (
-                  // Hiển thị thông tin job đã chọn
-                  <div className="p-3 border rounded-md bg-blue-50 border-blue-200">
-                    <span className="font-medium text-blue-900">{selectedJob.title}</span>
-                  </div>
-                ) : (
-                  // Hiển thị dropdown chọn job
-                  <Select value={filters.jobId} onValueChange={(value) => handleFilterChange('jobId', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn công việc để tìm ứng viên" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {jobs.map(job => (
-                        <SelectItem key={job.jobId} value={job.jobId.toString()}>
-                          <span className="font-medium">{job.title}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Candidates List - Right Side */}
-          <div className="lg:col-span-3 space-y-4">
+        {/* Candidates List */}
+        <div className="space-y-4">
             {loading && (
               <div className="text-center py-8">
                 <p>Đang tìm kiếm ứng viên...</p>
@@ -470,7 +458,6 @@ export default function CVSearchPage() {
               </div>
             )}
           </div>
-        </div>
       </div>
     </div>
   );
