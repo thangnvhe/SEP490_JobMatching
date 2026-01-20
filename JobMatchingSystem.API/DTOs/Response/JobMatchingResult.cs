@@ -75,7 +75,8 @@ namespace JobMatchingSystem.API.DTOs.Response
     {
         ExactMatch = 0,    // 100% - Trùng khớp hoàn toàn
         ParentMatch = 1,   // 50% - Biết ngôn ngữ cha
-        SiblingMatch = 2   // 30% - Cùng hệ sinh thái
+        SiblingMatch = 2,  // 30% - Cùng hệ sinh thái
+        Unrelated = 3      // 0.3% - Không liên quan
     }
 
     public enum PositionMatchType
