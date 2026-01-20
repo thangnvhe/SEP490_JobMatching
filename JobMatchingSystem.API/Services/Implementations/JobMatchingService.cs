@@ -1,23 +1,23 @@
+using JobMatchingSystem.API.Configuration;
 using JobMatchingSystem.API.Data;
 using JobMatchingSystem.API.DTOs.Response;
 using JobMatchingSystem.API.Helpers;
 using JobMatchingSystem.API.Models;
 using JobMatchingSystem.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace JobMatchingSystem.API.Services.Implementations
 {
     public class JobMatchingService : IJobMatchingService
     {
         private readonly ApplicationDbContext _context;
-        private const double SKILL_WEIGHT = 0.30;      // 30%
-        private const double EXPERIENCE_WEIGHT = 0.20; // 20%
-        private const double POSITION_WEIGHT = 0.40;   // 40%
-        private const double EDUCATION_WEIGHT = 0.10;  // 10%
+        private readonly JobMatchingSettings _settings;
 
-        public JobMatchingService(ApplicationDbContext context)
+        public JobMatchingService(ApplicationDbContext context, IOptions<JobMatchingSettings> settings)
         {
             _context = context;
+            _settings = settings.Value;
         }
         public async Task<JobMatchingResult?> CalculateMatchingScoreAsync(int candidateId, int jobId)
         {
@@ -238,10 +238,8 @@ namespace JobMatchingSystem.API.Services.Implementations
 
                 // Calculate weighted total score
                 var totalScore = 
-                    (skillDetails.Score * SKILL_WEIGHT) +
-                    (experienceDetails.Score * EXPERIENCE_WEIGHT) +
-                    (positionDetails.Score * POSITION_WEIGHT) +
-                    (educationDetails.Score * EDUCATION_WEIGHT);
+                    (skillDetails.Score * _settings.SkillWeight) +
+                    (educationDetails.Score * _settings.EducationWeight);
 
                 return new JobMatchingResult
                 {
@@ -346,7 +344,7 @@ namespace JobMatchingSystem.API.Services.Implementations
         private async Task<double> CalculateSkillSimilarityAsync(int candidateSkillId, int requiredSkillId)
         {
             if (candidateSkillId == requiredSkillId)
-                return 1.0; // Exact match
+                return _settings.SkillSimilarity.ExactMatch; // Exact match
 
             // Get both taxonomies with their hierarchies
             var candidateSkill = await GetTaxonomyWithHierarchyAsync(candidateSkillId);
@@ -355,13 +353,20 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (candidateSkill == null || requiredSkill == null)
                 return 0.0;
 
-            // Check if candidate skill is parent of required skill
-            if (await IsParentOfAsync(candidateSkill.Id, requiredSkill.Id))
-                return 0.5; // Parent match - knows language but not specific framework
+            // CASE 1: Candidate skill is Child of Required Skill (Specific implies General)
+            // Example: Candidate has "Spring Boot", Job requires "Java" -> 100% match
+            if (await IsParentOfAsync(requiredSkill.Id, candidateSkill.Id))
+                return _settings.SkillSimilarity.ChildMatch;
 
-            // Check if they are siblings (same parent)
+            // CASE 2: Candidate skill is Parent of Required Skill (General supports Specific)
+            // Example: Candidate has "Java", Job requires "Spring Boot" -> 60% match (Has Foundation)
+            if (await IsParentOfAsync(candidateSkill.Id, requiredSkill.Id))
+                return _settings.SkillSimilarity.ParentMatch; 
+
+            // CASE 3: Siblings (Same ecosystem/parent)
+            // Example: Candidate has "React", Job requires "Angular" -> 40% match (Transferable concepts)
             if (await AreSiblingsAsync(candidateSkill.Id, requiredSkill.Id))
-                return 0.3; // Sibling match - same ecosystem
+                return _settings.SkillSimilarity.SiblingMatch; 
 
             return 0.0; // No relationship
         }
@@ -411,13 +416,10 @@ namespace JobMatchingSystem.API.Services.Implementations
 
         private static SkillMatchType GetSkillMatchType(double similarity)
         {
-            return similarity switch
-            {
-                1.0 => SkillMatchType.ExactMatch,
-                0.5 => SkillMatchType.ParentMatch,
-                0.3 => SkillMatchType.SiblingMatch,
-                _ => SkillMatchType.ExactMatch
-            };
+            if (similarity >= 1.0) return SkillMatchType.ExactMatch;
+            if (similarity >= 0.6) return SkillMatchType.ParentMatch;
+            if (similarity >= 0.4) return SkillMatchType.SiblingMatch;
+            return SkillMatchType.ExactMatch;
         }
 
         private ExperienceMatchingDetails CalculateExperienceMatching(ApplicationUser candidate, Job job)
@@ -543,21 +545,15 @@ namespace JobMatchingSystem.API.Services.Implementations
                 return details;
             }
 
-            // Compare rank scores
-            var scoreDifference = details.CandidateRankScore - details.RequiredRankScore;
-
-            if (scoreDifference < 0)
+            // Calculate ratio: Candidate Score / Required Score
+            if (details.RequiredRankScore <= 0)
             {
-                details.Score = 0; // Candidate doesn't meet minimum education requirement
-            }
-            else if (scoreDifference == 0)
-            {
-                details.Score = 100; // Perfect match
+                details.Score = 100;
             }
             else
             {
-                // Over-qualified, slight reduction
-                details.Score = Math.Max(80, 100 - (scoreDifference * 5));
+                double ratio = (double)details.CandidateRankScore / details.RequiredRankScore;
+                details.Score = Math.Min(ratio, 1.0) * 100;
             }
 
             return details;

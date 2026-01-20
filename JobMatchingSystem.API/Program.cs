@@ -17,6 +17,9 @@ builder.Services.AddProblemDetails();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 
+// Register Configuration
+builder.Services.Configure<JobMatchingSettings>(builder.Configuration.GetSection("JobMatchingSettings"));
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>
