@@ -330,8 +330,9 @@ namespace JobMatchingSystem.API.Services.Implementations
 
                 var finalScore = similarity * experienceRatio * 100;
 
-                // Pick MAX (Use >= to ensure we assume a match even if score is 0 if that were possible, but min is 0.3)
-                if (finalScore >= bestScore)
+                // Pick MAX: Prioritize higher Final Score. 
+                // If Scores are tied (e.g. both 0), prioritize higher Similarity (Related > Unrelated).
+                if (finalScore > bestScore || (finalScore == bestScore && similarity > (bestMatch?.Similarity ?? -1)))
                 {
                     bestScore = finalScore;
                     bestMatch = new SkillMatchItem
@@ -368,7 +369,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (taxonomyLookup.AreSiblings(candidateSkillId, requiredSkillId))
                 return 0.4; 
 
-            return 0.3; // Rule: Unrelated = 0.3
+            return 0.0; // Rule: Unrelated = 0.0
         }
 
         private static double CalculateExperienceRatio(int candidateYears, int requiredYears)
