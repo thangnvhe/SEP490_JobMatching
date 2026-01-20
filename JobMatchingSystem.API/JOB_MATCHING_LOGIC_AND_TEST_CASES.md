@@ -39,8 +39,8 @@ PairScore = Similarity * ExperienceRatio * 100
 Trong đó:
 *   **Similarity (Độ tương đồng):**
     *   `1.0`: Khớp chính xác (Exact Match).
-    *   `0.5`: Quan hệ Cha-Con (Parent Match - ví dụ: biết Java nhưng yêu cầu Spring Boot).
-    *   `0.3`: Quan hệ Anh-Em (Sibling Match - ví dụ: cùng thuộc một nhóm công nghệ).
+    *   `0.6`: Quan hệ Cha-Con (Parent Match - ví dụ: biết Java nhưng yêu cầu Spring Boot).
+    *   `0.4`: Quan hệ Anh-Em (Sibling Match - ví dụ: cùng thuộc một nhóm công nghệ).
     *   `0.0`: Không khớp.
 *   **ExperienceRatio (Tỷ lệ kinh nghiệm):** 
     *   `Ratio = Số năm kinh nghiệm ứng viên / Số năm Job yêu cầu`.
