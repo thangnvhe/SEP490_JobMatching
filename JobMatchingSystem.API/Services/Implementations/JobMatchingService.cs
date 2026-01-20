@@ -26,7 +26,10 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             if (candidate == null || job == null) return null;
 
-            return await CalculateMatchingScoreInternalAsync(candidate, job);
+            var allTaxonomies = await _context.Taxonomies.AsNoTracking().ToListAsync();
+            var taxonomyLookup = new TaxonomyLookup(allTaxonomies);
+
+            return await CalculateMatchingScoreInternalAsync(candidate, job, taxonomyLookup);
         }
 
         public async Task<List<JobMatchingResult>> SearchJobsWithMatchingAsync(int candidateId, 
@@ -70,11 +73,15 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
 
             var jobs = await query.ToListAsync();
+            
+            var allTaxonomies = await _context.Taxonomies.AsNoTracking().ToListAsync();
+            var taxonomyLookup = new TaxonomyLookup(allTaxonomies);
+
             var matchingResults = new List<JobMatchingResult>();
 
             foreach (var job in jobs)
             {
-                var matchingResult = await CalculateMatchingScoreInternalAsync(candidate, job);
+                var matchingResult = await CalculateMatchingScoreInternalAsync(candidate, job, taxonomyLookup);
                 if (matchingResult != null)
                 {
                     matchingResults.Add(matchingResult);
@@ -166,11 +173,15 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             // Only return candidates with matching score >= Minimum Matching Score
             double minMatchingScore = _settings.MinMatchingScore;
+            
+            var allTaxonomies = await _context.Taxonomies.AsNoTracking().ToListAsync();
+            var taxonomyLookup = new TaxonomyLookup(allTaxonomies);
+            
             var matchingResults = new List<CandidateMatchingResult>();
 
             foreach (var candidate in candidatesWithCV)
             {
-                var matchingResult = await CalculateMatchingScoreForCandidateAsync(candidate, job);
+                var matchingResult = await CalculateMatchingScoreForCandidateAsync(candidate, job, taxonomyLookup);
                 if (matchingResult != null && matchingResult.TotalScore >= minMatchingScore)
                 {
                     matchingResults.Add(matchingResult);
@@ -227,12 +238,12 @@ namespace JobMatchingSystem.API.Services.Implementations
                 .FirstOrDefaultAsync(j => j.JobId == jobId && j.Status == Enums.JobStatus.Opened && !j.IsDeleted);
         }
 
-        private async Task<JobMatchingResult?> CalculateMatchingScoreInternalAsync(ApplicationUser candidate, Job job)
+        private async Task<JobMatchingResult?> CalculateMatchingScoreInternalAsync(ApplicationUser candidate, Job job, TaxonomyLookup taxonomyLookup)
         {
             try
             {
                 // Calculate individual scores
-                var skillDetails = await CalculateSkillMatchingAsync(candidate, job);
+                var skillDetails = CalculateSkillMatching(candidate, job, taxonomyLookup);
                 var educationDetails = CalculateEducationMatching(candidate, job);
 
                 // Calculate weighted total score
@@ -263,7 +274,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
         }
 
-        private async Task<SkillMatchingDetails> CalculateSkillMatchingAsync(ApplicationUser candidate, Job job)
+        private SkillMatchingDetails CalculateSkillMatching(ApplicationUser candidate, Job job, TaxonomyLookup taxonomyLookup)
         {
             var details = new SkillMatchingDetails();
             var requiredSkills = job.JobTaxonomies.ToList();
@@ -275,17 +286,16 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
 
             double totalScore = 0;
-            double maxPossibleScore = 0;
 
             foreach (var requiredSkill in requiredSkills)
             {
-                maxPossibleScore += 1.0;
-                var skillMatch = await FindBestSkillMatchAsync(candidate, requiredSkill, job);
-                
+                // Find Best Match for this Requirement
+                var skillMatch = FindBestSkillMatch(candidate, requiredSkill, job, taxonomyLookup);
+
                 if (skillMatch != null)
                 {
                     details.MatchedSkills.Add(skillMatch);
-                    totalScore += skillMatch.FinalScore / 100.0; // Convert to ratio
+                    totalScore += skillMatch.FinalScore / 100.0; 
                 }
                 else
                 {
@@ -293,116 +303,70 @@ namespace JobMatchingSystem.API.Services.Implementations
                 }
             }
 
-            details.Score = maxPossibleScore > 0 ? Math.Round((totalScore / maxPossibleScore) * 100, 2) : 0;
+            // Formula: Sum(Scores) / n
+            details.Score = Math.Round((totalScore / requiredSkills.Count) * 100, 2);
             return details;
         }
 
-        private async Task<SkillMatchItem?> FindBestSkillMatchAsync(ApplicationUser candidate, JobTaxonomy requiredSkill, Job job)
+        private SkillMatchItem? FindBestSkillMatch(ApplicationUser candidate, JobTaxonomy requiredSkill, Job job, TaxonomyLookup taxonomyLookup)
         {
             var candidateSkills = candidate.CandidateTaxonomies.ToList();
             SkillMatchItem? bestMatch = null;
             double bestScore = 0;
 
+            if (!candidateSkills.Any()) return null;
+
             foreach (var candidateSkill in candidateSkills)
             {
-                var similarity = await CalculateSkillSimilarityAsync(
+                var similarity = CalculateSkillSimilarity(
                     candidateSkill.TaxonomyId, 
-                    requiredSkill.TaxonomyId);
+                    requiredSkill.TaxonomyId, taxonomyLookup);
 
-                if (similarity > 0)
+                var experienceRatio = CalculateExperienceRatio(
+                    candidateSkill.ExperienceYear ?? 0, 
+                    job.ExperienceYear ?? 1);
+
+                var finalScore = similarity * experienceRatio * 100;
+
+                // Pick MAX (Use >= to ensure we assume a match even if score is 0 if that were possible, but min is 0.3)
+                if (finalScore >= bestScore)
                 {
-                    var experienceRatio = CalculateExperienceRatio(
-                        candidateSkill.ExperienceYear ?? 0, 
-                        job.ExperienceYear ?? 1);
-
-                    var finalScore = similarity * experienceRatio * 100;
-
-                    if (finalScore > bestScore)
+                    bestScore = finalScore;
+                    bestMatch = new SkillMatchItem
                     {
-                        bestScore = finalScore;
-                        bestMatch = new SkillMatchItem
-                        {
-                            TaxonomyId = candidateSkill.TaxonomyId,
-                            SkillName = candidateSkill.Taxonomy?.Name ?? "",
-                            Similarity = similarity,
-                            RequiredYears = job.ExperienceYear ?? 0,
-                            CandidateYears = candidateSkill.ExperienceYear ?? 0,
-                            ExperienceRatio = experienceRatio,
-                            FinalScore = Math.Round(finalScore, 2),
-                            MatchType = GetSkillMatchType(similarity)
-                        };
-                    }
+                        TaxonomyId = candidateSkill.TaxonomyId,
+                        SkillName = candidateSkill.Taxonomy?.Name ?? "",
+                        Similarity = similarity,
+                        RequiredYears = job.ExperienceYear ?? 0,
+                        CandidateYears = candidateSkill.ExperienceYear ?? 0,
+                        ExperienceRatio = experienceRatio,
+                        FinalScore = Math.Round(finalScore, 2),
+                        MatchType = GetSkillMatchType(similarity)
+                    };
                 }
             }
 
             return bestMatch;
         }
 
-        private async Task<double> CalculateSkillSimilarityAsync(int candidateSkillId, int requiredSkillId)
+        private double CalculateSkillSimilarity(int candidateSkillId, int requiredSkillId, TaxonomyLookup taxonomyLookup)
         {
             if (candidateSkillId == requiredSkillId)
-                return _settings.SkillSimilarity.ExactMatch; // Exact match
+                return 1.0; // Rule: Exact match = 1
 
-            // Get both taxonomies with their hierarchies
-            var candidateSkill = await GetTaxonomyWithHierarchyAsync(candidateSkillId);
-            var requiredSkill = await GetTaxonomyWithHierarchyAsync(requiredSkillId);
+            // CASE 1: Candidate skill is Child of Required Skill (Specific implies General) -> Score 1.0
+            if (taxonomyLookup.IsParentOf(requiredSkillId, candidateSkillId))
+                return 1.0;
 
-            if (candidateSkill == null || requiredSkill == null)
-                return 0.0;
+            // CASE 2: Candidate skill is Parent of Required Skill (General supports Specific) -> Score 0.6
+            if (taxonomyLookup.IsParentOf(candidateSkillId, requiredSkillId))
+                return 0.6; 
 
-            // CASE 1: Candidate skill is Child of Required Skill (Specific implies General)
-            // Example: Candidate has "Spring Boot", Job requires "Java" -> 100% match
-            if (await IsParentOfAsync(requiredSkill.Id, candidateSkill.Id))
-                return _settings.SkillSimilarity.ChildMatch;
+            // CASE 3: Siblings (Same ecosystem/parent) -> Score 0.4
+            if (taxonomyLookup.AreSiblings(candidateSkillId, requiredSkillId))
+                return 0.4; 
 
-            // CASE 2: Candidate skill is Parent of Required Skill (General supports Specific)
-            // Example: Candidate has "Java", Job requires "Spring Boot" -> 60% match (Has Foundation)
-            if (await IsParentOfAsync(candidateSkill.Id, requiredSkill.Id))
-                return _settings.SkillSimilarity.ParentMatch; 
-
-            // CASE 3: Siblings (Same ecosystem/parent)
-            // Example: Candidate has "React", Job requires "Angular" -> 40% match (Transferable concepts)
-            if (await AreSiblingsAsync(candidateSkill.Id, requiredSkill.Id))
-                return _settings.SkillSimilarity.SiblingMatch; 
-
-            return 0.0; // No relationship
-        }
-
-        private async Task<Taxonomy?> GetTaxonomyWithHierarchyAsync(int taxonomyId)
-        {
-            return await _context.Taxonomies
-                .Include(t => t.Parent)
-                .Include(t => t.Children)
-                .FirstOrDefaultAsync(t => t.Id == taxonomyId);
-        }
-
-        private async Task<bool> IsParentOfAsync(int parentId, int childId)
-        {
-            var child = await _context.Taxonomies
-                .FirstOrDefaultAsync(t => t.Id == childId);
-            
-            while (child?.ParentId != null)
-            {
-                if (child.ParentId == parentId)
-                    return true;
-                    
-                child = await _context.Taxonomies
-                    .FirstOrDefaultAsync(t => t.Id == child.ParentId);
-            }
-            
-            return false;
-        }
-
-        private async Task<bool> AreSiblingsAsync(int taxonomyId1, int taxonomyId2)
-        {
-            var taxonomy1 = await _context.Taxonomies
-                .FirstOrDefaultAsync(t => t.Id == taxonomyId1);
-            var taxonomy2 = await _context.Taxonomies
-                .FirstOrDefaultAsync(t => t.Id == taxonomyId2);
-
-            return taxonomy1?.ParentId != null && 
-                   taxonomy2?.ParentId != null && 
-                   taxonomy1.ParentId == taxonomy2.ParentId;
+            return 0.3; // Rule: Unrelated = 0.3
         }
 
         private static double CalculateExperienceRatio(int candidateYears, int requiredYears)
@@ -416,7 +380,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (similarity >= 1.0) return SkillMatchType.ExactMatch;
             if (similarity >= 0.6) return SkillMatchType.ParentMatch;
             if (similarity >= 0.4) return SkillMatchType.SiblingMatch;
-            return SkillMatchType.ExactMatch;
+            return SkillMatchType.Unrelated;
         }
         private EducationMatchingDetails CalculateEducationMatching(ApplicationUser candidate, Job job)
         {
@@ -512,13 +476,16 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             var filteredJobs = await query.ToListAsync();
 
+            var allTaxonomies = await _context.Taxonomies.AsNoTracking().ToListAsync();
+            var taxonomyLookup = new TaxonomyLookup(allTaxonomies);
+
             // Only return jobs with matching score >= Minimum Matching Score
             double minMatchingScore = _settings.MinMatchingScore;
             var jobsWithScores = new List<(Job Job, double Score)>();
 
             foreach (var job in filteredJobs)
             {
-                var matchingResult = await CalculateMatchingScoreInternalAsync(candidate, job);
+                var matchingResult = await CalculateMatchingScoreInternalAsync(candidate, job, taxonomyLookup);
                 if (matchingResult != null && matchingResult.TotalScore >= minMatchingScore)
                 {
                     jobsWithScores.Add((job, matchingResult.TotalScore));
@@ -637,10 +604,10 @@ namespace JobMatchingSystem.API.Services.Implementations
             return response;
         }
 
-        private async Task<CandidateMatchingResult?> CalculateMatchingScoreForCandidateAsync(ApplicationUser candidate, Job job)
+        private async Task<CandidateMatchingResult?> CalculateMatchingScoreForCandidateAsync(ApplicationUser candidate, Job job, TaxonomyLookup taxonomyLookup)
         {
             // Calculate matching score using existing logic
-            var jobMatchingResult = await CalculateMatchingScoreInternalAsync(candidate, job);
+            var jobMatchingResult = await CalculateMatchingScoreInternalAsync(candidate, job, taxonomyLookup);
             if (jobMatchingResult == null) return null;
 
             // Get primary CV
@@ -700,6 +667,47 @@ namespace JobMatchingSystem.API.Services.Implementations
             };
 
             return result;
+        }
+    }
+
+    public class TaxonomyLookup
+    {
+        private readonly Dictionary<int, int?> _taxonomyParents;
+
+        public TaxonomyLookup(List<Taxonomy> allTaxonomies)
+        {
+            _taxonomyParents = allTaxonomies.ToDictionary(t => t.Id, t => t.ParentId);
+        }
+
+        public bool IsParentOf(int parentId, int childId)
+        {
+            int? currentId = childId;
+            // Safety limit to prevent infinite loops in case of circular references in data
+            int depth = 0;
+            const int MaxDepth = 50;
+
+            while (currentId.HasValue && depth < MaxDepth)
+            {
+                if (_taxonomyParents.TryGetValue(currentId.Value, out var pId))
+                {
+                    if (pId == parentId) return true;
+                    currentId = pId;
+                    depth++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            return false;
+        }
+
+        public bool AreSiblings(int id1, int id2)
+        {
+            if (!_taxonomyParents.TryGetValue(id1, out var p1) ||
+                !_taxonomyParents.TryGetValue(id2, out var p2)) return false;
+
+            return p1.HasValue && p2.HasValue && p1 == p2;
         }
     }
 }
