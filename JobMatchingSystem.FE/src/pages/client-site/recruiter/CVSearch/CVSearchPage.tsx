@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -10,8 +9,6 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { MapPinIcon, BriefcaseIcon, GraduationCapIcon, FileTextIcon, ExternalLinkIcon, BookmarkIcon, MailIcon } from 'lucide-react';
 import { CandidateMatchingService } from '@/services/candidate-matching.service';
 import { CandidateMatchingResult, CandidateSearchFilters } from '@/models/candidate-matching';
-import { TaxonomyService } from '@/services/taxonomy.service';
-import { Taxonomy } from '@/models/taxonomy';
 import { JobServices } from '@/services/job.service';
 import { Job } from '@/models/job';
 import { SavedCVService } from '@/services/saved-cv.service';
@@ -23,10 +20,9 @@ export default function CVSearchPage() {
   const [searchParams] = useSearchParams();
   const [candidates, setCandidates] = useState<CandidateMatchingResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [selectedSkills, setSelectedSkills] = useState<number[]>([]);
+  const [selectedSkills] = useState<number[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [savedCVIds, setSavedCVIds] = useState<Set<number>>(new Set());
@@ -44,17 +40,6 @@ export default function CVSearchPage() {
     requiredSkills: [],
     educationLevelId: undefined
   });
-
-  const loadTaxonomies = useCallback(async () => {
-    try {
-      const response = await TaxonomyService.getAllTaxonomies();
-      if (response.isSuccess && response.result) {
-        setTaxonomies(response.result);
-      }
-    } catch (error: any) {
-      toast.error(error.response.data.errorMessages[0]);
-    }
-  }, []);
 
   const loadRecruiterJobs = useCallback(async () => {
     try {
@@ -125,10 +110,9 @@ export default function CVSearchPage() {
   }, [filters, selectedSkills]);
 
   useEffect(() => {
-    loadTaxonomies();
     loadRecruiterJobs();
     loadSavedCVs();
-  }, [loadTaxonomies, loadRecruiterJobs, loadSavedCVs]);
+  }, [loadRecruiterJobs, loadSavedCVs]);
 
   useEffect(() => {
     if (filters.jobId) {
@@ -141,15 +125,6 @@ export default function CVSearchPage() {
       ...prev,
       [key]: value
     }));
-  };
-
-  const handleSkillToggle = (skillId: number) => {
-    setSelectedSkills(prev => {
-      const newSkills = prev.includes(skillId)
-        ? prev.filter(id => id !== skillId)
-        : [...prev, skillId];
-      return newSkills;
-    });
   };
 
   const getScoreColor = (score: number) => {
