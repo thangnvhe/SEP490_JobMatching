@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MapPinIcon, BriefcaseIcon, GraduationCapIcon, FileTextIcon, ExternalLinkIcon, BookmarkIcon, MailIcon } from 'lucide-react';
+import { MapPinIcon, BriefcaseIcon, GraduationCapIcon, FileTextIcon, ExternalLinkIcon, BookmarkIcon, MailIcon, ArrowLeft } from 'lucide-react';
 import { CandidateMatchingService } from '@/services/candidate-matching.service';
 import { CandidateMatchingResult, CandidateSearchFilters } from '@/models/candidate-matching';
 import { JobServices } from '@/services/job.service';
@@ -16,6 +16,7 @@ import { InvitationService } from '@/services/invitation.service';
 import { toast } from 'sonner';
 
 export default function CVSearchPage() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [candidates, setCandidates] = useState<CandidateMatchingResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -219,6 +220,14 @@ export default function CVSearchPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
+            <Button
+              variant="ghost"
+              className="mb-2 pl-0 hover:bg-transparent -ml-2"
+              onClick={() => navigate(-1)}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Quay lại
+            </Button>
             <h1 className="text-3xl font-bold tracking-tight">Tìm kiếm CV ứng viên</h1>
             <p className="text-muted-foreground">
               Tìm kiếm và đánh giá ứng viên phù hợp cho vị trí tuyển dụng
