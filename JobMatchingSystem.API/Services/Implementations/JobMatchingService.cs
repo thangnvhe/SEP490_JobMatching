@@ -44,6 +44,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             if (candidate == null) return new List<JobMatchingResult>();
 
             var query = _context.Jobs
+                .AsNoTracking()
                 .Include(j => j.Company)
                 .Include(j => j.Position)
                 .Include(j => j.RequiredEducationLevel)
@@ -115,6 +116,7 @@ namespace JobMatchingSystem.API.Services.Implementations
 
             // Get candidates with CV and apply filters
             var candidatesWithCV = await _context.CVUploads
+                .AsNoTracking()
                 .Include(cv => cv.User)
                     .ThenInclude(u => u.CandidateTaxonomies)
                         .ThenInclude(ct => ct.Taxonomy)
@@ -219,6 +221,7 @@ namespace JobMatchingSystem.API.Services.Implementations
         private async Task<ApplicationUser?> GetCandidateWithDetailsAsync(int candidateId)
         {
             return await _context.ApplicationUsers
+                .AsNoTracking()
                 .Include(u => u.CVProfile)
                     .ThenInclude(cvp => cvp.Position)
                 .Include(u => u.CVEducations)
@@ -232,6 +235,7 @@ namespace JobMatchingSystem.API.Services.Implementations
         private async Task<Job?> GetJobWithDetailsAsync(int jobId)
         {
             return await _context.Jobs
+                .AsNoTracking()
                 .Include(j => j.Company)
                 .Include(j => j.Position)
                 .Include(j => j.RequiredEducationLevel)
@@ -449,6 +453,7 @@ namespace JobMatchingSystem.API.Services.Implementations
             }
 
             var query = _context.Jobs
+                .AsNoTracking()
                 .Include(j => j.Company)
                 .Include(j => j.Position)
                 .Include(j => j.RequiredEducationLevel)
