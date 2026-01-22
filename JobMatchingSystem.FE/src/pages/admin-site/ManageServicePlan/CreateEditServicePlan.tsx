@@ -27,48 +27,82 @@ import { ServicePlan } from "@/models/service-plan";
 
 // ===================== ZOD SCHEMA =====================
 
-// Helper function để validate số bắt buộc với thông báo lỗi phù hợp UX
-const requiredNumberSchema = (fieldName: string) =>
+// Helper function để validate số (cho phép 0) với thông báo lỗi phù hợp
+const optionalNumberSchema = (fieldName: string) =>
   z
     .number({
       invalid_type_error: `${fieldName} phải là số`,
     })
-    .superRefine((val, ctx) => {
-      // Kiểm tra nếu để trống (NaN)
-      if (isNaN(val)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `${fieldName} là bắt buộc`,
-        });
-        return;
-      }
-      
-      // Kiểm tra giá trị phải lớn hơn 0
-      if (val <= 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `${fieldName} phải lớn hơn 0`,
-        });
-      }
-    });
+    .min(0, `${fieldName} không được nhỏ hơn 0`);
 
-const servicePlanSchema = z.object({
-  name: z
-    .string({ required_error: "Tên gói dịch vụ là bắt buộc" })
-    .min(1, "Tên gói dịch vụ không được để trống")
-    .max(100, "Tên gói dịch vụ không được quá 100 ký tự"),
-  description: z
-    .string({ required_error: "Mô tả là bắt buộc" })
-    .min(1, "Mô tả không được để trống")
-    .max(500, "Mô tả không được quá 500 ký tự"),
-  price: requiredNumberSchema("Giá"),
-  jobPostAdditional: requiredNumberSchema("Số bài đăng thêm"),
-  highlightJobDays: requiredNumberSchema("Số ngày nổi bật"),
-  highlightJobDaysCount: requiredNumberSchema("Số lần nổi bật"),
-  extensionJobDays: requiredNumberSchema("Số ngày gia hạn"),
-  extensionJobDaysCount: requiredNumberSchema("Số lần gia hạn"),
-  cvSaveAdditional: requiredNumberSchema("Số CV lưu thêm"),
-});
+const servicePlanSchema = z
+  .object({
+    name: z
+      .string({ required_error: "Tên gói dịch vụ là bắt buộc" })
+      .min(1, "Tên gói dịch vụ không được để trống")
+      .max(100, "Tên gói dịch vụ không được quá 100 ký tự"),
+    description: z
+      .string({ required_error: "Mô tả là bắt buộc" })
+      .min(1, "Mô tả không được để trống")
+      .max(500, "Mô tả không được quá 500 ký tự"),
+    price: optionalNumberSchema("Giá"),
+    jobPostAdditional: optionalNumberSchema("Số bài đăng thêm"),
+    highlightJobDays: optionalNumberSchema("Số ngày nổi bật"),
+    highlightJobDaysCount: optionalNumberSchema("Số lần nổi bật"),
+    extensionJobDays: optionalNumberSchema("Số ngày gia hạn"),
+    extensionJobDaysCount: optionalNumberSchema("Số lần gia hạn"),
+    cvSaveAdditional: optionalNumberSchema("Số CV lưu thêm"),
+  })
+  .superRefine((data, ctx) => {
+    // Validate Highlight Job Pair: Nếu một trong hai có giá trị > 0 thì cái kia cũng phải > 0
+    if (data.highlightJobDays > 0 && data.highlightJobDaysCount <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Số lần nổi bật là bắt buộc khi có ngày nổi bật",
+        path: ["highlightJobDaysCount"],
+      });
+    }
+    if (data.highlightJobDaysCount > 0 && data.highlightJobDays <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Số ngày nổi bật là bắt buộc khi có số lần nổi bật",
+        path: ["highlightJobDays"],
+      });
+    }
+
+    // Validate Extension Job Pair: Nếu một trong hai có giá trị > 0 thì cái kia cũng phải > 0
+    if (data.extensionJobDays > 0 && data.extensionJobDaysCount <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Số lần gia hạn là bắt buộc khi có ngày gia hạn",
+        path: ["extensionJobDaysCount"],
+      });
+    }
+    if (data.extensionJobDaysCount > 0 && data.extensionJobDays <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Số ngày gia hạn là bắt buộc khi có số lần gia hạn",
+        path: ["extensionJobDays"],
+      });
+    }
+
+    // Validate At Least One Feature: Phải nhập ít nhất một tính năng
+    const hasAnyFeature =
+      data.jobPostAdditional > 0 ||
+      data.highlightJobDays > 0 ||
+      data.highlightJobDaysCount > 0 ||
+      data.extensionJobDays > 0 ||
+      data.extensionJobDaysCount > 0 ||
+      data.cvSaveAdditional > 0;
+
+    if (!hasAnyFeature) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Phải nhập ít nhất một tính năng cho gói dịch vụ",
+        path: ["jobPostAdditional"], // Hiển thị lỗi ở trường đầu tiên
+      });
+    }
+  });
 
 type ServicePlanFormData = z.infer<typeof servicePlanSchema>;
 
@@ -320,7 +354,7 @@ export default function CreateEditServicePlanDialog({
                   htmlFor="jobPostAdditional"
                   className="text-sm font-medium text-gray-900"
                 >
-                  Số bài đăng thêm <span className="text-red-500">*</span>
+                  Số bài đăng thêm
                 </Label>
                 <Controller
                   name="jobPostAdditional"
@@ -334,7 +368,7 @@ export default function CreateEditServicePlanDialog({
                       className="mt-1"
                       min={0}
                       disabled={loading}
-                      value={value !== undefined && value !== null && !isNaN(value) ? value : ""}
+                      value={value ? value : ""}
                       onChange={(e) => {
                         const val = e.target.value;
                         if (val === "" || val === null) {
@@ -359,7 +393,7 @@ export default function CreateEditServicePlanDialog({
                   htmlFor="cvSaveAdditional"
                   className="text-sm font-medium text-gray-900"
                 >
-                  Số CV lưu thêm <span className="text-red-500">*</span>
+                  Số CV lưu thêm
                 </Label>
                 <Controller
                   name="cvSaveAdditional"
@@ -373,7 +407,7 @@ export default function CreateEditServicePlanDialog({
                       className="mt-1"
                       min={0}
                       disabled={loading}
-                      value={value !== undefined && value !== null && !isNaN(value) ? value : ""}
+                      value={value ? value : ""}
                       onChange={(e) => {
                         const val = e.target.value;
                         if (val === "" || val === null) {
@@ -398,7 +432,7 @@ export default function CreateEditServicePlanDialog({
                   htmlFor="highlightJobDays"
                   className="text-sm font-medium text-gray-900"
                 >
-                  Số ngày nổi bật <span className="text-red-500">*</span>
+                  Số ngày nổi bật
                 </Label>
                 <Controller
                   name="highlightJobDays"
@@ -412,7 +446,7 @@ export default function CreateEditServicePlanDialog({
                       className="mt-1"
                       min={0}
                       disabled={loading}
-                      value={value !== undefined && value !== null && !isNaN(value) ? value : ""}
+                      value={value ? value : ""}
                       onChange={(e) => {
                         const val = e.target.value;
                         if (val === "" || val === null) {
@@ -437,7 +471,7 @@ export default function CreateEditServicePlanDialog({
                   htmlFor="highlightJobDaysCount"
                   className="text-sm font-medium text-gray-900"
                 >
-                  Số lần nổi bật <span className="text-red-500">*</span>
+                  Số lần nổi bật
                 </Label>
                 <Controller
                   name="highlightJobDaysCount"
@@ -451,7 +485,7 @@ export default function CreateEditServicePlanDialog({
                       className="mt-1"
                       min={0}
                       disabled={loading}
-                      value={value !== undefined && value !== null && !isNaN(value) ? value : ""}
+                      value={value ? value : ""}
                       onChange={(e) => {
                         const val = e.target.value;
                         if (val === "" || val === null) {
@@ -476,7 +510,7 @@ export default function CreateEditServicePlanDialog({
                   htmlFor="extensionJobDays"
                   className="text-sm font-medium text-gray-900"
                 >
-                  Số ngày gia hạn <span className="text-red-500">*</span>
+                  Số ngày gia hạn
                 </Label>
                 <Controller
                   name="extensionJobDays"
@@ -490,7 +524,7 @@ export default function CreateEditServicePlanDialog({
                       className="mt-1"
                       min={0}
                       disabled={loading}
-                      value={value !== undefined && value !== null && !isNaN(value) ? value : ""}
+                      value={value ? value : ""}
                       onChange={(e) => {
                         const val = e.target.value;
                         if (val === "" || val === null) {
@@ -515,7 +549,7 @@ export default function CreateEditServicePlanDialog({
                   htmlFor="extensionJobDaysCount"
                   className="text-sm font-medium text-gray-900"
                 >
-                  Số lần gia hạn <span className="text-red-500">*</span>
+                  Số lần gia hạn
                 </Label>
                 <Controller
                   name="extensionJobDaysCount"
@@ -529,7 +563,7 @@ export default function CreateEditServicePlanDialog({
                       className="mt-1"
                       min={0}
                       disabled={loading}
-                      value={value !== undefined && value !== null && !isNaN(value) ? value : ""}
+                      value={value ? value : ""}
                       onChange={(e) => {
                         const val = e.target.value;
                         if (val === "" || val === null) {
