@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { FileTextIcon, ExternalLinkIcon, Trash2Icon, BookmarkIcon, SearchIcon } from 'lucide-react';
+import { FileTextIcon, ExternalLinkIcon, Trash2Icon, BookmarkIcon, SearchIcon, Mail, Phone } from 'lucide-react';
 import { SavedCVService } from '@/services/saved-cv.service';
 import { SavedCV } from '@/models/saved-cv';
 import { CVServices } from '@/services/cv.service';
@@ -208,13 +208,13 @@ export default function SavedCVsPage() {
                 <div className="space-y-2 mb-4">
                   {hasDetails && cvDetail.user?.email && (
                     <div className="flex items-center text-sm text-gray-600">
-                      <FileTextIcon className="h-4 w-4 mr-2" />
+                      <Mail className="h-4 w-4 mr-2" />
                       {cvDetail.user.email}
                     </div>
                   )}
                   {hasDetails && cvDetail.user?.phoneNumber && (
                     <div className="flex items-center text-sm text-gray-600">
-                      <BookmarkIcon className="h-4 w-4 mr-2" />
+                      <Phone className="h-4 w-4 mr-2" />
                       {cvDetail.user.phoneNumber}
                     </div>
                   )}

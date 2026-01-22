@@ -16,9 +16,7 @@ import {
 import {
   RefreshCcw,
   Edit,
-  Trash2,
   AlertTriangle,
-  Plus,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -202,11 +200,6 @@ export default function ViewSystemConfigList() {
     setIsEditDialogOpen(true);
   };
 
-  const handleDelete = (config: SystemConfig) => {
-    setSelectedConfig(config);
-    setIsDeleteDialogOpen(true);
-  };
-
   const confirmDelete = async () => {
     if (!selectedConfig) return;
 
@@ -323,7 +316,7 @@ export default function ViewSystemConfigList() {
               >
                 <Edit className="h-4 w-4" />
               </Button>
-              <Button
+              {/* <Button
                 onClick={() => handleDelete(config)}
                 variant="outline"
                 size="sm"
@@ -331,7 +324,7 @@ export default function ViewSystemConfigList() {
                 title="Xóa cấu hình"
               >
                 <Trash2 className="h-4 w-4" />
-              </Button>
+              </Button> */}
             </div>
           );
         },
@@ -373,13 +366,13 @@ export default function ViewSystemConfigList() {
               </Select>
             </div>
             <div className="flex space-x-2">
-              <Button
+              {/* <Button
                 onClick={() => setIsCreateDialogOpen(true)}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Thêm cấu hình
-              </Button>
+              </Button> */}
               <Button
                 onClick={handleRefresh}
                 variant="outline"

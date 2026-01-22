@@ -252,10 +252,11 @@ export function CalendarApp({
           dayMaxEvents={true}
           weekends={true}
           firstDay={1}
-          slotMinTime="07:00:00"
-          slotMaxTime="21:00:00"
+          slotMinTime="00:00:00"
+          slotMaxTime="24:00:00"
           allDaySlot={true}
           nowIndicator={true}
+          eventMinHeight={60}
           select={readonly ? undefined : handleDateSelect}
           eventClick={handleEventClick}
           eventDrop={readonly ? undefined : handleEventDrop}

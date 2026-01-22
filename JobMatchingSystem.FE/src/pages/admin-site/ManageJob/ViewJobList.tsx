@@ -87,6 +87,10 @@ export default function ViewJobList() {
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [rejectJobId, setRejectJobId] = useState<number | null>(null);
   const [rejectJobTitle, setRejectJobTitle] = useState<string>('');
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteJobId, setDeleteJobId] = useState<number | null>(null);
+  const [deleteJobTitle, setDeleteJobTitle] = useState<string>('');
   const [paginationInfo, setPaginationInfo] = useState<PageInfo>({
     currentPage: 1,
     pageSize: 10,
@@ -267,13 +271,20 @@ export default function ViewJobList() {
     }
   };
 
-  const handleSoftDelete = async (job: Job) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa công việc "${job.title}" không?`)) {
-      return;
-    }
-    
+  const handleSoftDelete = (job: Job) => {
+    setDeleteJobId(job.jobId);
+    setDeleteJobTitle(job.title);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteJobId) return;
+
     try {
-      await JobServices.delete(job.jobId.toString());
+      await JobServices.delete(deleteJobId.toString());
+      setIsDeleteDialogOpen(false);
+      setDeleteJobId(null);
+      setDeleteJobTitle('');
       handleRefresh(); // Refresh data
       toast.success('Xóa công việc thành công!');
     } catch (error: any) {
@@ -936,6 +947,29 @@ export default function ViewJobList() {
               className="bg-red-600 hover:bg-red-700"
             >
               Xác nhận từ chối
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Alert Dialog cho Xóa công việc */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa công việc</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa công việc <strong>"{deleteJobTitle}"</strong> không?
+              <br />
+              Công việc sẽ được chuyển vào thùng rác và có thể khôi phục sau này.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Xác nhận xóa
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
